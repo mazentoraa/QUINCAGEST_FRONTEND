@@ -1,0 +1,179 @@
+.product-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .product-card.low-stock {
+    border-left: 4px solid #e74c3c;
+  }
+  
+  .product-image {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    overflow: hidden;
+  }
+  
+  .product-image img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+  }
+  
+  .no-image {
+    color: #bdc3c7;
+    font-style: italic;
+  }
+  
+  .product-info {
+    padding: 1.2rem;
+  }
+  
+  .product-info h3 {
+    margin-top: 0;
+    margin-bottom: 0.8rem;
+    color: #2c3e50;
+    font-size: 1.2rem;
+  }
+  
+  .product-info p {
+    margin: 0.4rem 0;
+    color: #7f8c8d;
+  }
+  
+  .product-info .material,
+  .product-info .thickness,
+  .product-info .quantity {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid #f1f1f1;
+  }
+  
+  .product-info .quantity {
+    color: #e74c3c;
+    font-weight: 500;
+  }
+  
+  .product-info .description {
+    margin-top: 1rem;
+    color: #34495e;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    max-height: 100px;
+    overflow-y: auto;
+  }
+  
+  .product-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.8rem 1.2rem;
+    background-color: #f8f9fa;
+    gap: 0.5rem;
+  }
+  
+  .edit-btn,
+  .delete-btn {
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .edit-btn {
+    background-color: #3498db;
+    color: white;
+  }
+  
+  .edit-btn:hover {
+    background-color: #2980b9;
+  }
+  
+  .delete-btn {
+    background-color: #e74c3c;
+    color: white;
+  }
+  
+  .delete-btn:hover {
+    background-color: #c0392b;
+  }
+  
+  /* Formulaire d'édition */
+  .edit-form {
+    padding: 1.2rem;
+  }
+  
+  .edit-form .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .edit-form label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+    color: #34495e;
+  }
+  
+  .edit-form input,
+  .edit-form select,
+  .edit-form textarea {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+  
+  .edit-form textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+  }
+  
+  .save-btn,
+  .cancel-btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: none;
+  }
+  
+  .save-btn {
+    background-color: #27ae60;
+    color: white;
+  }
+  
+  .save-btn:hover {
+    background-color: #219653;
+  }
+  
+  .cancel-btn {
+    background-color: #95a5a6;
+    color: white;
+  }
+  
+  .cancel-btn:hover {
+    background-color: #7f8c8d;
+  }

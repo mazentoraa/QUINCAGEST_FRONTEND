@@ -1,0 +1,134 @@
+.installment-form {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .installment-form h2 {
+    color: #2c3e50;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+  }
+  
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .form-group.full-width {
+    grid-column: span 2;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #34495e;
+  }
+  
+  .form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  .form-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  }
+  
+  .form-input.error {
+    border-color: #e74c3c;
+  }
+  
+  .error-text {
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+  }
+  
+  .installment-preview {
+    margin-top: 2rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  
+  .installment-preview h3 {
+    color: #2c3e50;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+  
+  .preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .preview-table th,
+  .preview-table td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    border: 1px solid #eaeaea;
+  }
+  
+  .preview-table th {
+    background-color: #f1f2f6;
+    color: #34495e;
+    font-weight: 500;
+  }
+  
+  .preview-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  .preview-table tr:hover {
+    background-color: #f1f8ff;
+  }
+  
+  .preview-table td.amount {
+    text-align: right;
+  }
+  
+  .submit-btn {
+    background-color: #3498db;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 1.5rem;
+  }
+  
+  .submit-btn:hover {
+    background-color: #2980b9;
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 768px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .form-group.full-width {
+      grid-column: span 1;
+    }
+  }

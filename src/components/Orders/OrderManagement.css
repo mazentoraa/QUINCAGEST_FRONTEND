@@ -1,0 +1,79 @@
+.order-management {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  
+  .order-header h1 {
+    color: #2c3e50;
+    margin: 0;
+  }
+  
+  .add-order-btn {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s ease;
+  }
+  
+  .add-order-btn:hover {
+    background-color: #219653;
+  }
+  
+  .add-order-btn i {
+    font-size: 1.1rem;
+  }
+  
+  .new-order-container {
+    position: relative;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #7f8c8d;
+  }
+  
+  .close-btn:hover {
+    color: #34495e;
+  }
+  
+  @media (max-width: 768px) {
+    .order-management {
+      padding: 1rem;
+    }
+    
+    .order-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    
+    .new-order-container {
+      padding: 1rem;
+    }
+  }

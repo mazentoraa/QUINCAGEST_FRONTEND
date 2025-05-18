@@ -1,0 +1,151 @@
+.printer-container {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+  }
+  
+  .printer-container h2 {
+    color: #2c3e50;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+  }
+  
+  .select-container {
+    margin-bottom: 1.5rem;
+  }
+  
+  .select-container label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #34495e;
+  }
+  
+  .installment-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  .installment-select:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  }
+  
+  .checkbox-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .checkbox-container input[type="checkbox"] {
+    margin-right: 0.75rem;
+    width: 1.2rem;
+    height: 1.2rem;
+    cursor: pointer;
+  }
+  
+  .checkbox-container label {
+    color: #34495e;
+    font-weight: normal;
+    cursor: pointer;
+  }
+  
+  .installment-details {
+    margin-bottom: 2rem;
+  }
+  
+  .installment-details h3 {
+    color: #2c3e50;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 0.5rem;
+  }
+  
+  .detail-item {
+    padding: 1rem;
+    border-bottom: 1px solid #eaeaea;
+    display: flex;
+    justify-content: space-between;
+    transition: background-color 0.2s;
+  }
+  
+  .detail-item:last-child {
+    border-bottom: none;
+  }
+  
+  .detail-item:hover {
+    background-color: #f9f9fb;
+  }
+  
+  .print-button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .print-button:hover {
+    background-color: #2980b9;
+  }
+  
+  .print-button:disabled {
+    background-color: #b2bec3;
+    cursor: not-allowed;
+  }
+  
+  .print-button i {
+    font-size: 1.1rem;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    color: #7f8c8d;
+  }
+  
+  .empty-state p {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Animation for loading state */
+  @keyframes spinner {
+    to {transform: rotate(360deg);}
+  }
+  
+  .loading .spinner {
+    display: inline-block;
+    width: 1.2rem;
+    height: 1.2rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spinner 0.8s linear infinite;
+    margin-right: 0.5rem;
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 768px) {
+    .printer-container {
+      padding: 1rem;
+    }
+  }
