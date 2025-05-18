@@ -4,6 +4,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import ClientTable from './ClientTable';
 import ClientForm from './ClientForm';
 import ClientService from '../services/ClientService';
+import ClientModel from '../models/ClientModel';
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -23,17 +24,19 @@ const ClientManagementPage = () => {
     setLoading(true);
     try {
       const data = await ClientService.getAllClients();
-      setClients(data);
+      // Ensure we always set an array, even if empty
+      setClients(Array.isArray(data) ? data : []);
     } catch (error) {
       message.error('Erreur lors du chargement des clients');
       console.error(error);
+      setClients([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
   };
 
   const handleAddClient = () => {
-    setCurrentClient(null);
+    setCurrentClient(ClientModel.createEmpty());
     setIsEditing(false);
     setFormVisible(true);
   };

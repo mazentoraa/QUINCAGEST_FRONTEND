@@ -1,10 +1,31 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Form, Input, Button, Typography, Card } from 'antd';
+import ClientModel from '../models/ClientModel';
 
 const { TextArea } = Input;
 
 const ClientForm = ({ initialValues, onFinish, onCancel, loading, isEdit }) => {
   const [form] = Form.useForm();
+  
+  // Reset form with initial values when they change
+  useEffect(() => {
+    if (initialValues) {
+      form.setFieldsValue({
+        nomClient: initialValues.nomClient || '',
+        numeroFiscal: initialValues.numeroFiscal || '',
+        adresse: initialValues.adresse || '',
+        telephone: initialValues.telephone || '',
+        nomResponsable: initialValues.nomResponsable || '',
+        email: initialValues.email || '',
+        emailResponsable: initialValues.emailResponsable || '',
+        telephoneResponsable: initialValues.telephoneResponsable || '',
+        autreNumero: initialValues.autreNumero || '',
+        informationsComplementaires: initialValues.informationsComplementaires || '',
+      });
+    } else {
+      form.resetFields();
+    }
+  }, [initialValues, form]);
 
   // Validate if input is numeric
   const validateNumeric = (_, value) => {
@@ -30,7 +51,6 @@ const ClientForm = ({ initialValues, onFinish, onCancel, loading, isEdit }) => {
       <Form
         form={form}
         layout="vertical"
-        initialValues={initialValues || {}}
         onFinish={onFinish}
       >
         <Form.Item

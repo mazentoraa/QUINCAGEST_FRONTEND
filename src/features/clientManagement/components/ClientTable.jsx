@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Input, Button, Space, Popconfirm, Typography } from 'antd';
+import { Table, Input, Button, Space, Popconfirm, Typography, Empty } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import Highlighter from 'react-highlight-words';
 
@@ -120,10 +120,13 @@ const ClientTable = ({ clients, onEdit, onDelete, loading }) => {
       <Typography.Title level={4}>Liste des clients</Typography.Title>
       <Table 
         columns={columns} 
-        dataSource={clients} 
+        dataSource={clients || []} 
         rowKey="id" 
         loading={loading}
         pagination={{ pageSize: 10 }}
+        locale={{
+          emptyText: <Empty description="Aucun client trouvé" />
+        }}
       />
     </div>
   );

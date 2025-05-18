@@ -20,21 +20,37 @@
 export default class ClientModel {
   constructor(data = {}) {
     this.id = data.id || '';
-    this.nomClient = data.nomClient || '';
-    this.numeroFiscal = data.numeroFiscal || '';
+    this.nomClient = data.nom_client || '';
+    this.numeroFiscal = data.numero_fiscal || '';
     this.adresse = data.adresse || '';
     this.telephone = data.telephone || '';
-    this.nomResponsable = data.nomResponsable || '';
+    this.nomResponsable = data.nom_responsable || '';
     this.email = data.email || '';
-    this.emailResponsable = data.emailResponsable || '';
-    this.telephoneResponsable = data.telephoneResponsable || '';
-    this.autreNumero = data.autreNumero || '';
-    this.informationsComplementaires = data.informationsComplementaires || '';
-    this.dateCreation = data.dateCreation || new Date();
-    this.derniereMiseAJour = data.derniereMiseAJour || new Date();
+    this.emailResponsable = data.email_responsable || '';
+    this.telephoneResponsable = data.telephone_responsable || '';
+    this.autreNumero = data.autre_numero || '';
+    this.informationsComplementaires = data.informations_complementaires || '';
+    this.dateCreation = data.date_creation ? new Date(data.date_creation) : new Date();
+    this.derniereMiseAJour = data.derniere_mise_a_jour ? new Date(data.derniere_mise_a_jour) : new Date();
   }
 
   static createEmpty() {
     return new ClientModel();
+  }
+
+  // Convert camelCase model to snake_case for API
+  toApiFormat() {
+    return {
+      nom_client: this.nomClient,
+      numero_fiscal: this.numeroFiscal,
+      adresse: this.adresse,
+      telephone: this.telephone,
+      nom_responsable: this.nomResponsable,
+      email: this.email,
+      email_responsable: this.emailResponsable,
+      telephone_responsable: this.telephoneResponsable,
+      autre_numero: this.autreNumero,
+      informations_complementaires: this.informationsComplementaires
+    };
   }
 }
