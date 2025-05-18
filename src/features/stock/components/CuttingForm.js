@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { ClientMaterialContext } from '../../contexts/ClientMaterialContext';
+import { ClientMaterialContext } from '../../clientMaterials/contexts/ClientMaterialContext';
 import './CuttingForm.css';
 
 function CuttingForm({ materialId, onComplete }) {

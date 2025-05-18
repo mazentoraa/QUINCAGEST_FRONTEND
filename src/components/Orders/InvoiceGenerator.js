@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { OrderContext } from '../../contexts/OrderContext';
-import { InstallmentContext } from '../../contexts/InstallmentContext';
+import { InstallmentContext } from '../../features/installments/contexts/InstallmentContext';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import './InvoiceGenerator.css';

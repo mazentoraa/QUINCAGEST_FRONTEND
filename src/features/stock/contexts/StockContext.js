@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { mockProducts } from '../data/mockData';
+import { mockProducts } from '../../../data/mockData';
 
 export const StockContext = createContext();
 

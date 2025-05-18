@@ -1,8 +1,8 @@
 import React, { useState, useContext } from 'react';
-import { ClientMaterialContext } from '../../contexts/ClientMaterialContext';
+import { ClientMaterialContext } from '../contexts/ClientMaterialContext';
 import ClientMaterialForm from './ClientMaterialForm';
 import ClientMaterialList from './ClientMaterialList';
-import DeliveryNoteList from './DeliveryNoteList';
+import DeliveryNoteList from '../../stock/components/DeliveryNoteList';
 import FilterSearch from './FilterSearch';
 import './ClientMaterialManagement.css';
 

@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { InstallmentContext } from '../../contexts/InstallmentContext';
+import { InstallmentContext } from '../contexts/InstallmentContext';
 import InstallmentForm from './InstallmentForm';
 import InstallmentsPrinter from './InstallmentsPrinter';
 import './InstallmentManagement.css';

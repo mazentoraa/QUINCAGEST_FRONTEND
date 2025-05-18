@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { StockContext } from '../../contexts/StockContext';
+import { StockContext } from '../../stock/contexts/StockContext';
 import './FilterSearch.css';
 
 function FilterSearch() {

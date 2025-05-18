@@ -1,6 +1,5 @@
 import React, { useContext } from 'react';
-import { StockContext } from '../../contexts/StockContext';
-import ProductCard from './ProductCard';
+import ProductCard from '../../products/components/ProductCard';
 import './ProductList.css';
 
 function ProductList({ products }) {

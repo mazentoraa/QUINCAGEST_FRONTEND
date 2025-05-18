@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
-import { StockContext } from '../../contexts/StockContext';
-import ProductList from './ProductList';
-import ProductForm from './ProductForm';
-import FilterSearch from './FilterSearch';
+import { StockContext } from '../contexts/StockContext';
+import ProductList from '../../products/components/ProductList';
+import ProductForm from '../../products/components/ProductForm';
+import FilterSearch from '../../clientMaterials/components/FilterSearch';
 import './StockManagement.css';
 
 function StockManagement() {

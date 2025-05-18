@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
-import { ClientMaterialContext } from '../../contexts/ClientMaterialContext';
+import { ClientMaterialContext } from '../../clientMaterials/contexts/ClientMaterialContext';
 import './ClientMaterialCard.css';
-import CuttingForm from './CuttingForm';
+import CuttingForm from '../../stock/components/CuttingForm';
 
 function ClientMaterialCard({ material }) {
   const { updateClientMaterial, deleteClientMaterial } = useContext(ClientMaterialContext);

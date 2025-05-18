@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { ClientMaterialContext } from '../../contexts/ClientMaterialContext';
+import { ClientMaterialContext } from '../contexts/ClientMaterialContext';
 import './ClientMaterialForm.css';
 
 function ClientMaterialForm() {

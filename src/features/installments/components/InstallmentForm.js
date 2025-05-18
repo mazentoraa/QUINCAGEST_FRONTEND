@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { InstallmentContext } from '../../contexts/InstallmentContext';
+import { InstallmentContext } from '../contexts/InstallmentContext';
 import './InstallmentForm.css';
 
 const InstallmentForm = () => {

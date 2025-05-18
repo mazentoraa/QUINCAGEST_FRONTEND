@@ -1,5 +1,4 @@
 import React, { useContext } from 'react';
-import { ClientMaterialContext } from '../../contexts/ClientMaterialContext';
 import ClientMaterialCard from './ClientMaterialCard';
 import './ClientMaterialList.css';
 

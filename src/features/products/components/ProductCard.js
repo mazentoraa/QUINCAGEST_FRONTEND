@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { StockContext } from '../../contexts/StockContext';
+import { StockContext } from '../../stock/contexts/StockContext';
 import './ProductCard.css';
 
 // Styles pour la galerie d'images

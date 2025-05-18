@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { StockContext } from '../../contexts/StockContext';
+import { StockContext } from '../../stock/contexts/StockContext';
 import './ProductForm.css';
 
 function ProductForm() {

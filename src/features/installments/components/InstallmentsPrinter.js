@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
-import { InstallmentContext } from '../../contexts/InstallmentContext';
-import { generateInstallmentsPDF } from '../../utils/pdfGenerator';
+import { InstallmentContext } from '../contexts/InstallmentContext';
+import { generateInstallmentsPDF } from '../../../utils/pdfGenerator';
 import './InstallmentsPrinter.css';
 
 const InstallmentsPrinter = ({ selectedInstallment }) => {

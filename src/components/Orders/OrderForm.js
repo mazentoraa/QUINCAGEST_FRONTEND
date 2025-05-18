@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
-import { StockContext } from '../../contexts/StockContext';
+import { StockContext } from '../../features/stock/contexts/StockContext';
 import { OrderContext } from '../../contexts/OrderContext';
-import { InstallmentContext } from '../../contexts/InstallmentContext';
+import { InstallmentContext } from '../../features/installments/contexts/InstallmentContext';
 import ClientForm from './ClientForm';
 import './OrderForm.css';
 
