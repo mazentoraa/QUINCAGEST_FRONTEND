@@ -33,6 +33,12 @@ function Navigation() {
           <NavLink to="/installments" className={({ isActive }) => isActive ? "active" : ""}>
             Gestion des Traites
           </NavLink>
+          <li>
+            <NavLink to="/clients" className={({ isActive }) => isActive ? "active" : ""}>
+              <i className="fas fa-users"></i>
+              <span>Clients</span>
+            </NavLink>
+          </li>
         </li>
       </ul>
     </nav>

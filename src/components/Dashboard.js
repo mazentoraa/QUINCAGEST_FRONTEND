@@ -30,6 +30,13 @@ function Dashboard() {
           <h2>Gestion des Traites</h2>
           <p>Générez et imprimez les traites bancaires</p>
         </Link>
+        <Link to="/clients" className="dashboard-card">
+          <div className="card-icon">
+            <i className="fas fa-users"></i>
+          </div>
+          <h2>Gestion des Clients</h2>
+          <p>Gérez vos clients, contacts et informations</p>
+        </Link>
       </div>
     </div>
   );

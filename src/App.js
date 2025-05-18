@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import StockManagement from './features/stock/components/StockManagement';
 import ClientMaterialManagement from './features/clientMaterials/components/ClientMaterialManagement';
+import ClientManagementPage from './features/clientManagement';
 import OrderManagement from './components/Orders/OrderManagement';
 import InstallmentManagement from './features/installments/components/InstallmentManagement';
 import Navigation from './components/Navigation';
@@ -28,6 +29,8 @@ function App() {
                     <Route path="/client-materials" element={<ClientMaterialManagement />} />
                     <Route path="/orders" element={<OrderManagement />} />
                     <Route path="/installments" element={<InstallmentManagement />} />
+                    <Route path="/clients" element={<ClientManagementPage />} />
+
                   </Routes>
                 </div>
               </div>
