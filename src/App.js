@@ -19,6 +19,7 @@ import LoginForm from './features/authentication/components/LoginForm';
 import AuthService from './services/AuthService';
 import './App.css';
 import { ManifestePage, WorkManagementPage } from './features/manifeste/components';
+import { ProductProvider } from './features/products/contexts/ProductContext';
 
 const { Header, Content, Sider } = Layout;
 
@@ -48,36 +49,38 @@ function App() {
                 <ClientMaterialProvider>
                   <OrderProvider>
                     <InstallmentProvider>
-                      <Layout style={{ minHeight: '100vh' }}>
-                        <Header className="app-header">
-                          <Navigation />
-                        </Header>
-                        <Layout>
-                          <Sider theme="light" width={300} className="app-sider">
-                            <SideMenu />
-                          </Sider>
-                          <Content className="main-content">
-                            <Routes>
-                              <Route path="/" element={<Dashboard />} />
-                              <Route path="/stock" element={<StockManagement />} />
-                              <Route path="/stock/produits" element={<StockManagement />} />
-                              <Route path="/stock/matieres" element={<ClientMaterialManagement />} />
-                              <Route path="/client-materials" element={<ClientMaterialManagement />} />
-                              <Route path="/client-materials/:client_id" element={<ClientRawMaterialsPage />} />
-                              <Route path="/orders" element={<OrderManagement />} />
-                              <Route path="/manifeste/travaux" element={<WorkManagementPage />} />
-                              <Route path="/manifeste" element={<ManifestePage />} />
-                              <Route path="/manifeste/bons" element={<ManifestePage />} />
-                              <Route path="/manifeste/inventaire" element={<ManifestePage />} />
-                              <Route path="/reglements/factures" element={<OrderManagement />} />
-                              <Route path="/reglements/traites" element={<InstallmentManagement />} />
-                              <Route path="/reglements/rapport" element={<Dashboard />} />
-                              <Route path="/installments" element={<InstallmentManagement />} />
-                              <Route path="/clients" element={<ClientManagementPage />} />
-                            </Routes>
-                          </Content>
+                      <ProductProvider>
+                        <Layout style={{ minHeight: '100vh' }}>
+                          <Header className="app-header">
+                            <Navigation />
+                          </Header>
+                          <Layout>
+                            <Sider theme="light" width={300} className="app-sider">
+                              <SideMenu />
+                            </Sider>
+                            <Content className="main-content">
+                              <Routes>
+                                <Route path="/" element={<Dashboard />} />
+                                <Route path="/stock" element={<StockManagement />} />
+                                <Route path="/stock/produits" element={<StockManagement />} />
+                                <Route path="/stock/matieres" element={<ClientMaterialManagement />} />
+                                <Route path="/client-materials" element={<ClientMaterialManagement />} />
+                                <Route path="/client-materials/:client_id" element={<ClientRawMaterialsPage />} />
+                                <Route path="/orders" element={<OrderManagement />} />
+                                <Route path="/manifeste/travaux" element={<WorkManagementPage />} />
+                                <Route path="/manifeste" element={<ManifestePage />} />
+                                <Route path="/manifeste/bons" element={<ManifestePage />} />
+                                <Route path="/manifeste/inventaire" element={<ManifestePage />} />
+                                <Route path="/reglements/factures" element={<OrderManagement />} />
+                                <Route path="/reglements/traites" element={<InstallmentManagement />} />
+                                <Route path="/reglements/rapport" element={<Dashboard />} />
+                                <Route path="/installments" element={<InstallmentManagement />} />
+                                <Route path="/clients" element={<ClientManagementPage />} />
+                              </Routes>
+                            </Content>
+                          </Layout>
                         </Layout>
-                      </Layout>
+                      </ProductProvider>
                     </InstallmentProvider>
                   </OrderProvider>
                 </ClientMaterialProvider>
