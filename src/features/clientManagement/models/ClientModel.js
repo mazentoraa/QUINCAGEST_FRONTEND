@@ -3,55 +3,55 @@
  * 
  * @typedef {Object} Client
  * @property {string} id - Unique identifier for the client
- * @property {string} nomClient - Client name (required)
- * @property {string} numeroFiscal - Fiscal registration number (required)
+ * @property {string} nom_client - Client name (required)
+ * @property {string} numero_fiscal - Fiscal registration number (required)
  * @property {string} [adresse] - Client address
  * @property {string} [telephone] - Client phone number
- * @property {string} [nomResponsable] - Manager or responsible person's name
+ * @property {string} [nom_responsable] - Manager or responsible person's name
  * @property {string} [email] - Client's email
- * @property {string} [emailResponsable] - Manager or responsible person's email
- * @property {string} [telephoneResponsable] - Manager or responsible person's phone number
- * @property {string} [autreNumero] - Other optional number
- * @property {string} [informationsComplementaires] - Additional information about the client
- * @property {Date} dateCreation - Date when the client was created
- * @property {Date} derniereMiseAJour - Date when the client was last updated
+ * @property {string} [email_responsable] - Manager or responsible person's email
+ * @property {string} [telephone_responsable] - Manager or responsible person's phone number
+ * @property {string} [autre_numero] - Other optional number
+ * @property {string} [informations_complementaires] - Additional information about the client
+ * @property {Date} date_creation - Date when the client was created
+ * @property {Date} derniere_mise_a_jour - Date when the client was last updated
  */
 
 export default class ClientModel {
   constructor(data = {}) {
     this.id = data.id || '';
     // Handle both camelCase and snake_case formats
-    this.nomClient = data.nomClient || data.nom_client || '';
-    this.numeroFiscal = data.numeroFiscal || data.numero_fiscal || '';
+    this.nom_client = data.nom_client || '';
+    this.numero_fiscal = data.numero_fiscal || '';
     this.adresse = data.adresse || '';
     this.telephone = data.telephone || '';
-    this.nomResponsable = data.nomResponsable || data.nom_responsable || '';
+    this.nom_responsable = data.nom_responsable || '';
     this.email = data.email || '';
-    this.emailResponsable = data.emailResponsable || data.email_responsable || '';
-    this.telephoneResponsable = data.telephoneResponsable || data.telephone_responsable || '';
-    this.autreNumero = data.autreNumero || data.autre_numero || '';
-    this.informationsComplementaires = data.informationsComplementaires || data.informations_complementaires || '';
-    this.dateCreation = data.date_creation ? new Date(data.date_creation) : new Date();
-    this.derniereMiseAJour = data.derniere_mise_a_jour ? new Date(data.derniere_mise_a_jour) : new Date();
+    this.email_responsable = data.email_responsable || '';
+    this.telephone_responsable = data.telephone_responsable || '';
+    this.autre_numero = data.autre_numero || '';
+    this.informations_complementaires = data.informations_complementaires || '';
+    this.date_creation = data.date_creation ? new Date(data.date_creation) : new Date();
+    this.derniere_mise_a_jour = data.derniere_mise_a_jour ? new Date(data.derniere_mise_a_jour) : new Date();
   }
 
-  static createEmpty() {
+  static create_empty() {
     return new ClientModel();
   }
 
   // Convert model to snake_case for API
-  toApiFormat() {
+  to_api_format() {
     return {
-      nom_client: this.nomClient,
-      numero_fiscal: this.numeroFiscal,
+      nom_client: this.nom_client,
+      numero_fiscal: this.numero_fiscal,
       adresse: this.adresse,
       telephone: this.telephone,
-      nom_responsable: this.nomResponsable,
+      nom_responsable: this.nom_responsable,
       email: this.email,
-      email_responsable: this.emailResponsable,
-      telephone_responsable: this.telephoneResponsable,
-      autre_numero: this.autreNumero,
-      informations_complementaires: this.informationsComplementaires
+      email_responsable: this.email_responsable,
+      telephone_responsable: this.telephone_responsable,
+      autre_numero: this.autre_numero,
+      informations_complementaires: this.informations_complementaires
     };
   }
 }

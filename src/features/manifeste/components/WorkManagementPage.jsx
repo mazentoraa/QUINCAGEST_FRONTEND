@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Layout, Typography, Button, message, Table, Modal, 
   Form, Input, InputNumber, Select, Space, Popconfirm, Spin,
-  Divider
+  Divider, Card, List, Tag
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
@@ -11,6 +11,8 @@ import WorkService from '../services/WorkService';
 import ClientService from '../services/ClientService';
 import ProductService from '../services/ProductService';
 import WorkModel from '../models/WorkModel';
+// Import the RawMaterialService
+import RawMaterialService from '../../clientManagement/services/RawMaterialService';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -30,6 +32,11 @@ const WorkManagementPage = () => {
   const [clientSearchLoading, setClientSearchLoading] = useState(false);
   const [productSearchLoading, setProductSearchLoading] = useState(false);
   
+  // Add new state for client materials
+  const [clientMaterials, setClientMaterials] = useState([]);
+  const [selectedMaterials, setSelectedMaterials] = useState([]);
+  const [loadingMaterials, setLoadingMaterials] = useState(false);
+
   useEffect(() => {
     fetchWorks();
     fetchInitialOptions();
@@ -116,6 +123,10 @@ const WorkManagementPage = () => {
       quantite: record.quantite,
       description: record.description
     });
+    
+    // Fetch materials for this client
+    handleClientChange(record.client_id);
+    
     setIsModalVisible(true);
   };
 
@@ -129,17 +140,59 @@ const WorkManagementPage = () => {
     }
   };
 
+  const handleClientChange = async (clientId) => {
+    if (!clientId) return;
+    
+    setLoadingMaterials(true);
+    try {
+      console.log('Fetching materials for client ID:', clientId);
+      const materials = await RawMaterialService.get_materials_by_client_id(clientId);
+      console.log('Retrieved materials:', materials);
+      setClientMaterials(materials);
+      setSelectedMaterials([]); // Reset selected materials when client changes
+    } catch (error) {
+      console.error('Error fetching client materials:', error);
+      message.error('Erreur lors du chargement des matières premières');
+    } finally {
+      setLoadingMaterials(false);
+    }
+  };
+
+  const handleMaterialSelect = (materialId, quantite) => {
+    const existingIndex = selectedMaterials.findIndex(m => m.materialId === materialId);
+    
+    if (existingIndex >= 0) {
+      const updatedMaterials = [...selectedMaterials];
+      updatedMaterials[existingIndex].quantite = quantite;
+      setSelectedMaterials(updatedMaterials);
+    } else {
+      setSelectedMaterials([...selectedMaterials, { materialId, quantite }]);
+    }
+  };
+  
+  const handleRemoveMaterial = (materialId) => {
+    setSelectedMaterials(selectedMaterials.filter(m => m.materialId !== materialId));
+  };
+
   const handleSubmit = async (values) => {
     try {
+      const workData = {
+        ...values,
+        materialsUsed: selectedMaterials
+      };
+      
       if (editingWork) {
-        await WorkService.updateWork(editingWork.id, values);
+        await WorkService.updateWork(editingWork.id, workData);
         message.success('Travail mis à jour avec succès');
       } else {
-        await WorkService.createWork(values);
+        await WorkService.createWork(workData);
         message.success('Travail ajouté avec succès');
       }
       setIsModalVisible(false);
       fetchWorks();
+      
+      setSelectedMaterials([]);
+      setClientMaterials([]);
     } catch (error) {
       message.error('Erreur lors de l\'enregistrement');
     }
@@ -250,7 +303,7 @@ const WorkManagementPage = () => {
           open={isModalVisible}
           onCancel={() => setIsModalVisible(false)}
           footer={null}
-          width={700}
+          width={800}
         >
           <Form
             form={form}
@@ -267,11 +320,78 @@ const WorkManagementPage = () => {
                 placeholder="Rechercher un client..."
                 filterOption={false}
                 onSearch={(value) => debouncedSearch(value, 'client')}
+                onChange={(value) => {
+                  console.log('Client selected:', value);
+                  handleClientChange(value);
+                }}
                 loading={clientSearchLoading}
                 notFoundContent={clientSearchLoading ? <Spin size="small" /> : null}
                 options={clientOptions}
               />
             </Form.Item>
+
+            {clientMaterials.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <Divider orientation="left">Matières Premières Disponibles</Divider>
+                <List
+                  loading={loadingMaterials}
+                  dataSource={clientMaterials}
+                  renderItem={(material) => (
+                    <List.Item>
+                      <Card 
+                        style={{ width: '100%' }} 
+                        size="small"
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <Tag color="blue">{material.type_matiere || material.materialType}</Tag>
+                            <span>{material.thickness}mm × {material.length}mm × {material.width}mm</span>
+                            <div>
+                              <Text type="secondary">Disponible: {material.remainingQuantity || material.quantite}</Text>
+                            </div>
+                          </div>
+                          <div>
+                            <InputNumber 
+                              min={1} 
+                              max={material.remainingQuantity || material.quantite} 
+                              onChange={(value) => handleMaterialSelect(material.id, value)}
+                              addonAfter="pièces"
+                              placeholder="Qté"
+                              style={{ width: 120 }}
+                            />
+                            <Button 
+                              type="link"
+                              onClick={() => handleRemoveMaterial(material.id)}
+                            >
+                              Retirer
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    </List.Item>
+                  )}
+                />
+
+                {selectedMaterials.length > 0 && (
+                  <div style={{ marginTop: 16 }}>
+                    <Title level={5}>Matières sélectionnées</Title>
+                    <List
+                      size="small"
+                      bordered
+                      dataSource={selectedMaterials}
+                      renderItem={(item) => {
+                        const material = clientMaterials.find(m => m.id === item.materialId);
+                        return (
+                          <List.Item>
+                            <Text>{material?.type_matiere || material?.materialType} ({material?.thickness}mm) - {item.quantite} pièce(s)</Text>
+                          </List.Item>
+                        );
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             <Form.Item
               name="produit_id"
@@ -316,7 +436,11 @@ const WorkManagementPage = () => {
 
             <Form.Item>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                <Button onClick={() => setIsModalVisible(false)}>
+                <Button onClick={() => {
+                  setIsModalVisible(false);
+                  setSelectedMaterials([]);
+                  setClientMaterials([]);
+                }}>
                   Annuler
                 </Button>
                 <Button type="primary" htmlType="submit">

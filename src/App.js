@@ -51,7 +51,7 @@ function App() {
                             <Route path="/" element={<Dashboard />} />
                             <Route path="/stock" element={<StockManagement />} />
                             <Route path="/client-materials" element={<ClientMaterialManagement />} />
-                            <Route path="/client-materials/:clientId" element={<ClientRawMaterialsPage />} />
+                            <Route path="/client-materials/:client_id" element={<ClientRawMaterialsPage />} />
                             <Route path="/orders" element={<OrderManagement />} />
                             <Route path="/installments" element={<InstallmentManagement />} />
                             <Route path="/clients" element={<ClientManagementPage />} />

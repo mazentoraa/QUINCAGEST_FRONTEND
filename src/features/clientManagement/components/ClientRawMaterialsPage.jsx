@@ -24,18 +24,18 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 const ClientRawMaterialsPage = () => {
-  const { clientId } = useParams();
+  const { client_id } = useParams();
   const location = useLocation();
-  const clientName = location.state?.clientName || 'Client';
+  const client_name = location.state?.client_name || 'Client';
 
-  const [materials, setMaterials] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingMaterial, setEditingMaterial] = useState(null);
+  const [materials, set_materials] = useState([]);
+  const [loading, set_loading] = useState(false);
+  const [is_modal_visible, set_is_modal_visible] = useState(false);
+  const [editing_material, set_editing_material] = useState(null);
   const [form] = Form.useForm();
 
   // Material types options
-  const materialTypes = [
+  const material_types = [
     { value: "acier", label: "Acier" },
     { value: "acier_inoxydable", label: "Acier inoxydable" },
     { value: "aluminium", label: "Aluminium" },
@@ -44,46 +44,58 @@ const ClientRawMaterialsPage = () => {
     { value: "acier_galvanise", label: "Acier galvanisé" },
     { value: "autre", label: "Autre" },
   ];
+  
+  // Function to get readable material type label
+  const getMaterialTypeLabel = (type) => {
+    const materialType = material_types.find(item => item.value === type);
+    return materialType ? materialType.label : type;
+  };
 
   // Fetch client materials
   useEffect(() => {
-    const fetchMaterials = async () => {
-      setLoading(true);
+    const fetch_materials = async () => {
+      set_loading(true);
       try {
-        const response = await RawMaterialService.getMaterialsByClientId(clientId);
-        setMaterials(response);
-        setLoading(false);
+        const response = await RawMaterialService.get_materials_by_client_id(client_id);
+        // Transform the data to display formatted material types
+        const formattedMaterials = response.map(material => ({
+          ...material,
+          display_type: getMaterialTypeLabel(material.type_matiere)
+        }));
+        set_materials(formattedMaterials);
+        set_loading(false);
       } catch (error) {
         console.error('Error fetching materials:', error);
         notification.error({
           message: 'Erreur',
           description: 'Impossible de récupérer la liste des matières premières.'
         });
-        setLoading(false);
+        set_loading(false);
       }
     };
 
-    if (clientId) {
-      fetchMaterials();
+    if (client_id) {
+      fetch_materials();
     }
-  }, [clientId]);
+  }, [client_id]);
 
   // Table columns
   const columns = [
     {
       title: 'N° Bon de livraison',
-      dataIndex: 'deliveryNote',
-      key: 'deliveryNote',
+      dataIndex: 'delivery_note',
+      key: 'delivery_note',
     },
     {
       title: 'Date de réception',
-      dataIndex: 'receptionDate',
-      key: 'receptionDate',
+      dataIndex: 'reception_date',
+      key: 'reception_date',
     },
     {
       title: 'Type de matériau',
-      dataIndex: 'type_material',
-      key: 'type_material',
+      dataIndex: 'type_matiere',
+      key: 'type_matiere',
+      render: (type) => getMaterialTypeLabel(type),
     },
     {
       title: 'Épaisseur (mm)',
@@ -102,8 +114,8 @@ const ClientRawMaterialsPage = () => {
     },
     {
       title: 'Quantité',
-      dataIndex: 'quantity',
-      key: 'quantity',
+      dataIndex: 'quantite',
+      key: 'quantite',
     },
     {
       title: 'Description',
@@ -116,10 +128,10 @@ const ClientRawMaterialsPage = () => {
       key: 'actions',
       render: (_, record) => (
         <Space size="small">
-          <Button type="link" onClick={() => handleEdit(record)}>Modifier</Button>
+          <Button type="link" onClick={() => handle_edit(record)}>Modifier</Button>
           <Popconfirm
             title="Êtes-vous sûr de vouloir supprimer cette matière première?"
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => handle_delete(record.id)}
             okText="Oui"
             cancelText="Non"
           >
@@ -130,19 +142,19 @@ const ClientRawMaterialsPage = () => {
     },
   ];
 
-  const handleEdit = (material) => {
-    setEditingMaterial(material);
+  const handle_edit = (material) => {
+    set_editing_material(material);
     form.setFieldsValue({
       ...material,
-      receptionDate: moment(material.receptionDate)
+      reception_date: moment(material.reception_date)
     });
-    setIsModalVisible(true);
+    set_is_modal_visible(true);
   };
 
-  const handleDelete = async (id) => {
+  const handle_delete = async (id) => {
     try {
-      await RawMaterialService.deleteMaterial(id);
-      setMaterials(materials.filter(material => material.id !== id));
+      await RawMaterialService.delete_material(id);
+      set_materials(materials.filter(material => material.id !== id));
       notification.success({
         message: 'Succès',
         description: 'Matière première supprimée avec succès.'
@@ -156,17 +168,23 @@ const ClientRawMaterialsPage = () => {
   };
 
   // Handle form submission
-  const handleSubmit = async (values) => {
+  const handle_submit = async (values) => {
     try {
-      let newMaterial;
-      if (editingMaterial) {
+      let new_material;
+      // Convert client_id to integer explicitly
+      const client_id_int = parseInt(client_id, 10);
+      
+      if (editing_material) {
         // Update existing material
-        newMaterial = await RawMaterialService.updateMaterial(editingMaterial.id, {
+        new_material = await RawMaterialService.update_material(editing_material.id, {
           ...values,
-          receptionDate: values.receptionDate.format('YYYY-MM-DD')
+          reception_date: values.reception_date.format('YYYY-MM-DD'),
+          client_id: client_id_int  // Explicitly set client_id as integer
         });
-        setMaterials(materials.map(material => 
-          material.id === editingMaterial.id ? newMaterial : material
+        // Add display_type for the updated material
+        new_material.display_type = getMaterialTypeLabel(new_material.type_matiere);
+        set_materials(materials.map(material => 
+          material.id === editing_material.id ? new_material : material
         ));
         notification.success({
           message: 'Succès',
@@ -174,20 +192,23 @@ const ClientRawMaterialsPage = () => {
         });
       } else {
         // Add new material
-        newMaterial = await RawMaterialService.addMaterialToClient(clientId, {
+        new_material = await RawMaterialService.add_material_to_client(client_id_int, {
           ...values,
-          receptionDate: values.receptionDate.format('YYYY-MM-DD')
+          reception_date: values.reception_date.format('YYYY-MM-DD'),
+          client_id: client_id_int  // Explicitly set client_id as integer
         });
-        setMaterials([...materials, newMaterial]);
+        // Add display_type for the new material
+        new_material.display_type = getMaterialTypeLabel(new_material.type_matiere);
+        set_materials([...materials, new_material]);
         notification.success({
           message: 'Succès',
           description: 'Matière première ajoutée avec succès.'
         });
       }
       
-      setIsModalVisible(false);
+      set_is_modal_visible(false);
       form.resetFields();
-      setEditingMaterial(null);
+      set_editing_material(null);
     } catch (error) {
       console.error('Error saving material:', error);
       notification.error({
@@ -197,10 +218,10 @@ const ClientRawMaterialsPage = () => {
     }
   };
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
+  const handle_cancel = () => {
+    set_is_modal_visible(false);
     form.resetFields();
-    setEditingMaterial(null);
+    set_editing_material(null);
   };
 
   return (
@@ -210,10 +231,10 @@ const ClientRawMaterialsPage = () => {
           <Title level={2}>Matières Premières Client</Title>
           <div className="client-info">
             <Text strong>Nom du client: </Text>
-            <Text>{clientName || 'N/A'}</Text>
+            <Text>{client_name || 'N/A'}</Text>
             <Divider type="vertical" />
             <Text strong>ID Client: </Text>
-            <Text>{clientId || 'N/A'}</Text>
+            <Text>{client_id || 'N/A'}</Text>
           </div>
           <Text type="secondary">
             Gestion des matières premières reçues du client pour la production
@@ -226,7 +247,7 @@ const ClientRawMaterialsPage = () => {
           <Button 
             type="primary" 
             icon={<PlusOutlined />}
-            onClick={() => setIsModalVisible(true)}
+            onClick={() => set_is_modal_visible(true)}
             style={{ marginBottom: 16 }}
           >
             Ajouter une matière première
@@ -244,16 +265,16 @@ const ClientRawMaterialsPage = () => {
 
       {/* Modal for adding or editing material */}
       <Modal
-        title={editingMaterial ? "Modifier une matière première" : "Réception de matière première client"}
-        open={isModalVisible}
-        onCancel={handleCancel}
+        title={editing_material ? "Modifier une matière première" : "Réception de matière première client"}
+        open={is_modal_visible}
+        onCancel={handle_cancel}
         footer={null}
         width={800}
       >
         <Form
           form={form}
           layout="vertical"
-          onFinish={handleSubmit}
+          onFinish={handle_submit}
         >
           <div style={{ marginBottom: 16 }}>
             <Title level={4}>Informations client</Title>
@@ -262,13 +283,13 @@ const ClientRawMaterialsPage = () => {
                 label="Nom du client"
                 style={{ flex: 1 }}
               >
-                <Input value={clientName} disabled />
+                <Input value={client_name} disabled />
               </Form.Item>
               <Form.Item
                 label="ID Client"
                 style={{ flex: 1 }}
               >
-                <Input value={clientId} disabled />
+                <Input value={client_id} disabled />
               </Form.Item>
             </div>
           </div>
@@ -277,7 +298,7 @@ const ClientRawMaterialsPage = () => {
             <Title level={4}>Informations livraison</Title>
             <div style={{ display: 'flex', gap: 16 }}>
               <Form.Item
-                name="deliveryNote"
+                name="delivery_note"
                 label="N° Bon de livraison"
                 rules={[{ required: true, message: 'Veuillez saisir le numéro de bon de livraison' }]}
                 style={{ flex: 1 }}
@@ -285,7 +306,7 @@ const ClientRawMaterialsPage = () => {
                 <Input placeholder="Ex: BL-2023-001" />
               </Form.Item>
               <Form.Item
-                name="receptionDate"
+                name="reception_date"
                 label="Date de réception"
                 rules={[{ required: true, message: 'Veuillez sélectionner une date' }]}
                 style={{ flex: 1 }}
@@ -305,7 +326,7 @@ const ClientRawMaterialsPage = () => {
                 style={{ flex: 1 }}
               >
                 <Select placeholder="Sélectionnez un type">
-                  {materialTypes.map(type => (
+                  {material_types.map(type => (
                     <Option key={type.value} value={type.value}>{type.label}</Option>
                   ))}
                 </Select>
@@ -338,7 +359,7 @@ const ClientRawMaterialsPage = () => {
                 <InputNumber style={{ width: '100%' }} min={0} />
               </Form.Item>
               <Form.Item
-                name="quantity"
+                name="quantite"
                 label="Quantité"
                 rules={[{ required: true, message: 'Veuillez saisir la quantité' }]}
                 style={{ flex: 1 }}
@@ -357,11 +378,11 @@ const ClientRawMaterialsPage = () => {
 
           <Form.Item>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 16 }}>
-              <Button onClick={handleCancel}>
+              <Button onClick={handle_cancel}>
                 Annuler
               </Button>
               <Button type="primary" htmlType="submit">
-                {editingMaterial ? 'Mettre à jour' : 'Enregistrer'}
+                {editing_material ? 'Mettre à jour' : 'Enregistrer'}
               </Button>
             </div>
           </Form.Item>

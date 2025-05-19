@@ -4,29 +4,29 @@ import RawMaterialModel from '../models/RawMaterialModel';
 const API_URL = 'http://localhost:8000/api/matieres';
 
 const RawMaterialService = {
-  getMaterialsByClientId: async (clientId) => {
+  get_materials_by_client_id: async (client_id) => {
     try {
       const response = await axios.get(`${API_URL}/by_client/`, {
-        params: { client_id: clientId }
+        params: { client_id: client_id }
       });
       
       // Handle both array and paginated response formats
-      let materialsData;
+      let materials_data;
       if (response.data && response.data.results !== undefined) {
-        materialsData = response.data.results;
+        materials_data = response.data.results;
       } else {
-        materialsData = response.data || [];
+        materials_data = response.data || [];
       }
       
-      // Convert snake_case API response to camelCase model objects
-      return materialsData.map(material => new RawMaterialModel(material));
+      // Convert snake_case API response to snake_case model objects
+      return materials_data.map(material => new RawMaterialModel(material));
     } catch (error) {
-      console.error(`Error fetching materials for client ${clientId}:`, error);
+      console.error(`Error fetching materials for client ${client_id}:`, error);
       throw error;
     }
   },
 
-  getMaterialById: async (id) => {
+  get_material_by_id: async (id) => {
     try {
       const response = await axios.get(`${API_URL}/${id}/`);
       return new RawMaterialModel(response.data);
@@ -36,19 +36,23 @@ const RawMaterialService = {
     }
   },
 
-  addMaterialToClient: async (clientId, materialData) => {
+  add_material_to_client: async (client_id, material_data) => {
     try {
       // Ensure client ID is set
       const data = {
-        ...materialData,
-        clientId: clientId
+        ...material_data,
+        client_id: client_id,
+        // Make sure quantite is explicitly sent as an integer
+        quantite: material_data.quantite !== undefined ? parseInt(material_data.quantite, 10) : 0
       };
       
-      // Convert camelCase to snake_case for Django backend
       // Only send fields expected by the Django serializer
-      const formattedData = new RawMaterialModel(data).toApiFormat();
+      const formatted_data = new RawMaterialModel(data).to_api_format();
       
-      const response = await axios.post(API_URL + '/', formattedData);
+      // Log the data being sent to API for debugging
+      console.log('Adding material with data:', formatted_data);
+      
+      const response = await axios.post(API_URL + '/', formatted_data);
       return new RawMaterialModel(response.data);
     } catch (error) {
       console.error('Error adding material:', error);
@@ -56,21 +60,37 @@ const RawMaterialService = {
     }
   },
 
-  updateMaterial: async (id, materialData) => {
+  update_material: async (id, material_data) => {
     try {
-      // Convert camelCase to snake_case for Django backend
+      // Ensure client_id is included and converted to integer
+      if (material_data.client_id) {
+        material_data.client_id = parseInt(material_data.client_id, 10);
+      }
+      
+      // Ensure quantite is sent as an integer
+      if (material_data.quantite !== undefined) {
+        material_data.quantite = parseInt(material_data.quantite, 10);
+      }
+      
       // Only send fields expected by the Django serializer
-      const formattedData = new RawMaterialModel(materialData).toApiFormat();
-
-      const response = await axios.put(`${API_URL}/${id}/`, formattedData);
+      const formatted_data = new RawMaterialModel(material_data).to_api_format();
+      
+      // Log the data being sent to API for debugging
+      console.log('Sending to API:', formatted_data);
+      
+      const response = await axios.put(`${API_URL}/${id}/`, formatted_data);
       return new RawMaterialModel(response.data);
     } catch (error) {
       console.error(`Error updating material with id ${id}:`, error);
+      // Log the full error response for debugging
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+      }
       throw error;
     }
   },
 
-  deleteMaterial: async (id) => {
+  delete_material: async (id) => {
     try {
       const response = await axios.delete(`${API_URL}/${id}/`);
       return response.data;

@@ -4,43 +4,43 @@ import { SearchOutlined, EditOutlined, DeleteOutlined, InboxOutlined } from '@an
 import Highlighter from 'react-highlight-words';
 import { useNavigate } from 'react-router-dom';
 
-const ClientTable = ({ clients, onEdit, onDelete, loading }) => {
-  const [searchText, setSearchText] = useState('');
-  const [searchedColumn, setSearchedColumn] = useState('');
+const ClientTable = ({ clients, on_edit, on_delete, loading }) => {
+  const [search_text, set_search_text] = useState('');
+  const [searched_column, set_searched_column] = useState('');
   const navigate = useNavigate();
 
-  const handleSearch = (selectedKeys, confirm, dataIndex) => {
+  const handle_search = (selectedKeys, confirm, dataIndex) => {
     confirm();
-    setSearchText(selectedKeys[0]);
-    setSearchedColumn(dataIndex);
+    set_search_text(selectedKeys[0]);
+    set_searched_column(dataIndex);
   };
 
-  const handleReset = (clearFilters) => {
+  const handle_reset = (clearFilters) => {
     clearFilters();
-    setSearchText('');
+    set_search_text('');
   };
 
-  const getColumnSearchProps = (dataIndex) => ({
+  const get_column_search_props = (dataIndex) => ({
     filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
       <div style={{ padding: 8 }}>
         <Input
           placeholder={`Rechercher ${dataIndex}`}
           value={selectedKeys[0]}
           onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          onPressEnter={() => handle_search(selectedKeys, confirm, dataIndex)}
           style={{ width: 188, marginBottom: 8, display: 'block' }}
         />
         <Space>
           <Button
             type="primary"
-            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            onClick={() => handle_search(selectedKeys, confirm, dataIndex)}
             icon={<SearchOutlined />}
             size="small"
             style={{ width: 90 }}
           >
             Rechercher
           </Button>
-          <Button onClick={() => handleReset(clearFilters)} size="small" style={{ width: 90 }}>
+          <Button onClick={() => handle_reset(clearFilters)} size="small" style={{ width: 90 }}>
             Réinitialiser
           </Button>
         </Space>
@@ -50,10 +50,10 @@ const ClientTable = ({ clients, onEdit, onDelete, loading }) => {
     onFilter: (value, record) =>
       record[dataIndex] ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase()) : '',
     render: (text) =>
-      searchedColumn === dataIndex ? (
+      searched_column === dataIndex ? (
         <Highlighter
           highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
-          searchWords={[searchText]}
+          searchWords={[search_text]}
           autoEscape
           textToHighlight={text ? text.toString() : ''}
         />
@@ -62,24 +62,24 @@ const ClientTable = ({ clients, onEdit, onDelete, loading }) => {
       ),
   });
 
-  const viewClientMaterials = (client) => {
+  const view_client_materials = (client) => {
     navigate(`/client-materials/${client.id}`, { 
-      state: { clientName: client.nomClient, clientId: client.id } 
+      state: { client_name: client.nom_client, client_id: client.id } 
     });
   };
 
   const columns = [
     {
       title: 'Nom du client',
-      dataIndex: 'nomClient',
-      key: 'nomClient',
-      ...getColumnSearchProps('nomClient'),
+      dataIndex: 'nom_client',
+      key: 'nom_client',
+      ...get_column_search_props('nom_client'),
     },
     {
       title: 'Numéro d\'enregistrement fiscal',
-      dataIndex: 'numeroFiscal',
-      key: 'numeroFiscal',
-      ...getColumnSearchProps('numeroFiscal'),
+      dataIndex: 'numero_fiscal',
+      key: 'numero_fiscal',
+      ...get_column_search_props('numero_fiscal'),
     },
     {
       title: 'Adresse',
@@ -104,20 +104,20 @@ const ClientTable = ({ clients, onEdit, onDelete, loading }) => {
           <Button 
             type="primary" 
             icon={<EditOutlined />} 
-            onClick={() => onEdit(record)}
+            onClick={() => on_edit(record)}
           >
             Modifier
           </Button>
           <Button
             type="default"
             icon={<InboxOutlined />}
-            onClick={() => viewClientMaterials(record)}
+            onClick={() => view_client_materials(record)}
           >
             Matières Premières
           </Button>
           <Popconfirm
             title="Êtes-vous sûr de vouloir supprimer ce client?"
-            onConfirm={() => onDelete(record.id)}
+            onConfirm={() => on_delete(record.id)}
             okText="Oui"
             cancelText="Non"
           >

@@ -13,7 +13,7 @@ function ClientMaterialCard({ material }) {
     const { name, value } = e.target;
     setEditedMaterial({ 
       ...editedMaterial, 
-      [name]: ['quantity', 'thickness', 'length', 'width', 'remainingQuantity'].includes(name)
+      [name]: ['quantite', 'thickness', 'length', 'width', 'remainingQuantity'].includes(name)
         ? parseFloat(value) 
         : value 
     });
@@ -56,12 +56,12 @@ function ClientMaterialCard({ material }) {
               </div>
               
               <div className="form-group">
-                <label htmlFor="clientId">ID Client</label>
+                <label htmlFor="client_id">ID Client</label>
                 <input
                   type="text"
-                  id="clientId"
-                  name="clientId"
-                  value={editedMaterial.clientId}
+                  id="client_id"
+                  name="client_id"
+                  value={editedMaterial.client_id}
                   onChange={handleChange}
                   required
                 />
@@ -166,9 +166,9 @@ function ClientMaterialCard({ material }) {
                 <label htmlFor="quantity">Quantité initiale</label>
                 <input
                   type="number"
-                  id="quantity"
-                  name="quantity"
-                  value={editedMaterial.quantity}
+                  id="quantite"
+                  name="quantite"
+                  value={editedMaterial.quantite}
                   onChange={handleChange}
                   min="1"
                   required
@@ -212,7 +212,7 @@ function ClientMaterialCard({ material }) {
          <div className="material-header">
   <div className="client-info">
     <h3 className="client-name">{material.clientName}</h3>
-    <span className="client-id">ID: {material.clientId}</span>
+    <span className="client-id">ID: {material.client_id}</span>
   </div>
   
   <div className="material-actions">
