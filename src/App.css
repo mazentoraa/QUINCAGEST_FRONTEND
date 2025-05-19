@@ -36,3 +36,103 @@
     transform: rotate(360deg);
   }
 }
+
+/* Main application layout styles */
+.app-header {
+  padding: 0;
+  display: flex;
+  align-items: center;
+  background-color: #001529;
+}
+
+.main-content {
+  padding: 24px;
+  background: #f0f2f5;
+  min-height: calc(100vh - 64px);
+  overflow-y: auto;
+}
+
+.app-sider {
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  min-width: 300px !important;
+  width: 300px !important;
+  max-width: 300px !important;
+}
+
+/* Dashboard styles */
+.dashboard-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card-content {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.card-icon {
+  margin-right: 16px;
+  color: #1890ff;
+}
+
+.card-info {
+  flex: 1;
+}
+
+/* Navigation styles */
+.navigation-container {
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+
+.logo {
+  width: 200px;
+  padding: 0 20px;
+}
+
+.nav-menu {
+  flex: 1;
+  background: transparent;
+}
+
+.nav-right {
+  padding-right: 24px;
+}
+
+/* Sidebar styles */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.sidebar-header {
+  padding: 20px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+  background-color: #f5f5f5;
+}
+
+/* Make sidebar menu items larger */
+.sidebar .ant-menu-item {
+  height: 50px;
+  line-height: 50px;
+  font-size: 16px;
+}
+
+.sidebar .ant-menu-submenu-title {
+  height: 50px;
+  line-height: 50px;
+  font-size: 16px;
+}
+
+/* Increase sidebar icons size */
+.sidebar .ant-menu-item .anticon,
+.sidebar .ant-menu-submenu-title .anticon {
+  font-size: 18px;
+  margin-right: 12px;
+}

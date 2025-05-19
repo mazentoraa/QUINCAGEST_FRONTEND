@@ -1,52 +1,49 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { Menu, Button, Typography, Space, Avatar } from 'antd';
+import { HomeOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import './Navigation.css';
+import AuthService from '../services/AuthService';
+
+const { Title } = Typography;
 
 function Navigation() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    AuthService.logout();
+    navigate('/login');
+  };
+
   return (
-    <nav className="navigation">
+    <div className="navigation-container">
       <div className="logo">
-        <h1>MetalGest</h1>
+        <Title level={3} style={{ margin: 0, color: '#fff' }}>MetalGest</Title>
       </div>
-      <ul className="nav-links">
-        <li>
-          <NavLink to="/" className={({ isActive }) => isActive ? "active" : ""}>
-            Tableau de Bord
-          </NavLink>
-        </li>
-        <li>
-          <NavLink to="/stock" className={({ isActive }) => isActive ? "active" : ""}>
-            Gestion des Produits
-          </NavLink>
-        </li>
-        <li>
-          <NavLink to="/client-materials" className={({ isActive }) => isActive ? "active" : ""}>
-            Matières Client
-          </NavLink>
-        </li>
-        <li>
-          <NavLink to="/orders" className={({ isActive }) => isActive ? "active" : ""}>
-            Gestion des Commandes
-          </NavLink>
-        </li>
-        <li>
-          <NavLink to="/manifeste" className={({ isActive }) => isActive ? "active" : ""}>
-            Gestion des Manifestes
-          </NavLink>
-        </li>
-        <li>
-          <NavLink to="/installments" className={({ isActive }) => isActive ? "active" : ""}>
-            Gestion des Traites
-          </NavLink>
-          <li>
-            <NavLink to="/clients" className={({ isActive }) => isActive ? "active" : ""}>
-              <i className="fas fa-users"></i>
-              <span>Clients</span>
-            </NavLink>
-          </li>
-        </li>
-      </ul>
-    </nav>
+      
+      <Menu theme="dark" mode="horizontal" className="nav-menu">
+        <Menu.Item key="home" icon={<HomeOutlined />} onClick={() => navigate('/')}>
+          Tableau de Bord
+        </Menu.Item>
+      </Menu>
+      
+      <div className="nav-right">
+        <Space>
+          <Avatar icon={<UserOutlined />} />
+          <span style={{ color: '#fff' }}>
+            {AuthService.getCurrentUser()?.username || 'Utilisateur'}
+          </span>
+          <Button 
+            type="text" 
+            icon={<LogoutOutlined />} 
+            onClick={handleLogout}
+            style={{ color: '#fff' }}
+          >
+            Déconnexion
+          </Button>
+        </Space>
+      </div>
+    </div>
   );
 }
 
