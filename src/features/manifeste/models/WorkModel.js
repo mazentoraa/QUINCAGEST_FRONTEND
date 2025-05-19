@@ -27,9 +27,13 @@ export default class WorkModel {
     this.date_creation = data.date_creation || '';
     this.derniere_mise_a_jour = data.derniere_mise_a_jour || '';
     
-    // UI-specific fields (populated separately)
-    this.client = data.client || null;
-    this.produit = data.produit || null;
+    // Add fields for client and product names
+    this.client_name = data.client_name || '';
+    this.produit_name = data.produit_name || '';
+
+    // For backward compatibility
+    this.client = data.client || { nom_client: data.client_name };
+    this.produit = data.produit || { nom_produit: data.produit_name };
   }
 
   static createEmpty() {

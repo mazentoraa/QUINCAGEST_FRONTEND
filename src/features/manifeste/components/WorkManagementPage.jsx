@@ -4,7 +4,8 @@ import {
   Form, Input, InputNumber, Select, Space, Popconfirm, Spin,
   Divider
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 import debounce from 'lodash/debounce';
 import WorkService from '../services/WorkService';
 import ClientService from '../services/ClientService';
@@ -147,15 +148,33 @@ const WorkManagementPage = () => {
   const columns = [
     {
       title: 'Client',
-      dataIndex: ['client', 'nom_client'],
+      dataIndex: 'client_name',
       key: 'client',
-      render: (text, record) => record.client?.nom_client || 'N/A',
+      render: (text, record) => (
+        <Space>
+          {record.client_name || record.client?.nom_client || 'N/A'}
+          {record.client_id && (
+            <Link to={`/clients/${record.client_id}`} style={{ color: 'inherit' }}>
+              <ArrowRightOutlined style={{ fontSize: '12px' }} />
+            </Link>
+          )}
+        </Space>
+      ),
     },
     {
       title: 'Produit',
-      dataIndex: ['produit', 'nom_produit'],
+      dataIndex: 'produit_name',
       key: 'produit',
-      render: (text, record) => record.produit?.nom_produit || 'N/A',
+      render: (text, record) => (
+        <Space>
+          {record.produit_name || record.produit?.nom_produit || 'N/A'}
+          {record.produit_id && (
+            <Link to={`/products/${record.produit_id}`} style={{ color: 'inherit' }}>
+              <ArrowRightOutlined style={{ fontSize: '12px' }} />
+            </Link>
+          )}
+        </Space>
+      ),
     },
     {
       title: 'Durée (heures)',
