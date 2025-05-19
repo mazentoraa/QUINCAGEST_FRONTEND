@@ -22,7 +22,14 @@ function Dashboard() {
           <h2>Gestion des Commandes</h2>
           <p>Créez et suivez vos commandes et factures</p>
         </Link>
-        
+
+        <Link to="/manifeste" className="dashboard-card">
+          <div className="card-icon">
+            <i className="fas fa-file-alt"></i>
+          </div>
+          <h2>Gestion des Manifestes</h2>
+          <p>Créez et gérez vos documents de manifeste</p>
+        </Link>
         <Link to="/installments" className="dashboard-card">
           <div className="card-icon">
             <i className="fas fa-money-check"></i>

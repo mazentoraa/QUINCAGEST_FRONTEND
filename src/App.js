@@ -16,6 +16,7 @@ import { AuthProvider } from './features/authentication/context/AuthContext';
 import LoginForm from './features/authentication/components/LoginForm';
 import AuthService from './services/AuthService';
 import './App.css';
+import { ManifestePage, WorkManagementPage } from './features/manifeste/components';
 
 // Simple PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -54,6 +55,8 @@ function App() {
                             <Route path="/orders" element={<OrderManagement />} />
                             <Route path="/installments" element={<InstallmentManagement />} />
                             <Route path="/clients" element={<ClientManagementPage />} />
+                            <Route path="/manifeste" element={<ManifestePage />} />
+                            <Route path="/travaux" element={<WorkManagementPage />} />
                           </Routes>
                         </div>
                       </div>

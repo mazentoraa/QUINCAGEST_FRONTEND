@@ -30,6 +30,11 @@ function Navigation() {
           </NavLink>
         </li>
         <li>
+          <NavLink to="/manifeste" className={({ isActive }) => isActive ? "active" : ""}>
+            Gestion des Manifestes
+          </NavLink>
+        </li>
+        <li>
           <NavLink to="/installments" className={({ isActive }) => isActive ? "active" : ""}>
             Gestion des Traites
           </NavLink>
