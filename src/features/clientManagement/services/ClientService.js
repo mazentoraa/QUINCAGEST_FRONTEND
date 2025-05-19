@@ -35,10 +35,8 @@ const ClientService = {
 
   createClient: async (clientData) => {
     try {
-      // Convert camelCase to snake_case for Django backend
-      const formattedData = new ClientModel(clientData).toApiFormat();
-      
-      const response = await axios.post(API_URL + '/', formattedData);
+      // Use the data directly without any transformation
+      const response = await axios.post(API_URL + '/', clientData);
       return new ClientModel(response.data);
     } catch (error) {
       console.error('Error creating client:', error);
@@ -48,10 +46,8 @@ const ClientService = {
 
   updateClient: async (id, clientData) => {
     try {
-      // Convert camelCase to snake_case for Django backend
-      const formattedData = new ClientModel(clientData).toApiFormat();
-
-      const response = await axios.put(`${API_URL}/${id}/`, formattedData);
+      // Use the data directly without any transformation
+      const response = await axios.put(`${API_URL}/${id}/`, clientData);
       return new ClientModel(response.data);
     } catch (error) {
       console.error(`Error updating client with id ${id}:`, error);

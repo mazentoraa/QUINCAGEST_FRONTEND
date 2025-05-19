@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Table, Input, Button, Space, Popconfirm, Typography, Empty } from 'antd';
-import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { SearchOutlined, EditOutlined, DeleteOutlined, InboxOutlined } from '@ant-design/icons';
 import Highlighter from 'react-highlight-words';
+import { useNavigate } from 'react-router-dom';
 
 const ClientTable = ({ clients, onEdit, onDelete, loading }) => {
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
+  const navigate = useNavigate();
 
   const handleSearch = (selectedKeys, confirm, dataIndex) => {
     confirm();
@@ -60,6 +62,12 @@ const ClientTable = ({ clients, onEdit, onDelete, loading }) => {
       ),
   });
 
+  const viewClientMaterials = (client) => {
+    navigate(`/client-materials/${client.id}`, { 
+      state: { clientName: client.nomClient, clientId: client.id } 
+    });
+  };
+
   const columns = [
     {
       title: 'Nom du client',
@@ -99,6 +107,13 @@ const ClientTable = ({ clients, onEdit, onDelete, loading }) => {
             onClick={() => onEdit(record)}
           >
             Modifier
+          </Button>
+          <Button
+            type="default"
+            icon={<InboxOutlined />}
+            onClick={() => viewClientMaterials(record)}
+          >
+            Matières Premières
           </Button>
           <Popconfirm
             title="Êtes-vous sûr de vouloir supprimer ce client?"

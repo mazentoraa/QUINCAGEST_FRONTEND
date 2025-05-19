@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import StockManagement from './features/stock/components/StockManagement';
 import ClientMaterialManagement from './features/clientMaterials/components/ClientMaterialManagement';
 import ClientManagementPage from './features/clientManagement';
+import ClientRawMaterialsPage from './features/clientManagement/components/ClientRawMaterialsPage';
 import OrderManagement from './components/Orders/OrderManagement';
 import InstallmentManagement from './features/installments/components/InstallmentManagement';
 import Navigation from './components/Navigation';
@@ -49,6 +50,7 @@ function App() {
                             <Route path="/" element={<Dashboard />} />
                             <Route path="/stock" element={<StockManagement />} />
                             <Route path="/client-materials" element={<ClientMaterialManagement />} />
+                            <Route path="/client-materials/:clientId" element={<ClientRawMaterialsPage />} />
                             <Route path="/orders" element={<OrderManagement />} />
                             <Route path="/installments" element={<InstallmentManagement />} />
                             <Route path="/clients" element={<ClientManagementPage />} />

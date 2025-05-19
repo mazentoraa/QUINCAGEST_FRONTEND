@@ -43,6 +43,29 @@ const ClientForm = ({ initialValues, onFinish, onCancel, loading, isEdit }) => {
     return Promise.resolve();
   };
 
+  const handleFinish = (values) => {
+    // Convert the form values directly to the format expected by the API
+    const clientData = {
+      nom_client: values.nomClient,
+      numero_fiscal: values.numeroFiscal,
+      adresse: values.adresse,
+      telephone: values.telephone,
+      nom_responsable: values.nomResponsable,
+      email: values.email,
+      email_responsable: values.emailResponsable,
+      telephone_responsable: values.telephoneResponsable,
+      autre_numero: values.autreNumero,
+      informations_complementaires: values.informationsComplementaires
+    };
+    
+    // If we're editing, include the ID
+    if (initialValues && initialValues.id) {
+      clientData.id = initialValues.id;
+    }
+    
+    onFinish(clientData);
+  };
+
   return (
     <Card>
       <Typography.Title level={4}>
@@ -51,7 +74,7 @@ const ClientForm = ({ initialValues, onFinish, onCancel, loading, isEdit }) => {
       <Form
         form={form}
         layout="vertical"
-        onFinish={onFinish}
+        onFinish={handleFinish}
       >
         <Form.Item
           name="nomClient"

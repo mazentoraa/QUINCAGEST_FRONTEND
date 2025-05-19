@@ -20,16 +20,17 @@
 export default class ClientModel {
   constructor(data = {}) {
     this.id = data.id || '';
-    this.nomClient = data.nom_client || '';
-    this.numeroFiscal = data.numero_fiscal || '';
+    // Handle both camelCase and snake_case formats
+    this.nomClient = data.nomClient || data.nom_client || '';
+    this.numeroFiscal = data.numeroFiscal || data.numero_fiscal || '';
     this.adresse = data.adresse || '';
     this.telephone = data.telephone || '';
-    this.nomResponsable = data.nom_responsable || '';
+    this.nomResponsable = data.nomResponsable || data.nom_responsable || '';
     this.email = data.email || '';
-    this.emailResponsable = data.email_responsable || '';
-    this.telephoneResponsable = data.telephone_responsable || '';
-    this.autreNumero = data.autre_numero || '';
-    this.informationsComplementaires = data.informations_complementaires || '';
+    this.emailResponsable = data.emailResponsable || data.email_responsable || '';
+    this.telephoneResponsable = data.telephoneResponsable || data.telephone_responsable || '';
+    this.autreNumero = data.autreNumero || data.autre_numero || '';
+    this.informationsComplementaires = data.informationsComplementaires || data.informations_complementaires || '';
     this.dateCreation = data.date_creation ? new Date(data.date_creation) : new Date();
     this.derniereMiseAJour = data.derniere_mise_a_jour ? new Date(data.derniere_mise_a_jour) : new Date();
   }
@@ -38,7 +39,7 @@ export default class ClientModel {
     return new ClientModel();
   }
 
-  // Convert camelCase model to snake_case for API
+  // Convert model to snake_case for API
   toApiFormat() {
     return {
       nom_client: this.nomClient,
