@@ -12,7 +12,7 @@ import ClientService from '../services/ClientService';
 import ProductService from '../services/ProductService';
 import WorkModel from '../models/WorkModel';
 // Import the RawMaterialService
-import RawMaterialService from '../../clientManagement/services/RawMaterialService';
+import RawMaterialService from '../services/RawMaterialService';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -126,6 +126,17 @@ const WorkManagementPage = () => {
     
     // Fetch materials for this client
     handleClientChange(record.client_id);
+    
+    // Pre-populate selected materials if record has matiere_usages
+    if (record.matiere_usages && record.matiere_usages.length > 0) {
+      const initialSelectedMaterials = record.matiere_usages.map(usage => ({
+        materialId: usage.matiere_id,
+        quantite: usage.quantite_utilisee
+      }));
+      setSelectedMaterials(initialSelectedMaterials);
+    } else {
+      setSelectedMaterials([]);
+    }
     
     setIsModalVisible(true);
   };
@@ -244,6 +255,17 @@ const WorkManagementPage = () => {
       dataIndex: 'description',
       key: 'description',
       ellipsis: true,
+    },
+    {
+      title: 'Matériaux utilisés',
+      key: 'materials',
+      render: (_, record) => (
+        record.matiere_usages && record.matiere_usages.length > 0 ? (
+          <span>{record.matiere_usages.length} matière(s) utilisée(s)</span>
+        ) : (
+          <span>Aucun</span>
+        )
+      )
     },
     {
       title: 'Date de création',

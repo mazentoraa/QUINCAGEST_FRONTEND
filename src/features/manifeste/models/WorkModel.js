@@ -10,6 +10,7 @@
  * @property {string} description - Additional description or observations
  * @property {string} date_creation - Date when the work was created
  * @property {string} derniere_mise_a_jour - Date when the work was last updated
+ * @property {Array} matiere_usages - Materials used in this work
  * 
  * // Additional fields for UI purposes
  * @property {Object} client - Client object (populated on frontend)
@@ -26,6 +27,7 @@ export default class WorkModel {
     this.description = data.description || '';
     this.date_creation = data.date_creation || '';
     this.derniere_mise_a_jour = data.derniere_mise_a_jour || '';
+    this.matiere_usages = data.matiere_usages || [];
     
     // Add fields for client and product names
     this.client_name = data.client_name || '';
@@ -40,14 +42,15 @@ export default class WorkModel {
     return new WorkModel();
   }
 
-  // Convert model to API format (not needed here as we're using snake_case already)
+  // Convert model to API format with material usage data
   toApiFormat() {
     return {
       client_id: this.client_id,
       produit_id: this.produit_id,
       duree: this.duree,
       quantite: this.quantite,
-      description: this.description
+      description: this.description,
+      matiere_usages: this.matiere_usages
     };
   }
 }

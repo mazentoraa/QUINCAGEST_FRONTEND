@@ -1,5 +1,5 @@
 import axios from 'axios';
-import RawMaterialModel from '../models/RawMaterialModel';
+import RawMaterialModel from '../../clientManagement/models/RawMaterialModel';
 
 const API_URL = 'http://localhost:8000/api/matieres';
 
@@ -76,6 +76,27 @@ const RawMaterialService = {
       return response.data;
     } catch (error) {
       console.error(`Error deleting material with id ${id}:`, error);
+      throw error;
+    }
+  },
+
+  get_materials_by_client_id: async (clientId) => {
+    try {
+      const response = await axios.get(`${API_URL}/by_client/`, {
+        params: { client_id: clientId }
+      });
+      
+      // Handle both array and paginated response formats
+      let materialsData;
+      if (response.data && response.data.results !== undefined) {
+        materialsData = response.data.results;
+      } else {
+        materialsData = response.data || [];
+      }
+      
+      return materialsData;
+    } catch (error) {
+      console.error(`Error fetching materials for client ${clientId}:`, error);
       throw error;
     }
   }

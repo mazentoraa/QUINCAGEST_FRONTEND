@@ -6,6 +6,7 @@ import WorkModel from './models/WorkModel';
 import RawMaterialService from './services/RawMaterialService';
 import RawMaterialModel from './models/RawMaterialModel';
 import ProductService from './services/ProductService';
+import ProductModel from './models/ProductModel';
 
 export {
   ClientService,
@@ -15,5 +16,6 @@ export {
   WorkModel,
   RawMaterialService,
   RawMaterialModel,
-  ProductService
+  ProductService,
+  ProductModel
 };
