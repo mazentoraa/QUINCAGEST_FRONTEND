@@ -36,16 +36,26 @@ const WorkManagementPage = () => {
   const [clientMaterials, setClientMaterials] = useState([]);
   const [selectedMaterials, setSelectedMaterials] = useState([]);
   const [loadingMaterials, setLoadingMaterials] = useState(false);
+  
+  // Add new state for client filter
+  const [selectedClientFilter, setSelectedClientFilter] = useState(null);
 
   useEffect(() => {
     fetchWorks();
     fetchInitialOptions();
-  }, []);
+  }, [selectedClientFilter]); // Re-fetch works when client filter changes
 
   const fetchWorks = async () => {
     setLoading(true);
     try {
-      const data = await WorkService.getAllWorks();
+      let data;
+      if (selectedClientFilter) {
+        // Fetch works for specific client
+        data = await WorkService.getWorksByClientId(selectedClientFilter);
+      } else {
+        // Fetch all works
+        data = await WorkService.getAllWorks();
+      }
       setWorks(data);
     } catch (error) {
       message.error('Erreur lors du chargement des travaux');
@@ -312,6 +322,39 @@ const WorkManagementPage = () => {
           </Button>
         </div>
         
+        <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
+          <Text strong style={{ marginRight: 12 }}>Filtrer par client:</Text>
+          <Select
+            style={{ width: 300 }}
+            placeholder="Sélectionnez un client ou 'Tous'"
+            onChange={(value) => setSelectedClientFilter(value)}
+            value={selectedClientFilter}
+            allowClear
+            options={[
+              { label: "Tous les clients", value: null },
+              ...clientOptions
+            ]}
+            loading={clientSearchLoading}
+          />
+          {selectedClientFilter && (
+            <Button 
+              type="link" 
+              onClick={() => setSelectedClientFilter(null)}
+              style={{ marginLeft: 8 }}
+            >
+              Réinitialiser le filtre
+            </Button>
+          )}
+        </div>
+        
+        {selectedClientFilter && (
+          <div style={{ marginBottom: 16 }}>
+            <Tag color="blue">
+              {clientOptions.find(c => c.value === selectedClientFilter)?.label || 'Client sélectionné'}
+            </Tag>
+          </div>
+        )}
+        
         <Table
           loading={loading}
           columns={columns}
@@ -367,15 +410,19 @@ const WorkManagementPage = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
                             <Tag color="blue">{material.type_matiere || material.materialType}</Tag>
-                            <span>{material.thickness}mm × {material.length}mm × {material.width}mm</span>
+                              <span>
+                                {material?.thickness != null ? `${material.thickness}mm` : '-'} × 
+                                {material?.length != null ? `${material.length}mm` : '-'} × 
+                                {material?.width != null ? `${material.width}mm` : '-'}
+                              </span>
                             <div>
-                              <Text type="secondary">Disponible: {material.remainingQuantity || material.quantite}</Text>
+                              <Text type="secondary">Disponible: {material.remaining_quantity}</Text>
                             </div>
                           </div>
                           <div>
                             <InputNumber 
                               min={1} 
-                              max={material.remainingQuantity || material.quantite} 
+                              max={material.remaining_quantity} 
                               onChange={(value) => handleMaterialSelect(material.id, value)}
                               addonAfter="pièces"
                               placeholder="Qté"

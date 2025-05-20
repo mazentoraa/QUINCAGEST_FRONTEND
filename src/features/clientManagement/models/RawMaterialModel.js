@@ -17,6 +17,7 @@
  * @property {number} length - Material length in mm (client-side only)
  * @property {number} width - Material width in mm (client-side only)
  * @property {number} quantite - Number of items (client-side only)
+ * @property {string} remaining_quantity - Supplier information (client-side only)
  */
 
 export default class RawMaterialModel {
@@ -38,6 +39,7 @@ export default class RawMaterialModel {
     this.length = data.length || 0;
     this.width = data.width || 0;
     this.quantite = data.quantite !== undefined ? parseInt(data.quantite, 10) : 0;
+    this.remaining_quantity = data.remaining_quantity !== undefined ? parseInt(data.remaining_quantity, 10) : 0;
   }
 
   static create_empty() {
@@ -58,7 +60,8 @@ export default class RawMaterialModel {
       thickness: this.thickness,
       length: this.length,
       width: this.width,
-      quantite: parseInt(this.quantite, 10) // Ensure quantite is sent as an integer
+      quantite: parseInt(this.quantite, 10), // Ensure quantite is sent as an integer
+      remaining_quantity: parseInt(this.remaining_quantity, 10), // Ensure remaining_quantity is sent as an integer
       // Note: date_creation and derniere_mise_a_jour are read-only fields
     };
   }

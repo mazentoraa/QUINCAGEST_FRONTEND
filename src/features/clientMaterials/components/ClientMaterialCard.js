@@ -246,7 +246,7 @@ function ClientMaterialCard({ material }) {
               </div>
               
               <div className="info-item">
-                <span className="info-label">Bon de livraison:</span>
+                <span className="info-label">Bon de livraisondddd:</span>
                 <span className="info-value">{material.deliveryNote}</span>
               </div>
               
