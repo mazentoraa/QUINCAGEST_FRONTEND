@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { 
   Layout, Typography, Button, message, Table, Modal, 
   Form, Input, InputNumber, Select, Space, Popconfirm, Spin,
-  Divider, Card, List, Tag
+  Divider, Card, List, Tag, Badge
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { 
+  PlusOutlined, EditOutlined, DeleteOutlined, 
+  ArrowRightOutlined, CheckOutlined 
+} from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import debounce from 'lodash/debounce';
 import WorkService from '../services/WorkService';
@@ -39,6 +42,10 @@ const WorkManagementPage = () => {
   
   // Add new state for client filter
   const [selectedClientFilter, setSelectedClientFilter] = useState(null);
+
+  // Add state for selected rows
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [selectedRowsData, setSelectedRowsData] = useState([]);
 
   useEffect(() => {
     fetchWorks();
@@ -219,6 +226,259 @@ const WorkManagementPage = () => {
     }
   };
 
+  // Improved function to handle selected works with their data
+  const handleProcessSelectedWorks = async () => {
+    if (selectedRowsData.length === 0) {
+      message.warning('Veuillez sélectionner au moins un travail');
+      return;
+    }
+    
+    // Show loading state
+    message.loading({ content: 'Récupération des détails...', key: 'materialsLoading' });
+    
+    try {
+      // Process selected rows to include full material information
+      const enrichedWorksData = await Promise.all(selectedRowsData.map(async (work) => {
+        // Clone the work to avoid modifying the original
+        const enrichedWork = { ...work };
+        
+        // Fetch client details if we only have ID
+        if (work.client_id) {
+          try {
+            const clientData = await ClientService.getClientById(work.client_id);
+            // Add the full client object to enrichedWork
+            
+            // Also add client fields directly to the work object for easier access
+            enrichedWork.clientDetails = {
+              nom_cf: clientData.nom_client,
+              adresse: clientData.adresse,
+              matricule_fiscale: clientData.numero_fiscal,
+              tel: clientData.telephone,
+              // Add any other client fields you need
+              email: clientData.email,
+              nom_responsable: clientData.nom_responsable,
+              email_responsable: clientData.email_responsable,
+              telephone_responsable: clientData.telephone_responsable,
+              autre_numero: clientData.autre_numero
+            };
+          } catch (error) {
+            console.error(`Error fetching client ${work.client_id}:`, error);
+          }
+        } else if (work.client) {
+          // If client data is already present, still format it consistently
+          enrichedWork.clientDetails = {
+            nom_cf: work.client.nom_client,
+            adresse: work.client.adresse,
+            matricule_fiscale: work.client.numero_fiscal,
+            tel: work.client.telephone,
+            // Add any other client fields you need
+            email: work.client.email,
+            nom_responsable: work.client.nom_responsable,
+            email_responsable: work.client.email_responsable,
+            telephone_responsable: work.client.telephone_responsable,
+            autre_numero: work.client.autre_numero
+          };
+        }
+        
+        // If work has material usages, fetch and add the material details
+        if (work.matiere_usages && work.matiere_usages.length > 0) {
+          // Fetch detailed material info for each matiere_id
+          const materialsWithDetails = await Promise.all(
+            work.matiere_usages.map(async (usage) => {
+              try {
+                // Fetch material details by ID
+                const materialDetail = await RawMaterialService.getMaterialById(usage.matiere_id);
+                
+                // Combine the usage data with the material details
+                return {
+                  ...usage,
+                  ...materialDetail, // This adds all properties from materialDetail
+                  // Ensure we have the essential fields with fallbacks
+                  type_matiere: materialDetail.type_matiere || usage.type_matiere || 'Type inconnu',
+                  nom_matiere: materialDetail.nom_matiere || usage.nom_matiere || `Matière #${usage.matiere_id}`,
+                  thickness: materialDetail.thickness,
+                  length: materialDetail.length,
+                  width: materialDetail.width
+                };
+              } catch (error) {
+                console.error(`Error fetching material ${usage.matiere_id}:`, error);
+                return {
+                  ...usage,
+                  type_matiere: usage.type_matiere || 'Type inconnu',
+                  nom_matiere: usage.nom_matiere || `Matière #${usage.matiere_id}`
+                };
+              }
+            })
+          );
+          
+          enrichedWork.matiere_usages = materialsWithDetails;
+        }
+        
+        return enrichedWork;
+      }));
+      
+      console.log('Enriched works data with client details:', enrichedWorksData);
+      
+      // This is where you could call a function to process the enriched data
+      // For example, export to PDF, send to another service, etc.
+      // processEnrichedWorksData(enrichedWorksData);
+      
+      // Hide loading
+      message.success({ content: 'Détails récupérés', key: 'materialsLoading', duration: 1 });
+      
+      // Show the modal with detailed information
+      Modal.info({
+        title: 'Travaux sélectionnés',
+        width: 700,
+        content: (
+          <div>
+            <p>{enrichedWorksData.length} travaux sélectionnés</p>
+            <List
+              size="small"
+              dataSource={enrichedWorksData}
+              renderItem={(item) => (
+                <List.Item>
+                  <div style={{ width: '100%' }}>
+                    {/* Client Information Block */}
+                    <Card
+                      size="small"
+                      title="Information Client"
+                      style={{ marginBottom: 16 }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div>
+                          <strong>Nom C/F : </strong>
+                          {item.clientDetails?.nom_cf || item.client?.nom_client || item.client_name || 'N/A'}
+                        </div>
+                        <div>
+                          <strong>Adresse : </strong>
+                          {item.clientDetails?.adresse || item.client?.adresse || 'N/A'}
+                        </div>
+                        <div>
+                          <strong>MatriculeFiscale : </strong>
+                          {item.clientDetails?.matricule_fiscale || item.client?.numero_fiscal || 'N/A'}
+                        </div>
+                        <div>
+                          <strong>Tel : </strong>
+                          {item.clientDetails?.tel || item.client?.telephone || 'N/A'}
+                        </div>
+                      </div>
+                    </Card>
+                    
+                    {/* Work Information */}
+                    <div>
+                      <strong>Produit:</strong> {item.produit_name}
+                    </div>
+                    
+                    {/* Materials List */}
+                    {item.matiere_usages && item.matiere_usages.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <strong>Matériaux utilisés:</strong>
+                        <List
+                          size="small"
+                          dataSource={item.matiere_usages}
+                          renderItem={(mat) => (
+                            <List.Item>
+                              <div style={{ width: '100%' }}>
+                                <Space>
+                                  <Tag color="blue">{mat.type_matiere}</Tag>
+                                  <span>{mat.nom_matiere}</span>
+                                </Space>
+                                <div>
+                                  <Text type="secondary">
+                                    Dimensions: {mat.thickness ? `${mat.thickness}mm` : '-'} × 
+                                    {mat.length ? `${mat.length}mm` : '-'} × 
+                                    {mat.width ? `${mat.width}mm` : '-'}
+                                  </Text>
+                                </div>
+                                <div>
+                                  <Text strong>Quantité utilisée: {mat.quantite_utilisee}</Text>
+                                </div>
+                              </div>
+                            </List.Item>
+                          )}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </List.Item>
+              )}
+            />
+          </div>
+        ),
+        onOk() {
+          // Provide access to the enriched data for downstream processing
+          window.lastProcessedWorks = enrichedWorksData;
+          console.log('Enriched data is available as window.lastProcessedWorks');
+          
+          // You could call a function here to further process the data
+          // processSelectedWorksData(enrichedWorksData);
+        },
+      });
+      
+    } catch (error) {
+      console.error('Error processing selected works:', error);
+      message.error({ content: 'Erreur lors du traitement des sélections', key: 'materialsLoading' });
+    }
+  };
+  
+  // When fetching works, we should also get material details
+  // Updated function to fetch complete material details for a work
+  const fetchWorkWithMaterialDetails = async (workId) => {
+    try {
+      // Get the basic work data
+      const workData = await WorkService.getWorkById(workId);
+      
+      if (!workData) return null;
+      
+      // If the work has material usages, fetch material details
+      if (workData.matiere_usages && workData.matiere_usages.length > 0) {
+        const enrichedMaterialUsages = await Promise.all(
+          workData.matiere_usages.map(async (usage) => {
+            try {
+              // Get material details
+              const materialDetail = await RawMaterialService.getMaterialById(usage.matiere_id);
+              return { ...usage, ...materialDetail };
+            } catch (error) {
+              return usage; // Return original usage if fetching details fails
+            }
+          })
+        );
+        
+        workData.matiere_usages = enrichedMaterialUsages;
+      }
+      
+      return workData;
+    } catch (error) {
+      console.error('Error fetching work details:', error);
+      return null;
+    }
+  };
+
+  // Expanded row selection configuration to potentially fetch material details
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: async (keys, selectedRows) => {
+      setSelectedRowKeys(keys);
+      
+      // If you need to fetch additional material details when selecting rows:
+      /*
+      const enrichedRows = await Promise.all(selectedRows.map(async (row) => {
+        if (row.matiere_usages && row.matiere_usages.some(m => !m.material_name)) {
+          // If any material is missing details, fetch them
+          const workWithDetails = await fetchWorkWithMaterialDetails(row.id);
+          return workWithDetails || row;
+        }
+        return row;
+      }));
+      setSelectedRowsData(enrichedRows);
+      */
+      
+      // Otherwise just use the rows as they are
+      setSelectedRowsData(selectedRows);
+    },
+  };
+
   const columns = [
     {
       title: 'Client',
@@ -313,13 +573,24 @@ const WorkManagementPage = () => {
       <div style={{ background: '#fff', padding: '24px', borderRadius: '2px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <Title level={2}>Gestion des Travaux</Title>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
-            onClick={handleAdd}
-          >
-            Ajouter un travail
-          </Button>
+          <Space>
+            {selectedRowKeys.length > 0 && (
+              <Button
+                type="primary"
+                icon={<CheckOutlined />}
+                onClick={handleProcessSelectedWorks}
+              >
+                Traiter {selectedRowKeys.length} travail(s) sélectionné(s)
+              </Button>
+            )}
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />} 
+              onClick={handleAdd}
+            >
+              Ajouter un travail
+            </Button>
+          </Space>
         </div>
         
         <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
@@ -355,7 +626,26 @@ const WorkManagementPage = () => {
           </div>
         )}
         
+        {selectedRowKeys.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <Badge count={selectedRowKeys.length} style={{ backgroundColor: '#108ee9' }}>
+              <Tag color="processing">Travaux sélectionnés</Tag>
+            </Badge>
+            <Button 
+              size="small" 
+              type="link" 
+              onClick={() => {
+                setSelectedRowKeys([]);
+                setSelectedRowsData([]);
+              }}
+            >
+              Effacer la sélection
+            </Button>
+          </div>
+        )}
+        
         <Table
+          rowSelection={rowSelection}
           loading={loading}
           columns={columns}
           dataSource={works}
