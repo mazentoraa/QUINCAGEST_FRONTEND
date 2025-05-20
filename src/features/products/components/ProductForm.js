@@ -173,13 +173,13 @@ const ProductForm = ({ onSuccess, onCancel, isModal = false }) => {
         
         <Form.Item
           name="price"
-          label="Prix (€)"
+          label="Prix (DT)"
         >
           <InputNumber 
             min={0} 
             step={0.01} 
-            formatter={value => `${value} €`}
-            parser={value => value.replace(' €', '')}
+            formatter={value => `${value} DT`}
+            parser={value => value.replace(' DT', '')}
             style={{ width: 200 }}
           />
         </Form.Item>

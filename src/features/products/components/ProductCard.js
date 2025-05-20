@@ -129,16 +129,16 @@ const ProductCard = ({ product }) => {
 
   // Helper function to safely format price
   const formatPrice = (price) => {
-    if (price === null || price === undefined) return "0.00 €";
+    if (price === null || price === undefined) return "0.00 DT";
     
     // Convert to number if it's a string
     const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
     
     // Check if it's a valid number
-    if (isNaN(numericPrice)) return "0.00 €";
+    if (isNaN(numericPrice)) return "0.00 DT";
     
     // Format the price
-    return numericPrice.toFixed(2) + " €";
+    return numericPrice.toFixed(2) + " DT";
   };
 
   // Material type color mapping
@@ -223,7 +223,7 @@ const ProductCard = ({ product }) => {
 
       <Form.Item
         name="price"
-        label="Prix (€)"
+        label="Prix (DT)"
       >
         <InputNumber min={0} step={0.01} />
       </Form.Item>

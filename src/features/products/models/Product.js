@@ -78,11 +78,11 @@ class Product {
     try {
       // Safely handle price formatting
       return typeof this.prix === 'number' ? 
-        this.prix.toFixed(2) + ' €' : 
-        parseFloat(this.prix || 0).toFixed(2) + ' €';
+        this.prix.toFixed(2) + ' DT' : 
+        parseFloat(this.prix || 0).toFixed(2) + ' DT';
     } catch (e) {
       console.error('Error formatting price:', e);
-      return '0.00 €';
+      return '0.00 DT';
     }
   }
 }

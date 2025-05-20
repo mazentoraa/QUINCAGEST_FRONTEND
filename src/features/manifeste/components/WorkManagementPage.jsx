@@ -562,24 +562,32 @@ const WorkManagementPage = () => {
       
       // Add each work item to the table
       billableData.forEach((item) => {
-        const workTotal = item.billable.prix_unitaire * item.billable.quantite;
-        totalHT += workTotal;
+        // Product itself is not directly billed, only its materials
+        // const workTotal = item.billable.prix_unitaire * item.billable.quantite; 
+        // totalHT += workTotal; // Product cost is not added to totalHT
         
-        tableRows.push([
-          item.produit_name + (item.description ? ` - ${item.description}` : ''),
-          item.billable.quantite,
-          item.billable.prix_unitaire.toFixed(3),
-          workTotal.toFixed(3)
-        ]);
+        // tableRows.push([
+        //   item.produit_name + (item.description ? ` - ${item.description}` : ''),
+        //   item.billable.quantite,
+        //   item.billable.prix_unitaire.toFixed(3),
+        //   workTotal.toFixed(3)
+        // ]);
         
         // If the item has materials, add them to the table
         if (item.matiere_usages && item.matiere_usages.length > 0) {
+          // Add a header for the work item if multiple works are billed, or just list materials
+          // For simplicity, if there's a product name, we can use it as a section header implicitly
+          // or add a specific row if needed. Here, we just list materials.
+          // If you want to show which product these materials belong to, you might add a non-financial row:
+          // tableRows.push([{content: `Matériaux pour: ${item.produit_name}`, colSpan: 4, styles: { fontStyle: 'italic', textColor: [100,100,100]}}]);
+
+
           item.matiere_usages.forEach(mat => {
             const matTotal = mat.prix_unitaire * mat.quantite_utilisee;
-            totalHT += matTotal;
+            totalHT += matTotal; // Only material costs contribute to totalHT
             
             tableRows.push([
-              `-- ${mat.nom_matiere} (${mat.type_matiere}) - ${mat.thickness || ''}×${mat.length || ''}×${mat.width || ''} mm`,
+              `Matériau: ${mat.nom_matiere} (${mat.type_matiere}) - ${mat.thickness || ''}×${mat.length || ''}×${mat.width || ''} mm (Pour ${item.produit_name})`,
               mat.quantite_utilisee,
               mat.prix_unitaire.toFixed(3),
               matTotal.toFixed(3)
@@ -1054,10 +1062,12 @@ const WorkManagementPage = () => {
               renderItem={(item, index) => (
                 <List.Item>
                   <Card 
-                    title={`Travail ${index + 1}: ${item.produit_name || 'Produit'}`} 
+                    title={`Travail ${index + 1}: ${item.produit_name || 'Produit'} - Matériaux Uniquement`} 
                     style={{ width: '100%' }}
                   >
                     <Form layout="vertical">
+                      {/* Row for product details is removed as product itself is not billed */}
+                      {/*
                       <Row gutter={16}>
                         <Col span={8}>
                           <Form.Item label="Description">
@@ -1077,17 +1087,8 @@ const WorkManagementPage = () => {
                               style={{ width: '100%' }}
                               min={1}
                               precision={0}
-                              defaultValue={item.billable.quantite}
-                              onChange={(value) => {
-                                if (value === null || isNaN(value)) return;
-                                
-                                const newData = [...billableData];
-                                newData[index].billable.quantite = value;
-                                // Recalculate total
-                                newData[index].billable.total_ht = 
-                                  value * newData[index].billable.prix_unitaire;
-                                setBillableData(newData);
-                              }}
+                              defaultValue={item.billable.quantite} // This quantity is for the product
+                              // ... onChange logic for product quantity
                             />
                           </Form.Item>
                         </Col>
@@ -1097,17 +1098,8 @@ const WorkManagementPage = () => {
                               style={{ width: '100%' }}
                               min={0}
                               precision={3}
-                              defaultValue={item.billable.prix_unitaire}
-                              onChange={(value) => {
-                                if (value === null || isNaN(value)) return;
-                                
-                                const newData = [...billableData];
-                                newData[index].billable.prix_unitaire = value;
-                                // Recalculate total
-                                newData[index].billable.total_ht = 
-                                  value * newData[index].billable.quantite;
-                                setBillableData(newData);
-                              }}
+                              defaultValue={item.billable.prix_unitaire} // This price is for the product
+                              // ... onChange logic for product price
                             />
                           </Form.Item>
                         </Col>
@@ -1121,6 +1113,7 @@ const WorkManagementPage = () => {
                           </Form.Item>
                         </Col>
                       </Row>
+                      */}
                       
                       {/* Materials section if available */}
                       {item.matiere_usages && item.matiere_usages.length > 0 && (
@@ -1170,11 +1163,25 @@ const WorkManagementPage = () => {
                                     precision={3}
                                     value={record.prix_unitaire}
                                     onChange={(value) => {
-                                      if (value === null || isNaN(value)) return;
+                                      // Ensure value is a number, default to 0 if invalid
+                                      const newPrice = (value === null || isNaN(value)) ? 0 : value;
                                       
-                                      const newData = [...billableData];
-                                      newData[index].matiere_usages[materialIndex].prix_unitaire = value;
-                                      setBillableData(newData);
+                                      setBillableData(prevBillableData => {
+                                        return prevBillableData.map((item, i) => {
+                                          if (i === index) { // `index` is from the outer List's renderItem
+                                            const updatedMatiereUsages = item.matiere_usages.map((mat, mi) => {
+                                              if (mi === materialIndex) { // `materialIndex` is from the column's render
+                                                return { ...mat, prix_unitaire: newPrice };
+                                              }
+                                              return mat;
+                                            });
+                                            // Recalculate item's total_ht if necessary, though it's mostly for display here
+                                            // and final totals are calculated in the summary.
+                                            return { ...item, matiere_usages: updatedMatiereUsages };
+                                          }
+                                          return item;
+                                        });
+                                      });
                                     }}
                                   />
                                 )
@@ -1206,54 +1213,44 @@ const WorkManagementPage = () => {
                     <p>
                       <strong>Total HT:</strong> {
                         billableData.reduce((sum, item) => {
-                          // Add main item total
-                          let total = sum + (item.billable.prix_unitaire * item.billable.quantite || 0);
-                          
-                          // Add materials totals if any
+                          // Product's direct cost (item.billable.prix_unitaire * item.billable.quantite) is not added.
+                          // It's assumed item.billable.prix_unitaire is 0 for the product itself.
+                          let materialTotalForItem = 0;
                           if (item.matiere_usages && item.matiere_usages.length > 0) {
-                            total += item.matiere_usages.reduce(
+                            materialTotalForItem = item.matiere_usages.reduce(
                               (materialSum, mat) => materialSum + (mat.prix_unitaire * mat.quantite_utilisee || 0),
                               0
                             );
                           }
-                          
-                          return total;
+                          return sum + materialTotalForItem;
                         }, 0).toFixed(3)
                       } DT
                     </p>
                     <p>
                       <strong>TVA ({taxRate}%):</strong> {
                         (billableData.reduce((sum, item) => {
-                          // Add main item total
-                          let total = sum + (item.billable.prix_unitaire * item.billable.quantite || 0);
-                          
-                          // Add materials totals if any
+                          let materialTotalForItem = 0;
                           if (item.matiere_usages && item.matiere_usages.length > 0) {
-                            total += item.matiere_usages.reduce(
+                            materialTotalForItem = item.matiere_usages.reduce(
                               (materialSum, mat) => materialSum + (mat.prix_unitaire * mat.quantite_utilisee || 0),
                               0
                             );
                           }
-                          
-                          return total;
+                          return sum + materialTotalForItem;
                         }, 0) * taxRate / 100).toFixed(3)
                       } DT
                     </p>
                     <p className="total-ttc">
                       <strong>Total TTC:</strong> {
                         (billableData.reduce((sum, item) => {
-                          // Add main item total
-                          let total = sum + (item.billable.prix_unitaire * item.billable.quantite || 0);
-                          
-                          // Add materials totals if any
+                          let materialTotalForItem = 0;
                           if (item.matiere_usages && item.matiere_usages.length > 0) {
-                            total += item.matiere_usages.reduce(
+                            materialTotalForItem = item.matiere_usages.reduce(
                               (materialSum, mat) => materialSum + (mat.prix_unitaire * mat.quantite_utilisee || 0),
                               0
                             );
                           }
-                          
-                          return total;
+                          return sum + materialTotalForItem;
                         }, 0) * (1 + taxRate / 100)).toFixed(3)
                       } DT
                     </p>
