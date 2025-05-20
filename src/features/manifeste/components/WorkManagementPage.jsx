@@ -18,8 +18,9 @@ import { drawTable } from '../../../utils/pdfTableHelper';
 import WorkService from '../services/WorkService';
 import ClientService from '../services/ClientService';
 import ProductService from '../services/ProductService';
-// Import the RawMaterialService
-import RawMaterialService from '../services/RawMaterialService';  // Import CSS
+// Import the RawMaterialService and InvoiceService
+import RawMaterialService from '../services/RawMaterialService';
+import InvoiceService from '../services/InvoiceService';  // Import CSS
 import './WorkManagementPage.css';
 
 const { Content } = Layout;
@@ -240,33 +241,34 @@ const WorkManagementPage = () => {
 
   // Function to handle selected works and prepare bill data
   const handleProcessSelectedWorks = async () => {
-    if (selectedRowsData.length === 0) {
-      message.warning('Veuillez sélectionner au moins un travail');
-      return;
-    }
-    
-    // Show loading state
-    message.loading({ content: 'Récupération des détails...', key: 'materialsLoading' });
-    
     try {
-      // Process selected rows to include full material information
+      if (!selectedRowsData || selectedRowsData.length === 0) {
+        message.error('Aucun travail sélectionné');
+        return;
+      }
+
+      // Show loading
+      message.loading({ content: 'Récupération des détails...', key: 'materialsLoading' });
+
+      // Process each work to add client and material details
       const enrichedWorksData = await Promise.all(selectedRowsData.map(async (work) => {
-        // Clone the work to avoid modifying the original
         const enrichedWork = { ...work };
         
-        // Fetch client details if we only have ID
-        if (work.client_id) {
+        // Ensure client_id is always included and available
+        if (!work.client_id && work.client?.id) {
+          enrichedWork.client_id = work.client.id;
+        }
+
+        // If client data is not already present, fetch it
+        if (enrichedWork.client_id && (!work.clientDetails || !work.client)) {
           try {
-            const clientData = await ClientService.getClientById(work.client_id);
-            // Add the full client object to enrichedWork
-            
-            // Also add client fields directly to the work object for easier access
+            const clientData = await ClientService.getClientById(enrichedWork.client_id);
             enrichedWork.clientDetails = {
+              id: clientData.id, // Ensure client ID is preserved
               nom_cf: clientData.nom_client,
               adresse: clientData.adresse,
               matricule_fiscale: clientData.numero_fiscal,
               tel: clientData.telephone,
-              // Add any other client fields you need
               email: clientData.email,
               nom_responsable: clientData.nom_responsable,
               email_responsable: clientData.email_responsable,
@@ -274,16 +276,16 @@ const WorkManagementPage = () => {
               autre_numero: clientData.autre_numero
             };
           } catch (error) {
-            console.error(`Error fetching client ${work.client_id}:`, error);
+            console.error(`Error fetching client ${enrichedWork.client_id}:`, error);
           }
         } else if (work.client) {
           // If client data is already present, still format it consistently
           enrichedWork.clientDetails = {
+            id: work.client.id, // Ensure client ID is preserved
             nom_cf: work.client.nom_client,
             adresse: work.client.adresse,
             matricule_fiscale: work.client.numero_fiscal,
             tel: work.client.telephone,
-            // Add any other client fields you need
             email: work.client.email,
             nom_responsable: work.client.nom_responsable,
             email_responsable: work.client.email_responsable,
@@ -291,78 +293,67 @@ const WorkManagementPage = () => {
             autre_numero: work.client.autre_numero
           };
         }
-        
-        // If work has material usages, fetch and add the material details
+
+        // If material usage data is present but missing details, enrich it
         if (work.matiere_usages && work.matiere_usages.length > 0) {
-          // Fetch detailed material info for each matiere_id
-          const materialsWithDetails = await Promise.all(
+          const enrichedMaterialUsages = await Promise.all(
             work.matiere_usages.map(async (usage) => {
+              // If the usage already has all necessary data, just return it
+              if (usage.nom_matiere && usage.type_matiere && usage.prix_unitaire) {
+                return usage;
+              }
+              
               try {
-                // Fetch material details by ID
+                // Get material details
                 const materialDetail = await RawMaterialService.getMaterialById(usage.matiere_id);
-                
-                // Combine the usage data with the material details
-                return {
-                  ...usage,
-                  ...materialDetail, // This adds all properties from materialDetail
-                  // Ensure we have the essential fields with fallbacks
-                  type_matiere: materialDetail.type_matiere || usage.type_matiere || 'Type inconnu',
-                  nom_matiere: materialDetail.nom_matiere || usage.nom_matiere || `Matière #${usage.matiere_id}`,
+                return { 
+                  ...usage, 
+                  nom_matiere: materialDetail.nom_matiere || materialDetail.designation,
+                  type_matiere: materialDetail.type_matiere,
+                  prix_unitaire: materialDetail.prix_unitaire || 0,
                   thickness: materialDetail.thickness,
                   length: materialDetail.length,
-                  width: materialDetail.width,
-                  // Add default price (can be edited later)
-                  prix_unitaire: materialDetail.prix || 0
+                  width: materialDetail.width
                 };
               } catch (error) {
-                console.error(`Error fetching material ${usage.matiere_id}:`, error);
-                return {
-                  ...usage,
-                  type_matiere: usage.type_matiere || 'Type inconnu',
-                  nom_matiere: usage.nom_matiere || `Matière #${usage.matiere_id}`,
-                  prix_unitaire: 0
-                };
+                console.error(`Error fetching material details for ID ${usage.matiere_id}:`, error);
+                return usage;
               }
             })
           );
           
-          enrichedWork.matiere_usages = materialsWithDetails;
+          enrichedWork.matiere_usages = enrichedMaterialUsages;
         }
-        
+
         // Add billable data fields with default values
         enrichedWork.billable = {
           date_facturation: moment().format('YYYY-MM-DD'),
           prix_unitaire: 0,
           quantite: enrichedWork.quantite || 1,
-          taxe: 19, // Default tax rate 19%
+          taxe: taxRate,
           total_ht: 0
         };
-        
+
         return enrichedWork;
       }));
-      
+
       console.log('Enriched works data with client details:', enrichedWorksData);
-      
+
       // Hide loading
       message.success({ content: 'Détails récupérés', key: 'materialsLoading', duration: 1 });
-      
-      // Set the billable data for the form
+
+      // Set the billable data
       setBillableData(enrichedWorksData);
-      
-      // Generate invoice number (year/month/day + sequence number)
-      const today = moment();
-      const year = today.format('YY');
-      const month = today.format('MM');
-      const sequence = Math.floor(1000 + Math.random() * 9000); // 4-digit sequence number
-      const newInvoiceNumber = `FAC-${year}${month}-${sequence}`;
-      setInvoiceNumber(newInvoiceNumber);
-      
-      // Open the bill form modal
+
+      // Generate invoice number using InvoiceService
+      const generatedInvoiceNumber = InvoiceService.generateInvoiceNumber();
+      setInvoiceNumber(generatedInvoiceNumber);
+
+      // Show the bill modal
       setIsBillModalVisible(true);
-      
     } catch (error) {
       console.error('Error processing selected works:', error);
-      message.error({ content: 'Erreur lors du traitement des sélections', key: 'materialsLoading' });
+      message.error('Erreur lors du traitement des travaux sélectionnés');
     }
   };
   
@@ -657,51 +648,51 @@ const WorkManagementPage = () => {
     }
   };
 
-// Function to save invoice data for future reference
-  const saveBillableData = () => {
+// Function to save invoice data using InvoiceService
+  const saveBillableData = async () => {
     try {
       if (!billableData || billableData.length === 0) {
         message.error('Aucune donnée à enregistrer');
         return false;
       }
 
+      // Extract client ID from the first item (all items should be for the same client)
+      const clientId = billableData[0].client_id || billableData[0].clientDetails?.id;
+      
+      if (!clientId) {
+        message.error('ID du client manquant');
+        return false;
+      }
+
+      // Get work IDs from billable data
+      const workIds = billableData.map(item => item.id);
+
       // Create a data object to save
       const invoiceData = {
-        invoiceNumber,
-        taxRate, 
-        billDate,
-        clientDetails: billableData[0].clientDetails,
-        items: billableData.map(item => ({
-          id: item.id,
-          produit_name: item.produit_name,
-          description: item.description || '',
-          billable: {
-            quantite: item.billable.quantite,
-            prix_unitaire: item.billable.prix_unitaire,
-            total_ht: item.billable.total_ht
-          },
-          matiere_usages: item.matiere_usages ? item.matiere_usages.map(mat => ({
-            matiere_id: mat.matiere_id,
-            nom_matiere: mat.nom_matiere,
-            type_matiere: mat.type_matiere,
-            quantite_utilisee: mat.quantite_utilisee,
-            prix_unitaire: mat.prix_unitaire
-          })) : []
-        })),
-        date_generated: new Date().toISOString(),
+        client_id: clientId,
+        client: clientId,
+        numero_facture: invoiceNumber,
+        tax_rate: taxRate, 
+        date_emission: billDate,
+        date_echeance: moment(billDate).add(30, 'days').format('YYYY-MM-DD'), // Default due date 30 days from bill date
+        statut: 'draft',
+        travaux_ids: workIds,
       };
 
-      // In a real application, you would save this to a database
-      // For now, we'll save to localStorage as an example
-      const savedInvoices = JSON.parse(localStorage.getItem('savedInvoices') || '[]');
-      savedInvoices.push(invoiceData);
-      localStorage.setItem('savedInvoices', JSON.stringify(savedInvoices));
 
-      message.success('Facture enregistrée avec succès');
+      // Show loading message
+      message.loading({ content: 'Enregistrement de la facture...', key: 'savingInvoice' });
+      
+      // Use InvoiceService to save the invoice
+      const savedInvoice = await InvoiceService.createInvoice(invoiceData, workIds, clientId);
+      
+      message.success({ content: 'Facture enregistrée avec succès', key: 'savingInvoice', duration: 2 });
+      console.log('Saved invoice:', savedInvoice);
+      
       return true;
     } catch (error) {
       console.error('Error saving invoice data:', error);
-      message.error('Erreur lors de l\'enregistrement de la facture');
+      message.error({ content: `Erreur lors de l'enregistrement de la facture: ${error.message}`, key: 'savingInvoice', duration: 3 });
       return false;
     }
   };
