@@ -1,9 +1,8 @@
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF, autoTable } from './pdfSetup'; // Changed import
 
 // Fonction pour générer un PDF de facture
 export const generateInvoicePDF = (order, client, products) => {
-  const doc = new jsPDF();
+  const doc = new jsPDF('l', 'mm', 'a4');
   
   // En-tête
   doc.setFontSize(20);
@@ -46,8 +45,8 @@ export const generateInvoicePDF = (order, client, products) => {
   
   // Calculer le total
   const total = products.reduce((sum, product) => sum + (product.quantity * product.unitPrice), 0);
-  
-  doc.autoTable({
+
+  autoTable(doc, {
     head: [tableColumn],
     body: tableRows,
     startY: 100,
@@ -280,8 +279,8 @@ const convertNumberToWords = (number) => {
 
 // Fonction pour générer un PDF d'une seule facture
 export const generateSingleInvoicePDF = (invoice) => {
-  const doc = new jsPDF();
-  
+  const doc = new jsPDF('l', 'mm', 'a4');
+
   // En-tête
   doc.setFontSize(22);
   doc.text('FACTURE', 105, 20, { align: 'center' });
@@ -342,7 +341,7 @@ export const generateSingleInvoicePDF = (invoice) => {
     tableRows.push(productData);
   });
   
-  doc.autoTable({
+  autoTable({
     head: [tableColumn],
     body: tableRows,
     startY: 100,
