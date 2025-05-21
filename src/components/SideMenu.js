@@ -29,6 +29,7 @@ function SideMenu() {
     if (path.includes('/stock')) return ['stock'];
     if (path.includes('/manifeste')) return ['manifeste'];
     if (path.includes('/reglements')) return ['reglements'];
+    if (path.includes('/bons')) return ['bons_devis'];
     return [];
   };
 
@@ -56,9 +57,24 @@ function SideMenu() {
           <Menu.Item key="/manifeste/travaux" icon={<ToolOutlined />} onClick={() => handleMenuClick('/manifeste/travaux')}>
             Travaux
           </Menu.Item>
-          <Menu.Item key="/manifeste/bons" icon={<CarOutlined />} onClick={() => handleMenuClick('/manifeste/bons')}>
-            Bons livraison
-          </Menu.Item>
+          <SubMenu key="bons_devis" icon={<FileTextOutlined />} title="Bons et Devis">
+            <Menu.Item key="/bons/livraison-reception" onClick={() => handleMenuClick('/bons/livraison-reception')}>
+              Bon de Livraison (Réception)
+            </Menu.Item>
+            <Menu.Item key="/bons/livraison-decoupe" onClick={() => handleMenuClick('/bons/livraison-decoupe')}>
+              Bon de Livraison (Découpe)
+            </Menu.Item>
+            <Menu.Item key="/bons/retour" onClick={() => handleMenuClick('/bons/retour')}>
+              Bon de Retour
+            </Menu.Item>
+            <Menu.Item key="/bons/commande" onClick={() => handleMenuClick('/bons/commande')}>
+              Bon de Commande
+            </Menu.Item>
+            <Menu.Item key="/bons/devis" onClick={() => handleMenuClick('/bons/devis')}>
+              Devis
+            </Menu.Item>
+          </SubMenu>
+
           <Menu.Item key="/manifeste/inventaire" icon={<DatabaseOutlined />} onClick={() => handleMenuClick('/manifeste/inventaire')}>
             Inventaire
           </Menu.Item>
