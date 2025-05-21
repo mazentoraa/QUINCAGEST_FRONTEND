@@ -4,9 +4,10 @@ import './ClientMaterialForm.css';
 
 function ClientMaterialForm() {
   const { addClientMaterial } = useContext(ClientMaterialContext);
+
   const [clientMaterial, setClientMaterial] = useState({
     clientName: '',
-    clientId: '',
+    client_id: '', // ✅ Correction ici (anciennement clientId)
     deliveryNote: '',
     material: '',
     thickness: '',
@@ -20,30 +21,30 @@ function ClientMaterialForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setClientMaterial({ 
-      ...clientMaterial, 
-      [name]: ['quantity', 'thickness', 'length', 'width'].includes(name)
-        ? parseFloat(value) 
-        : value 
+    const numericFields = ['quantity', 'thickness', 'length', 'width'];
+    setClientMaterial({
+      ...clientMaterial,
+      [name]: numericFields.includes(name) ? parseFloat(value) || 0 : value
     });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Générer un numéro de bon de livraison si non fourni
+
     const materialWithDeliveryNote = {
       ...clientMaterial,
       deliveryNote: clientMaterial.deliveryNote || `BL-${Date.now()}`,
       receivedAt: new Date().toISOString()
     };
-    
-    addClientMaterial(materialWithDeliveryNote);
-    
-    // Réinitialiser le formulaire
+
+    console.log('🚀 Données envoyées:', materialWithDeliveryNote); // ✅ debug
+
+    addClientMaterial(materialWithDeliveryNote); // ✅ ajoute au contexte
+
+    // Réinitialisation du formulaire
     setClientMaterial({
       clientName: '',
-      clientId: '',
+      client_id: '',
       deliveryNote: '',
       material: '',
       thickness: '',
@@ -54,9 +55,9 @@ function ClientMaterialForm() {
       receiptDate: new Date().toISOString().split('T')[0],
       status: 'received'
     });
-    
-    // Fermer le modal
-    document.querySelector('[data-bs-dismiss="modal"]').click();
+
+    // Fermer le modal Bootstrap
+    document.querySelector('[data-bs-dismiss="modal"]')?.click();
   };
 
   return (
@@ -79,20 +80,20 @@ function ClientMaterialForm() {
               required
             />
           </div>
-          
+
           <div className="form-group">
-            <label htmlFor="clientId">ID Client</label>
+            <label htmlFor="client_id">ID Client</label>
             <input
               type="text"
-              id="clientId"
-              name="clientId"
-              value={clientMaterial.clientId}
+              id="client_id"
+              name="client_id"
+              value={clientMaterial.client_id}
               onChange={handleChange}
               required
             />
           </div>
         </div>
-        
+
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="deliveryNote">N° Bon de livraison</label>
@@ -105,7 +106,7 @@ function ClientMaterialForm() {
               placeholder="Généré automatiquement si vide"
             />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="receiptDate">Date de réception</label>
             <input
@@ -140,7 +141,7 @@ function ClientMaterialForm() {
               <option value="laiton">Laiton</option>
             </select>
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="thickness">Épaisseur (mm)</label>
             <input
@@ -155,7 +156,7 @@ function ClientMaterialForm() {
             />
           </div>
         </div>
-        
+
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="length">Longueur (mm)</label>
@@ -166,11 +167,11 @@ function ClientMaterialForm() {
               value={clientMaterial.length}
               onChange={handleChange}
               step="1"
-              min="1" 
+              min="1"
               required
             />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="width">Largeur (mm)</label>
             <input
@@ -185,7 +186,7 @@ function ClientMaterialForm() {
             />
           </div>
         </div>
-        
+
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="quantity">Quantité</label>
@@ -200,7 +201,7 @@ function ClientMaterialForm() {
             />
           </div>
         </div>
-        
+
         <div className="form-group">
           <label htmlFor="description">Description / Observations</label>
           <textarea
@@ -212,8 +213,10 @@ function ClientMaterialForm() {
           ></textarea>
         </div>
       </div>
-      
-      <button type="submit" className="submit-btn">Enregistrer la réception</button>
+
+      <button type="submit" className="submit-btn">
+        Enregistrer la réception
+      </button>
     </form>
   );
 }
