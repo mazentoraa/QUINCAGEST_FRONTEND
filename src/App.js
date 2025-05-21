@@ -20,6 +20,11 @@ import AuthService from './services/AuthService';
 import './App.css';
 import { ManifestePage, WorkManagementPage } from './features/manifeste/components';
 import { ProductProvider } from './features/products/contexts/ProductContext';
+import BonLivraisonReception from './components/BonsDevis/BonLivraisonReception';
+import BonLivraisonDecoupe from './components/BonsDevis/BonLivraisonDecoupe';
+import BonRetour from './components/BonsDevis/BonRetour';
+import BonCommande from './components/BonsDevis/BonCommande';
+import Devis from './components/BonsDevis/Devis';
 
 const { Header, Content, Sider } = Layout;
 
@@ -76,6 +81,12 @@ function App() {
                                 <Route path="/reglements/rapport" element={<Dashboard />} />
                                 <Route path="/installments" element={<InstallmentManagement />} />
                                 <Route path="/clients" element={<ClientManagementPage />} />
+                                <Route path="/bons/livraison-reception" element={<BonLivraisonReception />} />
+                                <Route path="/bons/livraison-decoupe" element={<BonLivraisonDecoupe />} />
+                                <Route path="/bons/retour" element={<BonRetour />} />
+                                <Route path="/bons/commande" element={<BonCommande />} />
+                                <Route path="/bons/devis" element={<Devis />} />
+
                               </Routes>
                             </Content>
                           </Layout>
