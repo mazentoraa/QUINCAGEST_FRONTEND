@@ -70,7 +70,9 @@ const ClientRawMaterialsPage = () => {
         // Transform the data to display formatted material types
         const formattedMaterials = response.map(material => ({
           ...material,
-          display_type: getMaterialTypeLabel(material.type_matiere)
+          display_type: getMaterialTypeLabel(material.type_matiere),
+          remaining_quantity: material.remaining_quantity !== undefined ? 
+            material.remaining_quantity : material.quantite
         }));
         set_materials(formattedMaterials);
         set_loading(false);
@@ -132,6 +134,28 @@ const ClientRawMaterialsPage = () => {
       title: 'Quantité',
       dataIndex: 'quantite',
       key: 'quantite',
+    },
+    {
+      title: 'Quantité restante',
+      dataIndex: 'remaining_quantity',
+      key: 'remaining_quantity',
+      render: (remaining_quantity, record) => {
+        // If remaining_quantity is not defined, default to the original quantity
+        const value = remaining_quantity !== undefined ? 
+          remaining_quantity : 
+          record.quantite;
+        
+        // Highlight in red if less than 10% of original quantity remains
+        const style = {};
+        if (value < (record.quantite * 0.1) && value > 0) {
+          style.color = 'red';
+        } else if (value <= 0) {
+          style.color = 'red';
+          style.fontWeight = 'bold';
+        }
+        
+        return <span style={style}>{value}</span>;
+      }
     },
     {
       title: 'Description',

@@ -18,7 +18,8 @@ import {
   Empty,
   Spin,
   message,
-  Switch
+  Switch,
+  Tag
 } from 'antd';
 import { PlusOutlined, PrinterOutlined, SaveOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import RawMaterialService from '../../clientManagement/services/RawMaterialService';
@@ -47,6 +48,9 @@ const ClientRawMaterialsPage = () => {  // State for client search and selection
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedRowsData, setSelectedRowsData] = useState([]);
   const [form] = Form.useForm();
+
+  // Material type filter state
+  const [materialTypeFilter, setMaterialTypeFilter] = useState(null);
 
   // Modal for bill preparation
   const [isBillModalVisible, setIsBillModalVisible] = useState(false);
@@ -258,7 +262,13 @@ const ClientRawMaterialsPage = () => {  // State for client search and selection
       title: 'Type de matériau',
       dataIndex: 'type_matiere',
       key: 'type_matiere',
-      render: (type) => getMaterialTypeLabel(type),
+      render: (type) => {
+        const label = getMaterialTypeLabel(type);
+        return <Tag color={getMaterialTypeColor(type)}>{label}</Tag>;
+      },
+      filters: material_types.map(type => ({ text: type.label, value: type.value })),
+      onFilter: (value, record) => record.type_matiere === value,
+      filterMultiple: false,
     },
     {
       title: 'Épaisseur (mm)',
@@ -336,6 +346,32 @@ const ClientRawMaterialsPage = () => {  // State for client search and selection
         </Space>
       ),
     },  ];
+  };
+  // Get color for material type tag
+  const getMaterialTypeColor = (type) => {
+    switch(type) {
+      case 'acier': return 'blue';
+      case 'acier_inoxydable': return 'cyan';
+      case 'aluminium': return 'silver';
+      case 'laiton': return 'gold';
+      case 'cuivre': return 'orange';
+      case 'acier_galvanise': return 'purple';
+      default: return 'default';
+    }
+  };
+
+  // Filter materials by type (for the dropdown filter)
+  const handleMaterialTypeFilterChange = (value) => {
+    setMaterialTypeFilter(value);
+  };
+
+  // Get filtered materials based on material type filter
+  const getFilteredMaterials = () => {
+    if (!materialTypeFilter) {
+      return materials;
+    }
+    
+    return materials.filter(material => material.type_matiere === materialTypeFilter);
   };
   // Edit handler
   const handleEdit = (material) => {
@@ -741,16 +777,33 @@ const ClientRawMaterialsPage = () => {  // State for client search and selection
                 </Card>
               </div>
             )}<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-              {/* Only show Add material button when not in "view all" mode */}
-              {!viewAllMaterials && (
-                <Button 
-                  type="primary" 
-                  icon={<PlusOutlined />}
-                  onClick={handleAdd}
+              <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                {/* Only show Add material button when not in "view all" mode */}
+                {!viewAllMaterials && (
+                  <Button 
+                    type="primary" 
+                    icon={<PlusOutlined />}
+                    onClick={handleAdd}
+                  >
+                    Ajouter une matière première
+                  </Button>
+                )}
+                
+                {/* Add filter dropdown */}
+                <Select
+                  style={{ width: 200 }}
+                  placeholder="Filtrer par type de matériau"
+                  onChange={handleMaterialTypeFilterChange}
+                  value={materialTypeFilter}
+                  allowClear
                 >
-                  Ajouter une matière première
-                </Button>
-              )}
+                  {material_types.map(type => (
+                    <Option key={type.value} value={type.value}>
+                      <Tag color={getMaterialTypeColor(type.value)} style={{ marginRight: 5 }}>{type.label}</Tag>
+                    </Option>
+                  ))}
+                </Select>
+              </div>
               
               {/* Only show right-side button if we have selections */}
               {selectedRowKeys.length > 0 ? (
@@ -766,7 +819,7 @@ const ClientRawMaterialsPage = () => {  // State for client search and selection
               )}
             </div><Table
               columns={getColumns()}
-              dataSource={materials}
+              dataSource={materialTypeFilter ? getFilteredMaterials() : materials}
               rowKey="id"
               loading={loading}
               pagination={{ pageSize: 10 }}
