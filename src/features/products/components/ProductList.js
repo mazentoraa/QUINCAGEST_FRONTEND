@@ -62,11 +62,13 @@ const ProductList = () => {
 
   const materialOptions = [
     { value: "all", label: "Tous les matériaux" },
-    { value: "inox", label: "Inox" },
-    { value: "fer", label: "Fer" },
+    { value: "acier", label: "Acier" },
+    { value: "acier_inoxydable", label: "Acier inoxydable" },
     { value: "aluminium", label: "Aluminium" },
-    { value: "cuivre", label: "Cuivre" },
     { value: "laiton", label: "Laiton" },
+    { value: "cuivre", label: "Cuivre" },
+    { value: "acier_galvanise", label: "Acier galvanisé" },
+    { value: "autre", label: "Autre" },
   ];
 
   if (error) {
