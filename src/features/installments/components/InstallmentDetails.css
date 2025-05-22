@@ -1,0 +1,406 @@
+.installment-details-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.details-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.details-header h1 {
+  color: #2c3e50;
+  font-size: 2rem;
+  margin: 0;
+}
+
+.back-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
+
+/* Carte d'informations client */
+.client-info-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.client-info-card h2 {
+  color: #2c3e50;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 0.5rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-item label {
+  font-weight: 600;
+  color: #34495e;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-item span {
+  font-size: 1rem;
+  color: #2c3e50;
+  padding: 0.5rem 0;
+}
+
+.info-item span.amount {
+  font-weight: 600;
+  color: #27ae60;
+  font-size: 1.1rem;
+}
+
+/* Section des statistiques */
+.stats-section {
+  margin-bottom: 2rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  text-align: center;
+  border-left: 4px solid;
+}
+
+.stat-card.total {
+  border-left-color: #3498db;
+}
+
+.stat-card.paid {
+  border-left-color: #27ae60;
+}
+
+.stat-card.unpaid {
+  border-left-color: #e74c3c;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card.total .stat-number {
+  color: #3498db;
+}
+
+.stat-card.paid .stat-number {
+  color: #27ae60;
+}
+
+.stat-card.unpaid .stat-number {
+  color: #e74c3c;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: #7f8c8d;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Section tableau des traites */
+.installments-table-section {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.installments-table-section h2 {
+  color: #2c3e50;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 0.5rem;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.installments-details-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.installments-details-table th,
+.installments-details-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.installments-details-table th {
+  background-color: #f1f2f6;
+  color: #34495e;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.installments-details-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.installments-details-table tbody tr:hover {
+  background-color: #f9f9fb;
+}
+
+.installments-details-table tbody tr.paid-row {
+  background-color: #f8fff9;
+}
+
+.installments-details-table tbody tr.unpaid-row {
+  background-color: #fff8f8;
+}
+
+.installment-number {
+  font-weight: 600;
+  color: #3498db;
+}
+
+.amount {
+  font-weight: 600;
+  color: #27ae60;
+  font-size: 1.05rem;
+}
+
+.due-date {
+  color: #7f8c8d;
+  font-weight: 500;
+}
+
+.status-cell {
+  text-align: center;
+}
+
+.status-select {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
+}
+
+.status-select.paid {
+  background-color: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.status-select.unpaid {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-color: #f5c6cb;
+}
+
+.actions-cell {
+  text-align: center;
+}
+
+.status-toggle-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.status-toggle-btn.mark-paid {
+  background-color: #27ae60;
+  color: white;
+}
+
+.status-toggle-btn.mark-paid:hover {
+  background-color: #229954;
+}
+
+.status-toggle-btn.mark-unpaid {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.status-toggle-btn.mark-unpaid:hover {
+  background-color: #dc3545;
+}
+
+/* Actions globales */
+.global-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.bulk-action-btn {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bulk-action-btn.mark-all-paid {
+  background-color: #27ae60;
+  color: white;
+}
+
+.bulk-action-btn.mark-all-paid:hover {
+  background-color: #229954;
+  transform: translateY(-2px);
+}
+
+.bulk-action-btn.mark-all-unpaid {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.bulk-action-btn.mark-all-unpaid:hover {
+  background-color: #dc3545;
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .installment-details-page {
+    padding: 1rem;
+  }
+
+  .details-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .details-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .installments-details-table {
+    font-size: 0.9rem;
+  }
+
+  .installments-details-table th,
+  .installments-details-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .status-toggle-btn {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .global-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bulk-action-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .installment-details-page {
+    padding: 0.5rem;
+  }
+
+  .client-info-card,
+  .installments-table-section {
+    padding: 1rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+
+  .installments-details-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

@@ -2,12 +2,63 @@ import React, { useState, useContext } from 'react';
 import { InstallmentContext } from '../contexts/InstallmentContext';
 import InstallmentForm from './InstallmentForm';
 import InstallmentsPrinter from './InstallmentsPrinter';
+import InstallmentDetails from './InstallmentDetails';
 import './InstallmentManagement.css';
 
 const InstallmentManagement = () => {
-  const { installments } = useContext(InstallmentContext);
-  const [activeTab, setActiveTab] = useState('create'); // 'create', 'view', 'print'
+  const { installments, updateInstallment } = useContext(InstallmentContext);
+  const [activeTab, setActiveTab] = useState('create');
   const [selectedInstallment, setSelectedInstallment] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
+  
+  // États pour le filtrage
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all'); // all, paye, non_paye
+
+  // Fonction pour filtrer les traites
+  const filteredInstallments = installments.filter(installment => {
+    const matchesSearch = 
+      installment.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      installment.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || installment.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  // Fonction pour changer le statut d'une traite
+  const handleStatusChange = (installmentId, newStatus) => {
+    const installmentToUpdate = installments.find(item => item.id === installmentId);
+    if (installmentToUpdate) {
+      const updatedInstallment = {
+        ...installmentToUpdate,
+        status: newStatus
+      };
+      updateInstallment(updatedInstallment);
+    }
+  };
+
+  // Fonction pour afficher les détails d'un client
+  const handleClientClick = (installment) => {
+    setSelectedInstallment(installment);
+    setShowDetails(true);
+  };
+
+  // Fonction pour revenir à la liste
+  const handleBackToList = () => {
+    setShowDetails(false);
+    setSelectedInstallment(null);
+  };
+
+  if (showDetails && selectedInstallment) {
+    return (
+      <InstallmentDetails
+        installment={selectedInstallment}
+        onBack={handleBackToList}
+        onUpdateInstallment={updateInstallment}
+      />
+    );
+  }
 
   return (
     <div className="installment-management">
@@ -47,10 +98,45 @@ const InstallmentManagement = () => {
           {activeTab === 'view' && (
             <>
               <h2 className="panel-title">Traites Existantes</h2>
-              {installments.length === 0 ? (
+              
+              {/* Section de filtrage */}
+              <div className="filter-section">
+                <div className="filter-row">
+                  <div className="search-container">
+                    <input
+                      type="text"
+                      placeholder="Rechercher par client ou numéro de facture..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="search-input"
+                    />
+                    <i className="fas fa-search search-icon"></i>
+                  </div>
+                  
+                  <div className="status-filter">
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="status-select"
+                    >
+                      <option value="all">Tous les statuts</option>
+                      <option value="non_paye">Non payé</option>
+                      <option value="paye">Payé</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {filteredInstallments.length === 0 ? (
                 <div className="empty-state">
-                  <p>Aucune traite n'a été créée.</p>
-                  <p>Utilisez l'onglet "Créer des Traites" pour ajouter de nouvelles traites.</p>
+                  {installments.length === 0 ? (
+                    <>
+                      <p>Aucune traite n'a été créée.</p>
+                      <p>Utilisez l'onglet "Créer des Traites" pour ajouter de nouvelles traites.</p>
+                    </>
+                  ) : (
+                    <p>Aucune traite ne correspond aux critères de recherche.</p>
+                  )}
                 </div>
               ) : (
                 <div className="table-responsive">
@@ -61,19 +147,37 @@ const InstallmentManagement = () => {
                         <th>Numéro de Facture</th>
                         <th>Montant Total</th>
                         <th>Nombre de Traites</th>
+                        <th>Statut</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {installments.map((installment) => (
+                      {filteredInstallments.map((installment) => (
                         <tr key={installment.id}>
-                          <td>{installment.clientName}</td>
+                          <td>
+                            <button
+                              className="client-name-button"
+                              onClick={() => handleClientClick(installment)}
+                            >
+                              {installment.clientName}
+                            </button>
+                          </td>
                           <td>{installment.invoiceNumber}</td>
                           <td>{installment.totalAmount} DT</td>
                           <td>{installment.numberOfInstallments}</td>
                           <td>
+                            <select
+                              value={installment.status || 'non_paye'}
+                              onChange={(e) => handleStatusChange(installment.id, e.target.value)}
+                              className={`status-select-table ${installment.status === 'paye' ? 'paid' : 'unpaid'}`}
+                            >
+                              <option value="non_paye">Non payé</option>
+                              <option value="paye">Payé</option>
+                            </select>
+                          </td>
+                          <td>
                             <button 
-                              className="action-button"
+                              className="action-button print-button"
                               onClick={() => {
                                 setSelectedInstallment(installment);
                                 setActiveTab('print');
