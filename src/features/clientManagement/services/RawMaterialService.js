@@ -4,6 +4,26 @@ import RawMaterialModel from '../models/RawMaterialModel';
 const API_URL = 'http://localhost:8000/api/matieres';
 
 const RawMaterialService = {
+  get_all_materials: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/`);
+      
+      // Handle both array and paginated response formats
+      let materials_data;
+      if (response.data && response.data.results !== undefined) {
+        materials_data = response.data.results;
+      } else {
+        materials_data = response.data || [];
+      }
+      
+      // Convert snake_case API response to snake_case model objects
+      return materials_data.map(material => new RawMaterialModel(material));
+    } catch (error) {
+      console.error('Error fetching all materials:', error);
+      throw error;
+    }
+  },
+
   get_materials_by_client_id: async (client_id) => {
     try {
       const response = await axios.get(`${API_URL}/by_client/`, {

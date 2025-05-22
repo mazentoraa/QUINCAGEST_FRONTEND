@@ -10,7 +10,7 @@
  * @property {string} date_creation - Date when the material was created
  * @property {string} derniere_mise_a_jour - Date when the material was last updated
  * 
- * @property {string} delivery_note - Delivery note number (client-side only)
+ * @property {string} numero_bon - Delivery note number (client-side only)
  * @property {string} reception_date - Date when the material was received (client-side only)
  * @property {string} material_type - Type of material (client-side only)
  * @property {number} thickness - Material thickness in mm (client-side only)
@@ -32,7 +32,7 @@ export default class RawMaterialModel {
     this.derniere_mise_a_jour = data.derniere_mise_a_jour || '';
     
     // Client-side only fields (not sent to Django)
-    this.delivery_note = data.delivery_note || '';
+    this.numero_bon = data.numero_bon || '';
     this.reception_date = data.reception_date || '';
     this.material_type = data.material_type || '';
     this.thickness = data.thickness || 0;
@@ -55,7 +55,7 @@ export default class RawMaterialModel {
       // Ensure client_id is sent as a valid integer
       client_id: this.client_id ? parseInt(this.client_id, 10) : null,
       // Add these fields to the API format to ensure they're sent to the server
-      delivery_note: this.delivery_note,
+      numero_bon: this.numero_bon,
       reception_date: this.reception_date,
       thickness: this.thickness,
       length: this.length,

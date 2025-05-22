@@ -93,9 +93,9 @@ const ClientRawMaterialsPage = () => {
   const columns = [
     {
       title: 'N° Bon de livraison',
-      dataIndex: 'delivery_note',
-      key: 'delivery_note',
-      render: (delivery_note, record) => record.delivery_note || '-', // Utilise la valeur du record
+      dataIndex: 'numero_bon',
+      key: 'numero_bon',
+      render: (numero_bon, record) => record.numero_bon || '-', // Utilise la valeur du record
     },
     {
       title: 'Date de réception',
@@ -209,7 +209,7 @@ const ClientRawMaterialsPage = () => {
   // Ouvre le modal pour ajouter une matière première avec un numéro de bon généré automatiquement
   const handle_add = () => {
     form.setFieldsValue({
-      delivery_note: generateDeliveryNote(),
+      numero_bon: generateDeliveryNote(),
       reception_date: null,
       type_matiere: undefined,
       thickness: undefined,
@@ -255,7 +255,7 @@ const ClientRawMaterialsPage = () => {
         'N° Bon', 'Date réception', 'Type', 'Épaisseur', 'Longueur', 'Largeur', 'Quantité', 'Description'
       ]],
       body: billableData.map(item => [
-        item.delivery_note,
+        item.numero_bon,
         item.reception_date ? moment(item.reception_date).format('YYYY-MM-DD') : '',
         getMaterialTypeLabel(item.type_matiere),
         item.thickness,
@@ -449,7 +449,7 @@ const ClientRawMaterialsPage = () => {
             <Title level={4}>Informations livraison</Title>
             <div style={{ display: 'flex', gap: 16 }}>
               <Form.Item
-                name="delivery_note"
+                name="numero_bon"
                 label="N° Bon de livraison"
                 rules={[{ required: true, message: 'Veuillez saisir le numéro de bon de livraison' }]}
                 style={{ flex: 1 }}
@@ -593,14 +593,14 @@ const ClientRawMaterialsPage = () => {
             columns={[
               {
                 title: 'N° Bon de livraison',
-                dataIndex: 'delivery_note',
-                key: 'delivery_note',
+                dataIndex: 'numero_bon',
+                key: 'numero_bon',
                 render: (text, record, idx) => (
                   <Input
-                    value={record.delivery_note}
+                    value={record.numero_bon}
                     onChange={e => {
                       const newData = [...billableData];
-                      newData[idx].delivery_note = e.target.value;
+                      newData[idx].numero_bon = e.target.value;
                       setBillableData(newData);
                     }}
                   />
