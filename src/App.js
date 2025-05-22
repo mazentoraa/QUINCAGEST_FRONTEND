@@ -1,9 +1,12 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Layout } from 'antd';
+import SideMenu from './components/SideMenu';
 import Dashboard from './components/Dashboard';
 import StockManagement from './features/stock/components/StockManagement';
 import ClientMaterialManagement from './features/clientMaterials/components/ClientMaterialManagement';
 import ClientManagementPage from './features/clientManagement';
+import ClientRawMaterialsPage from './features/clientManagement/components/ClientRawMaterialsPage';
 import OrderManagement from './components/Orders/OrderManagement';
 import InstallmentManagement from './features/installments/components/InstallmentManagement';
 import Navigation from './components/Navigation';
@@ -15,6 +18,15 @@ import { AuthProvider } from './features/authentication/context/AuthContext';
 import LoginForm from './features/authentication/components/LoginForm';
 import AuthService from './services/AuthService';
 import './App.css';
+import { ManifestePage, WorkManagementPage } from './features/manifeste/components';
+import { ProductProvider } from './features/products/contexts/ProductContext';
+import BonLivraisonReception from './components/BonsDevis/BonLivraisonReception';
+import BonLivraisonDecoupe from './components/BonsDevis/BonLivraisonDecoupe';
+import BonRetour from './components/BonsDevis/BonRetour';
+import BonCommande from './components/BonsDevis/BonCommande';
+import Devis from './components/BonsDevis/Devis';
+
+const { Header, Content, Sider } = Layout;
 
 // Simple PrivateRoute component
 const PrivateRoute = ({ children }) => {
@@ -43,19 +55,44 @@ function App() {
                 <ClientMaterialProvider>
                   <OrderProvider>
                     <InstallmentProvider>
-                      <div className="app">
-                        <Navigation />
-                        <div className="main-content">
-                          <Routes>
-                            <Route path="/" element={<Dashboard />} />
-                            <Route path="/stock" element={<StockManagement />} />
-                            <Route path="/client-materials" element={<ClientMaterialManagement />} />
-                            <Route path="/orders" element={<OrderManagement />} />
-                            <Route path="/installments" element={<InstallmentManagement />} />
-                            <Route path="/clients" element={<ClientManagementPage />} />
-                          </Routes>
-                        </div>
-                      </div>
+                      <ProductProvider>
+                        <Layout style={{ minHeight: '100vh' }}>
+                          <Header className="app-header">
+                            <Navigation />
+                          </Header>
+                          <Layout>
+                            <Sider theme="light" width={300} className="app-sider">
+                              <SideMenu />
+                            </Sider>
+                            <Content className="main-content">
+                              <Routes>
+                                <Route path="/" element={<Dashboard />} />
+                                <Route path="/stock" element={<StockManagement />} />
+                                <Route path="/stock/produits" element={<StockManagement />} />
+                                <Route path="/stock/matieres" element={<ClientMaterialManagement />} />
+                                <Route path="/client-materials" element={<ClientMaterialManagement />} />
+                                <Route path="/client-materials/:client_id" element={<ClientRawMaterialsPage />} />
+                                <Route path="/orders" element={<OrderManagement />} />
+                                <Route path="/manifeste/travaux" element={<WorkManagementPage />} />
+                                <Route path="/manifeste" element={<ManifestePage />} />
+                                <Route path="/manifeste/bons" element={<ManifestePage />} />
+                                <Route path="/manifeste/inventaire" element={<ManifestePage />} />
+                                <Route path="/reglements/factures" element={<OrderManagement />} />
+                                <Route path="/reglements/traites" element={<InstallmentManagement />} />
+                                <Route path="/reglements/rapport" element={<Dashboard />} />
+                                <Route path="/installments" element={<InstallmentManagement />} />
+                                <Route path="/clients" element={<ClientManagementPage />} />
+                                <Route path="/bons/livraison-reception" element={<BonLivraisonReception />} />
+                                <Route path="/bons/livraison-decoupe" element={<BonLivraisonDecoupe />} />
+                                <Route path="/bons/retour" element={<BonRetour />} />
+                                <Route path="/bons/commande" element={<BonCommande />} />
+                                <Route path="/bons/devis" element={<Devis />} />
+
+                              </Routes>
+                            </Content>
+                          </Layout>
+                        </Layout>
+                      </ProductProvider>
                     </InstallmentProvider>
                   </OrderProvider>
                 </ClientMaterialProvider>

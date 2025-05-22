@@ -1,411 +1,346 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { StockContext } from '../../stock/contexts/StockContext';
-import './ProductCard.css';
+import React, { useState } from 'react';
+import { Card, Typography, Space, Tag, Button, Modal, Form, Input, InputNumber, Select, Upload, Image } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { useProducts } from '../contexts/ProductContext';
 
-// Styles pour la galerie d'images
-const galleryStyles = `
-  .image-gallery {
-    position: relative;
-    width: 100%;
-    margin-bottom: 15px;
-  }
-  
-  .main-image {
-    width: 100%;
-    height: 250px;
-    object-fit: contain;
-    border-radius: 4px;
-    background-color: #f8f8f8;
-  }
-  
-  .image-controls {
-    position: absolute;
-    top: 50%;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    transform: translateY(-50%);
-    padding: 0 10px;
-  }
-  
-  .prev-image, .next-image {
-    background-color: rgba(255, 255, 255, 0.7);
-    border: none;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s;
-  }
-  
-  .prev-image:hover, .next-image:hover {
-    background-color: rgba(255, 255, 255, 0.9);
-  }
-  
-  .image-thumbnails {
-    display: flex;
-    overflow-x: auto;
-    gap: 8px;
-    padding: 8px 0;
-    scrollbar-width: thin;
-  }
-  
-  .thumbnail {
-    width: 60px;
-    height: 60px;
-    flex-shrink: 0;
-    cursor: pointer;
-    border: 2px solid transparent;
-    border-radius: 4px;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  
-  .thumbnail.active {
-    border-color: #0066cc;
-  }
-  
-  .thumbnail img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
+const { Text, Paragraph } = Typography;
+const { Option } = Select;
+const { TextArea } = Input;
+const { confirm } = Modal;
 
-// Styles pour le formulaire d'édition
-const editFormStyles = `
-  .images-preview {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 10px;
-  }
-  
-  .image-preview-container {
-    position: relative;
-    width: 80px;
-    height: 80px;
-    border: 2px solid #ddd;
-    border-radius: 4px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: border-color 0.2s;
-  }
-  
-  .image-preview-container.active {
-    border-color: #0066cc;
-  }
-  
-  .image-preview {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .remove-image-btn {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    background-color: rgba(255, 0, 0, 0.7);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .remove-image-btn:hover {
-    background-color: rgba(255, 0, 0, 0.9);
-  }
-`;
-
-function ProductCard({ product }) {
-  const { updateProduct, deleteProduct } = useContext(StockContext);
+const ProductCard = ({ product }) => {
+  const { updateProduct, deleteProduct } = useProducts();
   const [isEditing, setIsEditing] = useState(false);
-  const [editedProduct, setEditedProduct] = useState({ ...product });
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [imageFiles, setImageFiles] = useState([]);
+  const [form] = Form.useForm();
+  const [fileList, setFileList] = useState([]);
+  const [imageUrl, setImageUrl] = useState(product.image);
 
-  // Réinitialiser l'état édité lorsque le produit change
-  useEffect(() => {
-    setEditedProduct({ ...product });
-  }, [product]);
+  // Handle form initialization and image display
+  React.useEffect(() => {
+    form.setFieldsValue({
+      name: product.name,
+      material: product.material_type,
+      thickness: product.thickness,
+      length: product.length,
+      surface: product.surface,
+      price: product.price,
+      description: product.description,
+    });
 
-  // Réinitialiser l'index d'image lorsqu'on entre en mode édition
-  useEffect(() => {
-    if (isEditing) {
-      setImageFiles([]);
+    if (product.image) {
+      setImageUrl(product.image);
+      setFileList([{
+        uid: '-1',
+        name: 'product-image.png',
+        status: 'done',
+        url: product.image,
+      }]);
+    } else {
+      setFileList([]);
+      setImageUrl(null);
     }
-  }, [isEditing]);
+  }, [product, form]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setEditedProduct({ 
-      ...editedProduct, 
-      [name]: name === 'thickness' || name === 'surface' 
-        ? parseFloat(value) 
-        : value 
+  // Show delete confirmation
+  const showDeleteConfirm = () => {
+    confirm({
+      title: 'Êtes-vous sûr de vouloir supprimer ce produit ?',
+      icon: <ExclamationCircleOutlined />,
+      content: 'Cette action est irréversible.',
+      okText: 'Oui',
+      okType: 'danger',
+      cancelText: 'Non',
+      onOk() {
+        return deleteProduct(product.id);
+      },
     });
   };
 
-  const handleImagesChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const filesArray = Array.from(e.target.files);
-      setImageFiles([...imageFiles, ...filesArray]);
-      
-      // Créer des URLs pour les aperçus des images
-      const newImagesUrls = [];
-      
-      filesArray.forEach(file => {
+  // Handle image upload
+  const handleUploadChange = ({ fileList: newFileList }) => {
+    setFileList(newFileList);
+    if (newFileList.length > 0) {
+      // Get the uploaded file
+      const file = newFileList[0]?.originFileObj;
+      if (file) {
+        // Create a URL for the uploaded image
         const reader = new FileReader();
-        reader.onload = (e) => {
-          newImagesUrls.push(e.target.result);
-          
-          // Mettre à jour l'état une fois que toutes les images sont chargées
-          if (newImagesUrls.length === filesArray.length) {
-            setEditedProduct({ 
-              ...editedProduct, 
-              images: [...(editedProduct.images || []), ...newImagesUrls] 
-            });
-          }
-        };
         reader.readAsDataURL(file);
-      });
+        reader.onload = () => {
+          setImageUrl(reader.result);
+        };
+      } else if (newFileList[0]?.url) {
+        // Image already has a URL
+        setImageUrl(newFileList[0].url);
+      }
+    } else {
+      setImageUrl(null);
     }
   };
 
-  const removeImage = (indexToRemove) => {
-    setEditedProduct({
-      ...editedProduct,
-      images: editedProduct.images.filter((_, index) => index !== indexToRemove)
+  // Convert file objects to data URLs for API
+  const getBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
     });
+  };
+
+  // Handle form submission
+  const handleSubmit = async (values) => {
+    try {
+      // Prepare image data
+      let imageData = null;
+      if (fileList.length > 0 && fileList[0].originFileObj) {
+        imageData = await getBase64(fileList[0].originFileObj);
+      } else if (imageUrl) {
+        imageData = imageUrl;
+      }
+
+      // Map frontend fields to both frontend and backend field names
+      const productData = {
+        // Backend field names
+        nom_produit: values.name,
+        type_matiere: values.material,
+        epaisseur: values.thickness,
+        longueur: values.length || 0,
+        surface: values.surface,
+        prix: values.price || 0,
+        description: values.description || '',
+        image: imageData,
+        // Frontend field names
+        name: values.name,
+        material_type: values.material,
+        thickness: values.thickness,
+        length: values.length || 0,
+        price: values.price || 0
+      };
+
+      // Update product
+      await updateProduct(product.id, productData);
+
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating product:', error);
+    }
+  };
+
+  // Helper function to safely format price
+  const formatPrice = (price) => {
+    if (price === null || price === undefined) return "0.00 DT";
     
-    if (imageFiles.length > indexToRemove) {
-      setImageFiles(imageFiles.filter((_, index) => index !== indexToRemove));
-    }
+    // Convert to number if it's a string
+    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
     
-    // Ajuster l'index de l'image actuelle si nécessaire
-    if (currentImageIndex >= editedProduct.images.length - 1) {
-      setCurrentImageIndex(Math.max(0, editedProduct.images.length - 2));
-    }
+    // Check if it's a valid number
+    if (isNaN(numericPrice)) return "0.00 DT";
+    
+    // Format the price
+    return numericPrice.toFixed(2) + " DT";
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    updateProduct(product.id, editedProduct);
-    setIsEditing(false);
-    setCurrentImageIndex(0); // Réinitialiser l'index d'image après l'enregistrement
+  // Material type color mapping
+  const getMaterialColor = (material) => {
+    const colors = {
+      'inox': 'blue',
+      'fer': 'volcano',
+      'aluminium': 'green',
+      'cuivre': 'orange',
+      'laiton': 'gold',
+    };
+    return colors[material] || 'default';
   };
 
-  const handleDelete = () => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
-      deleteProduct(product.id);
-    }
-  };
+  // Render the product edit form
+  const renderEditForm = () => (
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={handleSubmit}
+      initialValues={{
+        name: product.name,
+        material: product.material_type,
+        thickness: product.thickness,
+        length: product.length,
+        surface: product.surface,
+        price: product.price,
+        description: product.description,
+      }}
+    >
+      <Form.Item
+        name="name"
+        label="Nom du produit"
+        rules={[{ required: true, message: 'Le nom du produit est obligatoire' }]}
+      >
+        <Input />
+      </Form.Item>
 
-  const nextImage = () => {
-    if (product.images && product.images.length > 1) {
-      setCurrentImageIndex((prevIndex) => 
-        prevIndex === product.images.length - 1 ? 0 : prevIndex + 1
-      );
-    }
-  };
+      <Form.Item
+        name="material"
+        label="Type de matériau"
+        rules={[{ required: true, message: 'Le type de matériau est obligatoire' }]}
+      >
+        <Select>
+          <Option value="inox">Inox</Option>
+          <Option value="fer">Fer</Option>
+          <Option value="aluminium">Aluminium</Option>
+          <Option value="cuivre">Cuivre</Option>
+          <Option value="laiton">Laiton</Option>
+        </Select>
+      </Form.Item>
 
-  const prevImage = () => {
-    if (product.images && product.images.length > 1) {
-      setCurrentImageIndex((prevIndex) => 
-        prevIndex === 0 ? product.images.length - 1 : prevIndex - 1
-      );
-    }
-  };
+      <Form.Item label="Dimensions">
+        <Space style={{ display: 'flex', flexWrap: 'wrap' }}>
+          <Form.Item
+            name="thickness"
+            label="Épaisseur (mm)"
+            rules={[{ required: true, message: 'L\'épaisseur est obligatoire' }]}
+            style={{ marginBottom: 0 }}
+          >
+            <InputNumber min={0.1} step={0.1} />
+          </Form.Item>
+
+          <Form.Item
+            name="length"
+            label="Longueur (mm)"
+            style={{ marginBottom: 0 }}
+          >
+            <InputNumber min={0} step={1} />
+          </Form.Item>
+
+          <Form.Item
+            name="surface"
+            label="Surface (m²)"
+            rules={[{ required: true, message: 'La surface est obligatoire' }]}
+            style={{ marginBottom: 0 }}
+          >
+            <InputNumber min={0.01} step={0.01} />
+          </Form.Item>
+        </Space>
+      </Form.Item>
+
+      <Form.Item
+        name="price"
+        label="Prix (DT)"
+      >
+        <InputNumber min={0} step={0.01} />
+      </Form.Item>
+
+      <Form.Item
+        name="description"
+        label="Description"
+      >
+        <TextArea rows={4} />
+      </Form.Item>
+
+      <Form.Item label="Image">
+        <Upload
+          listType="picture-card"
+          fileList={fileList}
+          onChange={handleUploadChange}
+          beforeUpload={() => false}
+          maxCount={1}
+        >
+          {fileList.length < 1 && (
+            <div>
+              <PlusOutlined />
+              <div style={{ marginTop: 8 }}>Télécharger</div>
+            </div>
+          )}
+        </Upload>
+      </Form.Item>
+
+      <Space>
+        <Button type="primary" htmlType="submit">
+          Enregistrer
+        </Button>
+        <Button onClick={() => setIsEditing(false)}>
+          Annuler
+        </Button>
+      </Space>
+    </Form>
+  );
+
+  // Render product details
+  const renderProductDetails = () => (
+    <>
+      <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+        {product.image ? (
+          <Image
+            width="100%"
+            height={200}
+            src={product.image}
+            alt={product.name}
+            style={{ objectFit: 'contain' }}
+            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3PTWBSGcbGzM6GCKqlIBRV0dHRJFarQ0eUT8LH4BnRU0NHR0UEFVdIlFRV7TzRksomPY8uykTk/zewQfKw/9znv4yvJynLv4uLiV2dBoDiBf4qP3/ARuCRABEFAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghggQAQZQKAnYEaQBAQaASKIAQJEkAEEegJmBElAoBEgghgg0Aj8i0JO4OzsrPv69Wv+hi2qPHr0qNvf39+iI97soRIh4f3z58/u7du3SXX7Xt7Z2enevHmzfQe+oSN2apSAPj09TSrb+XKI/f379+08+A0cNRE2ANkupk+ACNPvkSPcAAEibACyXUyfABGm3yNHuAECRNgAZLuYPgEirKlHu7u7XdyytGwHAd8jjNyng4OD7vnz51dbPT8/7z58+NB9+/bt6jU/TI+AGWHEnrx48eJ/EsSmHzx40L18+fLyzxF3ZVMjEyDCiEDjMYZZS5wiPXnyZFbJaxMhQIQRGzHvWR7XCyOCXsOmiDAi1HmPMMQjDpbpEiDCiL358eNHurW/5SnWdIBbXiDCiA38/Pnzrce2YyZ4//59F3ePLNMl4PbpiL2J0L979+7yDtHDhw8vtzzvdGnEXdvUigSIsCLAWavHp/+qM0BcXMd/q25n1vF57TYBp0a3mUzilePj4+7k5KSLb6gt6ydAhPUzXnoPR0dHl79WGTNCfBnn1uvSCJdegQhLI1vvCk+fPu2ePXt2tZOYEV6/fn31dz+shwAR1sP1cqvLntbEN9MxA9xcYjsxS1jWR4AIa2Ibzx0tc44fYX/16lV6NDFLXH+YL32jwiACRBiEbf5KcXoTIsQSpzXx4N28Ja4BQoK7rgXiydbHjx/P25TaQAJEGAguWy0+2Q8PD6/Ki4R8EVl+bzBOnZY95fq9rj9zAkTI2SxdidBHqG9+skdw43borCXO/ZcJdraPWdv22uIEiLA4q7nvvCug8WTqzQveOH26fodo7g6uFe/a17W3+nFBAkRYENRdb1vkkz1CH9cPsVy/jrhr27PqMYvENYNlHAIesRiBYwRy0V+8iXP8+/fvX11Mr7L7ECueb/r48eMqm7FuI2BGWDEG8cm+7G3NEOfmdcTQw4h9/55lhm7DekRYKQPZF2ArbXTAyu4kDYB2YxUzwg0gi/41ztHnfQG26HbGel/crVrm7tNY+/1btkOEAZ2M05r4FB7r9GbAIdxaZYrHdOsgJ/wCEQY0J74TmOKnbxxT9n3FgGGWWsVdowHtjt9Nnvf7yQM2aZU/TIAIAxrw6dOnAWtZZcoEnBpNuTuObWMEiLAx1HY0ZQJEmHJ3HNvGCBBhY6jtaMoEiJB0Z29vL6ls58vxPcO8/zfrdo5qvKO+d3Fx8Wu8zf1dW4p/cPzLly/dtv9Ts/EbcvGAHhHyfBIhZ6NSiIBTo0LNNtScABFyNiqFCBChULMNNSdAhJyNSiECRCjUbEPNCRAhZ6NSiAARCjXbUHMCRMjZqBQiQIRCzTbUnAARcjYqhQgQoVCzDTUnQIScjUohAkQo1GxDzQkQIWejUogAEQo121BzAkTI2agUIkCEQs021JwAEXI2KoUIEKFQsw01J0CEnI1KIQJEKNRsQ80JECFno1KIABEKNdtQcwJEyNmoFCJAhELNNtScABFyNiqFCBChULMNNSdAhJyNSiECRCjUbEPNCRAhZ6NSiAARCjXbUHMCRMjZqBQiQIRCzTbUnAARcjYqhQgQoVCzDTUnQIScjUohAkQo1GxDzQkQIWejUogAEQo121BzAkTI2agUIkCEQs021JwAEXI2KoUIEKFQsw01J0CEnI1KIQJEKNRsQ80JECFno1KIABEKNdtQcwJEyNmoFCJAhELNNtScABFyNiqFCBChULMNNSdAhJyNSiECRCjUbEPNCRAhZ6NSiAARCjXbUHMCRMjZqBQiQIRCzTbUnAARcjYqhQgQoVCzDTUnQIScjUohAkQo1GxDzQkQIWejUogAEQo121BzAkTI2agUIkCEQs021JwAEXI2KoUIEKFQsw01J0CEnI1KIQJEKNRsQ80JECFno1KIABEKNdtQcwJEyNmoFCJAhELNNtScABFyNiqFCBChULMNNSdAhJyNSiECRCjUbEPNCRAhZ6NSiAARCjXbUHMCRMjZqBQiQIRCzTbUnAARcjYqhQgQoVCzDTUnQIScjUohAkQo1GxDzQkQIWejUogAEQo121BzAkTI2agUIkCEQs021JwAEXI2KoUIEKFQsw01J0CEnI1KIQJEKNRsQ80JECFno1KIABEKNdtQcwJEyNmoFCJAhELNNtScABFyNiqFCBChULMNNSdAhJyNSiECRCjUbEPNCRAhZ6NSiAARCjXbUHMCRMjZqBQiQIRCzTbUnAARcjYqhQgQoVCzDTUnQIScjUohAkQo1GxDzQkQIWejUogAEQo121BzAkTI2agUIkCEQs021JwAEXI2KoUIEKFQsw01J0CEnI1KIQJEKNRsQ80JECFno1KIABEKNdtQcwJEyNmoFCJAhELNNtScABFyNiqFCBChULMNNSdAhJyNSiEC/wGgKKC4YMA4TAAAAABJRU5ErkJggg=="
+          />
+        ) : (
+          <div style={{ width: '100%', height: '100%', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Text type="secondary">Pas d'image</Text>
+          </div>
+        )}
+      </div>
+
+      <Space direction="vertical" size="small" style={{ width: '100%' }}>
+        <Typography.Title level={5} style={{ margin: 0 }}>{product.name}</Typography.Title>
+        
+        <Space>
+          <Tag color={getMaterialColor(product.material_type)}>
+            {product.material_type}
+          </Tag>
+          {product.price > 0 && (
+            <Tag color="green">{formatPrice(product.price)}</Tag>
+          )}
+        </Space>
+        
+        <Space style={{ marginTop: 8 }}>
+          <Text type="secondary">Épaisseur: </Text>
+          <Text strong>{product.thickness} mm</Text>
+          
+          {product.length > 0 && (
+            <>
+              <Text type="secondary">Longueur: </Text>
+              <Text strong>{product.length} mm</Text>
+            </>
+          )}
+          
+          <Text type="secondary">Surface: </Text>
+          <Text strong>{product.surface} m²</Text>
+        </Space>
+        
+        {product.description && (
+          <Paragraph 
+            ellipsis={{ rows: 3, expandable: true, symbol: 'plus' }}
+            style={{ marginTop: 8 }}
+          >
+            {product.description}
+          </Paragraph>
+        )}
+
+        {product.created_at && (
+          <Text type="secondary" style={{ fontSize: '12px' }}>
+            Créé le {product.created_at.toLocaleDateString()}
+          </Text>
+        )}
+      </Space>
+    </>
+  );
 
   return (
-    <div className="product-card">
-      <style>{galleryStyles}</style>
-      <style>{editFormStyles}</style>
-      {isEditing ? (
-        <form onSubmit={handleSubmit} className="edit-form">
-          <div className="form-group">
-            <label htmlFor="name">Nom</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={editedProduct.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="material">Matériau</label>
-            <select
-              id="material"
-              name="material"
-              value={editedProduct.material}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Sélectionner un matériau</option>
-              <option value="inox">Inox</option>
-              <option value="fer">Fer</option>
-              <option value="aluminium">Aluminium</option>
-              <option value="cuivre">Cuivre</option>
-              <option value="laiton">Laiton</option>
-            </select>
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="thickness">Épaisseur (mm)</label>
-            <input
-              type="number"
-              id="thickness"
-              name="thickness"
-              value={editedProduct.thickness}
-              onChange={handleChange}
-              step="0.1"
-              min="0.1"
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="surface">Surface (m²)</label>
-            <input
-              type="number"
-              id="surface"
-              name="surface"
-              value={editedProduct.surface}
-              onChange={handleChange}
-              step="0.01"
-              min="0.01"
-              required
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              name="description"
-              value={editedProduct.description}
-              onChange={handleChange}
-            ></textarea>
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="images">Images du produit</label>
-            <input
-              type="file"
-              id="images"
-              name="images"
-              accept="image/*"
-              onChange={handleImagesChange}
-              multiple
-            />
-            {editedProduct.images && editedProduct.images.length > 0 && (
-              <div className="images-preview">
-                {editedProduct.images.map((imageUrl, index) => (
-                  <div 
-                    key={index} 
-                    className={`image-preview-container ${index === currentImageIndex ? 'active' : ''}`}
-                    onClick={() => setCurrentImageIndex(index)}
-                  >
-                    <img 
-                      src={imageUrl} 
-                      alt={`Aperçu du produit ${index + 1}`} 
-                      className="image-preview"
-                    />
-                    <button 
-                      type="button" 
-                      className="remove-image-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeImage(index);
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          <div className="form-actions">
-            <button type="submit" className="save-btn">Enregistrer</button>
-            <button type="button" className="cancel-btn" onClick={() => setIsEditing(false)}>Annuler</button>
-          </div>
-        </form>
-      ) : (
-        <>
-          <div className="product-image">
-            {product.images && product.images.length > 0 ? (
-              <div className="image-gallery">
-                <img 
-                  src={product.images[currentImageIndex]} 
-                  alt={product.name} 
-                  className="main-image"
-                />
-                {product.images.length > 1 && (
-                  <>
-                    <div className="image-controls">
-                      <button className="prev-image" onClick={prevImage}>
-                        <i className="fas fa-chevron-left"></i>
-                      </button>
-                      <button className="next-image" onClick={nextImage}>
-                        <i className="fas fa-chevron-right"></i>
-                      </button>
-                    </div>
-                    <div className="image-thumbnails">
-                      {product.images.map((image, index) => (
-                        <div 
-                          key={index} 
-                          className={`thumbnail ${index === currentImageIndex ? 'active' : ''}`}
-                          onClick={() => setCurrentImageIndex(index)}
-                        >
-                          <img src={image} alt={`${product.name} - miniature ${index + 1}`} />
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="no-image">Pas d'image</div>
-            )}
-          </div>
-          
-          <div className="product-info">
-            <h3>{product.name}</h3>
-            <p className="material"><strong>Matériau:</strong> {product.material}</p>
-            <p className="thickness"><strong>Épaisseur:</strong> {product.thickness} mm</p>
-            <p className="surface"><strong>Surface:</strong> {product.surface} m²</p>
-            {product.description && <p className="description">{product.description}</p>}
-          </div>
-          
-          <div className="product-actions">
-            <button className="edit-btn" onClick={() => setIsEditing(true)}>
-              <i className="fas fa-edit"></i>
-            </button>
-            <button className="delete-btn" onClick={handleDelete}>
-              <i className="fas fa-trash"></i>
-            </button>
-          </div>
-        </>
-      )}
-    </div>
+    <Card
+      hoverable
+      className="product-card"
+      style={{ height: '100%' }}
+      actions={[
+        <EditOutlined key="edit" onClick={() => setIsEditing(true)} />,
+        <DeleteOutlined key="delete" onClick={showDeleteConfirm} />,
+      ]}
+    >
+      {isEditing ? renderEditForm() : renderProductDetails()}
+    </Card>
   );
-}
-
+};
 
 export default ProductCard;

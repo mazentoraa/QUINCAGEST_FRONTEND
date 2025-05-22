@@ -4,26 +4,26 @@ import ClientModel from '../models/ClientModel';
 const API_URL = 'http://localhost:8000/api/clients';
 
 const ClientService = {
-  getAllClients: async () => {
+  get_all_clients: async () => {
     try {
       const response = await axios.get(API_URL + '/');
       // Handle both array and paginated response formats
-      let clientData;
+      let client_data;
       if (response.data && response.data.results !== undefined) {
-        clientData = response.data.results;
+        client_data = response.data.results;
       } else {
-        clientData = response.data || [];
+        client_data = response.data || [];
       }
       
-      // Convert snake_case API response to camelCase model objects
-      return clientData.map(client => new ClientModel(client));
+      // Convert to model objects
+      return client_data.map(client => new ClientModel(client));
     } catch (error) {
       console.error('Error fetching clients:', error);
       throw error;
     }
   },
 
-  getClientById: async (id) => {
+  get_client_by_id: async (id) => {
     try {
       const response = await axios.get(`${API_URL}/${id}/`);
       return new ClientModel(response.data);
@@ -33,12 +33,10 @@ const ClientService = {
     }
   },
 
-  createClient: async (clientData) => {
+  create_client: async (client_data) => {
     try {
-      // Convert camelCase to snake_case for Django backend
-      const formattedData = new ClientModel(clientData).toApiFormat();
-      
-      const response = await axios.post(API_URL + '/', formattedData);
+      // Use the data directly without any transformation
+      const response = await axios.post(API_URL + '/', client_data);
       return new ClientModel(response.data);
     } catch (error) {
       console.error('Error creating client:', error);
@@ -46,12 +44,10 @@ const ClientService = {
     }
   },
 
-  updateClient: async (id, clientData) => {
+  update_client: async (id, client_data) => {
     try {
-      // Convert camelCase to snake_case for Django backend
-      const formattedData = new ClientModel(clientData).toApiFormat();
-
-      const response = await axios.put(`${API_URL}/${id}/`, formattedData);
+      // Use the data directly without any transformation
+      const response = await axios.put(`${API_URL}/${id}/`, client_data);
       return new ClientModel(response.data);
     } catch (error) {
       console.error(`Error updating client with id ${id}:`, error);
@@ -59,7 +55,7 @@ const ClientService = {
     }
   },
 
-  deleteClient: async (id) => {
+  delete_client: async (id) => {
     try {
       const response = await axios.delete(`${API_URL}/${id}/`);
       return response.data;
@@ -69,7 +65,7 @@ const ClientService = {
     }
   },
 
-  searchClients: async (query) => {
+  search_clients: async (query) => {
     try {
       const response = await axios.get(`${API_URL}/search/`, {
         params: { query }

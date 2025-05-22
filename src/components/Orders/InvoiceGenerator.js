@@ -1,8 +1,7 @@
 import React, { useContext } from 'react';
 import { OrderContext } from '../../contexts/OrderContext';
 import { InstallmentContext } from '../../features/installments/contexts/InstallmentContext';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF, autoTable } from '../../utils/pdfSetup'; // Changed import
 import './InvoiceGenerator.css';
 
 function InvoiceGenerator({ order }) {
@@ -64,7 +63,7 @@ function InvoiceGenerator({ order }) {
     }
     
     // Tableau des produits
-    doc.autoTable({
+    autoTable({
       startY: 90,
       head: [['Produit', 'Quantité', 'Prix unitaire', 'Total']],
       body: order.items.map(item => [
@@ -104,7 +103,7 @@ function InvoiceGenerator({ order }) {
       doc.text(`Montant par traite: ${installmentPlan.installmentAmount.toFixed(2)} DT`, 20, finalY + 15);
       
       // Tableau des traites
-      doc.autoTable({
+      autoTable({
         startY: finalY + 25,
         head: [['N°', 'Date d\'échéance', 'Montant']],
         body: installmentPlan.installments.map(inst => [

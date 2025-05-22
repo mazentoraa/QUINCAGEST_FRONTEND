@@ -4,31 +4,31 @@ import ClientModel from '../models/ClientModel';
 
 const { TextArea } = Input;
 
-const ClientForm = ({ initialValues, onFinish, onCancel, loading, isEdit }) => {
+const ClientForm = ({ initial_values, on_finish, on_cancel, loading, is_edit }) => {
   const [form] = Form.useForm();
   
   // Reset form with initial values when they change
   useEffect(() => {
-    if (initialValues) {
+    if (initial_values) {
       form.setFieldsValue({
-        nomClient: initialValues.nomClient || '',
-        numeroFiscal: initialValues.numeroFiscal || '',
-        adresse: initialValues.adresse || '',
-        telephone: initialValues.telephone || '',
-        nomResponsable: initialValues.nomResponsable || '',
-        email: initialValues.email || '',
-        emailResponsable: initialValues.emailResponsable || '',
-        telephoneResponsable: initialValues.telephoneResponsable || '',
-        autreNumero: initialValues.autreNumero || '',
-        informationsComplementaires: initialValues.informationsComplementaires || '',
+        nom_client: initial_values.nom_client || '',
+        numero_fiscal: initial_values.numero_fiscal || '',
+        adresse: initial_values.adresse || '',
+        telephone: initial_values.telephone || '',
+        nom_responsable: initial_values.nom_responsable || '',
+        email: initial_values.email || '',
+        email_responsable: initial_values.email_responsable || '',
+        telephone_responsable: initial_values.telephone_responsable || '',
+        autre_numero: initial_values.autre_numero || '',
+        informations_complementaires: initial_values.informations_complementaires || '',
       });
     } else {
       form.resetFields();
     }
-  }, [initialValues, form]);
+  }, [initial_values, form]);
 
   // Validate if input is numeric
-  const validateNumeric = (_, value) => {
+  const validate_numeric = (_, value) => {
     if (value && !/^\d+$/.test(value)) {
       return Promise.reject(new Error('Veuillez entrer uniquement des chiffres'));
     }
@@ -36,25 +36,48 @@ const ClientForm = ({ initialValues, onFinish, onCancel, loading, isEdit }) => {
   };
 
   // Validate email format
-  const validateEmail = (_, value) => {
+  const validate_email = (_, value) => {
     if (value && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)) {
       return Promise.reject(new Error('Format d\'email invalide'));
     }
     return Promise.resolve();
   };
 
+  const handle_finish = (values) => {
+    // Convert the form values directly to the format expected by the API
+    const client_data = {
+      nom_client: values.nom_client,
+      numero_fiscal: values.numero_fiscal,
+      adresse: values.adresse,
+      telephone: values.telephone,
+      nom_responsable: values.nom_responsable,
+      email: values.email,
+      email_responsable: values.email_responsable,
+      telephone_responsable: values.telephone_responsable,
+      autre_numero: values.autre_numero,
+      informations_complementaires: values.informations_complementaires
+    };
+    
+    // If we're editing, include the ID
+    if (initial_values && initial_values.id) {
+      client_data.id = initial_values.id;
+    }
+    
+    on_finish(client_data);
+  };
+
   return (
     <Card>
       <Typography.Title level={4}>
-        {isEdit ? 'Modifier un client' : 'Ajouter un nouveau client'}
+        {is_edit ? 'Modifier un client' : 'Ajouter un nouveau client'}
       </Typography.Title>
       <Form
         form={form}
         layout="vertical"
-        onFinish={onFinish}
+        onFinish={handle_finish}
       >
         <Form.Item
-          name="nomClient"
+          name="nom_client"
           label="Nom du client"
           rules={[{ required: true, message: 'Le nom du client est obligatoire' }]}
         >
@@ -62,7 +85,7 @@ const ClientForm = ({ initialValues, onFinish, onCancel, loading, isEdit }) => {
         </Form.Item>
 
         <Form.Item
-          name="numeroFiscal"
+          name="numero_fiscal"
           label="Numéro d'enregistrement fiscal"
           rules={[{ required: true, message: 'Le numéro d\'enregistrement fiscal est obligatoire' }]}
         >
@@ -79,13 +102,13 @@ const ClientForm = ({ initialValues, onFinish, onCancel, loading, isEdit }) => {
         <Form.Item
           name="telephone"
           label="Numéro de téléphone"
-          rules={[{ validator: validateNumeric }]}
+          rules={[{ validator: validate_numeric }]}
         >
           <Input placeholder="Entrez le numéro de téléphone" />
         </Form.Item>
 
         <Form.Item
-          name="nomResponsable"
+          name="nom_responsable"
           label="Nom du responsable"
         >
           <Input placeholder="Entrez le nom du responsable ou gérant" />
@@ -94,37 +117,37 @@ const ClientForm = ({ initialValues, onFinish, onCancel, loading, isEdit }) => {
         <Form.Item
           name="email"
           label="Email du client"
-          rules={[{ validator: validateEmail }]}
+          rules={[{ validator: validate_email }]}
         >
           <Input placeholder="Entrez l'email du client" />
         </Form.Item>
 
         <Form.Item
-          name="emailResponsable"
+          name="email_responsable"
           label="Email du responsable"
-          rules={[{ validator: validateEmail }]}
+          rules={[{ validator: validate_email }]}
         >
           <Input placeholder="Entrez l'email du responsable" />
         </Form.Item>
 
         <Form.Item
-          name="telephoneResponsable"
+          name="telephone_responsable"
           label="Téléphone du responsable"
-          rules={[{ validator: validateNumeric }]}
+          rules={[{ validator: validate_numeric }]}
         >
           <Input placeholder="Entrez le numéro de téléphone du responsable" />
         </Form.Item>
 
         <Form.Item
-          name="autreNumero"
+          name="autre_numero"
           label="Autre numéro (optionnel)"
-          rules={[{ validator: validateNumeric }]}
+          rules={[{ validator: validate_numeric }]}
         >
           <Input placeholder="Entrez un autre numéro (optionnel)" />
         </Form.Item>
 
         <Form.Item
-          name="informationsComplementaires"
+          name="informations_complementaires"
           label="Informations complémentaires"
         >
           <TextArea rows={4} placeholder="Entrez des informations complémentaires" />
@@ -132,9 +155,9 @@ const ClientForm = ({ initialValues, onFinish, onCancel, loading, isEdit }) => {
 
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={loading} style={{ marginRight: '10px' }}>
-            {isEdit ? 'Mettre à jour' : 'Ajouter'}
+            {is_edit ? 'Mettre à jour' : 'Ajouter'}
           </Button>
-          <Button onClick={onCancel}>
+          <Button onClick={on_cancel}>
             Annuler
           </Button>
         </Form.Item>

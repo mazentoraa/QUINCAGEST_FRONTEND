@@ -10,79 +10,79 @@ const { Content } = Layout;
 const { Title } = Typography;
 
 const ClientManagementPage = () => {
-  const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [formVisible, setFormVisible] = useState(false);
-  const [currentClient, setCurrentClient] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [clients, set_clients] = useState([]);
+  const [loading, set_loading] = useState(false);
+  const [form_visible, set_form_visible] = useState(false);
+  const [current_client, set_current_client] = useState(null);
+  const [is_editing, set_is_editing] = useState(false);
 
   useEffect(() => {
-    fetchClients();
+    fetch_clients();
   }, []);
 
-  const fetchClients = async () => {
-    setLoading(true);
+  const fetch_clients = async () => {
+    set_loading(true);
     try {
-      const data = await ClientService.getAllClients();
+      const data = await ClientService.get_all_clients();
       // Ensure we always set an array, even if empty
-      setClients(Array.isArray(data) ? data : []);
+      set_clients(Array.isArray(data) ? data : []);
     } catch (error) {
       message.error('Erreur lors du chargement des clients');
       console.error(error);
-      setClients([]); // Set empty array on error
+      set_clients([]); // Set empty array on error
     } finally {
-      setLoading(false);
+      set_loading(false);
     }
   };
 
-  const handleAddClient = () => {
-    setCurrentClient(ClientModel.createEmpty());
-    setIsEditing(false);
-    setFormVisible(true);
+  const handle_add_client = () => {
+    set_current_client(ClientModel.create_empty());
+    set_is_editing(false);
+    set_form_visible(true);
   };
 
-  const handleEditClient = (client) => {
-    setCurrentClient(client);
-    setIsEditing(true);
-    setFormVisible(true);
+  const handle_edit_client = (client) => {
+    set_current_client(client);
+    set_is_editing(true);
+    set_form_visible(true);
   };
 
-  const handleDeleteClient = async (clientId) => {
-    setLoading(true);
+  const handle_delete_client = async (client_id) => {
+    set_loading(true);
     try {
-      await ClientService.deleteClient(clientId);
+      await ClientService.delete_client(client_id);
       message.success('Client supprimé avec succès');
-      fetchClients();
+      fetch_clients();
     } catch (error) {
       message.error('Erreur lors de la suppression du client');
       console.error(error);
     } finally {
-      setLoading(false);
+      set_loading(false);
     }
   };
 
-  const handleFormSubmit = async (values) => {
-    setLoading(true);
+  const handle_form_submit = async (values) => {
+    set_loading(true);
     try {
-      if (isEditing) {
-        await ClientService.updateClient(currentClient.id, values);
+      if (is_editing) {
+        await ClientService.update_client(current_client.id, values);
         message.success('Client mis à jour avec succès');
       } else {
-        await ClientService.createClient(values);
+        await ClientService.create_client(values);
         message.success('Client ajouté avec succès');
       }
-      setFormVisible(false);
-      fetchClients();
+      set_form_visible(false);
+      fetch_clients();
     } catch (error) {
       message.error('Erreur lors de l\'enregistrement du client');
       console.error(error);
     } finally {
-      setLoading(false);
+      set_loading(false);
     }
   };
 
-  const handleFormCancel = () => {
-    setFormVisible(false);
+  const handle_form_cancel = () => {
+    set_form_visible(false);
   };
 
   return (
@@ -93,7 +93,7 @@ const ClientManagementPage = () => {
           <Button 
             type="primary" 
             icon={<PlusOutlined />} 
-            onClick={handleAddClient}
+            onClick={handle_add_client}
           >
             Ajouter un client
           </Button>
@@ -102,23 +102,23 @@ const ClientManagementPage = () => {
         <ClientTable
           clients={clients}
           loading={loading}
-          onEdit={handleEditClient}
-          onDelete={handleDeleteClient}
+          on_edit={handle_edit_client}
+          on_delete={handle_delete_client}
         />
 
         <Modal
-          title={isEditing ? "Modifier un client" : "Ajouter un client"}
-          open={formVisible}
-          onCancel={handleFormCancel}
+          title={is_editing ? "Modifier un client" : "Ajouter un client"}
+          open={form_visible}
+          onCancel={handle_form_cancel}
           footer={null}
           width={800}
         >
           <ClientForm
-            initialValues={currentClient}
-            onFinish={handleFormSubmit}
-            onCancel={handleFormCancel}
+            initial_values={current_client}
+            on_finish={handle_form_submit}
+            on_cancel={handle_form_cancel}
             loading={loading}
-            isEdit={isEditing}
+            is_edit={is_editing}
           />
         </Modal>
       </div>
