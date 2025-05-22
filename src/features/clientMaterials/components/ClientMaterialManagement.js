@@ -1,383 +1,850 @@
-import React, { useState, useContext } from 'react';
-import { ClientMaterialContext } from '../contexts/ClientMaterialContext';
-import ClientMaterialForm from './ClientMaterialForm';
-import ClientMaterialList from './ClientMaterialList';
-import DeliveryNoteList from '../../stock/components/DeliveryNoteList';
-import FilterSearch from './FilterSearch';
-import './ClientMaterialManagement.css';
+import React, { useState, useEffect } from 'react';
+import { 
+  Typography, 
+  Card, 
+  Table, 
+  Button, 
+  Modal, 
+  Form, 
+  Input, 
+  DatePicker, 
+  InputNumber, 
+  Select, 
+  Divider, 
+  Space, 
+  notification,
+  Popconfirm,
+  AutoComplete,
+  Empty,
+  Spin
+} from 'antd';
+import { PlusOutlined, PrinterOutlined, SaveOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import RawMaterialService from '../../clientManagement/services/RawMaterialService';
+import ClientService from '../../clientManagement/services/ClientService';
+import moment from 'moment';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import debounce from 'lodash/debounce';
 
-function ClientMaterialManagement() {
-  const {
-    filteredMaterials,
-    deliveryNotes,
-    clientMaterials,
-    generateInventoryReport, // ✅ ajouté ici
-  } = useContext(ClientMaterialContext);
+const { Title, Text } = Typography;
+const { Option } = Select;
 
-  const [activeTab, setActiveTab] = useState('materials');
-  const [reportParams, setReportParams] = useState({
-    clientId: '',
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0],
-  });
-  const [inventoryReport, setInventoryReport] = useState(null);
+const ClientRawMaterialsPage = () => {
+  // State for client search and selection
+  const [clients, setClients] = useState([]);
+  const [searchText, setSearchText] = useState('');
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [searchOptions, setSearchOptions] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [clientSearchLoading, setClientSearchLoading] = useState(false);
 
-  const clients = [...new Set(clientMaterials.map(material => material.clientId))].map(clientId => {
-    const clientData = clientMaterials.find(material => material.clientId === clientId);
-    return {
-      id: clientId,
-      name: clientData ? clientData.clientName : 'Client Inconnu',
+  // Existing states from the original component
+  const [materials, setMaterials] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingMaterial, setEditingMaterial] = useState(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [selectedRowsData, setSelectedRowsData] = useState([]);
+  const [form] = Form.useForm();
+
+  // Modal for bill preparation
+  const [isBillModalVisible, setIsBillModalVisible] = useState(false);
+  const [billDate, setBillDate] = useState(moment().format('YYYY-MM-DD'));
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [billableData, setBillableData] = useState([]);
+
+  // Material types options
+  const material_types = [
+    { value: "acier", label: "Acier" },
+    { value: "acier_inoxydable", label: "Acier inoxydable" },
+    { value: "aluminium", label: "Aluminium" },
+    { value: "laiton", label: "Laiton" },
+    { value: "cuivre", label: "Cuivre" },
+    { value: "acier_galvanise", label: "Acier galvanisé" },
+    { value: "autre", label: "Autre" },
+  ];
+  
+  // Fetch initial clients for dropdown on component mount
+  useEffect(() => {
+    const fetchInitialClients = async () => {
+      try {
+        setClientSearchLoading(true);
+        const clientsData = await ClientService.search_clients('');
+        setClients(clientsData);
+        setSearchOptions(clientsData.map(client => ({
+          value: client.id,
+          label: `${client.nom_client || client.name || client.client_name || 'Client sans nom'} (ID: ${client.id})`,
+          client: client
+        })));
+      } catch (error) {
+        console.error('Error fetching initial clients:', error);
+        notification.error({
+          message: 'Erreur',
+          description: 'Impossible de récupérer la liste des clients.'
+        });
+      } finally {
+        setClientSearchLoading(false);
+      }
     };
-  });
 
-  const handleReportParamChange = (e) => {
-    const { name, value } = e.target;
-    setReportParams({ ...reportParams, [name]: value });
+    fetchInitialClients();
+  }, []);
+
+  // Handle client search with improved loading state and fewer requests
+  const handleSearch = async (value) => {
+    setSearchText(value);
+    
+    if (value.length < 2 && value.length > 0) return;
+    
+    setIsSearching(true);
+    setClientSearchLoading(true);
+    
+    try {
+      const clientsData = await ClientService.search_clients(value);
+      setClients(clientsData);
+      
+      setSearchOptions(clientsData.map(client => ({
+        value: client.id,
+        label: `${client.nom_client || client.name || client.client_name || 'Client sans nom'} (ID: ${client.id})`,
+        client: client
+      })));
+    } catch (error) {
+      console.error('Error searching clients:', error);
+      notification.error({
+        message: 'Erreur',
+        description: 'Erreur lors de la recherche des clients.'
+      });
+    } finally {
+      setIsSearching(false);
+      setClientSearchLoading(false);
+    }
+  };
+  
+  // Create a debounced search function with longer delay to reduce requests
+  const debouncedSearch = debounce(handleSearch, 800);
+
+  // Handle client selection
+  const handleClientSelect = (value, option) => {
+    setSelectedClient(option.client);
+    fetchClientMaterials(option.value);
   };
 
-  const generateReport = () => {
-    const report = generateInventoryReport(
-      reportParams.clientId,
-      reportParams.startDate,
-      reportParams.endDate
+  // Function to get readable material type label
+  const getMaterialTypeLabel = (type) => {
+    const materialType = material_types.find(item => item.value === type);
+    return materialType ? materialType.label : type;
+  };
+
+  // Fetch client materials when a client is selected
+  const fetchClientMaterials = async (clientId) => {
+    setLoading(true);
+    try {
+      const response = await RawMaterialService.get_materials_by_client_id(clientId);
+      // Transform the data to display formatted material types
+      const formattedMaterials = response.map(material => ({
+        ...material,
+        display_type: getMaterialTypeLabel(material.type_matiere)
+      }));
+      setMaterials(formattedMaterials);
+    } catch (error) {
+      console.error('Error fetching materials:', error);
+      notification.error({
+        message: 'Erreur',
+        description: 'Impossible de récupérer la liste des matières premières.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Table columns
+  const columns = [
+    {
+      title: 'N° Bon de livraison',
+      dataIndex: 'delivery_note',
+      key: 'delivery_note',
+      render: (delivery_note, record) => record.delivery_note || '-',
+    },
+    {
+      title: 'Date de réception',
+      dataIndex: 'reception_date',
+      key: 'reception_date',
+      render: (date, record) => {
+        const value = record.reception_date || date;
+        return value ? moment(value).format('YYYY-MM-DD') : '-';
+      },
+    },
+    {
+      title: 'Type de matériau',
+      dataIndex: 'type_matiere',
+      key: 'type_matiere',
+      render: (type) => getMaterialTypeLabel(type),
+    },
+    {
+      title: 'Épaisseur (mm)',
+      dataIndex: 'thickness',
+      key: 'thickness',
+    },
+    {
+      title: 'Longueur (mm)',
+      dataIndex: 'length',
+      key: 'length',
+    },
+    {
+      title: 'Largeur (mm)',
+      dataIndex: 'width',
+      key: 'width',
+    },
+    {
+      title: 'Quantité',
+      dataIndex: 'quantite',
+      key: 'quantite',
+    },
+    {
+      title: 'Description',
+      dataIndex: 'description',
+      key: 'description',
+      ellipsis: true,
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Space size="middle">
+          <Button 
+            type="text"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+            aria-label="Modifier"
+          />
+          <Popconfirm
+            title="Êtes-vous sûr de vouloir supprimer cette matière première?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Oui"
+            cancelText="Non"
+          >
+            <Button 
+              type="text"
+              danger
+              size="small"
+              icon={<DeleteOutlined />}
+              aria-label="Supprimer"
+            />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  // Edit handler
+  const handleEdit = (material) => {
+    setEditingMaterial(material);
+    form.setFieldsValue({
+      ...material,
+      reception_date: moment(material.reception_date)
+    });
+    setIsModalVisible(true);
+  };
+
+  // Delete handler
+  const handleDelete = async (id) => {
+    try {
+      await RawMaterialService.delete_material(id);
+      setMaterials(materials.filter(material => material.id !== id));
+      notification.success({
+        message: 'Succès',
+        description: 'Matière première supprimée avec succès.'
+      });
+    } catch (error) {
+      notification.error({
+        message: 'Erreur',
+        description: 'Impossible de supprimer la matière première.'
+      });
+    }
+  };
+
+  // Generate delivery note number
+  const generateDeliveryNote = () => {
+    const year = moment().format('YYYY');
+    // Filter materials from current year
+    const currentYearMaterials = materials.filter(
+      m => moment(m.reception_date).format('YYYY') === year
     );
-    setInventoryReport(report);
+    const nextNumber = currentYearMaterials.length + 1;
+    return `BL-${year}-${String(nextNumber).padStart(3, '0')}`;
+  };
+
+  // Add new material handler
+  const handleAdd = () => {
+    if (!selectedClient) {
+      notification.error({
+        message: 'Erreur',
+        description: 'Veuillez sélectionner un client avant d\'ajouter une matière première.'
+      });
+      return;
+    }
+    
+    form.setFieldsValue({
+      delivery_note: generateDeliveryNote(),
+      reception_date: moment(),
+      type_matiere: undefined,
+      thickness: undefined,
+      length: undefined,
+      width: undefined,
+      quantite: undefined,
+      description: undefined,
+    });
+    setEditingMaterial(null);
+    setIsModalVisible(true);
+  };
+
+  // Process selected materials handler
+  const handleProcessSelectedMaterials = () => {
+    if (!selectedRowsData || selectedRowsData.length === 0) {
+      notification.error({ message: 'Aucune matière sélectionnée' });
+      return;
+    }
+    setBillableData(selectedRowsData);
+    setInvoiceNumber(generateInvoiceNumber());
+    setBillDate(moment().format('YYYY-MM-DD'));
+    setIsBillModalVisible(true);
+  };
+
+  // Print bill handler
+  const handlePrintBill = () => {
+    // Generate PDF with jsPDF and autoTable
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('Facture Matières Premières', 105, 15, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.text(`Facture N°: ${invoiceNumber}`, 14, 25);
+    doc.text(`Date: ${billDate}`, 150, 25);
+
+    doc.text(`Client: ${selectedClient ? selectedClient.client_name : ''}`, 14, 32);
+    doc.text(`ID Client: ${selectedClient ? selectedClient.id : ''}`, 150, 32);
+
+    // Table of materials
+    autoTable(doc, {
+      startY: 40,
+      head: [[
+        'N° Bon', 'Date réception', 'Type', 'Épaisseur', 'Longueur', 'Largeur', 'Quantité', 'Description'
+      ]],
+      body: billableData.map(item => [
+        item.delivery_note,
+        item.reception_date ? moment(item.reception_date).format('YYYY-MM-DD') : '',
+        getMaterialTypeLabel(item.type_matiere),
+        item.thickness,
+        item.length,
+        item.width,
+        item.quantite,
+        item.description || ''
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [50, 50, 50] }
+    });
+
+    // Total quantity
+    const total = billableData.reduce((sum, item) => sum + (item.quantite || 0), 0);
+    doc.text(`Total quantité: ${total}`, 14, doc.lastAutoTable.finalY + 10);
+
+    doc.save(`facture-matieres-${invoiceNumber}.pdf`);
+
+    // Optional: launch print after download
+    window.print();
+    notification.success({ message: 'Facture téléchargée et impression lancée' });
+  };
+
+  // Save bill handler
+  const handleSaveBill = async () => {
+    try {
+      // Adapt to your billing API
+      // Example:
+      // await InvoiceService.createInvoice({ 
+      //   invoiceNumber, 
+      //   billDate, 
+      //   items: billableData, 
+      //   clientId: selectedClient.id 
+      // });
+      notification.success({ message: 'Facture sauvegardée avec succès' });
+      setIsBillModalVisible(false);
+    } catch (e) {
+      notification.error({ message: 'Erreur lors de la sauvegarde' });
+    }
+  };
+
+  // Form submission handler
+  const handleSubmit = async (values) => {
+    try {
+      let newMaterial;
+      // Make sure we have a client selected
+      if (!selectedClient) {
+        notification.error({
+          message: 'Erreur',
+          description: 'Aucun client sélectionné.'
+        });
+        return;
+      }
+      
+      const clientId = selectedClient.id;
+      
+      if (editingMaterial) {
+        // Update existing material
+        newMaterial = await RawMaterialService.update_material(editingMaterial.id, {
+          ...values,
+          reception_date: values.reception_date.format('YYYY-MM-DD'),
+          client_id: clientId
+        });
+        // Add display_type for the updated material
+        newMaterial.display_type = getMaterialTypeLabel(newMaterial.type_matiere);
+        setMaterials(materials.map(material => 
+          material.id === editingMaterial.id ? newMaterial : material
+        ));
+        notification.success({
+          message: 'Succès',
+          description: 'Matière première modifiée avec succès.'
+        });
+      } else {
+        // Add new material
+        newMaterial = await RawMaterialService.add_material_to_client(clientId, {
+          ...values,
+          reception_date: values.reception_date.format('YYYY-MM-DD'),
+          client_id: clientId
+        });
+        // Add display_type for the new material
+        newMaterial.display_type = getMaterialTypeLabel(newMaterial.type_matiere);
+        setMaterials([...materials, newMaterial]);
+        notification.success({
+          message: 'Succès',
+          description: 'Matière première ajoutée avec succès.'
+        });
+      }
+      
+      setIsModalVisible(false);
+      form.resetFields();
+      setEditingMaterial(null);
+    } catch (error) {
+      console.error('Error saving material:', error);
+      notification.error({
+        message: 'Erreur',
+        description: 'Impossible de sauvegarder la matière première.'
+      });
+    }
+  };
+
+  // Cancel form handler
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    form.resetFields();
+    setEditingMaterial(null);
+  };
+
+  // Generate invoice number
+  const generateInvoiceNumber = () => {
+    const date = moment().format('YYYYMMDD');
+    return `INV-${date}-${Math.floor(Math.random() * 1000)}`;
+  };
+
+  // Row selection for table
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (keys, rows) => {
+      setSelectedRowKeys(keys);
+      setSelectedRowsData(rows);
+    },
   };
 
   return (
-    <div className="client-material-management">
-      <div className="header">
-        <h1>Gestion des Matières Premières Client</h1>
-        {activeTab === 'materials' && (
-          <button
-            className="add-material-btn"
-            data-bs-toggle="modal"
-            data-bs-target="#addClientMaterialModal"
-          >
-            <i className="fas fa-plus"></i> Réceptionner matière client
-          </button>
-        )}
-      </div>
-
-      <div className="tab-navigation">
-        <button
-          className={`tab-btn ${activeTab === 'materials' ? 'active' : ''}`}
-          onClick={() => setActiveTab('materials')}
-        >
-          <i className="fas fa-boxes"></i> Matières premières
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'delivery-notes' ? 'active' : ''}`}
-          onClick={() => setActiveTab('delivery-notes')}
-        >
-          <i className="fas fa-clipboard-list"></i> Bons de livraison
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'inventory' ? 'active' : ''}`}
-          onClick={() => setActiveTab('inventory')}
-        >
-          <i className="fas fa-tasks"></i> Inventaire et facturation
-        </button>
-      </div>
-
-      {activeTab === 'materials' && (
-        <>
-          <FilterSearch type="client-materials" />
-          <div className="stock-stats">
-            <div className="stat-box">
-              <h3>Total des matières client</h3>
-              <span className="stat-number">{filteredMaterials.length}</span>
-            </div>
-            <div className="stat-box">
-              <h3>Stock épuisé</h3>
-              <span className="stat-number">
-                {filteredMaterials.filter(m => m.remainingQuantity === 0).length}
-              </span>
-            </div>
+    <div className="client-materials-container">
+      <Card>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div>
+            <Title level={2}>Matières Premières Client</Title>
+            <Text type="secondary">
+              Gestion des matières premières reçues des clients pour la production
+            </Text>
           </div>
-          <ClientMaterialList materials={filteredMaterials} />
-        </>
-      )}
+        </div>
 
-      {activeTab === 'delivery-notes' && (
-        <>
-          <div className="filter-section">
-            <div className="filter-box">
-              <label htmlFor="clientFilter">Filtrer par client:</label>
-              <select
-                id="clientFilter"
-                onChange={(e) =>
-                  handleReportParamChange({
-                    target: { name: 'clientId', value: e.target.value },
-                  })
-                }
-              >
-                <option value="">Tous les clients</option>
-                {clients.map(client => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="date-filter">
-              <div className="date-range">
-                <label htmlFor="startDate">Du:</label>
-                <input
-                  type="date"
-                  id="startDate"
-                  name="startDate"
-                  value={reportParams.startDate}
-                  onChange={handleReportParamChange}
-                />
-              </div>
-
-              <div className="date-range">
-                <label htmlFor="endDate">Au:</label>
-                <input
-                  type="date"
-                  id="endDate"
-                  name="endDate"
-                  value={reportParams.endDate}
-                  onChange={handleReportParamChange}
-                />
-              </div>
-
-              <button className="filter-btn" onClick={() => setActiveTab('delivery-notes')}>
-                <i className="fas fa-filter"></i> Filtrer
-              </button>
-            </div>
+        <div style={{ marginBottom: 20 }}>
+          <Title level={4}>Rechercher un client</Title>
+          <div style={{ display: 'flex', gap: 16 }}>
+            <AutoComplete
+              style={{ width: '100%' }}
+              options={searchOptions}
+              onSearch={(value) => debouncedSearch(value)}
+              onSelect={handleClientSelect}
+              placeholder="Rechercher par nom ou ID client"
+              value={searchText}
+              onChange={setSearchText}
+              notFoundContent={clientSearchLoading ? <Spin size="small" /> : 'Aucun client trouvé'}
+            />
+            {/* Search button removed to make search more streamlined */}
           </div>
+        </div>
 
-          <DeliveryNoteList
-            deliveryNotes={deliveryNotes.filter(
-              note =>
-                (!reportParams.clientId || note.clientId === reportParams.clientId) &&
-                new Date(note.date) >= new Date(reportParams.startDate) &&
-                new Date(note.date) <= new Date(reportParams.endDate)
-            )}
-          />
-        </>
-      )}
-
-      {activeTab === 'inventory' && (
-        <div className="inventory-section">
-          <div className="report-form">
-            <h3>Générer un rapport d'inventaire</h3>
-            <div className="form-group">
-              <label htmlFor="reportClient">Client:</label>
-              <select
-                id="reportClient"
-                name="clientId"
-                value={reportParams.clientId}
-                onChange={handleReportParamChange}
-                required
-              >
-                <option value="">Sélectionner un client</option>
-                {clients.map(client => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="reportStartDate">Date début:</label>
-                <input
-                  type="date"
-                  id="reportStartDate"
-                  name="startDate"
-                  value={reportParams.startDate}
-                  onChange={handleReportParamChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="reportEndDate">Date fin:</label>
-                <input
-                  type="date"
-                  id="reportEndDate"
-                  name="endDate"
-                  value={reportParams.endDate}
-                  onChange={handleReportParamChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <button
-              className="generate-btn"
-              onClick={generateReport}
-              disabled={!reportParams.clientId}
-            >
-              <i className="fas fa-file-invoice"></i> Générer le rapport
-            </button>
-          </div>
-
-          {inventoryReport && (
-            <div className="inventory-report">
-              <div className="report-header">
-                <h3>
-                  Rapport d'inventaire -{' '}
-                  {clients.find(c => c.id === inventoryReport.client)?.name}
-                </h3>
-                <p>
-                  Période: {new Date(inventoryReport.period.startDate).toLocaleDateString()} au{' '}
-                  {new Date(inventoryReport.period.endDate).toLocaleDateString()}
-                </p>
-                <div className="actions">
-                  <button className="print-btn">
-                    <i className="fas fa-print"></i> Imprimer
-                  </button>
-                  <button className="invoice-btn">
-                    <i className="fas fa-file-invoice-dollar"></i> Créer une facture
-                  </button>
+        {selectedClient && (
+          <>
+            <div className="client-info" style={{ marginBottom: 16 }}>
+              <Card size="small" title="Client sélectionné">
+                <div style={{ display: 'flex', gap: 16 }}>
+                  <div>
+                    <Text strong>Nom du client: </Text>
+                    <Text>{selectedClient.nom_client || selectedClient.name || selectedClient.client_name || 'N/A'}</Text>
+                  </div>
+                  <Divider type="vertical" />
+                  <div>
+                    <Text strong>ID Client: </Text>
+                    <Text>{selectedClient.id || 'N/A'}</Text>
+                  </div>
                 </div>
-              </div>
+              </Card>
+            </div>
 
-              <div className="report-section">
-                <h4>Matières premières reçues</h4>
-                <table className="report-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Bon de livraison</th>
-                      <th>Matériau</th>
-                      <th>Dimensions</th>
-                      <th>Quantité</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {inventoryReport.receivedMaterials.map(note =>
-                      note.items.map((item, index) => (
-                        <tr key={`${note.id}-${index}`}>
-                          <td>{new Date(note.date).toLocaleDateString()}</td>
-                          <td>{note.deliveryNoteNumber}</td>
-                          <td>{item.material}</td>
-                          <td>
-                            {item.length}×{item.width}×{item.thickness}mm
-                          </td>
-                          <td>{item.quantity}</td>
-                        </tr>
-                      ))
-                    )}
-                    {inventoryReport.receivedMaterials.length === 0 && (
-                      <tr>
-                        <td colSpan="5" className="no-data">
-                          Aucune matière reçue sur cette période
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />}
+                onClick={handleAdd}
+              >
+                Ajouter une matière première
+              </Button>
+              {selectedRowKeys.length > 0 && (
+                <Button
+                  type="primary"
+                  onClick={handleProcessSelectedMaterials}
+                >
+                  Préparer la facture ({selectedRowKeys.length} matière(s) sélectionnée(s))
+                </Button>
+              )}
+            </div>
 
-              <div className="report-section">
-                <h4>Pièces découpées livrées</h4>
-                <table className="report-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Bon de livraison</th>
-                      <th>Description</th>
-                      <th>Dimensions</th>
-                      <th>Quantité</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {inventoryReport.deliveryNotes.map(note =>
-                      note.items.map((item, index) => (
-                        <tr key={`${note.id}-${index}`}>
-                          <td>{new Date(note.date).toLocaleDateString()}</td>
-                          <td>{note.deliveryNoteNumber}</td>
-                          <td>{item.description || '-'}</td>
-                          <td>
-                            {item.length}×{item.width}×{item.thickness}mm
-                          </td>
-                          <td>{item.quantity}</td>
-                        </tr>
-                      ))
-                    )}
-                    {inventoryReport.deliveryNotes.length === 0 && (
-                      <tr>
-                        <td colSpan="5" className="no-data">
-                          Aucune pièce livrée sur cette période
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+            <Table
+              columns={columns}
+              dataSource={materials}
+              rowKey="id"
+              loading={loading}
+              pagination={{ pageSize: 10 }}
+              rowSelection={rowSelection}
+            />
+          </>
+        )}
 
-              <div className="report-section">
-                <h4>Matériel restant en stock</h4>
-                <table className="report-table">
-                  <thead>
-                    <tr>
-                      <th>Matériau</th>
-                      <th>Épaisseur</th>
-                      <th>Quantité initiale</th>
-                      <th>Quantité restante</th>
-                      <th>Utilisation (%)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {inventoryReport.remainingStock.map(stock => (
-                      <tr key={stock.id}>
-                        <td>{stock.material}</td>
-                        <td>{stock.thickness} mm</td>
-                        <td>{stock.initialQuantity}</td>
-                        <td>{stock.remainingQuantity}</td>
-                        <td>
-                          {Math.round(
-                            (1 - stock.remainingQuantity / stock.initialQuantity) * 100
-                          )}
-                          %
-                        </td>
-                      </tr>
-                    ))}
-                    {inventoryReport.remainingStock.length === 0 && (
-                      <tr>
-                        <td colSpan="5" className="no-data">
-                          Aucun stock pour ce client
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+        {!selectedClient && !loading && (
+          <Empty 
+            description="Veuillez sélectionner un client pour voir ses matières premières"
+            image={Empty.PRESENTED_IMAGE_SIMPLE} 
+          />
+        )}
+      </Card>
+
+      {/* Modal for adding or editing material */}
+      <Modal
+        title={editingMaterial ? "Modifier une matière première" : "Réception de matière première client"}
+        open={isModalVisible}
+        onCancel={handleCancel}
+        footer={null}
+        width={800}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSubmit}
+        >
+          {selectedClient && (
+            <div style={{ marginBottom: 16 }}>
+              <Title level={4}>Informations client</Title>
+              <div style={{ display: 'flex', gap: 16 }}>
+                <Form.Item
+                  label="Nom du client"
+                  style={{ flex: 1 }}
+                >
+                  <Input value={selectedClient.nom_client || selectedClient.name || selectedClient.client_name || 'N/A'} disabled />
+                </Form.Item>
+                <Form.Item
+                  label="ID Client"
+                  style={{ flex: 1 }}
+                >
+                  <Input value={selectedClient.id} disabled />
+                </Form.Item>
               </div>
             </div>
           )}
-        </div>
-      )}
 
-      <div
-        className="modal fade"
-        id="addClientMaterialModal"
-        tabIndex="-1"
-        aria-labelledby="addClientMaterialModalLabel"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="addClientMaterialModalLabel">
-                Réception de matière première client
-              </h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div className="modal-body">
-              <ClientMaterialForm />
+          <div style={{ marginBottom: 16 }}>
+            <Title level={4}>Informations livraison</Title>
+            <div style={{ display: 'flex', gap: 16 }}>
+              <Form.Item
+                name="delivery_note"
+                label="N° Bon de livraison"
+                rules={[{ required: true, message: 'Veuillez saisir le numéro de bon de livraison' }]}
+                style={{ flex: 1 }}
+              >
+                <Input placeholder="Ex: BL-2023-001" disabled={!editingMaterial} />
+              </Form.Item>
+              <Form.Item
+                name="reception_date"
+                label="Date de réception"
+                rules={[{ required: true, message: 'Veuillez sélectionner une date' }]}
+                style={{ flex: 1 }}
+              >
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
             </div>
           </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <Title level={4}>Caractéristiques du matériau</Title>
+            <div style={{ display: 'flex', gap: 16 }}>
+              <Form.Item
+                name="type_matiere"
+                label="Type de matériau"
+                rules={[{ required: true, message: 'Veuillez sélectionner un type de matériau' }]}
+                style={{ flex: 1 }}
+              >
+                <Select placeholder="Sélectionnez un type">
+                  {material_types.map(type => (
+                    <Option key={type.value} value={type.value}>{type.label}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="thickness"
+                label="Épaisseur (mm)"
+                rules={[{ required: true, message: 'Veuillez saisir l\'épaisseur' }]}
+                style={{ flex: 1 }}
+              >
+                <InputNumber style={{ width: '100%' }} min={0} step={0.1} precision={1} />
+              </Form.Item>
+            </div>
+            
+            <div style={{ display: 'flex', gap: 16 }}>
+              <Form.Item
+                name="length"
+                label="Longueur (mm)"
+                rules={[{ required: true, message: 'Veuillez saisir la longueur' }]}
+                style={{ flex: 1 }}
+              >
+                <InputNumber style={{ width: '100%' }} min={0} />
+              </Form.Item>
+              <Form.Item
+                name="width"
+                label="Largeur (mm)"
+                rules={[{ required: true, message: 'Veuillez saisir la largeur' }]}
+                style={{ flex: 1 }}
+              >
+                <InputNumber style={{ width: '100%' }} min={0} />
+              </Form.Item>
+              <Form.Item
+                name="quantite"
+                label="Quantité"
+                rules={[{ required: true, message: 'Veuillez saisir la quantité' }]}
+                style={{ flex: 1 }}
+              >
+                <InputNumber style={{ width: '100%' }} min={1} precision={0} />
+              </Form.Item>
+            </div>
+            
+            <Form.Item
+              name="description"
+              label="Description / Observations"
+            >
+              <Input.TextArea rows={4} placeholder="Observations supplémentaires sur la matière première..." />
+            </Form.Item>
+          </div>
+
+          <Form.Item>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 16 }}>
+              <Button onClick={handleCancel}>
+                Annuler
+              </Button>
+              <Button type="primary" htmlType="submit">
+                {editingMaterial ? 'Mettre à jour' : 'Enregistrer'}
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modal for bill preparation */}
+      <Modal
+        title="Préparation de la Facture"
+        open={isBillModalVisible}
+        width={900}
+        onCancel={() => setIsBillModalVisible(false)}
+        footer={[
+          <Button key="back" onClick={() => setIsBillModalVisible(false)}>
+            Annuler
+          </Button>,
+          <Button 
+            key="save" 
+            icon={<SaveOutlined />}
+            onClick={handleSaveBill}
+          >
+            Sauvegarder
+          </Button>,
+          <Button 
+            key="print" 
+            type="primary" 
+            icon={<PrinterOutlined />}
+            onClick={handlePrintBill}
+          >
+            Imprimer la facture
+          </Button>
+        ]}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <div className="client-info">
+            <Text strong>Client: </Text>
+            <Text>{selectedClient ? (selectedClient.nom_client || selectedClient.name || selectedClient.client_name || 'N/A') : 'N/A'}</Text>
+            <Divider type="vertical" />
+            <Text strong>ID Client: </Text>
+            <Text>{selectedClient?.id || 'N/A'}</Text>
+          </div>
         </div>
-      </div>
+        
+        <div style={{ textAlign: 'right', marginBottom: '10px' }}>
+          <Text strong>Facture N°: </Text>
+          <Input
+            value={invoiceNumber}
+            onChange={e => setInvoiceNumber(e.target.value)}
+            style={{ width: 200 }}
+          />
+        </div>
+        <div>
+          <Form layout="vertical">
+            <Form.Item label="Date de facturation">
+              <DatePicker 
+                style={{ width: '100%' }}
+                value={moment(billDate)}
+                onChange={(date) => setBillDate(date ? date.format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'))}
+              />
+            </Form.Item>
+          </Form>
+          <Divider />
+          <Table
+            dataSource={billableData}
+            rowKey="id"
+            pagination={false}
+            columns={[
+              {
+                title: 'N° Bon de livraison',
+                dataIndex: 'delivery_note',
+                key: 'delivery_note',
+                render: (text, record, idx) => (
+                  <Input
+                    value={record.delivery_note}
+                    onChange={e => {
+                      const newData = [...billableData];
+                      newData[idx].delivery_note = e.target.value;
+                      setBillableData(newData);
+                    }}
+                  />
+                )
+              },
+              {
+                title: 'Date de réception',
+                dataIndex: 'reception_date',
+                key: 'reception_date',
+                render: (date, record, idx) => (
+                  <DatePicker
+                    style={{ width: '100%' }}
+                    value={record.reception_date ? moment(record.reception_date) : null}
+                    onChange={d => {
+                      const newData = [...billableData];
+                      newData[idx].reception_date = d ? d.format('YYYY-MM-DD') : '';
+                      setBillableData(newData);
+                    }}
+                  />
+                )
+              },
+              {
+                title: 'Type de matériau',
+                dataIndex: 'type_matiere',
+                key: 'type_matiere',
+                render: (type, record, idx) => (
+                  <Select
+                    value={record.type_matiere}
+                    style={{ width: '100%' }}
+                    onChange={value => {
+                      const newData = [...billableData];
+                      newData[idx].type_matiere = value;
+                      setBillableData(newData);
+                    }}
+                  >
+                    {material_types.map(typeOpt => (
+                      <Option key={typeOpt.value} value={typeOpt.value}>{typeOpt.label}</Option>
+                    ))}
+                  </Select>
+                )
+              },
+              {
+                title: 'Épaisseur (mm)',
+                dataIndex: 'thickness',
+                key: 'thickness',
+                render: (value, record, idx) => (
+                  <InputNumber
+                    style={{ width: '100%' }}
+                    min={0}
+                    value={value}
+                    onChange={val => {
+                      const newData = [...billableData];
+                      newData[idx].thickness = val;
+                      setBillableData(newData);
+                    }}
+                  />
+                )
+              },
+              {
+                title: 'Quantité',
+                dataIndex: 'quantite',
+                key: 'quantite',
+                render: (value, record, idx) => (
+                  <InputNumber
+                    style={{ width: '100%' }}
+                    min={1}
+                    value={value}
+                    onChange={val => {
+                      const newData = [...billableData];
+                      newData[idx].quantite = val;
+                      setBillableData(newData);
+                    }}
+                  />
+                )
+              },
+              {
+                title: 'Description',
+                dataIndex: 'description',
+                key: 'description',
+                ellipsis: true,
+                render: (value, record, idx) => (
+                  <Input
+                    value={value}
+                    onChange={e => {
+                      const newData = [...billableData];
+                      newData[idx].description = e.target.value;
+                      setBillableData(newData);
+                    }}
+                  />
+                )
+              },
+            ]}
+            summary={pageData => {
+              const total = pageData.reduce((sum, item) => sum + (item.quantite || 0), 0);
+              return (
+                <Table.Summary.Row>
+                  <Table.Summary.Cell index={0} colSpan={4}><b>Total</b></Table.Summary.Cell>
+                  <Table.Summary.Cell index={4}><b>{total}</b></Table.Summary.Cell>
+                  <Table.Summary.Cell index={5} />
+                </Table.Summary.Row>
+              );
+            }}
+          />
+        </div>
+      </Modal>
     </div>
   );
-}
+};
 
-export default ClientMaterialManagement;
+export default ClientRawMaterialsPage;
