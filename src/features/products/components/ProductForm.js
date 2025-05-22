@@ -131,11 +131,13 @@ const ProductForm = ({ onSuccess, onCancel, isModal = false }) => {
           rules={[{ required: true, message: 'Le type de matériau est obligatoire' }]}
         >
           <Select placeholder="Sélectionner un matériau">
-            <Option value="inox">Inox</Option>
-            <Option value="fer">Fer</Option>
+            <Option value="acier">Acier</Option>
+            <Option value="inox">Acier inoxydable</Option>
             <Option value="aluminium">Aluminium</Option>
-            <Option value="cuivre">Cuivre</Option>
             <Option value="laiton">Laiton</Option>
+            <Option value="cuivre">Cuivre</Option>
+            <Option value="acier_galvanise">Acier galvanisé</Option>
+            <Option value="autre">Autre</Option>
           </Select>
         </Form.Item>
         
