@@ -246,14 +246,16 @@ function ClientMaterialCard({ material }) {
               </div>
               
               <div className="info-item">
-                <span className="info-label">Bon de livraisondddd:</span>
+                <span className="info-label">Bon de livraison:</span>
                 <span className="info-value">{material.deliveryNote}</span>
               </div>
               
               <div className="info-item">
                 <span className="info-label">Date de réception:</span>
                 <span className="info-value">
-                  {new Date(material.receiptDate).toLocaleDateString()}
+                  {material.receiptDate
+                    ? new Date(material.receiptDate).toLocaleDateString()
+                    : ''}
                 </span>
               </div>
               
