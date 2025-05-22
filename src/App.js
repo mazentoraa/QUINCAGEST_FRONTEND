@@ -18,8 +18,9 @@ import './App.css';
 
 // Simple PrivateRoute component
 const PrivateRoute = ({ children }) => {
-  const user = AuthService.getCurrentUser();
-  return user ? children : <Navigate to="/login" />;
+  // const user = AuthService.getCurrentUser();
+  // return user ? children : <Navigate to="/login" />;
+  return children;
 };
 
 function App() {
