@@ -1,4 +1,5 @@
-import { jsPDF, autoTable } from './pdfSetup'; // Changed import
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // Fonction pour générer un PDF de facture
 export const generateInvoicePDF = (order, client, products) => {
