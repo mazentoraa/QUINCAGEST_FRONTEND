@@ -11,25 +11,20 @@ class InvoiceService {
    * @param {number} clientId - ID of the client for this invoice
    * @returns {Promise<Object>} - The created invoice
    */
-  async createInvoice(invoiceData, workIds, clientId) {
+  async createInvoice(invoiceData, clientId) {
     try {
       if (!clientId) {
         throw new Error("Client ID is required");
       }
-      
-      if (!workIds || workIds.length === 0) {
-        throw new Error("At least one work item is required");
-      }
-      
+
       const requestData = {
         ...invoiceData,
         context: {
             client : clientId,
           client_id: clientId,
-          travaux_ids: workIds
         }
       };
-      
+
       const response = await axios.post(`${API_URL}/factures/`, requestData);
       return response.data;
     } catch (error) {

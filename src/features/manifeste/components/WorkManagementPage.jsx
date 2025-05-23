@@ -674,42 +674,79 @@ const WorkManagementPage = () => {
       }
 
       // Extract client ID from the first item (all items should be for the same client)
-      const clientId = billableData[0].client_id || billableData[0].clientDetails?.id;
+      // Ensure clientDetails is preferred if available, otherwise fallback to client object
+      const firstBillableItemClient = billableData[0].clientDetails || billableData[0].client;
+      const clientId = firstBillableItemClient?.id;
       
       if (!clientId) {
-        message.error('ID du client manquant');
+        message.error('ID du client manquant dans les données à facturer.');
         return false;
       }
 
-      // Get work IDs from billable data
-      const workIds = billableData.map(item => item.id);
+      // Construct the detailed line items for the invoice
+      const lineItems = billableData.map(item => {
+        // Ensure product details are available
+        const produitName = item.produit_name || item.produit?.nom_produit || 'Produit inconnu';
+        const produitId = item.produit_id || item.produit?.id;
 
-      // Create a data object to save
-      const invoiceData = {
+        return {
+          work_id: item.id, // Original Work ID
+          produit_id: produitId,
+          produit_name: produitName,
+          description_travail: item.description, // Description from the work item
+          quantite_produit: item.billable.quantite_produit,
+          prix_unitaire_produit: item.billable.prix_unitaire_produit,
+          matiere_usages: (item.matiere_usages || []).map(mat => ({
+            matiere_id: mat.matiere_id,
+            nom_matiere: mat.nom_matiere || mat.designation || 'Matériau inconnu',
+            type_matiere: mat.type_matiere || '',
+            thickness: mat.thickness,
+            length: mat.length,
+            width: mat.width,
+            quantite_utilisee: mat.quantite_utilisee,
+            prix_unitaire: mat.prix_unitaire, // Unit price of the material from the bill modal
+          })),
+        };
+      });
+
+      // Create the complete data object to save
+      const invoiceToPost = {
         client_id: clientId,
         client: clientId,
         numero_facture: invoiceNumber,
         tax_rate: taxRate, 
         date_emission: billDate,
         date_echeance: moment(billDate).add(30, 'days').format('YYYY-MM-DD'), // Default due date 30 days from bill date
-        statut: 'draft',
-        travaux_ids: workIds,
+        statut: 'draft', // Or any other appropriate status
+        line_items: lineItems,
+        // Optionally, include totals if the backend expects them, otherwise, it can calculate them.
+        // total_ht: billableData.reduce(...), // Calculate total HT based on line_items
+        // total_ttc: billableData.reduce(...), // Calculate total TTC
       };
 
+      // Log the data that will be posted
+      console.log('Data to be posted for invoice:', JSON.stringify(invoiceToPost, null, 2));
 
       // Show loading message
       message.loading({ content: 'Enregistrement de la facture...', key: 'savingInvoice' });
       
-      // Use InvoiceService to save the invoice
-      const savedInvoice = await InvoiceService.createInvoice(invoiceData, workIds, clientId);
+      // Use InvoiceService to save the invoice.
+      // The InvoiceService.createInvoice method should be adapted to accept this single object.
+      const savedInvoice = await InvoiceService.createInvoice(invoiceToPost, clientId);
+
+      message.success({ content: 'Facture enregistrée avec succès!', key: 'savingInvoice', duration: 2 });
+      console.log('Saved invoice response:', savedInvoice);
       
-      message.success({ content: 'Facture enregistrée avec succès', key: 'savingInvoice', duration: 2 });
-      console.log('Saved invoice:', savedInvoice);
-      
+      // Optionally, update the local state if the backend returns the full saved invoice object
+      // For example, if the backend assigns an ID to the invoice or line items:
+      // setInvoiceNumber(savedInvoice.numero_facture); // If it can change or be assigned by backend
+      // setBillableData( ... updated billableData with IDs from savedInvoice.line_items ... );
+
       return true;
     } catch (error) {
       console.error('Error saving invoice data:', error);
-      message.error({ content: `Erreur lors de l'enregistrement de la facture: ${error.message}`, key: 'savingInvoice', duration: 3 });
+      const errorMessage = error.response?.data?.detail || error.message || "Erreur inconnue";
+      message.error({ content: `Erreur lors de l'enregistrement: ${errorMessage}`, key: 'savingInvoice', duration: 4 });
       return false;
     }
   };
