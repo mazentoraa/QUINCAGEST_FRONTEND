@@ -222,12 +222,13 @@ const ClientRawMaterialsPage = () => {
   // Génère un numéro de bon de livraison unique basé sur l'année et le nombre de bons existants
   const generateDeliveryNote = () => {
     const year = moment().format('YYYY');
-    // Filtrer les matières de l'année courante
-    const currentYearMaterials = materials.filter(
-      m => moment(m.reception_date).format('YYYY') === year
-    );
-    const nextNumber = currentYearMaterials.length + 1;
-    return `BL-${year}-${String(nextNumber).padStart(3, '0')}`;
+    // Using a combination of timestamp (milliseconds) and a random number for higher uniqueness
+    const timestamp = moment().valueOf(); // Milliseconds since epoch
+    // Random number between 0 and 9999
+    const randomNumber1 = Math.floor(Math.random() * 10000).toString().padStart(2, '0'); // Random 2-digit number
+
+    const randomNumber2 = Math.floor(Math.random() * 10000).toString().padStart(2, '0'); // Random 2-digit number
+    return `BL-${randomNumber1}-${randomNumber2}`;
   };
 
   // Ouvre le modal pour ajouter une matière première avec un numéro de bon généré automatiquement
