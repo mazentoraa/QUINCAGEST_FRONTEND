@@ -40,7 +40,7 @@ const WorkManagementPage = () => {
   const [clientSearchLoading, setClientSearchLoading] = useState(false);
   const [productSearchLoading, setProductSearchLoading] = useState(false);
   
-  // Add new state for client materials
+  // Add new state for client materials - RESTORED
   const [clientMaterials, setClientMaterials] = useState([]);
   const [selectedMaterials, setSelectedMaterials] = useState([]);
   const [loadingMaterials, setLoadingMaterials] = useState(false);
@@ -154,10 +154,12 @@ const WorkManagementPage = () => {
       description: record.description
     });
     
-    // Fetch materials for this client
-    handleClientChange(record.client_id);
+    // Fetch materials for this client - RESTORED
+    if (record.client_id) {
+      handleClientChange(record.client_id);
+    }
     
-    // Pre-populate selected materials if record has matiere_usages
+    // Pre-populate selected materials if record has matiere_usages - RESTORED
     if (record.matiere_usages && record.matiere_usages.length > 0) {
       const initialSelectedMaterials = record.matiere_usages.map(usage => ({
         materialId: usage.matiere_id,
@@ -181,8 +183,13 @@ const WorkManagementPage = () => {
     }
   };
 
+  // handleClientChange - RESTORED
   const handleClientChange = async (clientId) => {
-    if (!clientId) return;
+    if (!clientId) {
+      setClientMaterials([]);
+      setSelectedMaterials([]);
+      return;
+    }
     
     setLoadingMaterials(true);
     try {
@@ -193,15 +200,23 @@ const WorkManagementPage = () => {
       setSelectedMaterials([]); // Reset selected materials when client changes
     } catch (error) {
       console.error('Error fetching client materials:', error);
-      message.error('Erreur lors du chargement des matières premières');
+      message.error('Erreur lors du chargement des matières premières du client.');
     } finally {
       setLoadingMaterials(false);
     }
   };
 
+  // handleMaterialSelect - RESTORED
   const handleMaterialSelect = (materialId, quantite) => {
     const existingIndex = selectedMaterials.findIndex(m => m.materialId === materialId);
     
+    if (quantite === null || quantite === 0) { // If quantity is cleared or zero, remove it
+      if (existingIndex >=0) {
+        setSelectedMaterials(selectedMaterials.filter(m => m.materialId !== materialId));
+      }
+      return;
+    }
+
     if (existingIndex >= 0) {
       const updatedMaterials = [...selectedMaterials];
       updatedMaterials[existingIndex].quantite = quantite;
@@ -211,6 +226,7 @@ const WorkManagementPage = () => {
     }
   };
   
+  // handleRemoveMaterial - RESTORED
   const handleRemoveMaterial = (materialId) => {
     setSelectedMaterials(selectedMaterials.filter(m => m.materialId !== materialId));
   };
@@ -219,7 +235,7 @@ const WorkManagementPage = () => {
     try {
       const workData = {
         ...values,
-        materialsUsed: selectedMaterials
+        materialsUsed: selectedMaterials // RESTORED
       };
       
       if (editingWork) {
@@ -234,6 +250,7 @@ const WorkManagementPage = () => {
       
       setSelectedMaterials([]);
       setClientMaterials([]);
+      form.resetFields();
     } catch (error) {
       message.error('Erreur lors de l\'enregistrement');
     }
@@ -328,10 +345,10 @@ const WorkManagementPage = () => {
         // Add billable data fields with default values
         enrichedWork.billable = {
           date_facturation: moment().format('YYYY-MM-DD'),
-          prix_unitaire: 0,
-          quantite: enrichedWork.quantite || 1,
+          prix_unitaire_produit: work.produit?.prix_unitaire || 0, // Price for the product itself
+          quantite_produit: enrichedWork.quantite || 1, // Quantity of the product
           taxe: taxRate,
-          total_ht: 0
+          // total_ht will be calculated dynamically in the modal/PDF
         };
 
         return enrichedWork;
@@ -461,7 +478,7 @@ const WorkManagementPage = () => {
       key: 'description',
       ellipsis: true,
     },
-    {
+    { // RESTORED Matériaux utilisés column
       title: 'Matériaux utilisés',
       key: 'materials',
       render: (_, record) => (
@@ -515,77 +532,77 @@ const WorkManagementPage = () => {
       
       
       const clientData = billableData[0].clientDetails || billableData[0].client || {};
-      
-      // Title and header
-      doc.setFontSize(20);
-      doc.text('FACTURE', 105, 20, { align: 'center' });
-      
-      // Add current date
-      doc.setFontSize(10);
-      doc.text(`Date: ${billDate}`, 170, 30, { align: 'right' });
-      doc.text(`Facture N°: ${invoiceNumber}`, 170, 35, { align: 'right' });
-      
-      // Company info (replace with your company info)
-      doc.setFontSize(16);
-      doc.text('Votre Société', 20, 30);
-      doc.setFontSize(10);
-      doc.text('Adresse: 123 Rue de la Métallurgie, Tunis', 20, 35);
-      doc.text('Tél: +216 xx xxx xxx', 20, 40);
-      doc.text('Email: contact@societe.com', 20, 45);
-      
-      // Divider
-      doc.line(20, 50, 190, 50);
-      
-      // Client Information
-      doc.setFontSize(14);
-      doc.text('Client', 20, 60);
-      doc.setFontSize(10);
-      doc.text(`Nom: ${clientData.nom_cf || clientData.nom_client || 'N/A'}`, 20, 65);
-      doc.text(`Adresse: ${clientData.adresse || 'N/A'}`, 20, 70);
-      doc.text(`Matricule Fiscale: ${clientData.matricule_fiscale || clientData.numero_fiscal || 'N/A'}`, 20, 75);
-      doc.text(`Tél: ${clientData.tel || clientData.telephone || 'N/A'}`, 20, 80);
-      
-      // Table for works
-      const tableColumn = ["Description", "Quantité", "Prix unitaire (DT)", "Total HT (DT)"];
-      let tableRows = [];
-      let currentY = 90;
-      let totalHT = 0;
-      
-      // Add each work item to the table
-      billableData.forEach((item) => {
-        // Product itself is not directly billed, only its materials
-        // const workTotal = item.billable.prix_unitaire * item.billable.quantite; 
-        // totalHT += workTotal; // Product cost is not added to totalHT
         
-        // tableRows.push([
-        //   item.produit_name + (item.description ? ` - ${item.description}` : ''),
-        //   item.billable.quantite,
-        //   item.billable.prix_unitaire.toFixed(3),
-        //   workTotal.toFixed(3)
-        // ]);
+        // Title and header
+        doc.setFontSize(20);
+        doc.text('FACTURE', 105, 20, { align: 'center' });
+        
+        // Add current date
+        doc.setFontSize(10);
+        doc.text(`Date: ${billDate}`, 170, 30, { align: 'right' });
+        doc.text(`Facture N°: ${invoiceNumber}`, 170, 35, { align: 'right' });
+        
+        // Company info (replace with your company info)
+        doc.setFontSize(16);
+        doc.text('Votre Société', 20, 30);
+        doc.setFontSize(10);
+        doc.text('Adresse: 123 Rue de la Métallurgie, Tunis', 20, 35);
+        doc.text('Tél: +216 xx xxx xxx', 20, 40);
+        doc.text('Email: contact@societe.com', 20, 45);
+        
+        // Divider
+        doc.line(20, 50, 190, 50);
+        
+        // Client Information
+        doc.setFontSize(14);
+        doc.text('Client', 20, 60);
+        doc.setFontSize(10);
+        doc.text(`Nom: ${clientData.nom_cf || clientData.nom_client || 'N/A'}`, 20, 65);
+        doc.text(`Adresse: ${clientData.adresse || 'N/A'}`, 20, 70);
+        doc.text(`Matricule Fiscale: ${clientData.matricule_fiscale || clientData.numero_fiscal || 'N/A'}`, 20, 75);
+        doc.text(`Tél: ${clientData.tel || clientData.telephone || 'N/A'}`, 20, 80);
+        
+        // Table for works
+        const tableColumn = ["ID Produit", "Description", "Quantité", "Prix unitaire (DT)", "Total HT (DT)"];
+        let tableRows = [];
+        let currentY = 90;
+        let totalHT = 0;
+        
+        // Add each work item to the table
+        billableData.forEach((item) => {
+        const productTotal = (item.billable.prix_unitaire_produit || 0) * (item.billable.quantite_produit || 0);
+        totalHT += productTotal;
+        
+        const productLineDescription = (item.produit_name || 'N/A') + 
+                 (item.description ? ` (Produit - ${item.description})` : ' (Produit)');
+
+        tableRows.push([
+          item.produit_id || '',
+          productLineDescription,
+          item.billable.quantite_produit || item.quantite, // Use quantite_produit from billable, fallback to item.quantite
+          (item.billable.prix_unitaire_produit || 0).toFixed(3),
+          productTotal.toFixed(3)
+        ]);
         
         // If the item has materials, add them to the table
         if (item.matiere_usages && item.matiere_usages.length > 0) {
-          // Add a header for the work item if multiple works are billed, or just list materials
-          // For simplicity, if there's a product name, we can use it as a section header implicitly
-          // or add a specific row if needed. Here, we just list materials.
-          // If you want to show which product these materials belong to, you might add a non-financial row:
-          // tableRows.push([{content: `Matériaux pour: ${item.produit_name}`, colSpan: 4, styles: { fontStyle: 'italic', textColor: [100,100,100]}}]);
-
-
           item.matiere_usages.forEach(mat => {
-            const matTotal = mat.prix_unitaire * mat.quantite_utilisee;
-            totalHT += matTotal; // Only material costs contribute to totalHT
-            
-            tableRows.push([
-              `Matériau: ${mat.nom_matiere} (${mat.type_matiere}) - ${mat.thickness || ''}×${mat.length || ''}×${mat.width || ''} mm (Pour ${item.produit_name})`,
-              mat.quantite_utilisee,
-              mat.prix_unitaire.toFixed(3),
-              matTotal.toFixed(3)
-            ]);
+          const matTotal = (mat.prix_unitaire || 0) * (mat.quantite_utilisee || 0);
+          
+          if (matTotal > 0) { // Only add if total is greater than 0
+          totalHT += matTotal; 
+          
+          tableRows.push([
+            '', // Empty for Product ID column for materials
+            `  Matériau: ${mat.nom_matiere || mat.designation} (${mat.type_matiere || ''}) ${mat.thickness || ''}x${mat.length || ''}x${mat.width || ''}mm`,
+            mat.quantite_utilisee,
+            mat.prix_unitaire ? (mat.prix_unitaire).toFixed(3) : '0.000', // Display 0.000 if no price
+            matTotal.toFixed(3)
+          ]);
+          }
           });
         }
-      });
+        });
       
       try {
         // Use our custom drawTable function
@@ -814,55 +831,60 @@ const WorkManagementPage = () => {
               />
             </Form.Item>
 
+            {/* RESTORED clientMaterials and selectedMaterials sections */}
             {clientMaterials.length > 0 && (
               <div style={{ marginBottom: 16 }}>
-                <Divider orientation="left">Matières Premières Disponibles</Divider>
+                <Divider orientation="left">Matières Premières Disponibles pour ce Client</Divider>
                 <List
                   loading={loadingMaterials}
                   dataSource={clientMaterials}
-                  renderItem={(material) => (
-                    <List.Item>
-                      <Card 
-                        style={{ width: '100%' }} 
-                        size="small"
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <Tag color="blue">{material.type_matiere || material.materialType}</Tag>
-                              <span>
-                                {material?.thickness != null ? `${material.thickness}mm` : '-'} × 
-                                {material?.length != null ? `${material.length}mm` : '-'} × 
-                                {material?.width != null ? `${material.width}mm` : '-'}
-                              </span>
+                  renderItem={(material) => {
+                    const currentSelection = selectedMaterials.find(sm => sm.materialId === material.id);
+                    return (
+                      <List.Item>
+                        <Card style={{ width: '100%' }} size="small">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                              <Text type="secondary">Disponible: {material.remaining_quantity}</Text>
+                              <Tag color="blue">{material.type_matiere || material.materialType}</Tag>
+                              <span>
+                                {material?.designation || 'N/A'} ({material?.thickness != null ? `${material.thickness}mm` : '-'} × 
+                                {material?.length != null ? `${material.length}mm` : '-'} × 
+                                {material?.width != null ? `${material.width}mm` : '-'})
+                              </span>
+                              <div>
+                                <Text type="secondary">Disponible: {material.remaining_quantity}</Text>
+                              </div>
+                            </div>
+                            <div style={{display: 'flex', alignItems: 'center'}}>
+                              <InputNumber 
+                                min={0} // Allow 0 to remove
+                                max={material.remaining_quantity} 
+                                value={currentSelection ? currentSelection.quantite : undefined}
+                                onChange={(value) => handleMaterialSelect(material.id, value)}
+                                addonAfter="pièces"
+                                placeholder="Qté"
+                                style={{ width: 140, marginRight: 8 }}
+                              />
+                              {currentSelection && (
+                                <Button 
+                                  type="link"
+                                  danger
+                                  onClick={() => handleRemoveMaterial(material.id)}
+                                >
+                                  Retirer
+                                </Button>
+                              )}
                             </div>
                           </div>
-                          <div>
-                            <InputNumber 
-                              min={1} 
-                              max={material.remaining_quantity} 
-                              onChange={(value) => handleMaterialSelect(material.id, value)}
-                              addonAfter="pièces"
-                              placeholder="Qté"
-                              style={{ width: 120 }}
-                            />
-                            <Button 
-                              type="link"
-                              onClick={() => handleRemoveMaterial(material.id)}
-                            >
-                              Retirer
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    </List.Item>
-                  )}
+                        </Card>
+                      </List.Item>
+                    );
+                  }}
                 />
 
                 {selectedMaterials.length > 0 && (
                   <div style={{ marginTop: 16 }}>
-                    <Title level={5}>Matières sélectionnées</Title>
+                    <Title level={5}>Matières sélectionnées pour ce travail</Title>
                     <List
                       size="small"
                       bordered
@@ -871,7 +893,7 @@ const WorkManagementPage = () => {
                         const material = clientMaterials.find(m => m.id === item.materialId);
                         return (
                           <List.Item>
-                            <Text>{material?.type_matiere || material?.materialType} ({material?.thickness}mm) - {item.quantite} pièce(s)</Text>
+                            <Text>{material?.designation || material?.type_matiere || 'Matériau inconnu'} ({material?.thickness || '-'}mm) - {item.quantite} pièce(s)</Text>
                           </List.Item>
                         );
                       }}
@@ -880,6 +902,7 @@ const WorkManagementPage = () => {
                 )}
               </div>
             )}
+
 
             <Form.Item
               name="produit_id"
@@ -907,8 +930,8 @@ const WorkManagementPage = () => {
 
             <Form.Item
               name="quantite"
-              label="Quantité"
-              rules={[{ required: true, message: 'Veuillez saisir la quantité' }]}
+              label="Quantité Produit" // Label changed for clarity
+              rules={[{ required: true, message: 'Veuillez saisir la quantité du produit' }]}
             >
               <InputNumber min={0.1} step={0.1} style={{ width: '100%' }} />
             </Form.Item>
@@ -928,6 +951,7 @@ const WorkManagementPage = () => {
                   setIsModalVisible(false);
                   setSelectedMaterials([]);
                   setClientMaterials([]);
+                  form.resetFields();
                 }}>
                   Annuler
                 </Button>
@@ -1053,63 +1077,65 @@ const WorkManagementPage = () => {
               renderItem={(item, index) => (
                 <List.Item>
                   <Card 
-                    title={`Travail ${index + 1}: ${item.produit_name || 'Produit'} - Matériaux Uniquement`} 
+                    title={`Travail ${index + 1}: ${item.produit_name || 'Produit Inconnu'}`} 
                     style={{ width: '100%' }}
                   >
                     <Form layout="vertical">
-                      {/* Row for product details is removed as product itself is not billed */}
-                      {/*
-                      <Row gutter={16}>
-                        <Col span={8}>
-                          <Form.Item label="Description">
+                      {/* Section for Product */}
+                      <Row gutter={16} style={{ marginBottom: 16, borderBottom: '1px solid #f0f0f0', paddingBottom: 16 }}>
+                        <Col span={10}>
+                          <Form.Item label="Produit / Service">
                             <Input 
-                              defaultValue={item.description || ''}
-                              onChange={(e) => {
-                                const newData = [...billableData];
-                                newData[index].description = e.target.value;
-                                setBillableData(newData);
-                              }} 
+                              value={item.produit_name + (item.description ? ` - ${item.description}`: '')}
+                              disabled
                             />
                           </Form.Item>
                         </Col>
                         <Col span={4}>
-                          <Form.Item label="Quantité">
+                          <Form.Item label="Qté Produit">
                             <InputNumber
                               style={{ width: '100%' }}
-                              min={1}
-                              precision={0}
-                              defaultValue={item.billable.quantite} // This quantity is for the product
-                              // ... onChange logic for product quantity
+                              min={0.1}
+                              precision={2}
+                              value={item.billable.quantite_produit}
+                              onChange={(value) => {
+                                const newData = [...billableData];
+                                newData[index].billable.quantite_produit = value;
+                                setBillableData(newData);
+                              }}
                             />
                           </Form.Item>
                         </Col>
                         <Col span={5}>
-                          <Form.Item label="Prix unitaire (DT)">
+                          <Form.Item label="Prix Unitaire Produit (DT)">
                             <InputNumber
                               style={{ width: '100%' }}
                               min={0}
                               precision={3}
-                              defaultValue={item.billable.prix_unitaire} // This price is for the product
-                              // ... onChange logic for product price
+                              value={item.billable.prix_unitaire_produit}
+                              onChange={(value) => {
+                                const newData = [...billableData];
+                                newData[index].billable.prix_unitaire_produit = value;
+                                setBillableData(newData);
+                              }}
                             />
                           </Form.Item>
                         </Col>
-                        <Col span={7}>
-                          <Form.Item label="Total HT (DT)">
+                        <Col span={5}>
+                          <Form.Item label="Total HT Produit (DT)">
                             <InputNumber
                               style={{ width: '100%' }}
-                              value={(item.billable.prix_unitaire * item.billable.quantite).toFixed(3)}
+                              value={((item.billable.prix_unitaire_produit || 0) * (item.billable.quantite_produit || 0)).toFixed(3)}
                               disabled
                             />
                           </Form.Item>
                         </Col>
                       </Row>
-                      */}
                       
                       {/* Materials section if available */}
                       {item.matiere_usages && item.matiere_usages.length > 0 && (
                         <div>
-                          <Divider orientation="left">Matériaux utilisés</Divider>
+                          <Divider orientation="left">Matériaux utilisés pour ce travail</Divider>
                           <Table
                             className="material-table"
                             size="small"
@@ -1204,44 +1230,45 @@ const WorkManagementPage = () => {
                     <p>
                       <strong>Total HT:</strong> {
                         billableData.reduce((sum, item) => {
-                          // Product's direct cost (item.billable.prix_unitaire * item.billable.quantite) is not added.
-                          // It's assumed item.billable.prix_unitaire is 0 for the product itself.
+                          const productTotal = (item.billable.prix_unitaire_produit || 0) * (item.billable.quantite_produit || 0);
                           let materialTotalForItem = 0;
                           if (item.matiere_usages && item.matiere_usages.length > 0) {
                             materialTotalForItem = item.matiere_usages.reduce(
-                              (materialSum, mat) => materialSum + (mat.prix_unitaire * mat.quantite_utilisee || 0),
+                              (materialSum, mat) => materialSum + ((mat.prix_unitaire || 0) * (mat.quantite_utilisee || 0)),
                               0
                             );
                           }
-                          return sum + materialTotalForItem;
+                          return sum + productTotal + materialTotalForItem;
                         }, 0).toFixed(3)
                       } DT
                     </p>
                     <p>
                       <strong>TVA ({taxRate}%):</strong> {
                         (billableData.reduce((sum, item) => {
+                          const productTotal = (item.billable.prix_unitaire_produit || 0) * (item.billable.quantite_produit || 0);
                           let materialTotalForItem = 0;
                           if (item.matiere_usages && item.matiere_usages.length > 0) {
                             materialTotalForItem = item.matiere_usages.reduce(
-                              (materialSum, mat) => materialSum + (mat.prix_unitaire * mat.quantite_utilisee || 0),
+                              (materialSum, mat) => materialSum + ((mat.prix_unitaire || 0) * (mat.quantite_utilisee || 0)),
                               0
                             );
                           }
-                          return sum + materialTotalForItem;
+                          return sum + productTotal + materialTotalForItem;
                         }, 0) * taxRate / 100).toFixed(3)
                       } DT
                     </p>
                     <p className="total-ttc">
                       <strong>Total TTC:</strong> {
                         (billableData.reduce((sum, item) => {
+                          const productTotal = (item.billable.prix_unitaire_produit || 0) * (item.billable.quantite_produit || 0);
                           let materialTotalForItem = 0;
                           if (item.matiere_usages && item.matiere_usages.length > 0) {
                             materialTotalForItem = item.matiere_usages.reduce(
-                              (materialSum, mat) => materialSum + (mat.prix_unitaire * mat.quantite_utilisee || 0),
+                              (materialSum, mat) => materialSum + ((mat.prix_unitaire || 0) * (mat.quantite_utilisee || 0)),
                               0
                             );
                           }
-                          return sum + materialTotalForItem;
+                          return sum + productTotal + materialTotalForItem;
                         }, 0) * (1 + taxRate / 100)).toFixed(3)
                       } DT
                     </p>
