@@ -509,7 +509,7 @@ const ClientRawMaterialsPage = () => {  // State for client search and selection
     
     try {
       // Generate new invoice number
-      const newInvoiceNumber = generateInvoiceNumber();
+      const newInvoiceNumber = selectedRowsData[0].numero_bon;
       setInvoiceNumber(newInvoiceNumber);
       
       // Set current date as default
@@ -538,7 +538,10 @@ const ClientRawMaterialsPage = () => {  // State for client search and selection
     doc.text(`Facture N°: ${invoiceNumber}`, 14, 25);
     doc.text(`Date: ${billDate}`, 150, 25);
 
-    doc.text(`Client: ${selectedClient ? selectedClient.client_name : ''}`, 14, 32);
+    const clientName = selectedClient 
+      ? (selectedClient.nom_client || selectedClient.name || selectedClient.client_name || 'N/A') 
+      : 'N/A';
+    doc.text(`Client: ${clientName}`, 14, 32);
     doc.text(`ID Client: ${selectedClient ? selectedClient.id : ''}`, 150, 32);
 
     // Table of materials
@@ -568,7 +571,6 @@ const ClientRawMaterialsPage = () => {  // State for client search and selection
     doc.save(`facture-matieres-${invoiceNumber}.pdf`);
 
     // Optional: launch print after download
-    window.print();
     notification.success({ message: 'Facture téléchargée et impression lancée' });
   };
   // Save bill handler
