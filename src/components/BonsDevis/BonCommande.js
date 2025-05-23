@@ -1093,8 +1093,8 @@ export default function BonCommande() {
     },
     {
       title: "N° Devis Orig.",
-      dataIndex: "devis_numero",
-      key: "devis_numero",
+      dataIndex: "devis",
+      key: "devis",
       render: (text) => text || "-",
       width: 150,
     },
@@ -1398,15 +1398,7 @@ export default function BonCommande() {
           />
         )}
       </Card>
-      {error && (
-        <Alert
-          message="Erreur"
-          description={error}
-          type="error"
-          showIcon
-          style={{ marginTop: 16 }}
-        />
-      )}
+
 
       <Drawer
         title={
