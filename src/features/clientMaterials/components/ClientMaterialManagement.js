@@ -811,7 +811,7 @@ const ClientRawMaterialsPage = () => {  // State for client search and selection
                   type="primary"
                   onClick={handleProcessSelectedMaterials}
                 >
-                  Préparer la facture ({selectedRowKeys.length} matière(s) sélectionnée(s))
+                  Préparer le bon de livraison ({selectedRowKeys.length} matière(s) sélectionnée(s))
                 </Button>
               ) : (
                 /* Empty div to maintain flex layout when no selections */
@@ -967,7 +967,7 @@ const ClientRawMaterialsPage = () => {  // State for client search and selection
 
       {/* Modal for bill preparation */}
       <Modal
-        title="Préparation de la Facture"
+        title="Préparation de bon de livraison"
         open={isBillModalVisible}
         width={900}
         onCancel={() => setIsBillModalVisible(false)}

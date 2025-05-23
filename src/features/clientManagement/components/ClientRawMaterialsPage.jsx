@@ -412,7 +412,7 @@ const ClientRawMaterialsPage = () => {
                 onClick={handleProcessSelectedMaterials}
                 style={{ marginBottom: 8 }}
               >
-                Préparer la facture ({selectedRowKeys.length} matière(s) sélectionnée(s))
+                Préparer le bon de livraison ({selectedRowKeys.length} matière(s) sélectionnée(s))
               </Button>
             )}
           </div>
@@ -564,9 +564,9 @@ const ClientRawMaterialsPage = () => {
         </Form>
       </Modal>
 
-      {/* Modal de préparation de la facture */}
+      {/* Modal de préparation du bon de livraison */}
       <Modal
-        title="Préparation de la Facture"
+        title="Préparation du bon de livraison"
         open={isBillModalVisible}
         width={900}
         onCancel={() => setIsBillModalVisible(false)}

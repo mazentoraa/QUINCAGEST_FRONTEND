@@ -4,6 +4,7 @@ import {
   ShoppingOutlined, 
   FileTextOutlined,
   AccountBookOutlined,
+  UserOutlined,
   ToolOutlined,
   CarOutlined,
   DatabaseOutlined,
@@ -44,6 +45,9 @@ function SideMenu() {
         selectedKeys={[location.pathname]}
         style={{ height: '100%', borderRight: 0 }}
       >
+        <Menu.Item key="/clients" icon={<UserOutlined />} onClick={() => handleMenuClick('/clients')}>
+          Clients
+        </Menu.Item>
         <SubMenu key="stock" icon={<ShoppingOutlined />} title="Gestion de Stock">
           <Menu.Item key="/stock/produits" onClick={() => handleMenuClick('/stock/produits')}>
             Produits Finis
@@ -75,9 +79,9 @@ function SideMenu() {
             </Menu.Item>
           </SubMenu>
 
-          <Menu.Item key="/manifeste/inventaire" icon={<DatabaseOutlined />} onClick={() => handleMenuClick('/manifeste/inventaire')}>
+          {/* <Menu.Item key="/manifeste/inventaire" icon={<DatabaseOutlined />} onClick={() => handleMenuClick('/manifeste/inventaire')}>
             Inventaire
-          </Menu.Item>
+          </Menu.Item> */}
         </SubMenu>
         
         <SubMenu key="reglements" icon={<AccountBookOutlined />} title="Règlements">
@@ -92,9 +96,7 @@ function SideMenu() {
           </Menu.Item>
         </SubMenu>
 
-        <Menu.Item key="/clients" onClick={() => handleMenuClick('/clients')}>
-          Clients
-        </Menu.Item>
+
       </Menu>
     </div>
   );

@@ -81,15 +81,44 @@ class ClientMaterialService {
   }
 
   /**
-   * Get all material invoices
+   * Get all material invoices with optional query parameters
+   * @param {Object} queryParams - Optional query parameters object
    * @returns {Promise<Array>} - List of material invoices
    */
-  async getAllMaterialInvoices() {
+  async getAllMaterialInvoices(queryParams = {}) {
     try {
-      const response = await axios.get(`${API_URL}/factures-matieres/`);
+      // Convert queryParams object to URL search params
+      const params = new URLSearchParams();
+      
+      // Add each query parameter to the URL
+      Object.entries(queryParams).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, value);
+        }
+      });
+      
+      // Generate query string
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+      
+      // Log the complete URL being called for debugging
+      const requestUrl = `${API_URL}/factures-matieres${queryString}`;
+      console.log('Calling API URL:', requestUrl);
+      
+      const response = await axios.get(requestUrl);
+      
+      // Log response data summary
+      console.log(`API response status: ${response.status}, data length: ${Array.isArray(response.data) ? response.data.length : 'Not an array'}`);
+      
+      // Check if response is empty and handle accordingly
+      if (!response.data || (Array.isArray(response.data) && response.data.length === 0)) {
+        console.log('Empty response data from API');
+        return []; // Return empty array instead of null/undefined
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Error fetching material invoices:', error);
+      console.error('Error details:', error.response ? error.response.data : 'No response data');
       throw error;
     }
   }

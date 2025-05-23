@@ -75,7 +75,7 @@ function App() {
                                 <Route path="/manifeste/travaux" element={<WorkManagementPage />} />
                                 <Route path="/manifeste" element={<ManifestePage />} />
                                 <Route path="/manifeste/bons" element={<ManifestePage />} />
-                                <Route path="/manifeste/inventaire" element={<ManifestePage />} />
+                                {/* <Route path="/manifeste/inventaire" element={<ManifestePage />} /> */}
                                 <Route path="/reglements/factures" element={<OrderManagement />} />
                                 <Route path="/reglements/traites" element={<InstallmentManagement />} />
                                 <Route path="/reglements/rapport" element={<Dashboard />} />
