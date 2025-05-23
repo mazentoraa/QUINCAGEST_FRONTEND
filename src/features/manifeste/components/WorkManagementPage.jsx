@@ -311,6 +311,29 @@ const WorkManagementPage = () => {
           };
         }
 
+        // Ensure product details, including unit price, are available for billing
+        let productUnitPrice = 0;
+        if (work.produit && typeof work.produit.prix_unitaire !== 'undefined') {
+          productUnitPrice = work.produit.prix_unitaire;
+        } else if (work.produit_id) {
+          try {
+            // Fetch product details if not fully available on the work object
+            const productDetails = await ProductService.getProductById(work.produit_id);
+            if (productDetails && typeof productDetails.prix_unitaire !== 'undefined') {
+              productUnitPrice = productDetails.prix_unitaire;
+              // Optionally enrich the work item with full product details if needed elsewhere
+              enrichedWork.produit = productDetails; 
+            }
+          } catch (error) {
+            console.error(`Error fetching product details for ID ${work.produit_id}:`, error);
+            // Keep productUnitPrice as 0 or handle error as appropriate
+          }
+        }
+        if (typeof productUnitPrice !== 'number' || isNaN(productUnitPrice)) {
+            productUnitPrice = 0; // Default to 0 if undefined, null, or NaN
+        }
+
+
         // If material usage data is present but missing details, enrich it
         if (work.matiere_usages && work.matiere_usages.length > 0) {
           const enrichedMaterialUsages = await Promise.all(
@@ -345,7 +368,7 @@ const WorkManagementPage = () => {
         // Add billable data fields with default values
         enrichedWork.billable = {
           date_facturation: moment().format('YYYY-MM-DD'),
-          prix_unitaire_produit: work.produit?.prix_unitaire || 0, // Price for the product itself
+          prix_unitaire_produit: productUnitPrice, // Use fetched or existing product unit price
           quantite_produit: enrichedWork.quantite || 1, // Quantity of the product
           taxe: taxRate,
           // total_ht will be calculated dynamically in the modal/PDF
@@ -1144,10 +1167,11 @@ const WorkManagementPage = () => {
                           </Form.Item>
                         </Col>
                         <Col span={5}>
-                          <Form.Item label="Prix Unitaire Produit (DT)">
+                          <Form.Item label="Prix U. Produit (DT)">
                             <InputNumber
                               style={{ width: '100%' }}
                               min={0}
+                              defaultValue={item.billable.prix_unitaire_produit}
                               precision={3}
                               value={item.billable.prix_unitaire_produit}
                               onChange={(value) => {
