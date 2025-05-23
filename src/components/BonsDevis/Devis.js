@@ -43,7 +43,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -634,7 +634,10 @@ export default function Devis() {
 
   // Generate PDF for devis
   const handlePrintDevisPDF = (devis) => {
-    const hideLoading = notification.info({
+    const notificationKey = `pdf-generation-${Date.now()}`;
+
+    notification.info({
+      key: notificationKey,
       message: "Génération du PDF",
       description: "Génération du PDF en cours...",
       duration: 0,
@@ -650,9 +653,14 @@ export default function Devis() {
             description:
               "Impossible de générer le PDF: détails du devis introuvables",
           });
-          hideLoading();
+          notification.destroy(notificationKey);
           return;
         }
+
+        // Find the client details from the clients array
+        const clientDetails = clients.find(
+          (client) => client.id === detailedDevis.client
+        );
 
         // Create PDF document
         const doc = new jsPDF();
@@ -715,11 +723,18 @@ export default function Devis() {
         // Divider
         doc.line(20, 60, 190, 60);
 
-        // Client Information
+        // Client Information - Enhanced with details from clients array
         doc.setFontSize(14);
         doc.text("Client", 20, 70);
         doc.setFontSize(10);
         doc.text(`Nom: ${detailedDevis.nom_client || "N/A"}`, 20, 75);
+        doc.text(`Adresse: ${clientDetails?.adresse || "N/A"}`, 20, 80);
+        doc.text(
+          `Matricule Fiscale: ${clientDetails?.numero_fiscal || "N/A"}`,
+          20,
+          85
+        );
+        doc.text(`Tél: ${clientDetails?.telephone || "N/A"}`, 20, 90);
 
         // Products table
         if (
@@ -747,9 +762,9 @@ export default function Devis() {
             tableRows.push(row);
           });
 
-          // Add table to PDF
-          doc.autoTable({
-            startY: 90,
+          // Add table to PDF using the correct autoTable syntax
+          autoTable(doc, {
+            startY: 100,
             head: [tableColumn],
             body: tableRows,
             theme: "grid",
@@ -766,7 +781,7 @@ export default function Devis() {
           });
 
           // Get final position of table
-          const finalY = doc.previousAutoTable.finalY || 120;
+          const finalY = doc.lastAutoTable.finalY || 120;
 
           // Add totals
           doc.setFillColor(240, 240, 240);
@@ -829,7 +844,7 @@ export default function Devis() {
           doc.rect(120, finalY + 125, 70, 20);
         } else {
           doc.setFontSize(12);
-          doc.text("Aucun produit dans ce devis.", 105, 110, {
+          doc.text("Aucun produit dans ce devis.", 105, 120, {
             align: "center",
           });
         }
@@ -847,13 +862,13 @@ export default function Devis() {
         doc.save(`Devis_${detailedDevis.numero_devis}.pdf`);
 
         // Show success
-        hideLoading();
+        notification.destroy(notificationKey);
         notification.success({
           message: "Succès",
           description: "PDF généré avec succès",
         });
       } catch (error) {
-        hideLoading();
+        notification.destroy(notificationKey);
         console.error("Error generating PDF:", error);
         notification.error({
           message: "Erreur",
@@ -1061,7 +1076,10 @@ export default function Devis() {
       return;
     }
 
-    const hideLoading = notification.info({
+    const notificationKey = `batch-action-${Date.now()}`;
+
+    notification.info({
+      key: notificationKey,
       message: "Traitement en cours",
       description: `Traitement de ${selectedRowKeys.length} devis...`,
       duration: 0,
@@ -1071,14 +1089,14 @@ export default function Devis() {
     if (action === "pdf") {
       Promise.all(selectedRows.map((devis) => handlePrintDevisPDF(devis)))
         .then(() => {
-          hideLoading();
+          notification.destroy(notificationKey);
           notification.success({
             message: "Succès",
             description: `${selectedRowKeys.length} PDFs générés avec succès`,
           });
         })
         .catch((err) => {
-          hideLoading();
+          notification.destroy(notificationKey);
           notification.error({
             message: "Erreur",
             description:
@@ -1860,10 +1878,7 @@ export default function Devis() {
                 </Button>,
               ]
             : [
-                <Button
-                  key="close"
-                  onClick={() => setShowConvertModal(false)}
-                >
+                <Button key="close" onClick={() => setShowConvertModal(false)}>
                   Annuler
                 </Button>,
                 <Button
@@ -1907,8 +1922,7 @@ export default function Devis() {
                   {formatCurrency(devisDetail.montant_ttc)}
                 </p>
                 <p>
-                  <strong>Statut:</strong>{" "}
-                  {translateStatus(devisDetail.statut)}
+                  <strong>Statut:</strong> {translateStatus(devisDetail.statut)}
                 </p>
               </div>
             )}
