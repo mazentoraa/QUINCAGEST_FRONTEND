@@ -197,7 +197,7 @@ export default function Devis() {
   const fetchDevisList = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/api/devis/`);
+      const response = await axios.get(`${API_BASE_URL}/devis/`);
       // Handle both paginated and direct array responses
       let responseData;
       if (
@@ -230,7 +230,7 @@ export default function Devis() {
   const fetchDevisDetail = async (devisId) => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/api/devis/${devisId}/`);
+      const response = await axios.get(`${API_BASE_URL}/devis/${devisId}/`);
       setDevisDetail(response.data);
       setCurrentProductsInDrawer(response.data.produit_devis || []);
       setError(null);
@@ -251,7 +251,7 @@ export default function Devis() {
   // Fetch clients for dropdown - ensure we always return an array
   const fetchClients = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/clients/`);
+      const response = await axios.get(`${API_BASE_URL}/clients/`);
       // Check if response.data has a results property (paginated) or is directly an array
       let clientsData;
       if (
@@ -280,7 +280,7 @@ export default function Devis() {
   // Fetch products for dropdown
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/produits/`);
+      const response = await axios.get(`${API_BASE_URL}/produits/`);
       // Handle both paginated and direct array responses
       let productsData;
       if (
@@ -499,7 +499,7 @@ export default function Devis() {
 
       if (currentView === "create") {
         const response = await axios.post(
-          `${API_BASE_URL}/api/devis/`,
+          `${API_BASE_URL}/devis/`,
           formattedValues
         );
         notification.success({
@@ -511,7 +511,7 @@ export default function Devis() {
       } else if (currentView === "edit") {
         const devisId = devisDetail.id;
         await axios.put(
-          `${API_BASE_URL}/api/devis/${devisId}/`,
+          `${API_BASE_URL}/devis/${devisId}/`,
           formattedValues
         );
         notification.success({
@@ -555,7 +555,7 @@ export default function Devis() {
       setError(null);
 
       const response = await axios.post(
-        `${API_BASE_URL}/api/devis/${targetDevis.id}/convert_to_commande/`,
+        `${API_BASE_URL}/devis/${targetDevis.id}/convert_to_commande/`,
         { confirmation: true }
       );
 
@@ -598,7 +598,7 @@ export default function Devis() {
   const handleUpdateStatus = async (devisId, newStatus) => {
     try {
       setLoading(true);
-      await axios.patch(`${API_BASE_URL}/api/devis/${devisId}/`, {
+      await axios.patch(`${API_BASE_URL}/devis/${devisId}/`, {
         statut: newStatus,
       });
       notification.success({

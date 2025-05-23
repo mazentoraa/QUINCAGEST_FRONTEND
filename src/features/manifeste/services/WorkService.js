@@ -1,7 +1,9 @@
 import axios from 'axios';
 import WorkModel from '../models/WorkModel';
 
-const API_URL = 'http://localhost:8000/api/traveaux';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
+
+const API_URL = `${API_BASE_URL}/traveaux`;
 
 const WorkService = {
   getAllWorks: async () => {

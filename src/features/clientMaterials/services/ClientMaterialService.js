@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // API base URL - replace with your actual API endpoint
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
-
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
+const API_URL = `${API_BASE_URL}/client-matieres`;
 class ClientMaterialService {
   /**
    * Get all materials for a specific client

@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8000/api/commandes";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
+
+const API_URL = `${API_BASE_URL}/commandes`;
 
 class OrderService {
   async getOrders() {

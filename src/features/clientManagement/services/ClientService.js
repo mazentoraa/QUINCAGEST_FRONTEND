@@ -1,8 +1,8 @@
 import axios from 'axios';
 import ClientModel from '../models/ClientModel';
 
-const API_URL = 'http://localhost:8000/api/clients';
-
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
+const API_URL = `${API_BASE_URL}/clients`;
 const ClientService = {
   get_all_clients: async () => {
     try {
