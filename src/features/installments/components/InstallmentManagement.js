@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { InstallmentContext } from '../../../contexts/InstallmentContext';
+import { InstallmentContext } from '../contexts/InstallmentContext';
 import InstallmentForm from './InstallmentForm';
 import InstallmentsPrinter from './InstallmentsPrinter';
 import InstallmentDetails from './InstallmentDetails';
@@ -49,6 +49,17 @@ const InstallmentManagement = () => {
     setShowDetails(false);
     setSelectedInstallment(null);
   };
+
+  // Ajout : écoute l'événement pour changer d'onglet après enregistrement
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.detail && e.detail.tab === 'view') {
+        setActiveTab('view');
+      }
+    };
+    window.addEventListener('switchInstallmentTab', handler);
+    return () => window.removeEventListener('switchInstallmentTab', handler);
+  }, []);
 
   if (showDetails && selectedInstallment) {
     return (

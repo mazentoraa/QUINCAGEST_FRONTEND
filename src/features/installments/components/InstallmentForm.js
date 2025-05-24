@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { InstallmentContext } from '../../../contexts/InstallmentContext';
+import { InstallmentContext } from "../contexts/InstallmentContext";
 import TraitePrinter from './TraitePrinter';
 import './InstallmentForm.css';
 
@@ -205,7 +205,6 @@ const InstallmentForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
     if (validate()) {
       const newInstallment = {
         id: Date.now().toString(),
@@ -216,15 +215,11 @@ const InstallmentForm = () => {
         status: 'non_paye',
         createdAt: new Date().toISOString()
       };
-      
       addInstallment(newInstallment);
-      
-      // Afficher l'aperçu après sauvegarde
-      setPreviewData(newInstallment);
-      setShowPreview(true);
-      
-      // Optionnel: Réinitialiser le formulaire après l'aperçu
-      // setFormData({ ... });
+      // Afficher la liste après enregistrement
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('switchInstallmentTab', { detail: { tab: 'view' } }));
+      }
     }
   };
 
@@ -595,3 +590,13 @@ const InstallmentForm = () => {
 };
 
 export default InstallmentForm;
+
+// En haut du fichier ou dans useEffect :
+// Permet à InstallmentManagement d'écouter l'événement pour changer d'onglet
+window.addEventListener('switchInstallmentTab', (e) => {
+  const { tab } = e.detail;
+  // Logique pour changer d'onglet dans InstallmentManagement
+  console.log('Changer d\'onglet vers:', tab);
+  // Ici, vous pouvez ajouter le code pour changer l'onglet, par exemple:
+  // setActiveTab(tab);
+});
