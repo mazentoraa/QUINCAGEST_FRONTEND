@@ -39,7 +39,7 @@ import {
 import { getApiService } from "../../services/apiServiceFactory";
 import ClientService from "../../features/clientManagement/services/ClientService";
 import ProductService from "../../components/BonsDevis/ProductService";
-import BonCommandePdfService from "../../features/orders/services/BonCommandePdfService";
+import BonCommandePdfApiService from "../../features/orders/services/BonCommandePdfApiService";
 
 import moment from "moment";
 
@@ -557,12 +557,6 @@ export default function BonCommande() {
         );
       }
 
-      // Note for 'no-undef' errors:
-      // The ESLint errors for 'clientDetailsForPdf' (lines 624+) do not match this section
-      // in the provided file. In this file, 'clientDetailsForPdf' is declared above
-      // and used below within this function's scope, which should be correct.
-      // Please verify the version of the file ESLint is checking on your local system.
-
       let mappedProduitCommande;
 
       if (
@@ -708,9 +702,12 @@ export default function BonCommande() {
 
       console.log("Order data for PDF:", orderDataForPDF); // Debug log
 
-      // Use the new PDF service
+      // Use the new PDF API service
       const filename = `BonCommande_${detailedOrder.numero_commande}.pdf`;
-      await BonCommandePdfService.generateOrderPDF(orderDataForPDF, filename);
+      await BonCommandePdfApiService.generateOrderPDF(
+        orderDataForPDF,
+        filename
+      );
 
       hideLoading();
       message.success("PDF généré avec succès");
@@ -733,7 +730,7 @@ export default function BonCommande() {
     );
 
     try {
-      // Create a summary HTML content for multiple orders
+      // Create a summary data object
       const summaryData = {
         title: "RÉCAPITULATIF DES COMMANDES",
         generation_date: moment().format("DD/MM/YYYY à HH:mm"),
@@ -745,18 +742,14 @@ export default function BonCommande() {
         ),
       };
 
-      // Generate summary HTML
+      // Generate summary using the new PDF service
       const summaryHTML = generateOrdersSummaryHTML(summaryData);
 
-      // Use the PDF service to generate the summary
-      // This part assumes BonCommandePdfService.API_URL and BonCommandePdfService.API_TOKEN are set
-      // and that the service has a generic HTML to PDF endpoint.
-      // If BonCommandePdfService is designed differently, this needs adjustment.
-      const response = await fetch(BonCommandePdfService.API_URL, {
-        // Ensure API_URL is correctly defined in BonCommandePdfService
+      // Use the PDF API service directly with custom HTML
+      const response = await fetch(BonCommandePdfApiService.API_URL, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${BonCommandePdfService.API_TOKEN}`, // Ensure API_TOKEN is correctly defined
+          Authorization: `Bearer ${BonCommandePdfApiService.API_TOKEN}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: `html=${encodeURIComponent(summaryHTML)}`,
@@ -765,7 +758,7 @@ export default function BonCommande() {
       if (response.ok) {
         const data = await response.json();
         if (data.file) {
-          BonCommandePdfService.openPDFInNewWindow(
+          BonCommandePdfApiService.openPDFInNewWindow(
             data.file,
             `Récapitulatif_Commandes_${moment().format("YYYYMMDD")}.pdf`
           );
@@ -795,16 +788,48 @@ export default function BonCommande() {
         <head>
           <title>${summaryData.title}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .summary-info { margin-bottom: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            .total { font-weight: bold; }
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 40px; 
+              font-size: 14px;
+              color: #000;
+            }
+            .header { 
+              text-align: center; 
+              margin-bottom: 30px; 
+            }
+            .summary-info { 
+              margin-bottom: 20px; 
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-bottom: 20px; 
+            }
+            th, td { 
+              border: 1px solid #000; 
+              padding: 8px; 
+              text-align: left; 
+            }
+            th { 
+              background-color: #f2f2f2; 
+            }
+            .total { 
+              font-weight: bold; 
+            }
+            .company-header {
+              text-align: center;
+              margin-bottom: 20px;
+            }
           </style>
         </head>
         <body>
+          <div class="company-header">
+            <h2>RM METALASER</h2>
+            <p>Découpes Métaux<br>
+               Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
+               Tél. : +216 20 366 150</p>
+          </div>
           <div class="header">
             <h1>${summaryData.title}</h1>
             <p>Généré le ${summaryData.generation_date}</p>
