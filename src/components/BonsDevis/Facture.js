@@ -66,6 +66,16 @@ const translateOrderStatus = (status) => {
   return statusMap[status] || status;
 };
 
+// You might want to define translations for payment methods as well
+const translatePaymentMethod = (method) => {
+  const methodMap = {
+    cash: "Espèces",
+    traite: "Traite",
+    mixte: "Mixte",
+  };
+  return methodMap[method] || method || "N/A"; // Return method itself or N/A if not in map
+};
+
 export default function BonCommande() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -250,6 +260,7 @@ export default function BonCommande() {
           date_livraison_prevue: fullOrderDetails.date_livraison_prevue
             ? moment(fullOrderDetails.date_livraison_prevue)
             : null,
+          mode_paiement: fullOrderDetails.mode_paiement || undefined, // Add this
         });
         setIsDrawerVisible(true);
       } else {
@@ -275,6 +286,7 @@ export default function BonCommande() {
       tax_rate: 20,
       statut: "pending",
       conditions_paiement: "À régler dans les 30 jours",
+      mode_paiement: "cash", // Default payment method
     });
 
     setIsDrawerVisible(true);
@@ -327,6 +339,7 @@ export default function BonCommande() {
           statut: values.statut || "pending",
           notes: values.notes || "",
           conditions_paiement: values.conditions_paiement || "",
+          mode_paiement: values.mode_paiement || "cash", // Add this
           tax_rate: values.tax_rate || 20,
           produits: newOrderProducts.map((p) => ({
             produit: p.produit_id,
@@ -358,6 +371,7 @@ export default function BonCommande() {
             remise_pourcentage: p.remise_pourcentage || 0,
           })),
           tax_rate: values.tax_rate,
+          mode_paiement: values.mode_paiement, // Add this
         };
         delete orderPayload.montant_ht_display;
         delete orderPayload.montant_tva_display;
@@ -693,6 +707,7 @@ export default function BonCommande() {
           "",
         statut: detailedOrder.statut || "",
         conditions_paiement: detailedOrder.conditions_paiement || "",
+        mode_paiement: translatePaymentMethod(detailedOrder.mode_paiement), // Add this
         notes: detailedOrder.notes || "",
         montant_ht: detailedOrder.montant_ht || 0,
         montant_tva: detailedOrder.montant_tva || 0,
@@ -704,10 +719,7 @@ export default function BonCommande() {
 
       // Use the new PDF API service
       const filename = `BonCommande_${detailedOrder.numero_commande}.pdf`;
-      await FacturePdfApiService.generateOrderPDF(
-        orderDataForPDF,
-        filename
-      );
+      await FacturePdfApiService.generateOrderPDF(orderDataForPDF, filename);
 
       hideLoading();
       message.success("PDF généré avec succès");
@@ -849,6 +861,7 @@ export default function BonCommande() {
                 <th>Client</th>
                 <th>Date</th>
                 <th>Statut</th>
+                <th>Mode Paiement</th> {/* Added Mode Paiement header */}
                 <th>Montant TTC</th>
               </tr>
             </thead>
@@ -865,6 +878,9 @@ export default function BonCommande() {
                       : ""
                   }</td>
                   <td>${translateOrderStatus(order.statut)}</td>
+                  <td>${translatePaymentMethod(
+                    order.mode_paiement
+                  )}</td> {/* Added Mode Paiement data */}
                   <td>${formatCurrency(order.montant_ttc)}</td>
                 </tr>
               `
@@ -938,7 +954,7 @@ export default function BonCommande() {
       sorter: (a, b) => (a.nom_client || "").localeCompare(b.nom_client || ""),
     },
     {
-      title: "Date Commande",
+      title: "Date Facture",
       dataIndex: "date_commande",
       key: "date_commande",
       render: (date) => (date ? moment(date).format("DD/MM/YYYY") : ""),
@@ -958,6 +974,14 @@ export default function BonCommande() {
       render: (status) => (
         <Tag color={getStatusColor(status)}>{translateOrderStatus(status)}</Tag>
       ),
+    },
+    {
+      title: "Mode Paiement", // New Column
+      dataIndex: "mode_paiement",
+      key: "mode_paiement",
+      render: (method) => translatePaymentMethod(method),
+      sorter: (a, b) =>
+        (a.mode_paiement || "").localeCompare(b.mode_paiement || ""),
     },
     {
       title: "Montant TTC",
@@ -1209,7 +1233,7 @@ export default function BonCommande() {
               showTotal: (total, range) =>
                 `${range[0]}-${range[1]} sur ${total} commandes`,
             }}
-            scroll={{ x: 1200 }}
+            scroll={{ x: 1300 }} // Adjusted scroll width
           />
         </Spin>
       </Card>
@@ -1303,6 +1327,26 @@ export default function BonCommande() {
                     recalculateTotalsInDrawer(currentProductsInDrawer, value);
                   }}
                 />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="mode_paiement"
+                label="Mode de Paiement"
+                rules={[
+                  {
+                    required: true,
+                    message: "Veuillez sélectionner un mode de paiement",
+                  },
+                ]}
+              >
+                <Select placeholder="Sélectionner un mode de paiement">
+                  <Option value="cash">Espèces</Option>
+                  <Option value="credit_card">Carte de crédit</Option>
+                  <Option value="bank_transfer">Virement bancaire</Option>
+                  <Option value="cheque">Chèque</Option>
+                  {/* Add other payment methods as needed */}
+                </Select>
               </Form.Item>
             </Col>
           </Row>
