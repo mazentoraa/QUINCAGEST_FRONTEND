@@ -31,7 +31,7 @@ function Navigation() {
         <Space>
           <Avatar icon={<UserOutlined />} />
           <span style={{ color: '#fff' }}>
-            {AuthService.getCurrentUser()?.username || 'Utilisateur'}
+            {(AuthService.getCurrentUser()?.username).toUpperCase() || 'UTILISATEUR'}
           </span>
           <Button 
             type="text" 
