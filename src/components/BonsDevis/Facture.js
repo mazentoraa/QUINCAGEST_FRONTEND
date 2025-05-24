@@ -406,7 +406,7 @@ export default function BonCommande() {
       }
 
       const newProductData = {
-        produit_id: values.produit_id,
+        produit: values.produit_id,
         nom_produit: productDetails.nom_produit,
         quantite: values.quantite,
         prix_unitaire:
@@ -1250,7 +1250,6 @@ export default function BonCommande() {
                   placeholder="Sélectionner un client"
                   value={selectedClientId}
                   onChange={setSelectedClientId}
-                  disabled={!isCreating}
                   showSearch
                   filterOption={(input, option) =>
                     option.children.toLowerCase().includes(input.toLowerCase())

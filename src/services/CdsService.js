@@ -49,10 +49,10 @@ class CdsService {
     }
   }
 
-  async addProductToOrder(orderId, productData) {
+ async addProductToOrder(orderId, productData) {
     try {
       const response = await axios.post(
-        `${API_URL}/${orderId}/products/`,
+        `${API_URL}/${orderId}/add_product/`,
         productData
       );
       return response.data;
@@ -64,19 +64,34 @@ class CdsService {
 
   async removeProductFromOrder(orderId, productId) {
     try {
-      const response = await axios.delete(
-        `${API_URL}/${orderId}/products/${productId}/`
-      );
-      return response.data;
+      const response = await axios.delete(`${API_URL}/${orderId}/remove_product/`, { data: { produit: productId } });
+      if (response.status === 204) {
+        console.log("Product removed successfully!");
+        // Handle success (e.g., update UI)
+      } else {
+        console.log("Unexpected status code:", response.status);
+        // Handle unexpected status
+      }
     } catch (error) {
-      console.error(
-        `Error removing product ${productId} from order ${orderId}:`,
-        error
-      );
-      throw error;
+      console.error("Error removing product:", error);
+
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.log("Response data:", error.response.data);
+        console.log("Response status:", error.response.status);
+        console.log("Response headers:", error.response.headers);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.log("No response received:", error.request);
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.log('Error', error.message);
+      }
+      console.log(error.config);
+      // Handle error (e.g., display error message to the user)
     }
   }
-
   async generateInvoiceFromOrder(orderId) {
     try {
       const response = await axios.post(
@@ -90,4 +105,4 @@ class CdsService {
   }
 }
 
-export default new CdsService();
+export default  new CdsService();
