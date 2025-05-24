@@ -216,7 +216,7 @@ function Dashboard() {
       value: counts.commandes,
       icon: <ThunderboltOutlined />,
       gradient: "linear-gradient(135deg, #13c2c2 0%, #08979c 100%)",
-      path: "/bons/commandes",
+      path: "/bons/commande",
       change: "+6%",
       trend: "up",
       subtitle: "Ce mois",
