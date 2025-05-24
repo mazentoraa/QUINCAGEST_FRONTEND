@@ -1,18 +1,45 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { OrderContext } from '../../contexts/OrderContext';
 import InvoiceGenerator, { generatePDF } from './InvoiceGenerator';
 import './OrderList.css';
+import axios from 'axios';
+
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
 
 function OrderList({ orders }) {
   const { findClient } = useContext(OrderContext);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [factures, setFactures] = useState([]);
   const [orderStatuses, setOrderStatuses] = useState(
     orders.reduce((acc, order) => {
       acc[order.id] = 'payé';
       return acc;
     }, {})
   );
+
+  useEffect(() => {
+    getFacture();
+  }, []);
+
+
+  const getFacture = () => {
+    try {
+      const response = axios.get(`${API_BASE_URL}/factures_produits`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      const data = response.result;
+      setFactures(data);
+    }catch (error) {
+      console.error("Erreur lors de la récupération des factures :", error);
+    }
+  }
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -81,7 +108,7 @@ function OrderList({ orders }) {
                   <td>
                     <button
                       className="view-invoice-btn"
-                      onClick={() => generatePDF(order, findClient(order.clientId))}
+                      onClick={() => handleViewInvoice(order)}
                     >
                       Facture
                     </button>
@@ -97,7 +124,25 @@ function OrderList({ orders }) {
                 <button className="close-invoice-btn" onClick={() => setShowInvoice(false)}>
                   <i className="fas fa-times"></i>
                 </button>
-                <InvoiceGenerator order={selectedOrder} />
+                <InvoiceGenerator 
+                  order={{...selectedOrder, client: findClient(selectedOrder.clientId)}} 
+                  editable={true}
+                  onEdit={(updatedOrder) => setSelectedOrder(updatedOrder)}
+                />
+                {/* Boutons pour télécharger ou modifier la facture */}
+                <div style={{display: 'flex', gap: 16, marginTop: '1.5rem', justifyContent: 'flex-end'}}>
+
+                  
+                  <button
+                    className="download-invoice-btn"
+                    style={{
+                      background: '#337ab7', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', fontWeight: 600, cursor: 'pointer', fontSize: 15, boxShadow: '0 1px 3px #0001'
+                    }}
+                    onClick={() => generatePDF(selectedOrder, selectedOrder.client)}
+                  >
+                    Télécharger PDF
+                  </button>
+                </div>
               </div>
             </div>
           )}
