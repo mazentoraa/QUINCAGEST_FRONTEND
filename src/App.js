@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from 'antd';
 import SideMenu from './components/SideMenu';
@@ -26,11 +26,17 @@ import BonRetour from './components/BonsDevis/BonRetour';
 import BonCommande from './components/BonsDevis/BonCommande';
 import Devis from './components/BonsDevis/Devis';
 
+
 const { Header, Content, Sider } = Layout;
 
-// Simple PrivateRoute component
 const PrivateRoute = ({ children }) => {
-  const user = AuthService.getCurrentUser();
+  const { user, loading } = useContext(AuthProvider);
+
+  if (loading) {
+    // You can render a loading spinner or a placeholder here
+    return <div>Loading...</div>;
+  }
+
   return user ? children : <Navigate to="/login" />;
 };
 
