@@ -1048,7 +1048,7 @@ export default function BonCommande() {
           <Row gutter={[16, 16]} align="middle">
             <Col span={24}>
               <Title level={2}>
-                <FileDoneOutlined /> Bons de Commande/Factures
+                <FileDoneOutlined /> Bons de Commande
               </Title>
             </Col>
           </Row>
