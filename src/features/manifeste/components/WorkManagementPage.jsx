@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Layout, Typography, Button, message, Table, Modal, 
   Form, Input, InputNumber, Select, Space, Popconfirm, Spin,
-  Divider, Card, List, Tag, Badge, DatePicker, Row, Col
+  Divider, Card, List, Tag, Badge, DatePicker, Row, Col, Tooltip
 } from 'antd';
 import { 
   PlusOutlined, EditOutlined, DeleteOutlined, 
@@ -521,21 +521,21 @@ const WorkManagementPage = () => {
       key: 'actions',
       render: (_, record) => (
         <Space size="small">
-          <Button
-            icon={<EditOutlined />} 
-            onClick={() => handleEdit(record)}
-          >
-            Modifier
-          </Button>
+          <Tooltip title="Modifier">
+            <Button
+              icon={<EditOutlined />} 
+              onClick={() => handleEdit(record)}
+            />
+          </Tooltip>
           <Popconfirm
             title="Êtes-vous sûr de vouloir supprimer ce travail?"
             onConfirm={() => handleDelete(record.id)}
             okText="Oui"
             cancelText="Non"
           >
-            <Button icon={<DeleteOutlined />} danger>
-              Supprimer
-            </Button>
+            <Tooltip title="Supprimer">
+              <Button icon={<DeleteOutlined />} danger />
+            </Tooltip>
           </Popconfirm>
         </Space>
       ),
