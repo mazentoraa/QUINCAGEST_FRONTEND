@@ -14,7 +14,7 @@ import { StockProvider } from './features/stock/contexts/StockContext';
 import { ClientMaterialProvider } from './features/clientMaterials/contexts/ClientMaterialContext';
 import { OrderProvider } from './contexts/OrderContext';
 import { InstallmentProvider } from './features/installments/contexts/InstallmentContext';
-import { AuthProvider } from './features/authentication/context/AuthContext';
+import { AuthProvider, AuthContext } from './features/authentication/context/AuthContext';
 import LoginForm from './features/authentication/components/LoginForm';
 import AuthService from './services/AuthService';
 import './App.css';
@@ -30,14 +30,14 @@ import Devis from './components/BonsDevis/Devis';
 const { Header, Content, Sider } = Layout;
 
 const PrivateRoute = ({ children }) => {
-  const { user, loading } = useContext(AuthProvider);
+  const { user, isAuthenticated, loading } = useContext(AuthContext);
 
   if (loading) {
     // You can render a loading spinner or a placeholder here
     return <div>Loading...</div>;
   }
 
-  return user ? children : <Navigate to="/login" />;
+  return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
 function App() {
