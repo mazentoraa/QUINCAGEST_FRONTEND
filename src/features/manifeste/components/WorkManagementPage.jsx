@@ -1024,7 +1024,7 @@ const WorkManagementPage = () => {
 
         {/* Bill Modal */}
         <Modal
-          title="Préparation de la Facture"
+          title="Préparation du bon de livraison"
           open={isBillModalVisible}
           width={900}
           onCancel={() => setIsBillModalVisible(false)}
