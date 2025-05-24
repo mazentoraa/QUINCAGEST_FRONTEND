@@ -35,11 +35,11 @@ import {
   FileDoneOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import { jsPDF, autoTable } from "../../utils/pdfSetup";
 
 import { getApiService } from "../../services/apiServiceFactory";
 import ClientService from "../../features/clientManagement/services/ClientService";
 import ProductService from "../../components/BonsDevis/ProductService";
+import BonCommandePdfService from "../../features/orders/services/BonCommandePdfService";
 
 import moment from "moment";
 
@@ -314,11 +314,6 @@ export default function BonCommande() {
           10000 + Math.random() * 90000
         )}`;
 
-        // Get client object from availableClients
-        const selectedClient = availableClients.find(
-          (client) => client.id === selectedClientId
-        );
-
         const orderPayload = {
           client_id: selectedClientId,
           client: selectedClientId, // Add client field as required by backend
@@ -534,349 +529,199 @@ export default function BonCommande() {
     }
   };
 
-  const handlePrintOrderPDF = (orderRecord) => {
+  const handlePrintOrderPDF = async (orderRecord) => {
     const hideLoading = message.loading("Génération du PDF en cours...", 0);
 
-    (async () => {
-      try {
-        // Create a new document with proper landscape orientation for better table rendering
-        const doc = new jsPDF();
-
-        // Fetch complete order details
-        const detailedOrder = await orderService.getOrderById(orderRecord.id);
-        if (!detailedOrder) {
-          message.error(
-            "Données de commande non trouvées pour la génération du PDF."
-          );
-          hideLoading();
-          return;
-        }
-
-        // Title and header
-        doc.setFontSize(20);
-        doc.text("BON DE COMMANDE", 105, 20, { align: "center" });
-
-        // Company info
-        doc.setFontSize(16);
-        doc.text("Votre Société", 20, 30);
-        doc.setFontSize(10);
-        doc.text("Adresse: 123 Rue de la Métallurgie, Tunis", 20, 35);
-        doc.text("Tél: +216 xx xxx xxx", 20, 40);
-        doc.text("Email: contact@societe.com", 20, 45);
-
-        // Order details
-        doc.setFontSize(10);
-        doc.text(`Bon N°: ${detailedOrder.numero_commande}`, 170, 30, {
-          align: "right",
-        });
-        doc.text(
-          `Date de commande: ${moment(detailedOrder.date_commande).format(
-            "DD/MM/YYYY"
-          )}`,
-          170,
-          35,
-          { align: "right" }
+    try {
+      // Fetch complete order details
+      const detailedOrder = await orderService.getOrderById(orderRecord.id);
+      if (!detailedOrder) {
+        message.error(
+          "Données de commande non trouvées pour la génération du PDF."
         );
-        doc.text(
-          `Date livr. prévue: ${moment(
-            detailedOrder.date_livraison_prevue
-          ).format("DD/MM/YYYY")}`,
-          170,
-          40,
-          { align: "right" }
-        );
-
-        // Status with color
-        const statusObj = {
-          pending: { label: "En attente", color: [255, 193, 7] },
-          processing: { label: "En cours", color: [0, 123, 255] },
-          completed: { label: "Terminée", color: [40, 167, 69] },
-          cancelled: { label: "Annulée", color: [220, 53, 69] },
-          invoiced: { label: "Facturée", color: [23, 162, 184] },
-        };
-
-        const status = statusObj[detailedOrder.statut] || {
-          label: translateOrderStatus(detailedOrder.statut),
-          color: [108, 117, 125],
-        };
-
-        // Divider
-        doc.line(20, 60, 190, 60);
-
-        // Client Information
-        doc.setFontSize(14);
-        doc.text("Client", 20, 70);
-        doc.setFontSize(10);
-        doc.text(`Nom: ${detailedOrder.nom_client || "N/A"}`, 20, 75);
-        doc.text(`Adresse: ${detailedOrder.adresse || "N/A"}`, 20, 80);
-        doc.text(
-          `Matricule Fiscale: ${detailedOrder.numero_fiscal || "N/A"}`,
-          20,
-          85
-        );
-        doc.text(`Tél: ${detailedOrder.telephone_client || "N/A"}`, 20, 90);
-
-        // Status
-        doc.setFillColor(status.color[0], status.color[1], status.color[2]);
-        doc.roundedRect(170, 45, 25, 8, 1, 1, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.text(status.label, 182.5, 50, { align: "center" });
-        doc.setTextColor(0, 0, 0);
-
-        // Products table
-        if (
-          detailedOrder.produit_commande &&
-          detailedOrder.produit_commande.length > 0
-        ) {
-          const tableColumn = [
-            "Produit",
-            "Quantité",
-            "Prix Unitaire",
-            "Remise (%)",
-            "Total HT",
-          ];
-          const tableRows = [];
-          detailedOrder.produit_commande.forEach((item) => {
-            const totalItem =
-              item.quantite *
-              item.prix_unitaire *
-              (1 - (item.remise_pourcentage || 0) / 100);
-            const row = [
-              item.nom_produit || `Produit ID ${item.produit_id}`,
-              item.quantite,
-              formatCurrency(item.prix_unitaire),
-              item.remise_pourcentage || 0,
-              formatCurrency(totalItem),
-            ];
-            tableRows.push(row);
-          });
-
-          // Call autoTable on the document instance with improved styling
-          autoTable(doc, {
-            startY: 100,
-            head: [tableColumn],
-            body: tableRows,
-            theme: "grid",
-            styles: { fontSize: 10, cellPadding: 3 },
-            columnStyles: {
-              0: { cellWidth: 70 },
-              4: { halign: "right" },
-            },
-            headStyles: {
-              fillColor: [50, 50, 50],
-              textColor: [255, 255, 255],
-              fontStyle: "bold",
-            },
-          });
-
-          // Get the final Y position directly from the document
-          let finalY = doc.lastAutoTable.finalY || 120;
-
-          // Totals with improved layout
-          // Rectangle for the totals
-          doc.setFillColor(240, 240, 240);
-          doc.rect(110, finalY + 10, 80, 30, "F");
-          doc.setDrawColor(180, 180, 180);
-          doc.rect(110, finalY + 10, 80, 30);
-
-          doc.setFontSize(10);
-          doc.text(`Montant HT:`, 115, finalY + 17);
-          doc.text(
-            `${formatCurrency(detailedOrder.montant_ht)}`,
-            185,
-            finalY + 17,
-            { align: "right" }
-          );
-
-          doc.text(`TVA (${detailedOrder.tax_rate || 0}%):`, 115, finalY + 24);
-          doc.text(
-            `${formatCurrency(detailedOrder.montant_tva || 0)}`,
-            185,
-            finalY + 24,
-            { align: "right" }
-          );
-
-          doc.setFontSize(12);
-          doc.setFont(undefined, "bold");
-          doc.text(`Total TTC:`, 115, finalY + 33);
-          doc.text(
-            `${formatCurrency(detailedOrder.montant_ttc || 0)}`,
-            185,
-            finalY + 33,
-            { align: "right" }
-          );
-          doc.setFont(undefined, "normal");
-
-          finalY += 50;
-
-          // Add notes if present
-          if (detailedOrder.notes) {
-            doc.setFontSize(11);
-            doc.text("Notes:", 20, finalY);
-            doc.setFontSize(10);
-
-            const splitNotes = doc.splitTextToSize(detailedOrder.notes, 170);
-            doc.text(splitNotes, 20, finalY + 7);
-            finalY += splitNotes.length * 5 + 10;
-          }
-
-          // Add payment terms if present
-          if (detailedOrder.conditions_paiement) {
-            doc.setFontSize(11);
-            doc.text("Conditions de Paiement:", 20, finalY);
-            doc.setFontSize(10);
-
-            const splitTerms = doc.splitTextToSize(
-              detailedOrder.conditions_paiement,
-              170
-            );
-            doc.text(splitTerms, 20, finalY + 7);
-            finalY += splitTerms.length * 5 + 15;
-          }
-        } else {
-          doc.setFontSize(12);
-          doc.text("Aucun produit dans cette commande.", 105, 120, {
-            align: "center",
-          });
-        }
-
-        // Common part - determine position based on previous content
-        let currentY;
-
-        if (doc.lastAutoTable && doc.lastAutoTable.finalY) {
-          currentY = doc.lastAutoTable.finalY + 40;
-        } else {
-          currentY = 150;
-        }
-
-        // Show totals if available
-        if (
-          detailedOrder.montant_ht !== undefined ||
-          detailedOrder.montant_ttc !== undefined
-        ) {
-          // Rectangle for the totals
-          doc.setFillColor(240, 240, 240);
-          doc.rect(110, currentY - 30, 80, 30, "F");
-          doc.setDrawColor(180, 180, 180);
-          doc.rect(110, currentY - 30, 80, 30);
-
-          doc.setFontSize(10);
-          doc.text(`Montant HT:`, 115, currentY - 23);
-          doc.text(
-            `${formatCurrency(detailedOrder.montant_ht || 0)}`,
-            185,
-            currentY - 23,
-            { align: "right" }
-          );
-
-          doc.text(
-            `TVA (${detailedOrder.tax_rate || 0}%):`,
-            115,
-            currentY - 16
-          );
-          doc.text(
-            `${formatCurrency(detailedOrder.montant_tva || 0)}`,
-            185,
-            currentY - 16,
-            { align: "right" }
-          );
-
-          doc.setFontSize(12);
-          doc.setFont(undefined, "bold");
-          doc.text(`Total TTC:`, 115, currentY - 7);
-          doc.text(
-            `${formatCurrency(detailedOrder.montant_ttc || 0)}`,
-            185,
-            currentY - 7,
-            { align: "right" }
-          );
-          doc.setFont(undefined, "normal");
-        }
-
-        // Add notes if present
-        if (detailedOrder.notes) {
-          doc.setFontSize(11);
-          doc.text("Notes:", 20, currentY);
-          doc.setFontSize(10);
-
-          const splitNotes = doc.splitTextToSize(detailedOrder.notes, 170);
-          doc.text(splitNotes, 20, currentY + 7);
-          currentY += splitNotes.length * 5 + 15;
-        }
-
-        // Add payment terms if present
-        if (detailedOrder.conditions_paiement) {
-          doc.setFontSize(11);
-          doc.text("Conditions de Paiement:", 20, currentY);
-          doc.setFontSize(10);
-
-          const splitTerms = doc.splitTextToSize(
-            detailedOrder.conditions_paiement,
-            170
-          );
-          doc.text(splitTerms, 20, currentY + 7);
-          currentY += splitTerms.length * 5 + 15;
-        }
-
-        // Add signature area
-        const signatureY = Math.min(240, currentY);
-        doc.setFontSize(10);
-        doc.text("Signature Client:", 20, signatureY);
-        doc.rect(20, signatureY + 5, 70, 20);
-
-        doc.text("Signature Société:", 120, signatureY);
-        doc.rect(120, signatureY + 5, 70, 20);
-
-        // Add footer
-        doc.setFontSize(8);
-        doc.text("Merci pour votre confiance !", 105, 285, { align: "center" });
-
-        // Save the PDF
-        doc.save(`BonCommande_${detailedOrder.numero_commande}.pdf`);
-
-        // Show success message
         hideLoading();
-        message.success("PDF généré avec succès");
-      } catch (e) {
-        hideLoading();
-        message.error("Erreur lors de la génération du PDF: " + e.message);
-        console.error("PDF generation error:", e);
-
-        try {
-          // Create a simpler error document
-          const errorDoc = new jsPDF();
-          errorDoc.setFontSize(18);
-          errorDoc.text(
-            "Erreur lors de la génération du Bon de Commande",
-            105,
-            20,
-            { align: "center" }
-          );
-          errorDoc.setFontSize(12);
-          errorDoc.text(
-            `Référence: ${orderRecord.numero_commande || "N/A"}`,
-            105,
-            30,
-            { align: "center" }
-          );
-          errorDoc.setFontSize(10);
-          errorDoc.text(`Erreur: ${e.message}`, 20, 50);
-          errorDoc.text(
-            `Veuillez contacter le service informatique avec cette référence d'erreur.`,
-            20,
-            60
-          );
-          errorDoc.save(
-            `BonCommande_${orderRecord.numero_commande || "erreur"}.pdf`
-          );
-        } catch (innerError) {
-          console.error("Failed to generate even the error PDF:", innerError);
-        }
+        return;
       }
-    })();
+
+      // Find the client in availableClients list
+      let clientDetailsForPdf = null;
+      const clientIdToFind =
+        detailedOrder.client_id ||
+        (typeof detailedOrder.client === "number"
+          ? detailedOrder.client
+          : null);
+
+      if (clientIdToFind) {
+        clientDetailsForPdf = availableClients.find(
+          (client) => client.id === clientIdToFind
+        );
+      }
+
+      // Note for 'no-undef' errors:
+      // The ESLint errors for 'clientDetailsForPdf' (lines 624+) do not match this section
+      // in the provided file. In this file, 'clientDetailsForPdf' is declared above
+      // and used below within this function's scope, which should be correct.
+      // Please verify the version of the file ESLint is checking on your local system.
+
+      let mappedProduitCommande;
+
+      if (
+        detailedOrder.produit_commande &&
+        detailedOrder.produit_commande.length > 0
+      ) {
+        mappedProduitCommande = detailedOrder.produit_commande.map(
+          (orderProduct) => {
+            const productDetailsFromCatalog = availableProducts.find(
+              (p) => p.id === (orderProduct.produit_id || orderProduct.produit)
+            );
+
+            const nomProduit =
+              orderProduct.nom_produit ||
+              productDetailsFromCatalog?.nom_produit ||
+              `Produit ID ${
+                orderProduct.produit_id || orderProduct.produit || "N/A"
+              }`;
+
+            const prixUnitaire =
+              orderProduct.prix_unitaire ??
+              productDetailsFromCatalog?.prix_unitaire ??
+              0;
+
+            const quantite = Number(orderProduct.quantite) || 0;
+            const remisePourcentage =
+              Number(orderProduct.remise_pourcentage) || 0;
+
+            const calculatedLineTotal =
+              quantite * prixUnitaire * (1 - remisePourcentage / 100);
+
+            const prixTotal =
+              typeof orderProduct.prix_total === "number"
+                ? orderProduct.prix_total
+                : calculatedLineTotal;
+
+            return {
+              id: orderProduct.id,
+              produit_id: orderProduct.produit_id || orderProduct.produit,
+              nom_produit: nomProduit,
+              quantite: quantite,
+              prix_unitaire: prixUnitaire,
+              remise_pourcentage: remisePourcentage,
+              prix_total: prixTotal,
+            };
+          }
+        );
+      } else if (
+        detailedOrder.produits_details &&
+        detailedOrder.produits_details.length > 0
+      ) {
+        console.warn(
+          "BonCommande.js: `produit_commande` is empty. Using `produits_details` as a fallback for PDF generation. Quantities will be assumed as 1 and discounts as 0."
+        );
+        mappedProduitCommande = detailedOrder.produits_details.map(
+          (detailProduct) => {
+            const productDetailsFromCatalog = availableProducts.find(
+              (p) => p.id === detailProduct.id
+            );
+            const nomProduit =
+              detailProduct.nom_produit ||
+              productDetailsFromCatalog?.nom_produit ||
+              `Produit ID ${detailProduct.id || "N/A"}`;
+            // Assuming 'prix' in produits_details is the unit price
+            const prixUnitaire =
+              detailProduct.prix ??
+              productDetailsFromCatalog?.prix_unitaire ??
+              0;
+            const quantite = 1; // Assumption: quantity is 1
+            const remisePourcentage = 0; // Assumption: no discount
+
+            return {
+              produit_id: detailProduct.id,
+              nom_produit: nomProduit,
+              quantite: quantite,
+              prix_unitaire: prixUnitaire,
+              remise_pourcentage: remisePourcentage,
+              prix_total:
+                quantite * prixUnitaire * (1 - remisePourcentage / 100),
+            };
+          }
+        );
+      } else {
+        mappedProduitCommande = [];
+      }
+
+      // Check if mappedProduitCommande is empty and log if necessary
+      if (mappedProduitCommande.length === 0) {
+        console.warn(
+          "BonCommande.js: No products will be listed in the PDF. `produit_commande` and `produits_details` (fallback) are empty or unavailable.",
+          detailedOrder
+        );
+      }
+
+      // Map the order data to match the PDF service expectations
+      const orderDataForPDF = {
+        ...detailedOrder,
+        produit_commande: mappedProduitCommande,
+        // Format dates properly
+        date_commande: detailedOrder.date_commande
+          ? moment(detailedOrder.date_commande).format("DD/MM/YYYY")
+          : "",
+        date_livraison_prevue: detailedOrder.date_livraison_prevue
+          ? moment(detailedOrder.date_livraison_prevue).format("DD/MM/YYYY")
+          : "",
+        // Ensure all required fields are present
+        numero_commande: detailedOrder.numero_commande || "",
+
+        // Correctly source client information
+        nom_client:
+          clientDetailsForPdf?.nom_complet ||
+          clientDetailsForPdf?.nom ||
+          detailedOrder.client?.nom_complet ||
+          detailedOrder.client?.nom ||
+          detailedOrder.nom_client ||
+          "",
+        client_address:
+          clientDetailsForPdf?.adresse ||
+          detailedOrder.client?.adresse ||
+          detailedOrder.client_address ||
+          detailedOrder.adresse ||
+          "",
+        client_tax_id:
+          clientDetailsForPdf?.numero_fiscal ||
+          detailedOrder.client?.numero_fiscal ||
+          detailedOrder.client_tax_id ||
+          detailedOrder.numero_fiscal ||
+          "",
+        client_phone:
+          clientDetailsForPdf?.telephone ||
+          detailedOrder.client?.telephone ||
+          detailedOrder.client_phone ||
+          detailedOrder.telephone_client ||
+          "",
+        statut: detailedOrder.statut || "",
+        conditions_paiement: detailedOrder.conditions_paiement || "",
+        notes: detailedOrder.notes || "",
+        montant_ht: detailedOrder.montant_ht || 0,
+        montant_tva: detailedOrder.montant_tva || 0,
+        montant_ttc: detailedOrder.montant_ttc || 0,
+        tax_rate: detailedOrder.tax_rate || 20,
+      };
+
+      console.log("Order data for PDF:", orderDataForPDF); // Debug log
+
+      // Use the new PDF service
+      const filename = `BonCommande_${detailedOrder.numero_commande}.pdf`;
+      await BonCommandePdfService.generateOrderPDF(orderDataForPDF, filename);
+
+      hideLoading();
+      message.success("PDF généré avec succès");
+    } catch (error) {
+      hideLoading();
+      console.error("Error generating PDF:", error);
+      message.error("Erreur lors de la génération du PDF: " + error.message);
+    }
   };
 
-  const handlePrintSelectedOrdersSummary = () => {
+  const handlePrintSelectedOrdersSummary = async () => {
     if (selectedRows.length === 0) {
       message.warn("Aucune commande sélectionnée pour l'impression.");
       return;
@@ -888,136 +733,169 @@ export default function BonCommande() {
     );
 
     try {
-      const doc = new jsPDF();
+      // Create a summary HTML content for multiple orders
+      const summaryData = {
+        title: "RÉCAPITULATIF DES COMMANDES",
+        generation_date: moment().format("DD/MM/YYYY à HH:mm"),
+        orders_count: selectedRows.length,
+        orders: selectedRows,
+        total_amount: selectedRows.reduce(
+          (sum, order) => sum + (Number(order.montant_ttc) || 0),
+          0
+        ),
+      };
 
-      // Title and header
-      doc.setFontSize(20);
-      doc.text("RÉCAPITULATIF DES COMMANDES", 105, 20, { align: "center" });
+      // Generate summary HTML
+      const summaryHTML = generateOrdersSummaryHTML(summaryData);
 
-      // Date of generation
-      doc.setFontSize(10);
-      doc.text(`Généré le: ${moment().format("DD/MM/YYYY à HH:mm")}`, 195, 30, {
-        align: "right",
-      });
-      doc.text(`Nombre de commandes: ${selectedRows.length}`, 195, 35, {
-        align: "right",
-      });
-
-      // Company info
-      doc.setFontSize(16);
-      doc.text("Votre Société", 20, 30);
-      doc.setFontSize(10);
-      doc.text("Adresse: 123 Rue de la Métallurgie, Tunis", 20, 35);
-      doc.text("Tél: +216 xx xxx xxx", 20, 40);
-
-      // Divider
-      doc.line(20, 45, 190, 45);
-
-      const tableColumn = [
-        "N° Commande",
-        "Client",
-        "Date",
-        "Statut",
-        "Montant TTC",
-      ];
-      const tableRows = [];
-
-      let totalAmount = 0;
-
-      selectedRows.forEach((order) => {
-        const orderData = [
-          order.numero_commande,
-          order.nom_client,
-          moment(order.date_commande).format("DD/MM/YYYY"),
-          translateOrderStatus(order.statut),
-          formatCurrency(order.montant_ttc),
-        ];
-        tableRows.push(orderData);
-
-        // Calculate total amount
-        totalAmount += Number(order.montant_ttc) || 0;
-      });
-
-      // Call autoTable on the doc instance with improved styling
-      autoTable(doc, {
-        startY: 50,
-        head: [tableColumn],
-        body: tableRows,
-        theme: "grid",
-        styles: { fontSize: 10, cellPadding: 3 },
-        columnStyles: {
-          4: { halign: "right" },
+      // Use the PDF service to generate the summary
+      // This part assumes BonCommandePdfService.API_URL and BonCommandePdfService.API_TOKEN are set
+      // and that the service has a generic HTML to PDF endpoint.
+      // If BonCommandePdfService is designed differently, this needs adjustment.
+      const response = await fetch(BonCommandePdfService.API_URL, {
+        // Ensure API_URL is correctly defined in BonCommandePdfService
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${BonCommandePdfService.API_TOKEN}`, // Ensure API_TOKEN is correctly defined
+          "Content-Type": "application/x-www-form-urlencoded",
         },
-        headStyles: {
-          fillColor: [50, 50, 50],
-          textColor: [255, 255, 255],
-          fontStyle: "bold",
-        },
+        body: `html=${encodeURIComponent(summaryHTML)}`,
       });
 
-      // Get the final Y position directly from the document
-      const finalY = doc.lastAutoTable.finalY || 120;
-
-      // Add total amount
-      doc.setFontSize(12);
-      doc.setFont(undefined, "bold");
-      doc.text(
-        `Montant Total TTC: ${formatCurrency(totalAmount)}`,
-        195,
-        finalY + 15,
-        { align: "right" }
-      );
-      doc.setFont(undefined, "normal");
-
-      // Add footer
-      doc.setFontSize(8);
-      doc.text("Document à usage interne uniquement", 105, 285, {
-        align: "center",
-      });
-
-      // Save the PDF
-      doc.save(`Récapitulatif_Commandes_${moment().format("YYYYMMDD")}.pdf`);
-
-      // Show success message
-      hideLoading();
-      message.success("Récapitulatif des commandes généré avec succès");
+      if (response.ok) {
+        const data = await response.json();
+        if (data.file) {
+          BonCommandePdfService.openPDFInNewWindow(
+            data.file,
+            `Récapitulatif_Commandes_${moment().format("YYYYMMDD")}.pdf`
+          );
+          hideLoading();
+          message.success("Récapitulatif des commandes généré avec succès");
+        } else {
+          throw new Error("Unexpected API response format for summary PDF");
+        }
+      } else {
+        const errorText = await response.text();
+        throw new Error(
+          `API Error for summary PDF: ${response.status} - ${errorText}`
+        );
+      }
     } catch (error) {
       hideLoading();
       console.error("Error generating order summary PDF:", error);
-      message.error("Erreur lors de la génération du PDF récapitulatif");
-    }
-  };
-
-  const handleGenerateInvoiceAPI = async (order) => {
-    if (order.statut !== "completed" && order.statut !== "processing") {
-      Modal.confirm({
-        title: "Confirmation de génération de facture",
-        content: `La commande N°${order.numero_commande} n'est pas au statut "Terminée". Voulez-vous quand même tenter de générer la facture ?`,
-        okText: "Oui, générer",
-        cancelText: "Annuler",
-        onOk: async () => {
-          await proceedWithInvoiceGeneration(order);
-        },
-      });
-    } else {
-      await proceedWithInvoiceGeneration(order);
-    }
-  };
-
-  const proceedWithInvoiceGeneration = async (order) => {
-    setLoading(true);
-    try {
-      const response = await orderService.generateInvoiceFromOrder(order.id);
-      message.success(response.success + ` ID Facture: ${response.invoice_id}`);
-      fetchOrders();
-    } catch (err) {
       message.error(
-        "Failed to generate invoice: " +
-          (err.response?.data?.detail || err.message)
+        "Erreur lors de la génération du PDF récapitulatif: " + error.message
       );
+    }
+  };
+
+  const generateOrdersSummaryHTML = (summaryData) => {
+    return `
+      <html>
+        <head>
+          <title>${summaryData.title}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .summary-info { margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .total { font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>${summaryData.title}</h1>
+            <p>Généré le ${summaryData.generation_date}</p>
+          </div>
+          <div class="summary-info">
+            <p><strong>Nombre de commandes:</strong> ${
+              summaryData.orders_count
+            }</p>
+            <p><strong>Montant total TTC:</strong> ${formatCurrency(
+              summaryData.total_amount
+            )}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>N° Commande</th>
+                <th>Client</th>
+                <th>Date</th>
+                <th>Statut</th>
+                <th>Montant TTC</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${summaryData.orders
+                .map(
+                  (order) => `
+                <tr>
+                  <td>${order.numero_commande || ""}</td>
+                  <td>${order.nom_client || ""}</td>
+                  <td>${
+                    order.date_commande
+                      ? moment(order.date_commande).format("DD/MM/YYYY")
+                      : ""
+                  }</td>
+                  <td>${translateOrderStatus(order.statut)}</td>
+                  <td>${formatCurrency(order.montant_ttc)}</td>
+                </tr>
+              `
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    try {
+      setLoading(true);
+      await orderService.deleteOrder(orderId);
+      message.success("Commande supprimée avec succès");
+      fetchOrders();
+    } catch (error) {
+      message.error("Erreur lors de la suppression: " + error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warn("Aucune commande sélectionnée");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await Promise.all(
+        selectedRowKeys.map((id) => orderService.deleteOrder(id))
+      );
+      message.success(`${selectedRowKeys.length} commande(s) supprimée(s)`);
+      setSelectedRowKeys([]);
+      setSelectedRows([]);
+      fetchOrders();
+    } catch (error) {
+      message.error("Erreur lors de la suppression: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    const statusColors = {
+      pending: "orange",
+      processing: "blue",
+      completed: "green",
+      cancelled: "red",
+      invoiced: "purple",
+    };
+    return statusColors[status] || "default";
   };
 
   const columns = [
@@ -1025,110 +903,75 @@ export default function BonCommande() {
       title: "N° Commande",
       dataIndex: "numero_commande",
       key: "numero_commande",
-      sorter: (a, b) => a.numero_commande.localeCompare(b.numero_commande),
-      fixed: "left",
-      width: 180,
+      sorter: (a, b) =>
+        (a.numero_commande || "").localeCompare(b.numero_commande || ""),
     },
     {
       title: "Client",
       dataIndex: "nom_client",
       key: "nom_client",
-      sorter: (a, b) => a.nom_client.localeCompare(b.nom_client),
-      width: 200,
+      sorter: (a, b) => (a.nom_client || "").localeCompare(b.nom_client || ""),
     },
     {
       title: "Date Commande",
       dataIndex: "date_commande",
       key: "date_commande",
-      render: (text) => moment(text).format("DD/MM/YYYY"),
+      render: (date) => (date ? moment(date).format("DD/MM/YYYY") : ""),
       sorter: (a, b) =>
-        moment(a.date_commande).unix() - moment(b.date_commande).unix(),
-      width: 150,
+        moment(a.date_commande).valueOf() - moment(b.date_commande).valueOf(),
     },
     {
-      title: "Date Liv. Prévue",
+      title: "Date Livraison",
       dataIndex: "date_livraison_prevue",
       key: "date_livraison_prevue",
-      render: (text) => moment(text).format("DD/MM/YYYY"),
-      width: 150,
+      render: (date) => (date ? moment(date).format("DD/MM/YYYY") : ""),
     },
     {
       title: "Statut",
       dataIndex: "statut",
       key: "statut",
       render: (status) => (
-        <Tag
-          color={
-            status === "completed"
-              ? "green"
-              : status === "invoiced"
-              ? "blue"
-              : status === "pending"
-              ? "gold"
-              : status === "processing"
-              ? "processing"
-              : "volcano"
-          }
-        >
-          {translateOrderStatus(status)}
-        </Tag>
+        <Tag color={getStatusColor(status)}>{translateOrderStatus(status)}</Tag>
       ),
-      width: 120,
-    },
-    {
-      title: "Montant HT",
-      dataIndex: "montant_ht",
-      key: "montant_ht",
-      render: (text) => formatCurrency(text),
-      width: 150,
-      align: "right",
     },
     {
       title: "Montant TTC",
       dataIndex: "montant_ttc",
       key: "montant_ttc",
-      render: (text) => formatCurrency(text),
-      width: 150,
-      align: "right",
-    },
-    {
-      title: "N° Devis Orig.",
-      dataIndex: "devis",
-      key: "devis",
-      render: (text) => text || "-",
-      width: 150,
+      render: (amount) => formatCurrency(amount),
+      sorter: (a, b) =>
+        (Number(a.montant_ttc) || 0) - (Number(b.montant_ttc) || 0),
     },
     {
       title: "Actions",
       key: "actions",
-      fixed: "right",
-      width: 180,
       render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="Modifier Commande">
+        <Space>
+          <Tooltip title="Modifier">
             <Button
+              type="primary"
               icon={<EditOutlined />}
-              onClick={() => handleEditOrder(record)}
               size="small"
+              onClick={() => handleEditOrder(record)}
             />
           </Tooltip>
-          <Tooltip title="Imprimer Bon de Commande (PDF)">
+          <Tooltip title="Imprimer PDF">
             <Button
               icon={<FilePdfOutlined />}
-              onClick={() => handlePrintOrderPDF(record)}
               size="small"
+              onClick={() => handlePrintOrderPDF(record)}
             />
           </Tooltip>
-          {(record.statut === "completed" || record.statut === "processing") &&
-            !record.facture_numero && (
-              <Tooltip title="Générer Facture">
-                <Button
-                  icon={<FileDoneOutlined />}
-                  onClick={() => handleGenerateInvoiceAPI(record)}
-                  size="small"
-                />
-              </Tooltip>
-            )}
+          <Tooltip title="Supprimer">
+            <Popconfirm
+              title="Êtes-vous sûr de vouloir supprimer cette commande ?"
+              onConfirm={() => handleDeleteOrder(record.id)}
+              okText="Oui"
+              cancelText="Non"
+            >
+              <Button danger icon={<DeleteOutlined />} size="small" />
+            </Popconfirm>
+          </Tooltip>
         </Space>
       ),
     },
@@ -1136,210 +979,151 @@ export default function BonCommande() {
 
   const rowSelection = {
     selectedRowKeys,
-    onChange: (keys, rows) => {
-      setSelectedRowKeys(keys);
-      setSelectedRows(rows);
+    onChange: (newSelectedRowKeys, newSelectedRows) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+      setSelectedRows(newSelectedRows);
     },
   };
 
-  const productColumnsInDrawer = [
-    {
-      title: "Produit",
-      dataIndex: "nom_produit",
-      key: "nom_produit",
-      width: 200,
-    },
-    { title: "Qté", dataIndex: "quantite", key: "quantite", width: 80 },
-    {
-      title: "Prix U.",
-      dataIndex: "prix_unitaire",
-      key: "prix_unitaire",
-      render: (val) => formatCurrency(val),
-      width: 100,
-      align: "right",
-    },
-    {
-      title: "Remise (%)",
-      dataIndex: "remise_pourcentage",
-      key: "remise_pourcentage",
-      width: 100,
-      align: "right",
-    },
-    {
-      title: "Total HT",
-      dataIndex: "prix_total",
-      key: "prix_total",
-      render: (val) => formatCurrency(val),
-      width: 120,
-      align: "right",
-    },
-    {
-      title: "Action",
-      key: "action",
-      width: 80,
-      render: (_, record) => (
-        <Popconfirm
-          title="Sûr de supprimer ce produit?"
-          onConfirm={() => handleRemoveProductFromDrawerOrder(record.id)}
-        >
-          <Button danger icon={<DeleteOutlined />} size="small" />
-        </Popconfirm>
-      ),
-    },
-  ];
+  const clearFilters = () => {
+    setSearchText("");
+    setSelectedClientFilter(null);
+    setSelectedStatus(null);
+    setDateRange(null);
+    setPriceRange([null, null]);
+  };
+
+  const totalAmount = filteredOrders.reduce(
+    (sum, order) => sum + (Number(order.montant_ttc) || 0),
+    0
+  );
+
+  if (error) {
+    return (
+      <div style={{ padding: "24px" }}>
+        <Alert
+          message="Erreur"
+          description={error}
+          type="error"
+          showIcon
+          action={
+            <Button size="small" onClick={fetchOrders}>
+              Réessayer
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
 
   return (
-    <Layout.Content style={{ padding: "20px" }}>
-      <Card title="Gestion des Bons de Commande">
-        {/* Statistics Row */}
-        <Row gutter={16} style={{ marginBottom: 16 }}>
-          <Col xs={24} sm={12} md={6} lg={6}>
-            <Card size="small">
+    <Layout.Content style={{ padding: "24px" }}>
+      <Card>
+        <div style={{ marginBottom: 16 }}>
+          <Row gutter={[16, 16]} align="middle">
+            <Col span={24}>
+              <Title level={2}>
+                <FileDoneOutlined /> Bons de Commande
+              </Title>
+            </Col>
+          </Row>
+
+          {/* Statistics */}
+          <Row gutter={16} style={{ marginBottom: 16 }}>
+            <Col span={6}>
               <Statistic
-                title="Total commandes"
+                title="Total Commandes"
                 value={filteredOrders.length}
-                suffix={`/ ${orders.length}`}
+                prefix={<FileDoneOutlined />}
               />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6} lg={6}>
-            <Card size="small">
+            </Col>
+            <Col span={6}>
               <Statistic
-                title="Montant total TTC"
-                value={filteredOrders.reduce(
-                  (sum, order) => sum + (Number(order.montant_ttc) || 0),
-                  0
-                )}
+                title="Montant Total TTC"
+                value={totalAmount}
                 formatter={(value) => formatCurrency(value)}
               />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6} lg={6}>
-            <Card size="small">
+            </Col>
+            <Col span={6}>
               <Statistic
-                title="En attente"
+                title="En Attente"
                 value={
-                  filteredOrders.filter((order) => order.statut === "pending")
-                    .length
+                  filteredOrders.filter((o) => o.statut === "pending").length
                 }
-                valueStyle={{ color: "#faad14" }}
+                valueStyle={{ color: "#fa8c16" }}
               />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6} lg={6}>
-            <Card size="small">
+            </Col>
+            <Col span={6}>
               <Statistic
                 title="Terminées"
                 value={
-                  filteredOrders.filter((order) => order.statut === "completed")
-                    .length
+                  filteredOrders.filter((o) => o.statut === "completed").length
                 }
                 valueStyle={{ color: "#52c41a" }}
               />
-            </Card>
-          </Col>
-        </Row>
+            </Col>
+          </Row>
 
-        <Row style={{ marginBottom: 16 }} gutter={[16, 16]} align="middle">
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Input
-              placeholder="Rechercher par client, N° commande..."
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              allowClear
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Select
-              placeholder="Filtrer par client"
-              style={{ width: "100%" }}
-              onChange={(value) => setSelectedClientFilter(value)}
-              allowClear
-              showSearch
-              optionFilterProp="children"
-              filterOption={(input, option) =>
-                (option?.children || "")
-                  .toLowerCase()
-                  .includes(input.toLowerCase())
-              }
-            >
-              {availableClients.map((client) => (
-                <Option key={client.id} value={client.id}>
-                  {client.nom_client}
-                </Option>
-              ))}
-            </Select>
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Select
-              placeholder="Filtrer par statut"
-              style={{ width: "100%" }}
-              onChange={(value) => setSelectedStatus(value)}
-              allowClear
-            >
-              <Option value="pending">En attente</Option>
-              <Option value="processing">En cours</Option>
-              <Option value="completed">Terminée</Option>
-              <Option value="cancelled">Annulée</Option>
-              <Option value="invoiced">Facturée</Option>
-            </Select>
-          </Col>
-          <Col xs={24} sm={12} md={10} lg={6}>
-            <DatePicker.RangePicker
-              style={{ width: "100%" }}
-              onChange={(dates) => setDateRange(dates)}
-              placeholder={["Date début", "Date fin"]}
-            />
-          </Col>
-          <Col xs={24} sm={12} md={10} lg={6}>
-            <Form.Item label="Montant TTC" style={{ marginBottom: 0 }}>
-              <Input.Group compact style={{ display: "flex" }}>
-                <InputNumber
-                  style={{ width: "50%" }}
-                  placeholder="Min"
-                  min={0}
-                  step={100}
-                  formatter={(value) =>
-                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
-                  }
-                  parser={(value) => value.replace(/\s+/g, "")}
-                  onChange={(value) => setPriceRange([value, priceRange[1]])}
-                />
-                <InputNumber
-                  style={{ width: "50%" }}
-                  placeholder="Max"
-                  min={0}
-                  step={100}
-                  formatter={(value) =>
-                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
-                  }
-                  parser={(value) => value.replace(/\s+/g, "")}
-                  onChange={(value) => setPriceRange([priceRange[0], value])}
-                />
-              </Input.Group>
-            </Form.Item>
-          </Col>
-          <Col flex="auto" style={{ textAlign: "right" }}>
-            <Space>
-              {(searchText ||
-                selectedClientFilter ||
-                selectedStatus ||
-                dateRange ||
-                priceRange[0] !== null ||
-                priceRange[1] !== null) && (
-                <Button
-                  onClick={() => {
-                    setSearchText("");
-                    setSelectedClientFilter(null);
-                    setSelectedStatus(null);
-                    setDateRange(null);
-                    setPriceRange([null, null]);
-                  }}
-                >
-                  Effacer tous les filtres
-                </Button>
-              )}
+          <Divider />
+
+          {/* Filters */}
+          <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+            <Col span={6}>
+              <Input
+                placeholder="Rechercher..."
+                prefix={<SearchOutlined />}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                allowClear
+              />
+            </Col>
+            <Col span={4}>
+              <Select
+                placeholder="Client"
+                value={selectedClientFilter}
+                onChange={setSelectedClientFilter}
+                allowClear
+                style={{ width: "100%" }}
+              >
+                {availableClients.map((client) => (
+                  <Option key={client.id} value={client.id}>
+                    {client.nom_complet || client.nom}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+            <Col span={4}>
+              <Select
+                placeholder="Statut"
+                value={selectedStatus}
+                onChange={setSelectedStatus}
+                allowClear
+                style={{ width: "100%" }}
+              >
+                <Option value="pending">En attente</Option>
+                <Option value="processing">En cours</Option>
+                <Option value="completed">Terminée</Option>
+                <Option value="cancelled">Annulée</Option>
+                <Option value="invoiced">Facturée</Option>
+              </Select>
+            </Col>
+            <Col span={6}>
+              <DatePicker.RangePicker
+                value={dateRange}
+                onChange={setDateRange}
+                format="DD/MM/YYYY"
+                placeholder={["Date début", "Date fin"]}
+                style={{ width: "100%" }}
+              />
+            </Col>
+            <Col span={4}>
+              <Button onClick={clearFilters}>Effacer filtres</Button>
+            </Col>
+          </Row>
+
+          {/* Action buttons */}
+          <Row gutter={16} style={{ marginBottom: 16 }}>
+            <Col>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -1347,426 +1131,272 @@ export default function BonCommande() {
               >
                 Nouvelle Commande
               </Button>
+            </Col>
+            <Col>
               <Button
-                icon={<FilePdfOutlined />}
-                onClick={handlePrintSelectedOrdersSummary}
-                disabled={selectedRowKeys.length === 0}
+                icon={<ReloadOutlined />}
+                onClick={fetchOrders}
+                loading={loading}
               >
-                Imprimer Sélection
-              </Button>
-              <Button icon={<ReloadOutlined />} onClick={fetchOrders}>
                 Actualiser
               </Button>
-            </Space>
-          </Col>
-        </Row>
+            </Col>
+            {selectedRowKeys.length > 0 && (
+              <>
+                <Col>
+                  <Badge count={selectedRowKeys.length}>
+                    <Button
+                      icon={<PrinterOutlined />}
+                      onClick={handlePrintSelectedOrdersSummary}
+                    >
+                      Imprimer Sélection
+                    </Button>
+                  </Badge>
+                </Col>
+                <Col>
+                  <Popconfirm
+                    title="Supprimer les commandes sélectionnées ?"
+                    onConfirm={handleDeleteSelected}
+                    okText="Oui"
+                    cancelText="Non"
+                  >
+                    <Button danger icon={<DeleteOutlined />}>
+                      Supprimer Sélection
+                    </Button>
+                  </Popconfirm>
+                </Col>
+              </>
+            )}
+          </Row>
+        </div>
 
-        <Table
-          rowKey="id"
-          columns={columns}
-          dataSource={filteredOrders}
-          loading={loading}
-          rowSelection={rowSelection}
-          bordered
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "50"],
-          }}
-          scroll={{ x: 1500 }}
-          size="middle"
-          locale={{
-            emptyText:
-              searchText ||
-              selectedClientFilter ||
-              selectedStatus ||
-              dateRange ||
-              priceRange[0] !== null ||
-              priceRange[1] !== null
-                ? "Aucune commande ne correspond aux critères de recherche"
-                : "Aucune commande disponible",
-          }}
-        />
-
-        {filteredOrders.length === 0 && orders.length > 0 && (
-          <Alert
-            message="Filtrage actif"
-            description="Aucune commande ne correspond aux critères de recherche. Essayez de modifier vos filtres."
-            type="info"
-            showIcon
-            style={{ marginTop: 16 }}
+        <Spin spinning={loading}>
+          <Table
+            columns={columns}
+            dataSource={filteredOrders}
+            rowKey="id"
+            rowSelection={rowSelection}
+            pagination={{
+              total: filteredOrders.length,
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} sur ${total} commandes`,
+            }}
+            scroll={{ x: 1200 }}
           />
-        )}
+        </Spin>
       </Card>
 
-
+      {/* Order Drawer */}
       <Drawer
         title={
           isCreating
             ? "Nouvelle Commande"
-            : editingOrder
-            ? `Modifier Commande: ${editingOrder.numero_commande}`
-            : ""
+            : `Modifier Commande ${editingOrder?.numero_commande || ""}`
         }
-        width={window.innerWidth > 900 ? 900 : "90%"}
+        width={800}
         onClose={handleDrawerClose}
         open={isDrawerVisible}
-        bodyStyle={{ paddingBottom: 80 }}
-        destroyOnClose
-        footer={
-          <Space
-            style={{
-              textAlign: "right",
-              width: "100%",
-              justifyContent: "flex-end",
-            }}
-          >
+        extra={
+          <Space>
             <Button onClick={handleDrawerClose}>Annuler</Button>
-            <Button onClick={handleDrawerSave} type="primary" loading={loading}>
+            <Button type="primary" onClick={handleDrawerSave} loading={loading}>
               {isCreating ? "Créer" : "Sauvegarder"}
             </Button>
           </Space>
         }
       >
-        <Form
-          form={drawerForm}
-          layout="vertical"
-          initialValues={{ tax_rate: 20 }}
-        >
-          {isCreating ? (
-            // Form for creating a new order
-            <>
-              <Row gutter={16}>
-                <Col xs={24} sm={24}>
-                  <Form.Item
-                    name="client_id"
-                    label="Client"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Veuillez sélectionner un client",
-                      },
-                    ]}
-                  >
-                    <Select
-                      showSearch
-                      placeholder="Sélectionner un client"
-                      optionFilterProp="children"
-                      filterOption={(input, option) =>
-                        String(option?.children || "")
-                          .toLowerCase()
-                          .includes(input.toLowerCase())
-                      }
-                      onChange={(value) => setSelectedClientId(value)}
-                    >
-                      {availableClients.map((client) => (
-                        <Option key={client.id} value={client.id}>
-                          {client.nom_client}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Row gutter={16}>
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    name="date_commande"
-                    label="Date Commande"
-                    rules={[
-                      { required: true, message: "Date de commande requise" },
-                    ]}
-                  >
-                    <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    name="date_livraison_prevue"
-                    label="Date Livraison Prévue"
-                  >
-                    <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Row gutter={16}>
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    name="statut"
-                    label="Statut"
-                    rules={[{ required: true, message: "Statut requis" }]}
-                  >
-                    <Select placeholder="Sélectionner un statut">
-                      <Option value="pending">En attente</Option>
-                      <Option value="processing">En cours</Option>
-                      <Option value="completed">Terminée</Option>
-                      <Option value="cancelled">Annulée</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    name="tax_rate"
-                    label="Taux de TVA (%)"
-                    rules={[{ required: true, message: "Taux de TVA requis" }]}
-                  >
-                    <InputNumber style={{ width: "100%" }} min={0} max={100} />
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Row gutter={16}>
-                <Col span={24}>
-                  <Form.Item name="notes" label="Notes">
-                    <Input.TextArea rows={3} />
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Row gutter={16}>
-                <Col span={24}>
-                  <Form.Item
-                    name="conditions_paiement"
-                    label="Conditions de Paiement"
-                  >
-                    <Input.TextArea rows={2} />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Divider>Produits de la Commande</Divider>
-              <Button
-                onClick={handleAddProductToDrawerOrder}
-                type="dashed"
-                icon={<PlusOutlined />}
-                style={{ marginBottom: 16 }}
+        <Form form={drawerForm} layout="vertical">
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="client_id"
+                label="Client"
+                rules={[
+                  {
+                    required: true,
+                    message: "Veuillez sélectionner un client",
+                  },
+                ]}
               >
-                Ajouter Produit
-              </Button>
-              <Table
-                rowKey="id"
-                columns={productColumnsInDrawer}
-                dataSource={newOrderProducts}
-                pagination={false}
-                size="small"
-                bordered
-                scroll={{ x: 600 }}
-              />
+                <Select
+                  placeholder="Sélectionner un client"
+                  value={selectedClientId}
+                  onChange={setSelectedClientId}
+                  disabled={!isCreating}
+                  showSearch
+                  filterOption={(input, option) =>
+                    option.children.toLowerCase().includes(input.toLowerCase())
+                  }
+                >
+                  {availableClients.map((client) => (
+                    <Option key={client.id} value={client.id}>
+                      {client.nom_complet || client.nom}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="statut" label="Statut">
+                <Select>
+                  <Option value="pending">En attente</Option>
+                  <Option value="processing">En cours</Option>
+                  <Option value="completed">Terminée</Option>
+                  <Option value="cancelled">Annulée</Option>
+                  <Option value="invoiced">Facturée</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
 
-              {newOrderProducts.length > 0 && (
-                <Row
-                  gutter={16}
-                  style={{
-                    marginTop: 20,
-                    borderTop: "1px solid #f0f0f0",
-                    paddingTop: 20,
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="date_commande" label="Date Commande">
+                <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="date_livraison_prevue"
+                label="Date Livraison Prévue"
+              >
+                <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="tax_rate" label="Taux TVA (%)">
+                <InputNumber
+                  min={0}
+                  max={100}
+                  style={{ width: "100%" }}
+                  onChange={(value) => {
+                    recalculateTotalsInDrawer(currentProductsInDrawer, value);
                   }}
-                >
-                  <Col
-                    xs={24}
-                    sm={{ span: 10, offset: 14 }}
-                    style={{ textAlign: "right" }}
-                  >
-                    <Statistic
-                      title="Montant HT"
-                      value={newOrderProducts.reduce(
-                        (sum, p) => sum + p.prix_total,
-                        0
-                      )}
-                      formatter={(val) => formatCurrency(val)}
-                    />
-                    <Statistic
-                      title="Montant TVA"
-                      value={
-                        newOrderProducts.reduce(
-                          (sum, p) => sum + p.prix_total,
-                          0
-                        ) *
-                        (drawerForm.getFieldValue("tax_rate") / 100)
-                      }
-                      formatter={(val) => formatCurrency(val)}
-                    />
-                    <Title level={5} style={{ marginTop: 10 }}>
-                      Montant TTC:{" "}
-                      {formatCurrency(
-                        newOrderProducts.reduce(
-                          (sum, p) => sum + p.prix_total,
-                          0
-                        ) *
-                          (1 + drawerForm.getFieldValue("tax_rate") / 100)
-                      )}
-                    </Title>
-                  </Col>
-                </Row>
-              )}
-            </>
-          ) : (
-            editingOrder && (
-              // Form for editing an existing order
-              <>
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item name="numero_commande" label="N° Commande">
-                      <Input disabled />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item label="Client">
-                      <Input value={editingOrder.nom_client} disabled />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="date_commande"
-                      label="Date Commande"
-                      rules={[
-                        { required: true, message: "Date de commande requise" },
-                      ]}
-                    >
-                      <DatePicker
-                        format="DD/MM/YYYY"
-                        style={{ width: "100%" }}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="date_livraison_prevue"
-                      label="Date Livraison Prévue"
-                    >
-                      <DatePicker
-                        format="DD/MM/YYYY"
-                        style={{ width: "100%" }}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="statut"
-                      label="Statut"
-                      rules={[{ required: true, message: "Statut requis" }]}
-                    >
-                      <Select placeholder="Sélectionner un statut">
-                        <Option value="pending">En attente</Option>
-                        <Option value="processing">En cours</Option>
-                        <Option value="completed">Terminée</Option>
-                        <Option value="cancelled">Annulée</Option>
-                        <Option value="invoiced">Facturée</Option>
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="tax_rate"
-                      label="Taux de TVA (%)"
-                      rules={[
-                        { required: true, message: "Taux de TVA requis" },
-                      ]}
-                    >
-                      <InputNumber
-                        style={{ width: "100%" }}
-                        min={0}
-                        max={100}
-                        onChange={() =>
-                          setTimeout(
-                            () =>
-                              recalculateTotalsInDrawer(
-                                currentProductsInDrawer,
-                                drawerForm.getFieldValue("tax_rate")
-                              ),
-                            0
-                          )
-                        }
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col span={24}>
-                    <Form.Item name="notes" label="Notes">
-                      <Input.TextArea rows={3} />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col span={24}>
-                    <Form.Item
-                      name="conditions_paiement"
-                      label="Conditions de Paiement"
-                    >
-                      <Input.TextArea rows={2} />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Divider>Produits de la Commande</Divider>
-                <Button
-                  onClick={handleAddProductToDrawerOrder}
-                  type="dashed"
-                  icon={<PlusOutlined />}
-                  style={{ marginBottom: 16 }}
-                  disabled={!editingOrder}
-                >
-                  Ajouter Produit
-                </Button>
-                <Table
-                  rowKey="id"
-                  columns={productColumnsInDrawer}
-                  dataSource={currentProductsInDrawer}
-                  pagination={false}
-                  size="small"
-                  bordered
-                  scroll={{ x: 600 }}
                 />
-                <Row
-                  gutter={16}
-                  style={{
-                    marginTop: 20,
-                    borderTop: "1px solid #f0f0f0",
-                    paddingTop: 20,
-                  }}
-                >
-                  <Col
-                    xs={24}
-                    sm={{ span: 10, offset: 14 }}
-                    style={{ textAlign: "right" }}
-                  >
-                    <Statistic
-                      title="Montant HT"
-                      value={editingOrder.montant_ht}
-                      formatter={(val) => formatCurrency(val)}
-                    />
-                    <Statistic
-                      title="Montant TVA"
-                      value={editingOrder.montant_tva}
-                      formatter={(val) => formatCurrency(val)}
-                    />
-                    <Title level={5} style={{ marginTop: 10 }}>
-                      Montant TTC: {formatCurrency(editingOrder.montant_ttc)}
-                    </Title>
-                  </Col>
-                </Row>
-              </>
-            )
-          )}
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item name="conditions_paiement" label="Conditions de Paiement">
+            <Input.TextArea rows={2} />
+          </Form.Item>
+
+          <Form.Item name="notes" label="Notes">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+
+          <Divider>Produits</Divider>
+
+          <Button
+            type="dashed"
+            onClick={handleAddProductToDrawerOrder}
+            style={{ width: "100%", marginBottom: 16 }}
+            icon={<PlusOutlined />}
+          >
+            Ajouter un Produit
+          </Button>
+
+          <Table
+            dataSource={currentProductsInDrawer}
+            rowKey="id"
+            pagination={false}
+            size="small"
+            columns={[
+              {
+                title: "Produit",
+                dataIndex: "nom_produit",
+                key: "nom_produit",
+              },
+              {
+                title: "Quantité",
+                dataIndex: "quantite",
+                key: "quantite",
+              },
+              {
+                title: "Prix Unitaire",
+                dataIndex: "prix_unitaire",
+                key: "prix_unitaire",
+                render: (prix) => formatCurrency(prix),
+              },
+              {
+                title: "Remise %",
+                dataIndex: "remise_pourcentage",
+                key: "remise_pourcentage",
+                render: (remise) => `${remise || 0}%`,
+              },
+              {
+                title: "Prix Total",
+                dataIndex: "prix_total",
+                key: "prix_total",
+                render: (prix) => formatCurrency(prix),
+              },
+              {
+                title: "Actions",
+                key: "actions",
+                render: (_, record) => (
+                  <Button
+                    danger
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    onClick={() =>
+                      handleRemoveProductFromDrawerOrder(record.id)
+                    }
+                  />
+                ),
+              },
+            ]}
+          />
+
+          <Divider />
+
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item name="montant_ht_display" label="Montant HT">
+                <InputNumber
+                  style={{ width: "100%" }}
+                  formatter={(value) => formatCurrency(value)}
+                  disabled
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="montant_tva_display" label="Montant TVA">
+                <InputNumber
+                  style={{ width: "100%" }}
+                  formatter={(value) => formatCurrency(value)}
+                  disabled
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="montant_ttc_display" label="Montant TTC">
+                <InputNumber
+                  style={{ width: "100%" }}
+                  formatter={(value) => formatCurrency(value)}
+                  disabled
+                />
+              </Form.Item>
+            </Col>
+          </Row>
         </Form>
       </Drawer>
 
+      {/* Product Modal */}
       <Modal
-        title="Ajouter Produit à la Commande"
+        title="Ajouter un Produit"
         open={isProductModalVisible}
-        onCancel={() => setIsProductModalVisible(false)}
         onOk={handleProductModalSave}
-        confirmLoading={loading}
-        destroyOnClose
+        onCancel={() => setIsProductModalVisible(false)}
+        okText="Ajouter"
+        cancelText="Annuler"
       >
-        <Form
-          form={productForm}
-          layout="vertical"
-          initialValues={{ quantite: 1, remise_pourcentage: 0 }}
-        >
+        <Form form={productForm} layout="vertical">
           <Form.Item
             name="produit_id"
             label="Produit"
@@ -1775,69 +1405,43 @@ export default function BonCommande() {
             ]}
           >
             <Select
-              showSearch
               placeholder="Sélectionner un produit"
-              optionFilterProp="children"
+              showSearch
               filterOption={(input, option) =>
-                String(option?.children || "")
-                  .toLowerCase()
-                  .includes(input.toLowerCase())
+                option.children.toLowerCase().includes(input.toLowerCase())
               }
-              onChange={(value) => {
-                const selectedProd = availableProducts.find(
-                  (p) => p.id === value
-                );
-                if (selectedProd) {
-                  productForm.setFieldsValue({
-                    prix_unitaire:
-                      selectedProd.prix_unitaire || selectedProd.prix,
-                  });
-                }
-              }}
             >
-              {availableProducts.map((p) => (
-                <Option key={p.id} value={p.id}>
-                  {p.nom_produit} ({formatCurrency(p.prix_unitaire || p.prix)})
+              {availableProducts.map((product) => (
+                <Option key={product.id} value={product.id}>
+                  {product.nom_produit} -{" "}
+                  {formatCurrency(product.prix_unitaire)}
                 </Option>
               ))}
             </Select>
           </Form.Item>
+
           <Form.Item
             name="quantite"
             label="Quantité"
             rules={[
-              { required: true, message: "Quantité requise" },
-              {
-                type: "number",
-                min: 0.01,
-                message: "La quantité doit être positive",
-              },
+              { required: true, message: "Veuillez saisir une quantité" },
             ]}
           >
-            <InputNumber min={0.01} style={{ width: "100%" }} step={0.1} />
+            <InputNumber min={1} style={{ width: "100%" }} />
           </Form.Item>
-          <Form.Item
-            name="prix_unitaire"
-            label="Prix Unitaire"
-            rules={[
-              { required: true, message: "Prix requis" },
-              { type: "number", min: 0, message: "Prix invalide" },
-            ]}
-          >
+
+          <Form.Item name="prix_unitaire" label="Prix Unitaire (optionnel)">
             <InputNumber
-              style={{ width: "100%" }}
               min={0}
-              step={0.01}
-              precision={2}
+              style={{ width: "100%" }}
+              formatter={(value) =>
+                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+              }
+              parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
             />
           </Form.Item>
-          <Form.Item
-            name="remise_pourcentage"
-            label="Remise (%)"
-            rules={[
-              { type: "number", min: 0, max: 100, message: "Remise invalide" },
-            ]}
-          >
+
+          <Form.Item name="remise_pourcentage" label="Remise (%)">
             <InputNumber min={0} max={100} style={{ width: "100%" }} />
           </Form.Item>
         </Form>
