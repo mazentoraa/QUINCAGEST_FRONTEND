@@ -215,7 +215,6 @@ export default function Devis() {
       setFilteredDevisList(responseData);
       setError(null);
     } catch (err) {
-      setError("Erreur lors du chargement des devis");
       notification.error({
         message: "Erreur",
         description: "Impossible de charger la liste des devis",
@@ -236,7 +235,6 @@ export default function Devis() {
       setError(null);
       return response.data;
     } catch (err) {
-      setError("Erreur lors du chargement des détails du devis");
       notification.error({
         message: "Erreur",
         description: "Impossible de charger les détails du devis",
