@@ -1580,14 +1580,7 @@ export default function Devis() {
         </Button>,
       ]}
     >
-      {error && (
-        <Alert
-          message={error}
-          type="error"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
-      )}
+
 
       <Form form={form} layout="vertical" initialValues={initialFormValues}>
         <Row gutter={16}>
