@@ -10,6 +10,7 @@
  */
 
 import OrderService from "./OrderService";
+import CdsService from "./CdsService";
 import productService from "./ProductService";
 import devisService from "./DevisService";
 import clientService from "./ClientService";
@@ -101,6 +102,7 @@ export const getApiService = () => {
   // Return the real services
   return {
     orderService: OrderService,
+    cdsService: CdsService
     // Include other services as needed
   };
 };

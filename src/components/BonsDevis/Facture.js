@@ -39,11 +39,11 @@ import {
 import { getApiService } from "../../services/apiServiceFactory";
 import ClientService from "../../features/clientManagement/services/ClientService";
 import ProductService from "../../components/BonsDevis/ProductService";
-import BonCommandePdfApiService from "../../features/orders/services/BonCommandePdfApiService";
 
 import moment from "moment";
+import FacturePdfApiService from "../../features/orders/services/FacturePdfApiService";
 
-const { orderService } = getApiService();
+const { cdsService } = getApiService();
 const { Option } = Select;
 const { Title } = Typography;
 
@@ -131,7 +131,7 @@ export default function BonCommande() {
     setLoading(true);
     setError(null);
     try {
-      const data = await orderService.getOrders();
+      const data = await cdsService.getOrders();
       setOrders(data);
       setFilteredOrders(data); // Initialize filteredOrders with all orders
     } catch (err) {
@@ -238,7 +238,7 @@ export default function BonCommande() {
   const handleEditOrder = async (order) => {
     setLoading(true);
     try {
-      const fullOrderDetails = await orderService.getOrderById(order.id);
+      const fullOrderDetails = await cdsService.getOrderById(order.id);
       if (fullOrderDetails) {
         setEditingOrder(fullOrderDetails);
         setCurrentProductsInDrawer(fullOrderDetails.produit_commande || []);
@@ -310,7 +310,7 @@ export default function BonCommande() {
         }
 
         // Generate a random order number
-        const randomOrderNumber = `CMD-${new Date().getFullYear()}-${Math.floor(
+        const randomOrderNumber = `FAC-${new Date().getFullYear()}-${Math.floor(
           10000 + Math.random() * 90000
         )}`;
 
@@ -336,7 +336,7 @@ export default function BonCommande() {
           })),
         };
 
-        const createdOrder = await orderService.createOrder(orderPayload);
+        const createdOrder = await cdsService.createOrder(orderPayload);
         message.success(
           `Commande ${createdOrder.numero_commande} créée avec succès!`
         );
@@ -363,7 +363,7 @@ export default function BonCommande() {
         delete orderPayload.montant_tva_display;
         delete orderPayload.montant_ttc_display;
 
-        const updatedOrder = await orderService.updateOrder(
+        const updatedOrder = await cdsService.updateOrder(
           editingOrder.id,
           orderPayload
         );
@@ -474,7 +474,7 @@ export default function BonCommande() {
         }
 
         // Call API to add product if it doesn't exist already
-        const addedProductFromApi = await orderService.addProductToOrder(
+        const addedProductFromApi = await cdsService.addProductToOrder(
           editingOrder.id,
           newProductData
         );
@@ -509,7 +509,7 @@ export default function BonCommande() {
         setCurrentProductsInDrawer(updatedProducts);
       } else {
         // For existing order, call API
-        await orderService.removeProductFromOrder(
+        await cdsService.removeProductFromOrder(
           editingOrder.id,
           produitCommandeIdToRemove
         );
@@ -534,7 +534,7 @@ export default function BonCommande() {
 
     try {
       // Fetch complete order details
-      const detailedOrder = await orderService.getOrderById(orderRecord.id);
+      const detailedOrder = await cdsService.getOrderById(orderRecord.id);
       if (!detailedOrder) {
         message.error(
           "Données de commande non trouvées pour la génération du PDF."
@@ -704,7 +704,7 @@ export default function BonCommande() {
 
       // Use the new PDF API service
       const filename = `BonCommande_${detailedOrder.numero_commande}.pdf`;
-      await BonCommandePdfApiService.generateOrderPDF(
+      await FacturePdfApiService.generateOrderPDF(
         orderDataForPDF,
         filename
       );
@@ -746,10 +746,10 @@ export default function BonCommande() {
       const summaryHTML = generateOrdersSummaryHTML(summaryData);
 
       // Use the PDF API service directly with custom HTML
-      const response = await fetch(BonCommandePdfApiService.API_URL, {
+      const response = await fetch(FacturePdfApiService.API_URL, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${BonCommandePdfApiService.API_TOKEN}`,
+          Authorization: `Bearer ${FacturePdfApiService.API_TOKEN}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: `html=${encodeURIComponent(summaryHTML)}`,
@@ -758,7 +758,7 @@ export default function BonCommande() {
       if (response.ok) {
         const data = await response.json();
         if (data.file) {
-          BonCommandePdfApiService.openPDFInNewWindow(
+          FacturePdfApiService.openPDFInNewWindow(
             data.file,
             `Récapitulatif_Commandes_${moment().format("YYYYMMDD")}.pdf`
           );
@@ -845,7 +845,7 @@ export default function BonCommande() {
           <table>
             <thead>
               <tr>
-                <th>N° Commande</th>
+                <th>N° Facture</th>
                 <th>Client</th>
                 <th>Date</th>
                 <th>Statut</th>
@@ -880,7 +880,7 @@ export default function BonCommande() {
   const handleDeleteOrder = async (orderId) => {
     try {
       setLoading(true);
-      await orderService.deleteOrder(orderId);
+      await cdsService.deleteOrder(orderId);
       message.success("Commande supprimée avec succès");
       fetchOrders();
     } catch (error) {
@@ -899,7 +899,7 @@ export default function BonCommande() {
     try {
       setLoading(true);
       await Promise.all(
-        selectedRowKeys.map((id) => orderService.deleteOrder(id))
+        selectedRowKeys.map((id) => cdsService.deleteOrder(id))
       );
       message.success(`${selectedRowKeys.length} commande(s) supprimée(s)`);
       setSelectedRowKeys([]);
@@ -925,7 +925,7 @@ export default function BonCommande() {
 
   const columns = [
     {
-      title: "N° Commande",
+      title: "N° Facture",
       dataIndex: "numero_commande",
       key: "numero_commande",
       sorter: (a, b) =>
@@ -1048,7 +1048,7 @@ export default function BonCommande() {
           <Row gutter={[16, 16]} align="middle">
             <Col span={24}>
               <Title level={2}>
-                <FileDoneOutlined /> Bons de Commande/Factures
+                <FileDoneOutlined /> Factures
               </Title>
             </Col>
           </Row>
@@ -1057,7 +1057,7 @@ export default function BonCommande() {
           <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col span={6}>
               <Statistic
-                title="Total Commandes"
+                title="Total Factures"
                 value={filteredOrders.length}
                 prefix={<FileDoneOutlined />}
               />
@@ -1154,7 +1154,7 @@ export default function BonCommande() {
                 icon={<PlusOutlined />}
                 onClick={handleCreateOrder}
               >
-                Nouvelle Commande
+                Nouvelle Facture
               </Button>
             </Col>
             <Col>
@@ -1180,7 +1180,7 @@ export default function BonCommande() {
                 </Col>
                 <Col>
                   <Popconfirm
-                    title="Supprimer les commandes sélectionnées ?"
+                    title="Supprimer les Facture sélectionnées ?"
                     onConfirm={handleDeleteSelected}
                     okText="Oui"
                     cancelText="Non"
@@ -1218,8 +1218,8 @@ export default function BonCommande() {
       <Drawer
         title={
           isCreating
-            ? "Nouvelle Commande"
-            : `Modifier Commande ${editingOrder?.numero_commande || ""}`
+            ? "Nouvelle Facture"
+            : `Modifier Facture ${editingOrder?.numero_commande || ""}`
         }
         width={800}
         onClose={handleDrawerClose}
@@ -1279,7 +1279,7 @@ export default function BonCommande() {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="date_commande" label="Date Commande">
+              <Form.Item name="date_commande" label="Date Facture">
                 <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
               </Form.Item>
             </Col>

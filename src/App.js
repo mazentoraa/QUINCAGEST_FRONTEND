@@ -35,6 +35,7 @@ import BonLivraisonReception from "./components/BonsDevis/BonLivraisonReception"
 import BonLivraisonDecoupe from "./components/BonsDevis/BonLivraisonDecoupe";
 import BonRetour from "./components/BonsDevis/BonRetour";
 import BonCommande from "./components/BonsDevis/BonCommande";
+import Facture from "./components/BonsDevis/Facture";
 import Devis from "./components/BonsDevis/Devis";
 
 import { Spin } from "antd"; // Import Spin
@@ -145,7 +146,7 @@ function App() {
                                   {/* <Route path="/manifeste/inventaire" element={<ManifestePage />} /> */}
                                   <Route
                                     path="/reglements/factures"
-                                    element={<OrderManagement />}
+                                    element={<Facture />}
                                   />
                                   <Route
                                     path="/reglements/traites"
