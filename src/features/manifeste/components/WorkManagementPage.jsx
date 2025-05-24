@@ -761,14 +761,6 @@ const WorkManagementPage = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <Title level={2}>Gestion des Travaux</Title>
           <Space>
-            {/* Add test button */}
-            <Button 
-              type="dashed" 
-              onClick={testPDFAPI}
-              style={{ marginRight: 8 }}
-            >
-              Test PDF API
-            </Button>
             {selectedRowKeys.length > 0 && (
               <Button
                 type="primary"
