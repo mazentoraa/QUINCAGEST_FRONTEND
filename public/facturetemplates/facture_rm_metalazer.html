@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Facture RM METALASER</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            font-size: 14px;
+            color: #000;
+        }
+
+        header,
+        footer {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .company-info {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .client-info {
+            margin-top: 20px;
+            border: 1px solid #000;
+            padding: 10px;
+            width: fit-content;
+        }
+
+        .invoice-details {
+            margin-top: 20px;
+        }
+
+        .invoice-details table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .invoice-details th,
+        .invoice-details td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .totals {
+            margin-top: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .totals table {
+            width: 300px;
+            border-collapse: collapse;
+        }
+
+        .totals td {
+            padding: 4px 8px;
+            border: 1px solid #000;
+        }
+
+        .signature {
+            margin-top: 40px;
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 190px; margin-bottom: 5px;">
+        <h2>RM METALASER</h2>
+        <p>Découpes Métaux<br>
+            Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
+            IF: 191 1419B/M/A/000<br>
+            Tél. : +216 20 366 150<br>
+            Email: contact@rmmetalaser.tn<br>
+            Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
+    </header>
+
+    <div class="client-info">
+        <strong>Nom Client :</strong> YYYYYYYYYYYYYYYYYY<br>
+        <strong>Adresse :</strong> YYYYYYYYYYYYYYYY<br>
+        <strong>M.F :</strong> YYYYYYYY/Y/Y/YYY<br>
+        <strong>Tél. :</strong> XX XXX XXX
+    </div>
+
+    <div class="invoice-details">
+        <p><strong>Facture N°:</strong> XXXX<br>
+            <strong>Date:</strong> JJ/MM/AAAA<br>
+            <strong>Code Client:</strong> XXXX
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>CODE</th>
+                    <th>DESIGNATION</th>
+                    <th>QTE</th>
+                    <th>P.U. HT (TND)</th>
+                    <th>REMISE (%)</th>
+                    <th>Total P. HT (TND)</th>
+                    <th>TVA</th>
+                    <th>TOTAL P. TTC (TND)</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="totals">
+        <table>
+            <tr>
+                <td><strong>Total HT</strong></td>
+                <td>XXXX,XXX</td>
+            </tr>
+            <tr>
+                <td><strong>Remise (%)</strong></td>
+                <td>XX</td>
+            </tr>
+            <tr>
+                <td><strong>Total HT (après remise)</strong></td>
+                <td>XXX,XXX</td>
+            </tr>
+            <tr>
+                <td><strong>Total TVA</strong></td>
+                <td>XXX,XXX</td>
+            </tr>
+            <tr>
+                <td><strong>NET À PAYER</strong></td>
+                <td><strong>XXXXX,XXX</strong></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="signature">
+        <p><strong>Cachet et Signature</strong></p>
+        <p>Base: XXX,XXX — Taux TVA: 19% — Montant TVA: XXX,XXX</p>
+    </div>
+
+</body>
+
+</html>

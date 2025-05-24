@@ -12,9 +12,8 @@ import {
 import { Link } from 'react-router-dom';
 import debounce from 'lodash/debounce';
 import moment from 'moment';
-// Import jsPDF from pdfSetup and our custom table helper from pdfTableHelper
-import { jsPDF } from '../../../utils/pdfSetup';
-import { drawTable } from '../../../utils/pdfTableHelper';
+// Import our new PDF API service
+import PdfApiService from '../services/PdfApiService';
 import WorkService from '../services/WorkService';
 import ClientService from '../services/ClientService';
 import ProductService from '../services/ProductService';
@@ -542,152 +541,119 @@ const WorkManagementPage = () => {
     },
   ];
 
-  // Function to generate PDF from bill data
-  const generateBillPDF = () => {
+  // Function to generate PDF from bill data using PDF API
+  const generateBillPDF = async () => {
     try {
       if (!billableData || billableData.length === 0) {
         message.error('Aucune donnée à imprimer');
         return;
       }
-  
-      const doc = new jsPDF();
+
+      message.loading({ content: 'Génération de la facture via API...', key: 'generatePDF' });
       
-      
+      // Get client data from the first billable item
       const clientData = billableData[0].clientDetails || billableData[0].client || {};
+      console.log("Client data for PDF:", clientData);
+      
+      // Calculate totals
+      let totalHT = 0;
+      let totalTVA = 0;
+      
+      // Prepare items for the invoice
+      const invoiceItems = billableData.flatMap(item => {
+        const productItems = [];
         
-        // Title and header
-        doc.setFontSize(20);
-        doc.text('FACTURE', 105, 20, { align: 'center' });
-        
-        // Add current date
-        doc.setFontSize(10);
-        doc.text(`Date: ${billDate}`, 170, 30, { align: 'right' });
-        doc.text(`Facture N°: ${invoiceNumber}`, 170, 35, { align: 'right' });
-        
-        // Company info (replace with your company info)
-        doc.setFontSize(16);
-        doc.text('Votre Société', 20, 30);
-        doc.setFontSize(10);
-        doc.text('Adresse: 123 Rue de la Métallurgie, Tunis', 20, 35);
-        doc.text('Tél: +216 xx xxx xxx', 20, 40);
-        doc.text('Email: contact@societe.com', 20, 45);
-        
-        // Divider
-        doc.line(20, 50, 190, 50);
-        
-        // Client Information
-        doc.setFontSize(14);
-        doc.text('Client', 20, 60);
-        doc.setFontSize(10);
-        doc.text(`Nom: ${clientData.nom_cf || clientData.nom_client || 'N/A'}`, 20, 65);
-        doc.text(`Adresse: ${clientData.adresse || 'N/A'}`, 20, 70);
-        doc.text(`Matricule Fiscale: ${clientData.matricule_fiscale || clientData.numero_fiscal || 'N/A'}`, 20, 75);
-        doc.text(`Tél: ${clientData.tel || clientData.telephone || 'N/A'}`, 20, 80);
-        
-        // Table for works
-        const tableColumn = ["ID Produit", "Description", "Quantité", "Prix unitaire (DT)", "Total HT (DT)"];
-        let tableRows = [];
-        let currentY = 90;
-        let totalHT = 0;
-        
-        // Add each work item to the table
-        billableData.forEach((item) => {
+        // Add product as an item
         const productTotal = (item.billable.prix_unitaire_produit || 0) * (item.billable.quantite_produit || 0);
         totalHT += productTotal;
         
-        const productLineDescription = (item.produit_name || 'N/A') + 
-                 (item.description ? ` (Produit - ${item.description})` : ' (Produit)');
-
-        tableRows.push([
-          item.produit_id || '',
-          productLineDescription,
-          item.billable.quantite_produit || item.quantite, // Use quantite_produit from billable, fallback to item.quantite
-          (item.billable.prix_unitaire_produit || 0).toFixed(3),
-          productTotal.toFixed(3)
-        ]);
-        
-        // If the item has materials, add them to the table
-        if (item.matiere_usages && item.matiere_usages.length > 0) {
-          item.matiere_usages.forEach(mat => {
-          const matTotal = (mat.prix_unitaire || 0) * (mat.quantite_utilisee || 0);
-          
-          if (matTotal > 0) { // Only add if total is greater than 0
-          totalHT += matTotal; 
-          
-          tableRows.push([
-            '', // Empty for Product ID column for materials
-            `  Matériau: ${mat.nom_matiere || mat.designation} (${mat.type_matiere || ''}) ${mat.thickness || ''}x${mat.length || ''}x${mat.width || ''}mm`,
-            mat.quantite_utilisee,
-            mat.prix_unitaire ? (mat.prix_unitaire).toFixed(3) : '0.000', // Display 0.000 if no price
-            matTotal.toFixed(3)
-          ]);
-          }
+        if (productTotal > 0) {
+          productItems.push({
+            code: item.produit_id || '',
+            description: (item.produit_name || 'N/A') + 
+                         (item.description ? ` (${item.description})` : ''),
+            quantity: item.billable.quantite_produit || item.quantite,
+            unitPrice: item.billable.prix_unitaire_produit || 0,
+            discount: 0, // Default discount
+            taxRate: taxRate
           });
         }
-        });
-      
-      try {
-        // Use our custom drawTable function
-        console.log('Using custom table implementation');
-        drawTable(doc, { head: [tableColumn], body: tableRows }, currentY, {
-          columnWidths: [90, 20, 35, 35],
-          fontSize: 9,
-          headerBgColor: [50, 50, 50],
-          headerTextColor: [255, 255, 255]
-        });
-      } catch (error) {
-        console.error('Erreur lors de la création de la table:', error);
-        // Fall back to simple text
-        doc.text('Erreur lors de la création de la table. Affichage en format texte:', 20, currentY);
-        currentY += 10;
         
-        // Output as simple text
-        doc.setFontSize(9);
-        tableRows.forEach((row, index) => {
-          doc.text(`${row[0]} - ${row[1]} x ${row[2]} = ${row[3]} DT`, 20, currentY + index * 6);
-        });
-      }
+        // Add materials as items if they exist
+        if (item.matiere_usages && item.matiere_usages.length > 0) {
+          const materialItems = item.matiere_usages
+            .filter(mat => {
+              const matTotal = (mat.prix_unitaire || 0) * (mat.quantite_utilisee || 0);
+              if (matTotal > 0) {
+                totalHT += matTotal;
+                return true;
+              }
+              return false;
+            })
+            .map(mat => ({
+              code: mat.matiere_id || '',
+              description: `Matériau: ${mat.nom_matiere || mat.designation} (${mat.type_matiere || ''}) ${mat.thickness || ''}x${mat.length || ''}x${mat.width || ''}mm`,
+              quantity: mat.quantite_utilisee,
+              unitPrice: mat.prix_unitaire || 0,
+              discount: 0,
+              taxRate: taxRate
+            }));
+      
+          productItems.push(...materialItems);
+        }
+        
+        return productItems;
+      });
+      
+      console.log("Invoice items:", invoiceItems);
       
       // Calculate totals
-      const TVA = totalHT * (taxRate / 100);
-      const totalTTC = totalHT + TVA;
+      totalTVA = totalHT * (taxRate / 100);
+      const totalTTC = totalHT + totalTVA;
       
-      // Add totals (use fixed position from bottom)
-      const totalsY = 240;  // Position fixe pour les totaux
-      doc.setFontSize(10);
-      doc.text(`Total HT:`, 150, totalsY);
-      doc.text(`${totalHT.toFixed(3)} DT`, 190, totalsY, { align: 'right' });
+      // No discount in this implementation
+      const discountRate = 0;
+      const totalHTAfterDiscount = totalHT;
       
-      doc.text(`TVA (${taxRate}%):`, 150, totalsY + 5);
-      doc.text(`${TVA.toFixed(3)} DT`, 190, totalsY + 5, { align: 'right' });
+      // Create invoice data object
+      const invoiceData = {
+        invoiceNumber: invoiceNumber,
+        invoiceDate: billDate,
+        clientName: clientData.nom_cf || clientData.nom_client || 'N/A',
+        clientAddress: clientData.adresse || 'N/A',
+        clientTaxId: clientData.matricule_fiscale || clientData.numero_fiscal || 'N/A',
+        clientPhone: clientData.tel || clientData.telephone || 'N/A',
+        clientCode: clientData.id || 'N/A',
+        items: invoiceItems,
+        totalHT: totalHT,
+        discountRate: discountRate,
+        totalHTAfterDiscount: totalHTAfterDiscount,
+        taxRate: taxRate,
+        totalTVA: totalTVA,
+        totalTTC: totalTTC
+      };
       
-      doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
-      doc.text(`Total TTC:`, 150, totalsY + 15);
-      doc.text(`${totalTTC.toFixed(3)} DT`, 190, totalsY + 15, { align: 'right' });
+      console.log("Final invoice data being sent to PDF API:", invoiceData);
       
-      // Add signature area
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      doc.text('Signature et cachet:', 150, totalsY + 35);
-      doc.rect(150, totalsY + 40, 40, 20);
+      // Use the PDF API service
+      await PdfApiService.generateInvoicePDF(
+        invoiceData,
+        `facture-${billDate}-${invoiceNumber}.pdf`
+      );
       
-      // Footer
-      doc.setFontSize(8);
-      doc.text('Merci pour votre confiance !', 105, 280, { align: 'center' });
-      
-      // Save the PDF
-      doc.save(`facture-${billDate}.pdf`);
-      
+      message.success({ content: 'Facture générée avec succès!', key: 'generatePDF' });
       return true;
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      message.error('Erreur lors de la génération du PDF');
+      console.error('Error generating PDF with API:', error);
+      message.error({ 
+        content: `Erreur lors de la génération de la facture: ${error.message}`, 
+        key: 'generatePDF' 
+      });
       return false;
     }
   };
 
-// Function to save invoice data using InvoiceService
+  // Function to save invoice data using InvoiceService
   const saveBillableData = async () => {
     try {
       if (!billableData || billableData.length === 0) {
@@ -773,12 +739,36 @@ const WorkManagementPage = () => {
     }
   };
 
+  // Add this function before the return statement
+  const testPDFAPI = async () => {
+    try {
+      message.loading({ content: 'Testing PDF API...', key: 'testAPI' });
+      const result = await PdfApiService.testAPI();
+      
+      if (result.success) {
+        message.success({ content: result.message, key: 'testAPI' });
+      } else {
+        message.error({ content: result.message, key: 'testAPI' });
+      }
+    } catch (error) {
+      message.error({ content: `Test failed: ${error.message}`, key: 'testAPI' });
+    }
+  };
+
   return (
     <Content style={{ padding: '24px', minHeight: 'calc(100vh - 64px)' }}>
       <div style={{ background: '#fff', padding: '24px', borderRadius: '2px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <Title level={2}>Gestion des Travaux</Title>
           <Space>
+            {/* Add test button */}
+            <Button 
+              type="dashed" 
+              onClick={testPDFAPI}
+              style={{ marginRight: 8 }}
+            >
+              Test PDF API
+            </Button>
             {selectedRowKeys.length > 0 && (
               <Button
                 type="primary"
