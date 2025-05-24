@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devis - RM METALASER</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: black;
+            margin: 0;
+            padding: 15px;
+            line-height: 1.4;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header img {
+            width: 190px;
+            margin-bottom: 5px;
+        }
+
+        .header h1 {
+            margin: 15px 0 8px 0;
+            color: #333;
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .devis-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+
+        .client-info,
+        .devis-details {
+            width: 48%;
+            border: 2px solid #000;
+            padding: 12px;
+            background: #f9f9f9;
+            font-size: 11px;
+        }
+
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .products-table th {
+            border: 2px solid #000;
+            padding: 10px 6px;
+            text-align: center;
+            background-color: #e6f7ff;
+            font-weight: bold;
+        }
+
+        .products-table td {
+            border: 1px solid #000;
+            padding: 8px 6px;
+        }
+
+        .totals-table {
+            width: 350px;
+            border-collapse: collapse;
+            margin-left: auto;
+            font-size: 11px;
+        }
+
+        .totals-table td {
+            padding: 8px 12px;
+            border: 1px solid #000;
+        }
+
+        .signature-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .signature-box {
+            width: 45%;
+            text-align: center;
+            border: 1px solid #ccc;
+            padding: 15px;
+            min-height: 60px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo">
+        <h1>DEVIS</h1>
+        <h2>RM METALASER</h2>
+        <p>
+            Découpes Métaux<br>
+            Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
+            IF: 191 1419B/M/A/000<br>
+            Tél. : +216 20 366 150<br>
+            Email: contact@rmmetalaser.tn<br>
+            Site Web: www.rmmetalaser.tn
+        </p>
+    </div>
+
+    <div class="devis-info">
+        <div class="client-info">
+            <strong>FACTURÉ À :</strong><br><br>
+            <strong>Nom Client :</strong> {{nom_client}}<br>
+            <strong>Adresse :</strong> {{client_address}}<br>
+            <strong>M.F :</strong> {{client_tax_id}}<br>
+            <strong>Tél. :</strong> {{client_phone}}
+        </div>
+
+        <div class="devis-details">
+            <strong>DÉTAILS DU DEVIS :</strong><br><br>
+            <strong>N° Devis :</strong> {{numero_devis}}<br>
+            <strong>Date d'émission :</strong> {{date_emission}}<br>
+            <strong>Valide jusqu'au :</strong> {{date_validite}}<br>
+            <strong>Statut :</strong> {{statut}}<br>
+            <strong>Conditions :</strong> {{conditions_paiement}}
+        </div>
+    </div>
+
+    <table class="products-table">
+        <thead>
+            <tr>
+                <th style="width: 40%;">DÉSIGNATION</th>
+                <th style="width: 12%;">QTÉ</th>
+                <th style="width: 16%;">PRIX UNIT. HT</th>
+                <th style="width: 12%;">REMISE (%)</th>
+                <th style="width: 20%;">TOTAL HT</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each produit_devis}}
+            <tr>
+                <td>{{nom_produit}}</td>
+                <td style="text-align: center;">{{quantite}}</td>
+                <td style="text-align: right;">{{prix_unitaire}}</td>
+                <td style="text-align: center;">{{remise_pourcentage}}%</td>
+                <td style="text-align: right;">{{prix_total}}</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <table class="totals-table">
+        <tr>
+            <td><strong>Total HT</strong></td>
+            <td style="text-align: right;"><strong>{{montant_ht}}</strong></td>
+        </tr>
+        <tr>
+            <td><strong>TVA ({{tax_rate}}%)</strong></td>
+            <td style="text-align: right;"><strong>{{montant_tva}}</strong></td>
+        </tr>
+        <tr style="background-color: #e6f7ff;">
+            <td><strong>TOTAL TTC</strong></td>
+            <td style="text-align: right;"><strong>{{montant_ttc}}</strong></td>
+        </tr>
+    </table>
+
+    <div style="margin-top: 25px; padding: 15px; background: #f9f9f9; border: 1px solid #d9d9d9;">
+        <div style="font-weight: bold; margin-bottom: 10px;">Remarques et Conditions :</div>
+        <div style="white-space: pre-line;">{{remarques}}</div>
+    </div>
+
+    <div class="signature-section">
+        <div class="signature-box">
+            <div style="font-weight: bold; margin-bottom: 10px;">SIGNATURE CLIENT</div>
+            <div style="margin-top: 20px;">
+                Date : ___________<br><br>
+                Signature :
+            </div>
+        </div>
+
+        <div class="signature-box">
+            <div style="font-weight: bold; margin-bottom: 10px;">SIGNATURE RM METALASER</div>
+            <div style="margin-top: 20px;">
+                Date : ___________<br><br>
+                Cachet et Signature :
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

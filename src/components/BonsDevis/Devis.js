@@ -42,8 +42,7 @@ import {
 } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import DevisPdfService from "../../features/devis/services/DevisPdfService";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -114,7 +113,10 @@ export default function Devis() {
   const API_BASE_URL =
     process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
   // randomId of 2 letter and 3 digits placed randomly in the string
-  const randomId = `ID-${Math.random().toString(36).substring(2, 4).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
+  const randomId = `ID-${Math.random()
+    .toString(36)
+    .substring(2, 4)
+    .toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
   const initialFormValues = {
     numero_devis: `DEV-${new Date().getFullYear()}-${randomId}`,
     client: undefined,
@@ -508,10 +510,7 @@ export default function Devis() {
         });
       } else if (currentView === "edit") {
         const devisId = devisDetail.id;
-        await axios.put(
-          `${API_BASE_URL}/devis/${devisId}/`,
-          formattedValues
-        );
+        await axios.put(`${API_BASE_URL}/devis/${devisId}/`, formattedValues);
         notification.success({
           message: "Succès",
           description: "Devis modifié avec succès",
@@ -629,8 +628,8 @@ export default function Devis() {
     }
   };
 
-  // Generate PDF for devis
-  const handlePrintDevisPDF = (devis) => {
+  // Generate PDF for devis - Updated to use DevisPdfService
+  const handlePrintDevisPDF = async (devis) => {
     const notificationKey = `pdf-generation-${Date.now()}`;
 
     notification.info({
@@ -640,239 +639,54 @@ export default function Devis() {
       duration: 0,
     });
 
-    (async () => {
-      try {
-        // Fetch detailed devis info for PDF
-        const detailedDevis = await fetchDevisDetail(devis.id);
-        if (!detailedDevis) {
-          notification.error({
-            message: "Erreur",
-            description:
-              "Impossible de générer le PDF: détails du devis introuvables",
-          });
-          notification.destroy(notificationKey);
-          return;
-        }
-
-        // Find the client details from the clients array
-        const clientDetails = clients.find(
-          (client) => client.id === detailedDevis.client
-        );
-
-        // Create PDF document
-        const doc = new jsPDF();
-
-        // Add title
-        doc.setFontSize(20);
-        doc.text("DEVIS", 105, 20, { align: "center" });
-
-        // Company info
-        doc.setFontSize(16);
-        doc.text("Votre Société", 20, 30);
-        doc.setFontSize(10);
-        doc.text("Adresse: 123 Rue de la Métallurgie, Tunis", 20, 35);
-        doc.text("Tél: +216 xx xxx xxx", 20, 40);
-        doc.text("Email: contact@societe.com", 20, 45);
-
-        // Devis details
-        doc.setFontSize(10);
-        doc.text(`Devis N°: ${detailedDevis.numero_devis}`, 170, 30, {
-          align: "right",
-        });
-        doc.text(
-          `Date d'émission: ${dayjs(detailedDevis.date_emission).format(
-            "DD/MM/YYYY"
-          )}`,
-          170,
-          35,
-          { align: "right" }
-        );
-        doc.text(
-          `Valide jusqu'au: ${dayjs(detailedDevis.date_validite).format(
-            "DD/MM/YYYY"
-          )}`,
-          170,
-          40,
-          { align: "right" }
-        );
-
-        // Status with color
-        const statusColor = {
-          draft: [128, 128, 128],
-          sent: [0, 123, 255],
-          accepted: [40, 167, 69],
-          rejected: [220, 53, 69],
-          expired: [255, 193, 7],
-          converted: [23, 162, 184],
-        };
-
-        const status = statusColor[detailedDevis.statut] || [108, 117, 125];
-
-        // Status badge
-        doc.setFillColor(status[0], status[1], status[2]);
-        doc.roundedRect(170, 45, 25, 8, 1, 1, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.text(translateStatus(detailedDevis.statut), 182.5, 50, {
-          align: "center",
-        });
-        doc.setTextColor(0, 0, 0);
-
-        // Divider
-        doc.line(20, 60, 190, 60);
-
-        // Client Information - Enhanced with details from clients array
-        doc.setFontSize(14);
-        doc.text("Client", 20, 70);
-        doc.setFontSize(10);
-        doc.text(`Nom: ${detailedDevis.nom_client || "N/A"}`, 20, 75);
-        doc.text(`Adresse: ${clientDetails?.adresse || "N/A"}`, 20, 80);
-        doc.text(
-          `Matricule Fiscale: ${clientDetails?.numero_fiscal || "N/A"}`,
-          20,
-          85
-        );
-        doc.text(`Tél: ${clientDetails?.telephone || "N/A"}`, 20, 90);
-
-        // Products table
-        if (
-          detailedDevis.produit_devis &&
-          detailedDevis.produit_devis.length > 0
-        ) {
-          const tableColumn = [
-            "Produit",
-            "Quantité",
-            "Prix Unitaire",
-            "Remise (%)",
-            "Total HT",
-          ];
-          const tableRows = [];
-
-          detailedDevis.produit_devis.forEach((item) => {
-            const totalItem = item.prix_total;
-            const row = [
-              item.nom_produit || `Produit ID ${item.produit}`,
-              item.quantite,
-              formatCurrency(item.prix_unitaire),
-              item.remise_pourcentage || 0,
-              formatCurrency(totalItem),
-            ];
-            tableRows.push(row);
-          });
-
-          // Add table to PDF using the correct autoTable syntax
-          autoTable(doc, {
-            startY: 100,
-            head: [tableColumn],
-            body: tableRows,
-            theme: "grid",
-            styles: { fontSize: 10, cellPadding: 3 },
-            columnStyles: {
-              0: { cellWidth: 70 },
-              4: { halign: "right" },
-            },
-            headStyles: {
-              fillColor: [50, 50, 50],
-              textColor: [255, 255, 255],
-              fontStyle: "bold",
-            },
-          });
-
-          // Get final position of table
-          const finalY = doc.lastAutoTable.finalY || 120;
-
-          // Add totals
-          doc.setFillColor(240, 240, 240);
-          doc.rect(110, finalY + 10, 80, 30, "F");
-          doc.setDrawColor(180, 180, 180);
-          doc.rect(110, finalY + 10, 80, 30);
-
-          doc.setFontSize(10);
-          doc.text(`Montant HT:`, 115, finalY + 17);
-          doc.text(
-            `${formatCurrency(detailedDevis.montant_ht)}`,
-            185,
-            finalY + 17,
-            { align: "right" }
-          );
-
-          doc.text(`TVA (${detailedDevis.tax_rate || 0}%):`, 115, finalY + 24);
-          doc.text(
-            `${formatCurrency(detailedDevis.montant_tva || 0)}`,
-            185,
-            finalY + 24,
-            { align: "right" }
-          );
-
-          doc.setFontSize(12);
-          doc.setFont(undefined, "bold");
-          doc.text(`Total TTC:`, 115, finalY + 33);
-          doc.text(
-            `${formatCurrency(detailedDevis.montant_ttc || 0)}`,
-            185,
-            finalY + 33,
-            { align: "right" }
-          );
-          doc.setFont(undefined, "normal");
-
-          // Add remarques
-          if (detailedDevis.remarques) {
-            doc.setFontSize(11);
-            doc.text("Remarques:", 20, finalY + 50);
-            doc.setFontSize(10);
-
-            const splitText = doc.splitTextToSize(detailedDevis.remarques, 170);
-            doc.text(splitText, 20, finalY + 57);
-          }
-
-          // Add conditions
-          if (detailedDevis.conditions_paiement) {
-            doc.setFontSize(11);
-            doc.text("Conditions de Paiement:", 20, finalY + 90);
-            doc.setFontSize(10);
-            doc.text(detailedDevis.conditions_paiement, 20, finalY + 97);
-          }
-
-          // Add signature areas
-          doc.setFontSize(10);
-          doc.text("Signature Client:", 20, finalY + 120);
-          doc.rect(20, finalY + 125, 70, 20);
-
-          doc.text("Signature Société:", 120, finalY + 120);
-          doc.rect(120, finalY + 125, 70, 20);
-        } else {
-          doc.setFontSize(12);
-          doc.text("Aucun produit dans ce devis.", 105, 120, {
-            align: "center",
-          });
-        }
-
-        // Footer
-        doc.setFontSize(8);
-        doc.text(
-          "Ce devis doit être accepté et signé pour valider la commande.",
-          105,
-          285,
-          { align: "center" }
-        );
-
-        // Save PDF
-        doc.save(`Devis_${detailedDevis.numero_devis}.pdf`);
-
-        // Show success
-        notification.destroy(notificationKey);
-        notification.success({
-          message: "Succès",
-          description: "PDF généré avec succès",
-        });
-      } catch (error) {
-        notification.destroy(notificationKey);
-        console.error("Error generating PDF:", error);
+    try {
+      // Fetch detailed devis info for PDF
+      const detailedDevis = await fetchDevisDetail(devis.id);
+      if (!detailedDevis) {
         notification.error({
           message: "Erreur",
-          description: "Erreur lors de la génération du PDF",
+          description:
+            "Impossible de générer le PDF: détails du devis introuvables",
         });
+        notification.destroy(notificationKey);
+        return;
       }
-    })();
+
+      // Find the client details from the clients array
+      const clientDetails = clients.find(
+        (client) => client.id === detailedDevis.client
+      );
+
+      // Prepare data for PDF service
+      const pdfData = {
+        ...detailedDevis,
+        client_address: clientDetails?.adresse || "",
+        client_tax_id: clientDetails?.numero_fiscal || "",
+        client_phone: clientDetails?.telephone || "",
+        date_emission: dayjs(detailedDevis.date_emission).format("DD/MM/YYYY"),
+        date_validite: dayjs(detailedDevis.date_validite).format("DD/MM/YYYY"),
+      };
+
+      // Generate PDF using DevisPdfService
+      await DevisPdfService.generateDevisPDF(
+        pdfData,
+        `Devis_${detailedDevis.numero_devis}.pdf`
+      );
+
+      // Show success
+      notification.destroy(notificationKey);
+      notification.success({
+        message: "Succès",
+        description: "PDF généré avec succès",
+      });
+    } catch (error) {
+      notification.destroy(notificationKey);
+      console.error("Error generating PDF:", error);
+      notification.error({
+        message: "Erreur",
+        description: "Erreur lors de la génération du PDF",
+      });
+    }
   };
 
   // Main data columns for list view
@@ -1577,8 +1391,6 @@ export default function Devis() {
         </Button>,
       ]}
     >
-
-
       <Form form={form} layout="vertical" initialValues={initialFormValues}>
         <Row gutter={16}>
           <Col span={12}>
