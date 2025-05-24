@@ -1,57 +1,84 @@
-import React, { useState, useEffect } from 'react';
-import { Row, Col, Empty, Spin, Alert, Select, Space, Typography, Card, Button, Input } from 'antd';
-import { ReloadOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
-import { useProducts } from '../contexts/ProductContext';
-import ProductCard from './ProductCard';
+import React, { useState, useEffect } from "react";
+import {
+  Row,
+  Col,
+  Empty,
+  Spin,
+  Alert,
+  Select,
+  Space,
+  Typography,
+  Card,
+  Button,
+  Input,
+} from "antd";
+import {
+  ReloadOutlined,
+  FilterOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
+import { useProducts } from "../contexts/ProductContext";
+import ProductCard from "./ProductCard";
 
 const { Option } = Select;
 const { Title } = Typography;
 const { Search } = Input;
 
 const ProductList = () => {
-  const { 
-    products, 
-    loading, 
-    error, 
-    selectedMaterial, 
+  const {
+    products,
+    loading,
+    error,
+    selectedMaterial,
     filterByMaterial,
-    refreshProducts 
+    refreshProducts,
   } = useProducts();
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [displayedProducts, setDisplayedProducts] = useState([]);
-  
+
   // Add debugging logs to see what's happening
   useEffect(() => {
-    console.log('Raw products from context:', products);
-    console.log('Selected material:', selectedMaterial);
-    console.log('Search term:', searchTerm);
-    
+    console.log("Raw products from context:", products);
+    console.log("Selected material:", selectedMaterial);
+    console.log("Search term:", searchTerm);
+
     // Make sure products is an array before filtering
     if (!Array.isArray(products)) {
-      console.error('Products is not an array:', products);
+      console.error("Products is not an array:", products);
       setDisplayedProducts([]);
       return;
     }
-    
+
     let materialFilteredProducts = products;
     if (selectedMaterial && selectedMaterial !== "all") {
-      materialFilteredProducts = products.filter(product => 
-        product.material_type?.trim().toLowerCase() === selectedMaterial.toLowerCase()
-      );
+      materialFilteredProducts = products.filter((product) => {
+        // Use the backend field name type_matiere for consistent filtering
+        const productMaterial = product.type_matiere || product.material_type;
+        return (
+          productMaterial?.trim().toLowerCase() ===
+          selectedMaterial.toLowerCase()
+        );
+      });
     }
-    
-    const searchFilteredProducts = materialFilteredProducts.filter(product => 
-      !searchTerm || 
-      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(product.id)?.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const searchFilteredProducts = materialFilteredProducts.filter(
+      (product) =>
+        !searchTerm ||
+        (product.nom_produit || product.name)
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        String(product.id)?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    
-    console.log('Filtered products (after material and search):', searchFilteredProducts);
+
+    console.log(
+      "Filtered products (after material and search):",
+      searchFilteredProducts
+    );
     setDisplayedProducts(searchFilteredProducts);
   }, [products, searchTerm, selectedMaterial]); // Added selectedMaterial to dependencies
-  
+
   const handleSearch = (value) => {
     setSearchTerm(value);
   };
@@ -83,13 +110,23 @@ const ProductList = () => {
   }
 
   // Add a debug display to see what's happening with our state
-  console.log('Rendering with displayedProducts:', displayedProducts);
-  
+  console.log("Rendering with displayedProducts:", displayedProducts);
+
   return (
     <Card className="product-list-container">
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-          <Title level={4} style={{ margin: 0 }}>Liste des produits ({displayedProducts.length})</Title>
+      <Space direction="vertical" size="large" style={{ width: "100%" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "10px",
+          }}
+        >
+          <Title level={4} style={{ margin: 0 }}>
+            Liste des produits ({displayedProducts.length})
+          </Title>
           <Space wrap>
             <Search
               placeholder="Rechercher un produit..."
@@ -105,12 +142,14 @@ const ProductList = () => {
               value={selectedMaterial || "all"}
               suffixIcon={<FilterOutlined />}
             >
-              {materialOptions.map(option => (
-                <Option key={option.value} value={option.value}>{option.label}</Option>
+              {materialOptions.map((option) => (
+                <Option key={option.value} value={option.value}>
+                  {option.label}
+                </Option>
               ))}
             </Select>
-            <Button 
-              icon={<ReloadOutlined />} 
+            <Button
+              icon={<ReloadOutlined />}
               onClick={refreshProducts}
               loading={loading}
             >
@@ -120,17 +159,17 @@ const ProductList = () => {
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '50px' }}>
+          <div style={{ textAlign: "center", padding: "50px" }}>
             <Spin size="large" />
           </div>
         ) : displayedProducts.length === 0 ? (
-          <Empty 
-            description="Aucun produit ne correspond à votre recherche" 
+          <Empty
+            description="Aucun produit ne correspond à votre recherche"
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         ) : (
           <Row gutter={[16, 16]}>
-            {displayedProducts.map(product => (
+            {displayedProducts.map((product) => (
               <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
                 <ProductCard product={product} />
               </Col>

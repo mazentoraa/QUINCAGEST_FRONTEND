@@ -52,7 +52,7 @@ class ProductService {
 
   static async updateProduct(id, product) {
     try {
-      const response = await axios.put(`${API_BASE_URL}/produits/${id}/`, product);
+      const response = await axios.patch(`${API_BASE_URL}/produits/${id}/`, product);
       return new ProductModel(response.data);
     } catch (error) {
       console.error(`Error updating product ${id}:`, error);
