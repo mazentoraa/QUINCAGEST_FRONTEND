@@ -11,12 +11,12 @@ function OrderManagement() {
   return (
     <div className="order-management">
       <div className="order-header">
-        <h1>Gestion des Commandes</h1>
+        <h1>Gestion des Factures</h1>
         <button 
           className="add-order-btn" 
           onClick={() => setShowNewOrderForm(true)}
         >
-          <i className="fas fa-plus"></i> Nouvelle Commande
+          <i className="fas fa-plus"></i> Nouvelle Facture
         </button>
       </div>
       

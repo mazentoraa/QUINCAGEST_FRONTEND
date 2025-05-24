@@ -1,136 +1,156 @@
+/* InstallmentForm.css */
+
 .installment-form {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
   background-color: #f8f9fa;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  min-height: 100vh;
 }
 
 .form-title {
-  color: #fff;
-  background-color: #4a90e2;
-  padding: 1rem;
-  margin: -2rem -2rem 2rem -2rem;
-  border-radius: 8px 8px 0 0;
-  font-size: 1.5rem;
-  font-weight: 600;
   text-align: center;
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 30px;
+  color: #333;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* Sections du formulaire */
 .form-sections {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
+  gap: 20px;
+  margin-bottom: 25px;
 }
 
 .form-section {
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-}
-
-.drawer-section {
-  border-left: 4px solid #27ae60;
-}
-
-.client-section {
-  border-left: 4px solid #8e44ad;
-}
-
-.main-info-section {
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-  border-left: 4px solid #f39c12;
-}
-
-.additional-info-section {
-  border-left: 4px solid #e67e22;
-}
-
-.bank-info-section {
-  border-left: 4px solid #3498db;
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
 }
 
 .section-title {
-  color: #2c3e50;
-  font-size: 1.1rem;
+  font-size: 18px;
   font-weight: 600;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #ecf0f1;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* Couleurs des sections */
+.drawer-section {
+  border-left: 4px solid #007bff;
 }
 
 .drawer-section .section-title {
-  color: #27ae60;
+  color: #007bff;
+}
+
+.client-section {
+  border-left: 4px solid #28a745;
 }
 
 .client-section .section-title {
-  color: #8e44ad;
+  color: #28a745;
+}
+
+.main-info-section {
+  border-left: 4px solid #6c757d;
+  grid-column: 1 / -1;
 }
 
 .main-info-section .section-title {
-  color: #f39c12;
+  color: #6c757d;
+}
+
+.additional-info-section {
+  border-left: 4px solid #ffc107;
 }
 
 .additional-info-section .section-title {
-  color: #e67e22;
+  color: #e68900;
+}
+
+.bank-info-section {
+  border-left: 4px solid #6f42c1;
 }
 
 .bank-info-section .section-title {
-  color: #3498db;
+  color: #6f42c1;
 }
 
+/* Contenu des sections */
 .section-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 15px;
 }
 
 .main-info-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
+  gap: 20px;
 }
 
+/* Mise en page spécifique pour les informations bancaires */
+.bank-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bank-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+/* Groupes de formulaire */
 .form-group {
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .form-group.full-width {
-  grid-column: span 2;
+  grid-column: 1 / -1;
+}
+
+/* Groupe RIP spécial */
+.rip-group {
+  grid-column: 1 / -1;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #34495e;
-  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 5px;
 }
 
+/* Inputs */
 .form-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
   background-color: #fff;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 .form-input.error {
-  border-color: #e74c3c;
+  border-color: #dc3545;
+  background-color: #fff5f5;
 }
 
 .form-input:disabled {
@@ -139,154 +159,267 @@
   cursor: not-allowed;
 }
 
-.error-text {
-  color: #e74c3c;
-  font-size: 0.8rem;
-  margin-top: 0.3rem;
+/* Input RIP spécial */
+.rip-input {
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  letter-spacing: 1px;
+  background-color: #f8f9fa;
+  border: 2px solid #6f42c1;
+  color: #6f42c1;
+  font-weight: 600;
 }
 
-.installment-preview {
-  margin-top: 2rem;
+.rip-input:focus {
+  border-color: #6f42c1;
+  box-shadow: 0 0 0 3px rgba(111, 66, 193, 0.1);
   background-color: #fff;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  border-left: 4px solid #2ecc71;
+}
+
+.helper-text {
+  font-size: 12px;
+  color: #6c757d;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Messages d'erreur */
+.error-text {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Aperçu des traites */
+.installment-preview {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #17a2b8;
 }
 
 .installment-preview h3 {
-  color: #2ecc71;
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
+  color: #17a2b8;
+  margin-bottom: 20px;
+  font-size: 20px;
   font-weight: 600;
 }
 
 .table-responsive {
   overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .preview-table {
   width: 100%;
   border-collapse: collapse;
-  background-color: white;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.preview-table th,
-.preview-table td {
-  padding: 0.8rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid #eaeaea;
+  background: white;
+  font-size: 14px;
 }
 
 .preview-table th {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color: #495057;
+  font-weight: 600;
+  padding: 15px 12px;
+  text-align: left;
+  border-bottom: 2px solid #dee2e6;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.preview-table td {
+  padding: 12px;
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.preview-table tbody tr:hover {
   background-color: #f8f9fa;
-  color: #34495e;
-  font-weight: 600;
-  font-size: 0.9rem;
 }
 
-.preview-table tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-
-.preview-table tr:hover {
-  background-color: #f1f8ff;
-}
-
-.preview-table td.amount {
+.preview-table .amount {
   text-align: right;
+  font-family: 'Courier New', monospace;
   font-weight: 600;
+  color: #28a745;
 }
 
+.preview-table .font-bold {
+  font-weight: 600;
+  color: #333;
+}
+
+.preview-table .total-row {
+  background-color: #f8f9fa;
+  border-top: 2px solid #17a2b8;
+}
+
+.preview-table .total-row .font-bold {
+  color: #17a2b8;
+}
+
+/* Badge de statut */
 .status-badge {
-  padding: 0.3rem 0.6rem;
+  padding: 4px 8px;
   border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .status-badge.non-paye {
-  background-color: #fff5f5;
-  color: #e53e3e;
-  border: 1px solid #fed7d7;
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+/* Actions du formulaire */
+.form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+
+.form-actions button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.preview-btn {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+}
+
+.preview-btn:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .submit-btn {
-  background-color: #4a90e2;
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
   color: white;
-  padding: 1rem 2rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 1.5rem;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .submit-btn:hover {
-  background-color: #357abd;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
+  background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
-.submit-btn:active {
-  transform: translateY(0);
+.reset-btn {
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  color: white;
 }
 
-/* Responsive styles */
-@media (max-width: 1200px) {
+.reset-btn:hover {
+  background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
   .main-info-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
+  .installment-form {
+    padding: 15px;
+  }
+  
   .form-sections {
     grid-template-columns: 1fr;
+    gap: 15px;
   }
   
   .section-content {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .bank-info-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
   
   .main-info-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .form-group.full-width {
-    grid-column: span 1;
-  }
-  
-  .installment-form {
-    padding: 1rem;
-  }
-  
-  .form-title {
-    margin: -1rem -1rem 1.5rem -1rem;
-    font-size: 1.3rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .form-title {
-    font-size: 1.2rem;
-    padding: 0.8rem;
+    gap: 15px;
   }
   
   .form-section {
-    padding: 1rem;
+    padding: 20px;
+  }
+  
+  .form-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .form-actions button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  .preview-table {
+    font-size: 12px;
   }
   
   .preview-table th,
   .preview-table td {
-    padding: 0.5rem;
-    font-size: 0.8rem;
+    padding: 8px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .installment-form {
+    padding: 10px;
+  }
+  
+  .form-section {
+    padding: 15px;
+  }
+  
+  .form-title {
+    font-size: 20px;
+  }
+  
+  .section-title {
+    font-size: 16px;
+  }
+  
+  .form-input {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  .rip-input {
+    font-size: 14px;
+    letter-spacing: 0.5px;
   }
 }
