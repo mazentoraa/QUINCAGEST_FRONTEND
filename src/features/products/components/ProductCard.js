@@ -1,16 +1,34 @@
-import React, { useState } from 'react';
-import { Card, Typography, Space, Tag, Button, Modal, Form, Input, InputNumber, Select, Upload, Image } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { useProducts } from '../contexts/ProductContext';
+import React, { useState } from "react";
+import {
+  Card,
+  Typography,
+  Space,
+  Tag,
+  Button,
+  Modal,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Upload,
+  Image,
+} from "antd";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  ExclamationCircleOutlined,
+} from "@ant-design/icons";
+import { useProducts } from "../contexts/ProductContext";
 
 const { Text, Paragraph } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
-const { confirm } = Modal;
 
 const ProductCard = ({ product }) => {
   const { updateProduct, deleteProduct } = useProducts();
   const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [imageUrl, setImageUrl] = useState(product.image);
@@ -29,31 +47,120 @@ const ProductCard = ({ product }) => {
 
     if (product.image) {
       setImageUrl(product.image);
-      setFileList([{
-        uid: '-1',
-        name: 'product-image.png',
-        status: 'done',
-        url: product.image,
-      }]);
+      setFileList([
+        {
+          uid: "-1",
+          name: "product-image.png",
+          status: "done",
+          url: product.image,
+        },
+      ]);
     } else {
       setFileList([]);
       setImageUrl(null);
     }
   }, [product, form]);
 
+  // Handle delete confirmation
+  const handleDeleteClick = () => {
+    console.log("Delete icon clicked"); // Debug log
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    console.log(
+      "Confirmation OK clicked, attempting to delete product:",
+      product.id
+    );
+
+    try {
+      if (!deleteProduct) {
+        console.error("deleteProduct function is not available from context");
+        Modal.error({
+          title: "Erreur",
+          content: "Fonction de suppression non disponible.",
+        });
+        return;
+      }
+
+      console.log("Calling deleteProduct function...");
+      const result = await deleteProduct(product.id);
+      console.log("Delete result:", result);
+
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      Modal.error({
+        title: "Erreur",
+        content: `Impossible de supprimer le produit: ${
+          error.message || error
+        }`,
+      });
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    console.log("Delete cancelled");
+    setShowDeleteConfirm(false);
+  };
+
   // Show delete confirmation
-  const showDeleteConfirm = () => {
-    confirm({
-      title: 'Êtes-vous sûr de vouloir supprimer ce produit ?',
+  const showDeleteConfirmModal = () => {
+    console.log("Delete button clicked for product:", product.id); // Debug log
+
+    // Try using a different approach for the modal
+    const modal = Modal.confirm({
+      title: "Êtes-vous sûr de vouloir supprimer ce produit ?",
       icon: <ExclamationCircleOutlined />,
-      content: 'Cette action est irréversible.',
-      okText: 'Oui',
-      okType: 'danger',
-      cancelText: 'Non',
-      onOk() {
-        return deleteProduct(product.id);
+      content: "Cette action est irréversible.",
+      okText: "Oui",
+      okType: "danger",
+      cancelText: "Non",
+      centered: true,
+      maskClosable: false,
+      onOk: async () => {
+        console.log(
+          "Confirmation OK clicked, attempting to delete product:",
+          product.id
+        ); // Debug log
+
+        try {
+          // Check if deleteProduct function exists
+          if (!deleteProduct) {
+            console.error(
+              "deleteProduct function is not available from context"
+            );
+            Modal.error({
+              title: "Erreur",
+              content: "Fonction de suppression non disponible.",
+            });
+            throw new Error("Delete function not available");
+          }
+
+          // Call delete with explicit logging
+          console.log("Calling deleteProduct function...");
+          const result = await deleteProduct(product.id);
+          console.log("Delete result:", result);
+
+          return result;
+        } catch (error) {
+          console.error("Error deleting product:", error);
+          Modal.error({
+            title: "Erreur",
+            content: `Impossible de supprimer le produit: ${
+              error.message || error
+            }`,
+          });
+          throw error; // Re-throw to prevent modal from closing
+        }
+      },
+      onCancel: () => {
+        console.log("Delete cancelled"); // Debug log
       },
     });
+
+    console.log("Modal created:", modal); // Debug log to see if modal is created
   };
 
   // Handle image upload
@@ -108,14 +215,14 @@ const ProductCard = ({ product }) => {
         longueur: values.length || 0,
         surface: values.surface,
         prix: values.price || 0,
-        description: values.description || '',
+        description: values.description || "",
         image: imageData,
         // Frontend field names
         name: values.name,
         material_type: values.material,
         thickness: values.thickness,
         length: values.length || 0,
-        price: values.price || 0
+        price: values.price || 0,
       };
 
       // Update product
@@ -123,20 +230,20 @@ const ProductCard = ({ product }) => {
 
       setIsEditing(false);
     } catch (error) {
-      console.error('Error updating product:', error);
+      console.error("Error updating product:", error);
     }
   };
 
   // Helper function to safely format price
   const formatPrice = (price) => {
     if (price === null || price === undefined) return "0.00 DT";
-    
+
     // Convert to number if it's a string
-    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
-    
+    const numericPrice = typeof price === "string" ? parseFloat(price) : price;
+
     // Check if it's a valid number
     if (isNaN(numericPrice)) return "0.00 DT";
-    
+
     // Format the price
     return numericPrice.toFixed(2) + " DT";
   };
@@ -144,13 +251,13 @@ const ProductCard = ({ product }) => {
   // Material type color mapping
   const getMaterialColor = (material) => {
     const colors = {
-      'inox': 'blue',
-      'fer': 'volcano',
-      'aluminium': 'green',
-      'cuivre': 'orange',
-      'laiton': 'gold',
+      inox: "blue",
+      fer: "volcano",
+      aluminium: "green",
+      cuivre: "orange",
+      laiton: "gold",
     };
-    return colors[material] || 'default';
+    return colors[material] || "default";
   };
 
   // Render the product edit form
@@ -172,7 +279,9 @@ const ProductCard = ({ product }) => {
       <Form.Item
         name="name"
         label="Nom du produit"
-        rules={[{ required: true, message: 'Le nom du produit est obligatoire' }]}
+        rules={[
+          { required: true, message: "Le nom du produit est obligatoire" },
+        ]}
       >
         <Input />
       </Form.Item>
@@ -180,7 +289,9 @@ const ProductCard = ({ product }) => {
       <Form.Item
         name="material"
         label="Type de matériau"
-        rules={[{ required: true, message: 'Le type de matériau est obligatoire' }]}
+        rules={[
+          { required: true, message: "Le type de matériau est obligatoire" },
+        ]}
       >
         <Select>
           <Option value="acier">Acier</Option>
@@ -194,11 +305,11 @@ const ProductCard = ({ product }) => {
       </Form.Item>
 
       <Form.Item label="Dimensions">
-        <Space style={{ display: 'flex', flexWrap: 'wrap' }}>
+        <Space style={{ display: "flex", flexWrap: "wrap" }}>
           <Form.Item
             name="thickness"
             label="Épaisseur (mm)"
-            rules={[{ required: true, message: 'L\'épaisseur est obligatoire' }]}
+            rules={[{ required: true, message: "L'épaisseur est obligatoire" }]}
             style={{ marginBottom: 0 }}
           >
             <InputNumber min={0.1} step={0.1} />
@@ -215,7 +326,7 @@ const ProductCard = ({ product }) => {
           <Form.Item
             name="surface"
             label="Surface (m²)"
-            rules={[{ required: true, message: 'La surface est obligatoire' }]}
+            rules={[{ required: true, message: "La surface est obligatoire" }]}
             style={{ marginBottom: 0 }}
           >
             <InputNumber min={0.01} step={0.01} />
@@ -223,17 +334,11 @@ const ProductCard = ({ product }) => {
         </Space>
       </Form.Item>
 
-      <Form.Item
-        name="price"
-        label="Prix (DT)"
-      >
+      <Form.Item name="price" label="Prix (DT)">
         <InputNumber min={0} step={0.01} />
       </Form.Item>
 
-      <Form.Item
-        name="description"
-        label="Description"
-      >
+      <Form.Item name="description" label="Description">
         <TextArea rows={4} />
       </Form.Item>
 
@@ -258,9 +363,7 @@ const ProductCard = ({ product }) => {
         <Button type="primary" htmlType="submit">
           Enregistrer
         </Button>
-        <Button onClick={() => setIsEditing(false)}>
-          Annuler
-        </Button>
+        <Button onClick={() => setIsEditing(false)}>Annuler</Button>
       </Space>
     </Form>
   );
@@ -268,25 +371,44 @@ const ProductCard = ({ product }) => {
   // Render product details
   const renderProductDetails = () => (
     <>
-      <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+      <div
+        style={{
+          height: "200px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: "16px",
+        }}
+      >
         {product.image ? (
           <Image
             width="100%"
             height={200}
             src={product.image}
             alt={product.name}
-            style={{ objectFit: 'contain' }}
+            style={{ objectFit: "contain" }}
           />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              background: "#f0f0f0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <Text type="secondary">Pas d'image</Text>
           </div>
         )}
       </div>
 
-      <Space direction="vertical" size="small" style={{ width: '100%' }}>
-        <Typography.Title level={5} style={{ margin: 0 }}>{product.name}</Typography.Title>
-        
+      <Space direction="vertical" size="small" style={{ width: "100%" }}>
+        <Typography.Title level={5} style={{ margin: 0 }}>
+          {product.name}
+        </Typography.Title>
+
         <Space>
           <Tag color={getMaterialColor(product.material_type)}>
             {product.material_type}
@@ -295,25 +417,25 @@ const ProductCard = ({ product }) => {
             <Tag color="green">{formatPrice(product.price)}</Tag>
           )}
         </Space>
-        
+
         <Space style={{ marginTop: 8 }}>
           <Text type="secondary">Épaisseur: </Text>
           <Text strong>{product.thickness} mm</Text>
-          
+
           {product.length > 0 && (
             <>
               <Text type="secondary">Longueur: </Text>
               <Text strong>{product.length} mm</Text>
             </>
           )}
-          
+
           <Text type="secondary">Surface: </Text>
           <Text strong>{product.surface} m²</Text>
         </Space>
-        
+
         {product.description && (
-          <Paragraph 
-            ellipsis={{ rows: 3, expandable: true, symbol: 'plus' }}
+          <Paragraph
+            ellipsis={{ rows: 3, expandable: true, symbol: "plus" }}
             style={{ marginTop: 8 }}
           >
             {product.description}
@@ -321,7 +443,7 @@ const ProductCard = ({ product }) => {
         )}
 
         {product.created_at && (
-          <Text type="secondary" style={{ fontSize: '12px' }}>
+          <Text type="secondary" style={{ fontSize: "12px" }}>
             Créé le {product.created_at.toLocaleDateString()}
           </Text>
         )}
@@ -330,17 +452,44 @@ const ProductCard = ({ product }) => {
   );
 
   return (
-    <Card
-      hoverable
-      className="product-card"
-      style={{ height: '100%' }}
-      actions={[
-        <EditOutlined key="edit" onClick={() => setIsEditing(true)} />,
-        <DeleteOutlined key="delete" onClick={showDeleteConfirm} />,
-      ]}
-    >
-      {isEditing ? renderEditForm() : renderProductDetails()}
-    </Card>
+    <>
+      <Card
+        hoverable
+        className="product-card"
+        style={{ height: "100%" }}
+        actions={[
+          <EditOutlined key="edit" onClick={() => setIsEditing(true)} />,
+          <DeleteOutlined key="delete" onClick={handleDeleteClick} />,
+        ]}
+      >
+        {isEditing ? renderEditForm() : renderProductDetails()}
+      </Card>
+
+      {/* Custom Delete Confirmation Modal */}
+      <Modal
+        title="Confirmation de suppression"
+        open={showDeleteConfirm}
+        onOk={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        okText="Oui, supprimer"
+        cancelText="Annuler"
+        okType="danger"
+        centered
+      >
+        <Space>
+          <ExclamationCircleOutlined
+            style={{ color: "#ff4d4f", fontSize: "22px" }}
+          />
+          <div>
+            <p>
+              <strong>Êtes-vous sûr de vouloir supprimer ce produit ?</strong>
+            </p>
+            <p>Cette action est irréversible.</p>
+            <p style={{ color: "#666" }}>Produit: {product.name}</p>
+          </div>
+        </Space>
+      </Modal>
+    </>
   );
 };
 
