@@ -113,8 +113,10 @@ export default function Devis() {
   const [priceRange, setPriceRange] = useState([null, null]); // [min, max]
   const API_BASE_URL =
     process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+  // randomId of 2 letter and 3 digits placed randomly in the string
+  const randomId = `ID-${Math.random().toString(36).substring(2, 4).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
   const initialFormValues = {
-    numero_devis: `DEV-${new Date().getFullYear()}-`,
+    numero_devis: `DEV-${new Date().getFullYear()}-${randomId}`,
     client: undefined,
     date_emission: dayjs(),
     date_validite: dayjs().add(15, "days"),
