@@ -68,14 +68,14 @@ function SideMenu() {
             <Menu.Item key="/bons/livraison-decoupe" onClick={() => handleMenuClick('/bons/livraison-decoupe')}>
               Bon de Livraison (Découpe)
             </Menu.Item>
-            <Menu.Item key="/bons/retour" onClick={() => handleMenuClick('/bons/retour')}>
-              Bon de Retour
+            <Menu.Item key="/bons/devis" onClick={() => handleMenuClick('/bons/devis')}>
+              Devis
             </Menu.Item>
             <Menu.Item key="/bons/commande" onClick={() => handleMenuClick('/bons/commande')}>
               Bon de Commande
             </Menu.Item>
-            <Menu.Item key="/bons/devis" onClick={() => handleMenuClick('/bons/devis')}>
-              Devis
+            <Menu.Item key="/bons/retour" onClick={() => handleMenuClick('/bons/retour')}>
+              Bon de Retour
             </Menu.Item>
           </SubMenu>
 

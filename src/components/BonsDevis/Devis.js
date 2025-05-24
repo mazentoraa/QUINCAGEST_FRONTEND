@@ -504,8 +504,6 @@ export default function Devis() {
           message: "Succès",
           description: "Devis créé avec succès",
         });
-        navigate(`/devis/${response.data.id}`);
-        setCurrentView("detail");
       } else if (currentView === "edit") {
         const devisId = devisDetail.id;
         await axios.put(
@@ -626,7 +624,6 @@ export default function Devis() {
     const devisDetail = await fetchDevisDetail(devis.id);
     if (devisDetail) {
       setCurrentView("detail");
-      navigate(`/devis/${devis.id}`);
     }
   };
 
@@ -1860,7 +1857,6 @@ export default function Devis() {
                   key="view"
                   type="primary"
                   onClick={() => {
-                    navigate(`/commandes/${convertSuccess.orderId}`);
                     setShowConvertModal(false);
                     setConvertSuccess(null);
                   }}
