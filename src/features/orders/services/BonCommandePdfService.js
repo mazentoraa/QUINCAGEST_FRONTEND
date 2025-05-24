@@ -442,9 +442,6 @@ class BonCommandePdfService {
                   <strong>Date livr. prévue :</strong> ${
                     data.date_livraison_prevue || ""
                   }<br>
-                  <strong>Statut :</strong> <span class="status-badge">${this.getStatusLabel(
-                    data.statut
-                  )}</span><br>
                   <strong>Conditions :</strong> ${
                     data.conditions_paiement || ""
                   }
