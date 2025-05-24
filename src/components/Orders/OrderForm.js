@@ -3,6 +3,10 @@ import { StockContext } from '../../features/stock/contexts/StockContext';
 import { OrderContext } from '../../contexts/OrderContext';
 import { InstallmentContext } from '../../contexts/InstallmentContext';
 import './OrderForm.css';
+import axios from 'axios';
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
+
 
 function OrderForm({ onComplete, onCancel }) {
   const { products } = useContext(StockContext);
