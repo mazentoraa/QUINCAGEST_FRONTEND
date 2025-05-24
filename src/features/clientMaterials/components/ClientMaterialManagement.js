@@ -61,7 +61,7 @@ const ClientRawMaterialsPage = () => {
 
   // Modal for bill preparation
   const [isBillModalVisible, setIsBillModalVisible] = useState(false);
-  const [billDate, setBillDate] = useState(moment().format("YYYY-MM-DD"));
+  const [billDate, setBillDate] = useState(moment()); // Store as moment object
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [billableData, setBillableData] = useState([]);
 
@@ -571,12 +571,12 @@ const ClientRawMaterialsPage = () => {
     setBillableData(selectedRowsData);
 
     try {
-      // Generate new invoice number
-      const newInvoiceNumber = selectedRowsData[0].numero_bon;
+      // Generate new random invoice number for matiere premiere
+      const newInvoiceNumber = generateInvoiceNumber();
       setInvoiceNumber(newInvoiceNumber);
 
       // Set current date as default
-      setBillDate(moment().format("YYYY-MM-DD"));
+      setBillDate(moment()); // Update with moment object
 
       // Show bill modal
       setIsBillModalVisible(true);
@@ -618,7 +618,9 @@ const ClientRawMaterialsPage = () => {
 
       const pdfData = {
         deliveryNumber: invoiceNumber,
-        deliveryDate: billDate,
+        deliveryDate: billDate
+          ? billDate.format("YYYY-MM-DD")
+          : moment().format("YYYY-MM-DD"),
         clientName: clientName,
         clientAddress: selectedClient?.adresse || "N/A",
         clientTaxId: selectedClient?.numero_fiscal || "N/A",
@@ -679,7 +681,9 @@ const ClientRawMaterialsPage = () => {
         client: selectedClient.id,
         matieres: materialIds,
         numero_bon: invoiceNumber,
-        date_reception: billDate,
+        date_reception: billDate
+          ? billDate.format("YYYY-MM-DD")
+          : moment().format("YYYY-MM-DD"),
         tax_rate: 19, // Default tax rate
         notes: "Facture générée automatiquement",
       };
@@ -706,8 +710,12 @@ const ClientRawMaterialsPage = () => {
         duration: 2,
       });
 
-      // Close the modal after successful save if needed
-      // setIsBillModalVisible(false);
+      // Close the modal after successful save
+      setIsBillModalVisible(false);
+
+      // Clear selected rows after successful save
+      setSelectedRowKeys([]);
+      setSelectedRowsData([]);
     } catch (err) {
       console.error("Error saving invoice:", err);
       notification.error({
@@ -1205,14 +1213,11 @@ const ClientRawMaterialsPage = () => {
             <Form.Item label="Date de facturation">
               <DatePicker
                 style={{ width: "100%" }}
-                value={moment(billDate)}
-                onChange={(date) =>
-                  setBillDate(
-                    date
-                      ? date.format("YYYY-MM-DD")
-                      : moment().format("YYYY-MM-DD")
-                  )
+                value={billDate} // Use moment object directly
+                onChange={
+                  (dateMoment) => setBillDate(dateMoment || moment()) // Update with moment object, default to now if cleared
                 }
+                format="YYYY-MM-DD" // Ensure display format is correct
               />
             </Form.Item>
           </Form>

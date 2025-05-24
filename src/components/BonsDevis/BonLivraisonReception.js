@@ -1,19 +1,37 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
-  Table, Card, Input, Button, Space, Tooltip, Drawer, Form,
-  Select, DatePicker, Typography, Tag, Empty, Spin, Divider, Row, Col, message, notification
-} from 'antd';
+  Table,
+  Card,
+  Input,
+  Button,
+  Space,
+  Tooltip,
+  Drawer,
+  Form,
+  Select,
+  DatePicker,
+  Typography,
+  Tag,
+  Empty,
+  Spin,
+  Divider,
+  Row,
+  Col,
+  message,
+  notification,
+} from "antd";
 import {
-  FilterOutlined, ReloadOutlined, FileSearchOutlined,
-  PrinterOutlined
-} from '@ant-design/icons';
-import moment from 'moment';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { debounce } from 'lodash';
+  FilterOutlined,
+  ReloadOutlined,
+  FileSearchOutlined,
+  PrinterOutlined,
+} from "@ant-design/icons";
+import moment from "moment";
+import { debounce } from "lodash";
 
-import ClientMaterialService from '../../features/clientMaterials/services/ClientMaterialService';
-import ClientService from '../../features/clientManagement/services/ClientService';
+import ClientMaterialService from "../../features/clientMaterials/services/ClientMaterialService";
+import ClientService from "../../features/clientManagement/services/ClientService";
+import ClientMaterialPdfService from "../../features/clientMaterials/services/ClientMaterialPdfService";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -23,33 +41,33 @@ const BonLivraisonReception = () => {
   const [deliveryNotes, setDeliveryNotes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
-  
+
   // State for filters
   const [filters, setFilters] = useState({
     clientId: null,
     dateRange: null,
-    numeroSearch: '',
+    numeroSearch: "",
     status: null,
   });
-  
+
   // State for data display
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
   });
-  
+
   // State for detail view
   const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
   const [selectedDeliveryNote, setSelectedDeliveryNote] = useState(null);
-  
+
   // State for advanced filter drawer
   const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
   const [clientOptions, setClientOptions] = useState([]);
   const [clientSearchLoading, setClientSearchLoading] = useState(false);
-  
+
   // Form for filters
   const [filterForm] = Form.useForm();
-  
+
   // Material types options for display
   const material_types = [
     { value: "acier", label: "Acier" },
@@ -64,7 +82,10 @@ const BonLivraisonReception = () => {
   // Calculate total quantity for a delivery note - memoize it
   const calculateTotalQuantity = useCallback((materials) => {
     if (!materials || !Array.isArray(materials)) return 0;
-    return materials.reduce((sum, item) => sum + (parseFloat(item.quantite) || 0), 0);
+    return materials.reduce(
+      (sum, item) => sum + (parseFloat(item.quantite) || 0),
+      0
+    );
   }, []); // No dependencies, it's a pure function of its arguments
 
   // Fetch delivery notes based on current filters and pagination
@@ -80,8 +101,8 @@ const BonLivraisonReception = () => {
         params.client_id = filters.clientId;
       }
       if (filters.dateRange && filters.dateRange.length === 2) {
-        params.date_after = filters.dateRange[0].format('YYYY-MM-DD');
-        params.date_before = filters.dateRange[1].format('YYYY-MM-DD');
+        params.date_after = filters.dateRange[0].format("YYYY-MM-DD");
+        params.date_before = filters.dateRange[1].format("YYYY-MM-DD");
       }
       if (filters.numeroSearch) {
         params.search = filters.numeroSearch; // Assumes backend handles 'search' for numero_bon
@@ -90,11 +111,15 @@ const BonLivraisonReception = () => {
         params.status = filters.status; // Assumes backend handles 'status'
       }
 
-      const response = await ClientMaterialService.getAllMaterialInvoices(params);
+      const response = await ClientMaterialService.getAllMaterialInvoices(
+        params
+      );
 
       const processNotes = (notes) => {
-        return notes.map(note => {
-          const currentMatieresDetails = Array.isArray(note.matieres_details) ? note.matieres_details : [];
+        return notes.map((note) => {
+          const currentMatieresDetails = Array.isArray(note.matieres_details)
+            ? note.matieres_details
+            : [];
           return {
             ...note,
             matieres_details: currentMatieresDetails, // Ensure it's always an array
@@ -103,8 +128,12 @@ const BonLivraisonReception = () => {
           };
         });
       };
-      
-      if (response && typeof response.count === 'number' && Array.isArray(response.results)) {
+
+      if (
+        response &&
+        typeof response.count === "number" &&
+        Array.isArray(response.results)
+      ) {
         setDeliveryNotes(processNotes(response.results));
         setTotalRecords(response.count);
       } else if (Array.isArray(response)) {
@@ -114,12 +143,14 @@ const BonLivraisonReception = () => {
         // Fallback for unexpected response structure
         setDeliveryNotes([]);
         setTotalRecords(0);
-        console.warn('Unexpected API response structure for delivery notes:', response);
+        console.warn(
+          "Unexpected API response structure for delivery notes:",
+          response
+        );
       }
-
     } catch (error) {
-      console.error('Error fetching delivery notes:', error);
-      message.error('Erreur lors de la récupération des bons de livraison.');
+      console.error("Error fetching delivery notes:", error);
+      message.error("Erreur lors de la récupération des bons de livraison.");
     } finally {
       setLoading(false);
     }
@@ -130,14 +161,14 @@ const BonLivraisonReception = () => {
     setClientSearchLoading(true);
     try {
       const clientData = await ClientService.get_all_clients();
-      const options = clientData.map(client => ({
+      const options = clientData.map((client) => ({
         value: client.id, // Assuming ClientModel has id
-        label: client.nom_client // Assuming ClientModel has nom_client
+        label: client.nom_client, // Assuming ClientModel has nom_client
       }));
       setClientOptions(options);
     } catch (error) {
-      console.error('Error fetching initial clients:', error);
-      message.error('Erreur lors de la récupération des clients.');
+      console.error("Error fetching initial clients:", error);
+      message.error("Erreur lors de la récupération des clients.");
     } finally {
       setClientSearchLoading(false);
     }
@@ -156,21 +187,25 @@ const BonLivraisonReception = () => {
   const handleClientSearch = async (value) => {
     // Always allow empty search to get all clients
     setClientSearchLoading(true);
-    
+
     try {
       // Use empty string if value is less than 2 chars to fetch all clients
-      const searchValue = value && value.length >= 2 ? value : '';
+      const searchValue = value && value.length >= 2 ? value : "";
       const clientsData = await ClientService.search_clients(searchValue);
-      
-      setClientOptions(clientsData.map(client => ({
-        value: client.id,
-        label: `${client.nom_client || client.name || 'Client sans nom'} (ID: ${client.id})`,
-      })));
+
+      setClientOptions(
+        clientsData.map((client) => ({
+          value: client.id,
+          label: `${
+            client.nom_client || client.name || "Client sans nom"
+          } (ID: ${client.id})`,
+        }))
+      );
     } catch (err) {
-      console.error('Error searching clients:', err);
+      console.error("Error searching clients:", err);
       notification.error({
-        message: 'Erreur',
-        description: 'Erreur lors de la recherche des clients.'
+        message: "Erreur",
+        description: "Erreur lors de la recherche des clients.",
       });
     } finally {
       setClientSearchLoading(false);
@@ -200,15 +235,15 @@ const BonLivraisonReception = () => {
       numeroSearch: values.numeroSearch || filters.numeroSearch,
       status: values.status,
     };
-    
+
     setFilters(newFilters);
     setPagination({
       ...pagination,
       current: 1, // Reset to first page when filtering
     });
-    
+
     setFilterDrawerVisible(false);
-    
+
     // Trigger fetch with new filters
     fetchDeliveryNotes();
   };
@@ -219,7 +254,7 @@ const BonLivraisonReception = () => {
     setFilters({
       clientId: null,
       dateRange: null,
-      numeroSearch: '',
+      numeroSearch: "",
       status: null,
     });
     setPagination({
@@ -244,168 +279,140 @@ const BonLivraisonReception = () => {
     setDetailDrawerVisible(true);
   };
 
-  // Print delivery note
-  const printDeliveryNote = (record) => {
-    const doc = new jsPDF();
-    
-    // Add title
-    doc.setFontSize(18);
-    doc.text('Bon de Livraison (Réception)', 105, 15, { align: 'center' });
-    
-    // Add reference number and date
-    doc.setFontSize(12);
-    doc.text(`N° Bon: ${record.numero_bon}`, 14, 25);
-    doc.text(`Date de réception: ${record.date_reception}`, 14, 32);
-    
-    // Add client information
-    doc.setFontSize(12);
-    doc.text('Informations Client:', 14, 42);
-    doc.setFontSize(10);
-    doc.text(`Client: ${record.client_details?.nom_client || 'Non spécifié'}`, 20, 49);
-    
-    if (record.client_details) {
-      doc.text(`Adresse: ${record.client_details.adresse || 'Non spécifiée'}`, 20, 56);
-      doc.text(`Téléphone: ${record.client_details.telephone || 'Non spécifié'}`, 20, 63);
-      doc.text(`Email: ${record.client_details.email || 'Non spécifié'}`, 20, 70);
-    }
-    
-    // Materials table
-    if (record.matieres_details && record.matieres_details.length > 0) {
-      const materialTypesMap = material_types.reduce((acc, type) => {
-        acc[type.value] = type.label;
-        return acc;
-      }, {});
-      
-      // Table header and data
-      const tableColumn = [
-        'Type de matériau',
-        'Description',
-        'Quantité',
-        'Surface'
-      ];
-      
-      const tableRows = record.matieres_details.map(material => [
-        materialTypesMap[material.type_matiere] || material.type_matiere,
-        material.description || '-',
-        material.quantite,
-        material.surface ? `${material.surface} m²` : '-',
-      ]);
-      
-      // Add summary row
-      const totalQuantity = calculateTotalQuantity(record.matieres_details);
-      tableRows.push([
-        'TOTAL',
-        '',
-        totalQuantity,
-        ''
-      ]);
-      
-      // Generate the table
-      autoTable(doc, {
-        startY: 80,
-        head: [tableColumn],
-        body: tableRows,
-        headStyles: { fillColor: [60, 60, 60], textColor: [255, 255, 255] },
-        footStyles: { fillColor: [240, 240, 240] },
-        alternateRowStyles: { fillColor: [245, 245, 245] },
-        columnStyles: {
-          0: { cellWidth: 50 },
-          1: { cellWidth: 70 },
-          2: { cellWidth: 30 },
-          3: { cellWidth: 30 },
-        },
-      });
-      
-      // Add notes
-      if (record.notes) {
-        const finalY = doc.lastAutoTable.finalY + 10;
-        doc.setFontSize(12);
-        doc.text('Notes:', 14, finalY);
-        doc.setFontSize(10);
-        doc.text(record.notes, 14, finalY + 7);
+  // Print delivery note - Updated to use PDF API service like ClientMaterialManagement
+  const printDeliveryNote = async (record) => {
+    try {
+      if (!record.matieres_details || record.matieres_details.length === 0) {
+        notification.error({
+          message: "Aucune matière à imprimer",
+          description:
+            "Ce bon de livraison ne contient aucune matière première.",
+        });
+        return;
       }
-      
-      // Add signature fields
-      const signaturesY = doc.lastAutoTable.finalY + 30;
-      doc.setFontSize(10);
-      doc.text('Signature du livreur:', 20, signaturesY);
-      doc.text('Signature du récepteur:', 120, signaturesY);
-      
-      // Add lines for signatures
-      doc.line(20, signaturesY + 20, 80, signaturesY + 20); // Livreur signature line
-      doc.line(120, signaturesY + 20, 180, signaturesY + 20); // Récepteur signature line
-    } else {
-      doc.setFontSize(12);
-      doc.text('Aucune matière première dans ce bon de livraison', 105, 90, { align: 'center' });
-    }
-    
-    // Add footer
-    const pageCount = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.text(`Page ${i} sur ${pageCount} - Généré le ${moment().format('DD/MM/YYYY à HH:mm')}`, 105, 
-        doc.internal.pageSize.height - 10, { align: 'center' });
-    }
-    
-    // Save the PDF
-    doc.save(`bon-livraison-${record.numero_bon}.pdf`);
-    
-    notification.success({
-      message: 'PDF généré',
-      description: `Le bon de livraison ${record.numero_bon} a été généré et téléchargé.`,
-    });
-  };
 
+      message.loading({
+        content: "Génération du bon de livraison...",
+        key: "generatePDF",
+      });
+
+      // Get material type label function (same as ClientMaterialManagement)
+      const getMaterialTypeLabel = (type) => {
+        const materialType = material_types.find((item) => item.value === type);
+        return materialType ? materialType.label : type;
+      };
+
+      // Prepare client information
+      const clientName =
+        record.client_details?.nom_client || "Client non spécifié";
+      const clientAddress =
+        record.client_details?.adresse || "Adresse non spécifiée";
+      const clientPhone = record.client_details?.telephone || "N/A";
+      const clientEmail = record.client_details?.email || "N/A";
+      const clientTaxId = record.client_details?.numero_fiscal || "N/A";
+      const clientCode = record.client_details?.id || record.client || "N/A";
+
+      const totalQuantity = calculateTotalQuantity(record.matieres_details);
+
+      // Prepare data for PDF generation (same structure as ClientMaterialManagement)
+      const pdfData = {
+        deliveryNumber: record.numero_bon,
+        deliveryDate: record.date_reception,
+        clientName: clientName,
+        clientAddress: clientAddress,
+        clientTaxId: clientTaxId,
+        clientPhone: clientPhone,
+        clientCode: clientCode,
+        materials: record.matieres_details.map((item) => ({
+          numero_bon: record.numero_bon, // Use the delivery note number for all items
+          reception_date: record.date_reception,
+          type_matiere: getMaterialTypeLabel(item.type_matiere), // Use the label instead of value
+          thickness: item.thickness || item.epaisseur || "-",
+          length: item.length || item.longueur || "-",
+          width: item.width || item.largeur || "-",
+          quantite: item.quantite || 0,
+          description: item.description || "",
+          surface: item.surface ? `${item.surface} m²` : "-",
+        })),
+        totalQuantity: totalQuantity,
+        notes: record.notes || "",
+      };
+
+      console.log("PDF data for delivery note:", pdfData);
+
+      // Use the same PDF API service as ClientMaterialManagement
+      await ClientMaterialPdfService.generateClientMaterialsPDF(
+        pdfData,
+        `bon-livraison-${record.numero_bon}.pdf`
+      );
+
+      message.success({
+        content: "Bon de livraison généré avec succès!",
+        key: "generatePDF",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      message.error({
+        content: `Erreur lors de la génération: ${error.message}`,
+        key: "generatePDF",
+      });
+
+      notification.error({
+        message: "Erreur PDF",
+        description: `Impossible de générer le PDF: ${error.message}`,
+      });
+    }
+  };
 
   // Table columns data
   const columns = [
     {
-      title: 'N° Bon',
-      dataIndex: 'numero_bon',
-      key: 'numero_bon',
-      width: '15%',
+      title: "N° Bon",
+      dataIndex: "numero_bon",
+      key: "numero_bon",
+      width: "15%",
       render: (text) => <span className="invoice-number">{text}</span>,
     },
     {
-      title: 'Client',
-      dataIndex: ['client_details', 'nom_client'], // Use array for nested path
-      key: 'client', // Simplified key
-      width: '20%',
-      render: (nomClient) => nomClient || '-', // Safely render name or provide fallback
+      title: "Client",
+      dataIndex: ["client_details", "nom_client"], // Use array for nested path
+      key: "client", // Simplified key
+      width: "20%",
+      render: (nomClient) => nomClient || "-", // Safely render name or provide fallback
     },
     {
-      title: 'Date de réception',
-      dataIndex: 'date_reception',
-      key: 'date_reception',
-      width: '13%',
-      sorter: (a, b) => moment(a.date_reception).unix() - moment(b.date_reception).unix(),
+      title: "Date de réception",
+      dataIndex: "date_reception",
+      key: "date_reception",
+      width: "13%",
+      sorter: (a, b) =>
+        moment(a.date_reception).unix() - moment(b.date_reception).unix(),
     },
     {
-      title: 'Matières',
-      dataIndex: 'materialsCount',
-      key: 'materialsCount',
-      width: '10%',
-      render: (count) => <Tag color="blue">{count}</Tag>
+      title: "Matières",
+      dataIndex: "materialsCount",
+      key: "materialsCount",
+      width: "10%",
+      render: (count) => <Tag color="blue">{count}</Tag>,
     },
     {
-      title: 'Quantité totale',
-      dataIndex: 'totalQuantity',
-      key: 'totalQuantity',
-      width: '12%',
+      title: "Quantité totale",
+      dataIndex: "totalQuantity",
+      key: "totalQuantity",
+      width: "12%",
     },
     {
-      title: 'Notes',
-      dataIndex: 'notes',
-      key: 'notes',
-      width: '15%',
+      title: "Notes",
+      dataIndex: "notes",
+      key: "notes",
+      width: "15%",
       ellipsis: true,
-      render: (text) => text || '-',
+      render: (text) => text || "-",
     },
     {
-      title: 'Actions',
-      key: 'actions',
-      width: '15%',
+      title: "Actions",
+      key: "actions",
+      width: "15%",
       render: (_, record) => (
         <Space size="small">
           <Tooltip title="Détails">
@@ -431,40 +438,54 @@ const BonLivraisonReception = () => {
 
   // Render material type with proper label
   const renderMaterialType = (type) => {
-    const materialType = material_types.find(item => item.value === type);
+    const materialType = material_types.find((item) => item.value === type);
     return materialType ? materialType.label : type;
   };
 
   // Get color for material type tag
   const getMaterialTypeColor = (type) => {
-    switch(type) {
-      case 'acier': return 'blue';
-      case 'acier_inoxydable': return 'cyan';
-      case 'aluminium': return 'silver';
-      case 'laiton': return 'gold';
-      case 'cuivre': return 'orange';
-      case 'acier_galvanise': return 'purple';
-      default: return 'default';
+    switch (type) {
+      case "acier":
+        return "blue";
+      case "acier_inoxydable":
+        return "cyan";
+      case "aluminium":
+        return "silver";
+      case "laiton":
+        return "gold";
+      case "cuivre":
+        return "orange";
+      case "acier_galvanise":
+        return "purple";
+      default:
+        return "default";
     }
   };
 
   return (
     <div className="bon-livraison-reception">
       <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20,
+          }}
+        >
           <Title level={2}>Bons de Livraison (Réception)</Title>
           <Space size="middle">
             <Tooltip title="Rafraîchir">
-              <Button 
-                icon={<ReloadOutlined />} 
+              <Button
+                icon={<ReloadOutlined />}
                 onClick={() => fetchDeliveryNotes()}
               />
             </Tooltip>
           </Space>
         </div>
-        
+
         {/* Quick filters */}
-        <div style={{ display: 'flex', marginBottom: 16, gap: 16 }}>
+        <div style={{ display: "flex", marginBottom: 16, gap: 16 }}>
           <Input.Search
             placeholder="Rechercher par N° bon"
             allowClear
@@ -479,52 +500,68 @@ const BonLivraisonReception = () => {
           >
             Filtres avancés
           </Button>
-          
-          {(filters.clientId || (filters.dateRange && filters.dateRange.length) || filters.status) && (
-            <Button 
-              danger 
-              onClick={resetFilters}
-            >
+
+          {(filters.clientId ||
+            (filters.dateRange && filters.dateRange.length) ||
+            filters.status) && (
+            <Button danger onClick={resetFilters}>
               Réinitialiser les filtres
             </Button>
           )}
         </div>
-        
+
         {/* Active filters display */}
-        {(filters.clientId || (filters.dateRange && filters.dateRange.length) || filters.status) && (
+        {(filters.clientId ||
+          (filters.dateRange && filters.dateRange.length) ||
+          filters.status) && (
           <div style={{ marginBottom: 16 }}>
             <Text type="secondary">Filtres actifs: </Text>
             <Space size="small">
               {filters.clientId && (
-                <Tag color="blue" closable onClose={() => {
-                  setFilters({...filters, clientId: null});
-                  fetchDeliveryNotes();
-                }}>
-                  Client: {clientOptions.find(c => c.value === filters.clientId)?.label || `ID: ${filters.clientId}`}
+                <Tag
+                  color="blue"
+                  closable
+                  onClose={() => {
+                    setFilters({ ...filters, clientId: null });
+                    fetchDeliveryNotes();
+                  }}
+                >
+                  Client:{" "}
+                  {clientOptions.find((c) => c.value === filters.clientId)
+                    ?.label || `ID: ${filters.clientId}`}
                 </Tag>
               )}
-              
+
               {filters.dateRange && filters.dateRange.length === 2 && (
-                <Tag color="blue" closable onClose={() => {
-                  setFilters({...filters, dateRange: null});
-                  fetchDeliveryNotes();
-                }}>
-                  Période: {filters.dateRange[0].format('DD/MM/YYYY')} - {filters.dateRange[1].format('DD/MM/YYYY')}
+                <Tag
+                  color="blue"
+                  closable
+                  onClose={() => {
+                    setFilters({ ...filters, dateRange: null });
+                    fetchDeliveryNotes();
+                  }}
+                >
+                  Période: {filters.dateRange[0].format("DD/MM/YYYY")} -{" "}
+                  {filters.dateRange[1].format("DD/MM/YYYY")}
                 </Tag>
               )}
-              
+
               {filters.status && (
-                <Tag color="blue" closable onClose={() => {
-                  setFilters({...filters, status: null});
-                  fetchDeliveryNotes();
-                }}>
+                <Tag
+                  color="blue"
+                  closable
+                  onClose={() => {
+                    setFilters({ ...filters, status: null });
+                    fetchDeliveryNotes();
+                  }}
+                >
                   Statut: {filters.status}
                 </Tag>
               )}
             </Space>
           </div>
         )}
-        
+
         {/* Data table */}
         <Table
           columns={columns}
@@ -546,11 +583,11 @@ const BonLivraisonReception = () => {
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description="Aucun bon de livraison trouvé"
               />
-            )
+            ),
           }}
         />
       </Card>
-      
+
       {/* Advanced filter drawer */}
       <Drawer
         title="Filtres avancés"
@@ -560,7 +597,9 @@ const BonLivraisonReception = () => {
         bodyStyle={{ paddingBottom: 80 }}
         extra={
           <Space>
-            <Button onClick={() => setFilterDrawerVisible(false)}>Annuler</Button>
+            <Button onClick={() => setFilterDrawerVisible(false)}>
+              Annuler
+            </Button>
             <Button onClick={() => filterForm.submit()} type="primary">
               Appliquer
             </Button>
@@ -578,10 +617,7 @@ const BonLivraisonReception = () => {
             status: filters.status,
           }}
         >
-          <Form.Item
-            name="clientId"
-            label="Client"
-          >
+          <Form.Item name="clientId" label="Client">
             <Select
               allowClear
               showSearch
@@ -592,27 +628,18 @@ const BonLivraisonReception = () => {
               options={clientOptions}
             />
           </Form.Item>
-          
-          <Form.Item
-            name="dateRange"
-            label="Période de réception"
-          >
-            <RangePicker
-              style={{ width: '100%' }}
-              format="DD/MM/YYYY"
-            />
+
+          <Form.Item name="dateRange" label="Période de réception">
+            <RangePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
           </Form.Item>
-          
-          <Form.Item
-            name="numeroSearch"
-            label="N° Bon de livraison"
-          >
+
+          <Form.Item name="numeroSearch" label="N° Bon de livraison">
             <Input placeholder="Rechercher par numéro" />
           </Form.Item>
-          
+
           <Divider />
-          
-          <div style={{ textAlign: 'right' }}>
+
+          <div style={{ textAlign: "right" }}>
             <Space>
               <Button onClick={() => filterForm.resetFields()}>
                 Effacer les filtres
@@ -624,7 +651,7 @@ const BonLivraisonReception = () => {
           </div>
         </Form>
       </Drawer>
-      
+
       {/* Detail drawer */}
       <Drawer
         title={`Détails du bon de livraison ${selectedDeliveryNote?.numero_bon}`}
@@ -635,7 +662,9 @@ const BonLivraisonReception = () => {
           <Button
             type="primary"
             icon={<PrinterOutlined />}
-            onClick={() => selectedDeliveryNote && printDeliveryNote(selectedDeliveryNote)}
+            onClick={() =>
+              selectedDeliveryNote && printDeliveryNote(selectedDeliveryNote)
+            }
           >
             Imprimer
           </Button>
@@ -654,38 +683,48 @@ const BonLivraisonReception = () => {
                 <Col span={12}>
                   <div className="detail-item">
                     <Text type="secondary">Date de réception</Text>
-                    <Title level={4}>{selectedDeliveryNote.date_reception}</Title>
+                    <Title level={4}>
+                      {selectedDeliveryNote.date_reception}
+                    </Title>
                   </div>
                 </Col>
               </Row>
             </div>
-            
+
             <Divider orientation="left">Informations client</Divider>
             {selectedDeliveryNote.client_details ? (
               <div className="client-details" style={{ marginBottom: 24 }}>
                 <Row gutter={[16, 16]}>
                   <Col span={24}>
                     <Text strong>Nom: </Text>
-                    <Text>{selectedDeliveryNote.client_details.nom_client}</Text>
+                    <Text>
+                      {selectedDeliveryNote.client_details.nom_client}
+                    </Text>
                   </Col>
                   <Col span={12}>
                     <Text strong>Téléphone: </Text>
-                    <Text>{selectedDeliveryNote.client_details.telephone || '-'}</Text>
+                    <Text>
+                      {selectedDeliveryNote.client_details.telephone || "-"}
+                    </Text>
                   </Col>
                   <Col span={12}>
                     <Text strong>Email: </Text>
-                    <Text>{selectedDeliveryNote.client_details.email || '-'}</Text>
+                    <Text>
+                      {selectedDeliveryNote.client_details.email || "-"}
+                    </Text>
                   </Col>
                   <Col span={24}>
                     <Text strong>Adresse: </Text>
-                    <Text>{selectedDeliveryNote.client_details.adresse || '-'}</Text>
+                    <Text>
+                      {selectedDeliveryNote.client_details.adresse || "-"}
+                    </Text>
                   </Col>
                 </Row>
               </div>
             ) : (
               <Empty description="Aucune information client disponible" />
             )}
-            
+
             <Divider orientation="left">Matières reçues</Divider>
             {selectedDeliveryNote.matieres_details?.length > 0 ? (
               <Table
@@ -695,38 +734,42 @@ const BonLivraisonReception = () => {
                 size="small"
                 columns={[
                   {
-                    title: 'Type',
-                    dataIndex: 'type_matiere',
-                    key: 'type_matiere',
+                    title: "Type",
+                    dataIndex: "type_matiere",
+                    key: "type_matiere",
                     render: (type) => (
                       <Tag color={getMaterialTypeColor(type)}>
                         {renderMaterialType(type)}
                       </Tag>
-                    )
+                    ),
                   },
                   {
-                    title: 'Description',
-                    dataIndex: 'description',
-                    key: 'description',
-                    render: (text) => text || '-',
+                    title: "Description",
+                    dataIndex: "description",
+                    key: "description",
+                    render: (text) => text || "-",
                   },
                   {
-                    title: 'Quantité',
-                    dataIndex: 'quantite',
-                    key: 'quantite',
+                    title: "Quantité",
+                    dataIndex: "quantite",
+                    key: "quantite",
                   },
                   {
-                    title: 'Surface',
-                    dataIndex: 'surface',
-                    key: 'surface',
-                    render: (val) => val ? `${val} m²` : '-',
+                    title: "Surface",
+                    dataIndex: "surface",
+                    key: "surface",
+                    render: (val) => (val ? `${val} m²` : "-"),
                   },
                 ]}
                 summary={() => (
                   <Table.Summary.Row>
-                    <Table.Summary.Cell index={0} colSpan={2}>Total</Table.Summary.Cell>
+                    <Table.Summary.Cell index={0} colSpan={2}>
+                      Total
+                    </Table.Summary.Cell>
                     <Table.Summary.Cell index={2}>
-                      {calculateTotalQuantity(selectedDeliveryNote.matieres_details)}
+                      {calculateTotalQuantity(
+                        selectedDeliveryNote.matieres_details
+                      )}
                     </Table.Summary.Cell>
                     <Table.Summary.Cell index={3}></Table.Summary.Cell>
                   </Table.Summary.Row>
@@ -735,7 +778,7 @@ const BonLivraisonReception = () => {
             ) : (
               <Empty description="Aucune matière première dans ce bon de livraison" />
             )}
-            
+
             {selectedDeliveryNote.notes && (
               <>
                 <Divider orientation="left">Notes</Divider>

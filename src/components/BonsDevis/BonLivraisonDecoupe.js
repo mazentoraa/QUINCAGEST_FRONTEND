@@ -468,7 +468,7 @@ const BonLivraisonDecoupe = () => {
             marginBottom: 20,
           }}
         >
-          <Title level={2}>Factures Produits</Title>
+          <Title level={2}>Bon de Livraison Découpé</Title>
           <Space size="middle">
             <Tooltip title="Rafraîchir">
               <Button
