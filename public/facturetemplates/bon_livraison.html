@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Bon de Livraison - RM METALASER</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      font-size: 14px;
+      color: #000;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .company-logo {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .company-logo img {
+      width: 150px;
+      height: auto;
+    }
+
+    .client-info, .receiver-info {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #000;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table th, table td {
+      border: 1px solid #000;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .totals {
+      margin-top: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .totals table {
+      width: 350px;
+      border-collapse: collapse;
+    }
+
+    .totals td {
+      border: 1px solid #000;
+      padding: 6px 10px;
+    }
+
+    .remarks, .signature-section {
+      margin-top: 30px;
+    }
+
+    .remarks {
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="company-logo">
+    <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="Logo RM METALASER">
+  </div>
+
+  <header>
+    <h2>Bon De Livraison</h2>
+    <p>RM METALASER – Découpes Métaux</p>
+    <p>Rue hedi khfecha Z Madagascar 3047, Sfax ville<br>
+    IF: 191 1419B/M/A/000 – Tél. : +216 20 366 1 50<br>
+    Email: contact@rmmetalaser.tn – Site Web: www.rmmetalaser.tn</p>
+  </header>
+
+  <div class="client-info">
+    <strong>Bon N°:</strong> BDL-AAAA-XXX<br>
+    <strong>Date:</strong> JJ/MM/AAAA<br>
+    <strong>Code C/F:</strong> XXX<br><br>
+    <strong>Nom C/F:</strong> YYYYYYYYYYYYYYYYYY<br>
+    <strong>Adresse:</strong> YYYYYYYYYYYYYYYY<br>
+    <strong>M.F:</strong> YYYYYYYY/Y/Y/YYY<br>
+    <strong>Tél.:</strong> XX XXX XXX
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>CODE P.</th>
+        <th>DESIGNATION</th>
+        <th>QTE</th>
+        <th>P.U. HT (TND)</th>
+        <th>REMISE (%)</th>
+        <th>Total P. HT (TND)</th>
+        <th>TVA</th>
+        <th>TOTAL P. TTC (TND)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>xxx</td>
+        <td>Exemple</td>
+        <td>xxxx</td>
+        <td>xxx,xxx</td>
+        <td>xx,xx</td>
+        <td>xxx,xxx</td>
+        <td>19%</td>
+        <td>xxx,xxx</td>
+      </tr>
+      <tr>
+        <td>xxx</td>
+        <td>Exemple</td>
+        <td>xxxx</td>
+        <td>xxx,xxx</td>
+        <td>xx,xx</td>
+        <td>xxx,xxx</td>
+        <td>19%</td>
+        <td>xxx,xxx</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <table>
+      <tr>
+        <td><strong>Total HT</strong></td>
+        <td>XXXX,XXX</td>
+      </tr>
+      <tr>
+        <td><strong>Remise (%)</strong></td>
+        <td>XX</td>
+      </tr>
+      <tr>
+        <td><strong>Total HT</strong></td>
+        <td>XXX,XXX</td>
+      </tr>
+      <tr>
+        <td><strong>Total TVA</strong></td>
+        <td>XXX,XXX</td>
+      </tr>
+      <tr>
+        <td><strong>NET À PAYER</strong></td>
+        <td><strong>XXXXX,XXX</strong></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="remarks">
+    <p>Remarques :</p>
+    <ul>
+      <li>_ Vérifier si les marchandises livrées sont en bon état.</li>
+      <li>_ Ce bon de livraison doit être signé par le client à la réception des marchandises.</li>
+    </ul>
+  </div>
+
+  <div class="receiver-info">
+    <strong>Nom du réceptionnaire :</strong> __________________________<br>
+    <strong>Date de réception :</strong> __________________________<br>
+    <strong>Signature du client :</strong> __________________________<br>
+    <strong>Cachet :</strong> __________________________
+  </div>
+
+  <div class="signature-section">
+    <p><strong>Signature R.C :</strong> __________________________</p>
+    <p><strong>Cachet :</strong> __________________________</p>
+  </div>
+
+</body>
+</html>

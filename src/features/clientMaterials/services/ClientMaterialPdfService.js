@@ -1,0 +1,424 @@
+class ClientMaterialPdfService {
+  // Your APDF.io API token
+  static API_TOKEN = "kMZrwMgVmmej90g7wimNOcvwFaGRQhXndOVKfTSPf540b6d3";
+  static API_URL = "https://apdf.io/api/pdf/file/create";
+
+  /**
+   * Test the API connection
+   */
+  static async testAPI() {
+    try {
+      console.log("Testing APDF.io API connection for client materials...");
+
+      const testHTML =
+        "<html><body><h1>Test Client Materials PDF</h1><p>This is a test document for client materials.</p></body></html>";
+
+      const response = await fetch(this.API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.API_TOKEN}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: `html=${encodeURIComponent(testHTML)}`,
+      });
+
+      console.log("Response status:", response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("API Response:", data);
+
+        if (data.file) {
+          this.openPDFInNewWindow(data.file, "Test Client Materials PDF");
+          return {
+            success: true,
+            message: `API test successful - PDF opened in new window! (${data.pages} page(s), ${data.size} bytes)`,
+          };
+        } else {
+          return {
+            success: false,
+            message: `Unexpected response format: ${JSON.stringify(data)}`,
+          };
+        }
+      } else {
+        const errorText = await response.text();
+        console.error("API Error response:", errorText);
+        return {
+          success: false,
+          message: `API Error: ${response.status} - ${errorText}`,
+        };
+      }
+    } catch (error) {
+      console.error("API test error:", error);
+      return { success: false, message: `API test error: ${error.message}` };
+    }
+  }
+
+  /**
+   * Generate PDF for client materials delivery note
+   */
+  static async generateClientMaterialsPDF(
+    materialsData,
+    filename = "bon-livraison-matieres.pdf"
+  ) {
+    try {
+      console.log("Generating client materials PDF using APDF.io API...");
+
+      const htmlContent = this.generateClientMaterialsHTML(materialsData);
+      console.log(
+        "Generated HTML for materials API (length):",
+        htmlContent.length
+      );
+
+      const response = await fetch(this.API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.API_TOKEN}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: `html=${encodeURIComponent(htmlContent)}`,
+      });
+
+      console.log("API Response status:", response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("PDF API Response:", data);
+
+        if (data.file) {
+          this.openPDFInNewWindow(data.file, filename);
+          console.log(
+            `PDF generated successfully: ${data.pages} page(s), ${data.size} bytes`
+          );
+          return true;
+        } else {
+          throw new Error(
+            `API returned unexpected format: ${JSON.stringify(data)}`
+          );
+        }
+      } else {
+        const errorText = await response.text();
+        console.error("API Error response:", errorText);
+        throw new Error(`PDF API Error: ${response.status} - ${errorText}`);
+      }
+    } catch (error) {
+      console.error("Error generating PDF with APDF.io API:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Open PDF in a new window/tab
+   */
+  static openPDFInNewWindow(url, title = "PDF Document") {
+    try {
+      console.log("Opening PDF in new window:", url);
+
+      const newWindow = window.open(
+        url,
+        "_blank",
+        "width=1000,height=800,scrollbars=yes,resizable=yes"
+      );
+
+      if (newWindow) {
+        newWindow.document.title = title;
+        newWindow.focus();
+        console.log("PDF opened successfully in new window");
+      } else {
+        console.warn("Popup blocked, creating download link");
+        this.createDownloadLink(url, title);
+      }
+    } catch (error) {
+      console.error("Error opening PDF in new window:", error);
+      this.createDownloadLink(url, title);
+    }
+  }
+
+  /**
+   * Create a download link as fallback
+   */
+  static createDownloadLink(url, filename) {
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    console.log("Download link created and clicked");
+  }
+
+  /**
+   * Get material type color for styling
+   */
+  static getMaterialTypeColor(type) {
+    switch (type) {
+      case "acier":
+        return "#1890ff";
+      case "acier_inoxydable":
+        return "#13c2c2";
+      case "aluminium":
+        return "#8c8c8c";
+      case "laiton":
+        return "#faad14";
+      case "cuivre":
+        return "#fa541c";
+      case "acier_galvanise":
+        return "#722ed1";
+      default:
+        return "#d9d9d9";
+    }
+  }
+
+  /**
+   * Get material type label
+   */
+  static getMaterialTypeLabel(type) {
+    const types = {
+      acier: "Acier",
+      acier_inoxydable: "Acier inoxydable",
+      aluminium: "Aluminium",
+      laiton: "Laiton",
+      cuivre: "Cuivre",
+      acier_galvanise: "Acier galvanisé",
+      autre: "Autre",
+    };
+    return types[type] || type;
+  }
+
+  /**
+   * Generate HTML for client materials delivery note
+   */
+  static generateClientMaterialsHTML(data) {
+    const tableRows = data.materials
+      .map((material) => {
+        return `
+        <tr>
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
+            material.numero_bon || ""
+          }</td>
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
+            material.reception_date || ""
+          }</td>
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px;">
+            <span style="background-color: ${this.getMaterialTypeColor(
+              material.type_matiere
+            )}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">
+              ${this.getMaterialTypeLabel(material.type_matiere)}
+            </span>
+          </td>
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
+            material.thickness || "-"
+          }</td>
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
+            material.length || "-"
+          }</td>
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
+            material.width || "-"
+          }</td>
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
+            material.quantite || ""
+          }</td>
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; word-wrap: break-word;">${
+            material.description || ""
+          }</td>
+        </tr>
+      `;
+      })
+      .join("");
+
+    return `
+      <!DOCTYPE html>
+      <html lang="fr">
+      <head>
+          <meta charset="UTF-8">
+          <title>Bon de Livraison Matières - RM METALASER</title>
+          <style>
+              body {
+                  font-family: Arial, sans-serif;
+                  font-size: 12px;
+                  color: black;
+                  margin: 0;
+                  padding: 15px;
+                  line-height: 1.4;
+              }
+              .header {
+                  text-align: center;
+                  margin-bottom: 25px;
+              }
+              .header img {
+                  width: 190px;
+                  margin-bottom: 5px;
+                  display: block;
+                  margin-left: auto;
+                  margin-right: auto;
+              }
+              .header h2 {
+                  margin: 8px 0;
+                  color: #333;
+                  font-size: 20px;
+              }
+              .header p {
+                  margin: 3px 0;
+                  line-height: 1.3;
+                  font-size: 11px;
+              }
+              .header a {
+                  color: #1890ff;
+                  text-decoration: none;
+              }
+              .client-info {
+                  margin: 20px 0;
+                  border: 2px solid #000;
+                  padding: 12px;
+                  background: #f9f9f9;
+                  display: inline-block;
+                  font-size: 11px;
+              }
+              .delivery-details {
+                  margin: 20px 0;
+              }
+              .delivery-details p {
+                  margin: 6px 0;
+                  font-size: 12px;
+              }
+              .materials-table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin: 15px 0;
+                  font-size: 10px;
+              }
+              .materials-table th {
+                  border: 2px solid #000;
+                  padding: 8px 4px;
+                  text-align: center;
+                  background-color: #f0f0f0;
+                  font-weight: bold;
+                  font-size: 9px;
+              }
+              .materials-table td {
+                  border: 1px solid #000;
+                  padding: 6px 4px;
+                  text-align: left;
+                  font-size: 10px;
+              }
+              .summary {
+                  margin: 20px 0;
+                  text-align: right;
+              }
+              .summary-table {
+                  width: 280px;
+                  border-collapse: collapse;
+                  margin-left: auto;
+                  font-size: 11px;
+              }
+              .summary-table td {
+                  padding: 6px 10px;
+                  border: 1px solid #000;
+              }
+              .signature {
+                  margin-top: 30px;
+                  text-align: right;
+                  font-size: 10px;
+              }
+              .remarks {
+                  margin-top: 20px;
+                  font-size: 10px;
+                  font-style: italic;
+              }
+          </style>
+      </head>
+      <body>
+          <div class="header">
+              <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo">
+              <h2>RM METALASER</h2>
+              <p>
+                  Découpes Métaux<br>
+                  Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
+                  IF: 191 1419B/M/A/000<br>
+                  Tél. : +216 20 366 150<br>
+                  Email: contact@rmmetalaser.tn<br>
+                  Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
+              </p>
+          </div>
+
+          <div class="client-info">
+              <strong>Nom Client :</strong> ${data.clientName || ""}<br>
+              <strong>Adresse :</strong> ${data.clientAddress || ""}<br>
+              <strong>M.F :</strong> ${data.clientTaxId || ""}<br>
+              <strong>Tél. :</strong> ${data.clientPhone || ""}
+          </div>
+
+          <div class="delivery-details">
+              <p><strong>Bon de Livraison N°:</strong> ${
+                data.deliveryNumber || ""
+              }</p>
+              <p><strong>Date:</strong> ${data.deliveryDate || ""}</p>
+              <p><strong>Code Client:</strong> ${data.clientCode || ""}</p>
+          </div>
+
+          <table class="materials-table">
+              <thead>
+                  <tr>
+                      <th style="width: 12%;">N° Bon</th>
+                      <th style="width: 12%;">Date réception</th>
+                      <th style="width: 15%;">Type</th>
+                      <th style="width: 10%;">Épaisseur (mm)</th>
+                      <th style="width: 10%;">Longueur (mm)</th>
+                      <th style="width: 10%;">Largeur (mm)</th>
+                      <th style="width: 8%;">Quantité</th>
+                      <th style="width: 23%;">Description</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  ${tableRows}
+              </tbody>
+          </table>
+
+          <div class="summary">
+              <table class="summary-table">
+                  <tr>
+                      <td><strong>Total quantité</strong></td>
+                      <td style="text-align: right;"><strong>${
+                        data.totalQuantity || "0"
+                      }</strong></td>
+                  </tr>
+                  <tr>
+                      <td><strong>Nombre de matières</strong></td>
+                      <td style="text-align: right;"><strong>${
+                        data.materials ? data.materials.length : "0"
+                      }</strong></td>
+                  </tr>
+              </table>
+          </div>
+
+          <div class="remarks">
+              <p><strong>Remarques :</strong></p>
+              <ul>
+                  <li>Vérifier si les matières premières livrées sont en bon état.</li>
+                  <li>Ce bon de livraison doit être signé par le responsable à la réception des matières.</li>
+                  <li>Conserver ce document pour vos dossiers.</li>
+              </ul>
+          </div>
+
+          <div class="signature">
+              <p><strong>Signature Responsable :</strong></p>
+              <br><br>
+              <p><strong>Cachet et Signature</strong></p>
+              <br><br>
+              <p style="font-size: 9px;">
+                  Date d'émission: ${data.deliveryDate || ""} — 
+                  Total matières: ${
+                    data.materials ? data.materials.length : "0"
+                  } — 
+                  Quantité totale: ${data.totalQuantity || "0"}
+              </p>
+          </div>
+      </body>
+      </html>
+    `;
+  }
+}
+
+export default ClientMaterialPdfService;

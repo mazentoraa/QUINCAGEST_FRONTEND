@@ -1,22 +1,43 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
-  Table, Card, Input, Button, Space, Tooltip, Drawer, Form,
-  Select, DatePicker, Typography, Tag, Empty, Spin, Divider, Row, Col, 
-  message, notification, Modal, List, Badge
-} from 'antd';
+  Table,
+  Card,
+  Input,
+  Button,
+  Space,
+  Tooltip,
+  Drawer,
+  Form,
+  Select,
+  DatePicker,
+  Typography,
+  Tag,
+  Empty,
+  Spin,
+  Divider,
+  Row,
+  Col,
+  message,
+  notification,
+  Modal,
+  List,
+  Badge,
+} from "antd";
 import {
-  FilterOutlined, ReloadOutlined, FileSearchOutlined,
-  PrinterOutlined, EyeOutlined
-} from '@ant-design/icons';
-import moment from 'moment';
-import { debounce } from 'lodash';
+  FilterOutlined,
+  ReloadOutlined,
+  FileSearchOutlined,
+  PrinterOutlined,
+  EyeOutlined,
+} from "@ant-design/icons";
+import moment from "moment";
+import { debounce } from "lodash";
 
 // Import services
-import InvoiceService from '../../features/manifeste/services/InvoiceService';
-import ClientService from '../../features/clientManagement/services/ClientService';
-// Import PDF utilities from WorkManagementPage
-import { jsPDF } from '../../utils/pdfSetup';
-import { drawTable } from '../../utils/pdfTableHelper';
+import InvoiceService from "../../features/manifeste/services/InvoiceService";
+import ClientService from "../../features/clientManagement/services/ClientService";
+// Import new PDF service
+import BonLivraisonDecoupePdfService from "../../services/BonLivraisonDecoupePdfService";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -27,46 +48,46 @@ const BonLivraisonDecoupe = () => {
   const [filteredInvoices, setFilteredInvoices] = useState([]); // Add filtered invoices state
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
-  
+
   // State for filters
   const [filters, setFilters] = useState({
     clientId: null,
     dateRange: null,
-    numeroSearch: '',
+    numeroSearch: "",
     status: null,
   });
-  
+
   // State for data display
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
   });
-  
+
   // State for detail view
   const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
-  
+
   // State for advanced filter drawer
   const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
   const [clientOptions, setClientOptions] = useState([]);
   const [clientSearchLoading, setClientSearchLoading] = useState(false);
-  
+
   // Form for filters
   const [filterForm] = Form.useForm();
 
   // Calculate total amount for an invoice - memoize it
   const calculateInvoiceTotal = useCallback((invoice) => {
     if (!invoice) return { totalHT: 0, totalTVA: 0, totalTTC: 0 };
-    
+
     // Use the totals already calculated by the backend
     const totalHT = invoice.total_ht || 0;
     const totalTVA = invoice.total_tax || 0;
     const totalTTC = invoice.total_ttc || 0;
-    
+
     return {
       totalHT: totalHT,
       totalTVA: totalTVA,
-      totalTTC: totalTTC
+      totalTTC: totalTTC,
     };
   }, []);
 
@@ -83,7 +104,7 @@ const BonLivraisonDecoupe = () => {
       const response = await InvoiceService.getAllInvoices(params);
 
       const processInvoices = (invoiceList) => {
-        return invoiceList.map(invoice => {
+        return invoiceList.map((invoice) => {
           const totals = calculateInvoiceTotal(invoice);
           return {
             ...invoice,
@@ -92,31 +113,37 @@ const BonLivraisonDecoupe = () => {
           };
         });
       };
-      
-      if (response && typeof response.count === 'number' && Array.isArray(response.results)) {
+
+      if (
+        response &&
+        typeof response.count === "number" &&
+        Array.isArray(response.results)
+      ) {
         const processedInvoices = processInvoices(response.results);
         setInvoices(processedInvoices);
         setTotalRecords(response.count);
-        
+
         // Apply client-side filtering immediately
         applyClientSideFilters(processedInvoices, filters);
       } else if (Array.isArray(response)) {
         const processedInvoices = processInvoices(response);
         setInvoices(processedInvoices);
         setTotalRecords(response.length);
-        
+
         // Apply client-side filtering immediately
         applyClientSideFilters(processedInvoices, filters);
       } else {
         setInvoices([]);
         setFilteredInvoices([]);
         setTotalRecords(0);
-        console.warn('Unexpected API response structure for invoices:', response);
+        console.warn(
+          "Unexpected API response structure for invoices:",
+          response
+        );
       }
-
     } catch (error) {
-      console.error('Error fetching invoices:', error);
-      message.error('Erreur lors de la récupération des factures.');
+      console.error("Error fetching invoices:", error);
+      message.error("Erreur lors de la récupération des factures.");
     } finally {
       setLoading(false);
     }
@@ -128,7 +155,7 @@ const BonLivraisonDecoupe = () => {
 
     // Filter by client
     if (currentFilters.clientId) {
-      filtered = filtered.filter(invoice => {
+      filtered = filtered.filter((invoice) => {
         const clientId = invoice.client_details?.id || invoice.client_id;
         return clientId === currentFilters.clientId;
       });
@@ -138,25 +165,25 @@ const BonLivraisonDecoupe = () => {
     if (currentFilters.dateRange && currentFilters.dateRange.length === 2) {
       const startDate = currentFilters.dateRange[0];
       const endDate = currentFilters.dateRange[1];
-      
-      filtered = filtered.filter(invoice => {
+
+      filtered = filtered.filter((invoice) => {
         const invoiceDate = moment(invoice.date_emission);
-        return invoiceDate.isBetween(startDate, endDate, 'day', '[]'); // inclusive
+        return invoiceDate.isBetween(startDate, endDate, "day", "[]"); // inclusive
       });
     }
 
     // Filter by invoice number
     if (currentFilters.numeroSearch) {
       const searchTerm = currentFilters.numeroSearch.toLowerCase();
-      filtered = filtered.filter(invoice => 
+      filtered = filtered.filter((invoice) =>
         invoice.numero_facture?.toLowerCase().includes(searchTerm)
       );
     }
 
     // Filter by status
     if (currentFilters.status) {
-      filtered = filtered.filter(invoice => 
-        invoice.statut === currentFilters.status
+      filtered = filtered.filter(
+        (invoice) => invoice.statut === currentFilters.status
       );
     }
 
@@ -180,14 +207,14 @@ const BonLivraisonDecoupe = () => {
     setClientSearchLoading(true);
     try {
       const clientData = await ClientService.get_all_clients(); // Use same method as BonLivraisonReception
-      const options = clientData.map(client => ({
+      const options = clientData.map((client) => ({
         value: client.id,
-        label: client.nom_client
+        label: client.nom_client,
       }));
       setClientOptions(options);
     } catch (error) {
-      console.error('Error fetching initial clients:', error);
-      message.error('Erreur lors de la récupération des clients.');
+      console.error("Error fetching initial clients:", error);
+      message.error("Erreur lors de la récupération des clients.");
     } finally {
       setClientSearchLoading(false);
     }
@@ -206,21 +233,25 @@ const BonLivraisonDecoupe = () => {
   const handleClientSearch = async (value) => {
     // Always allow empty search to get all clients
     setClientSearchLoading(true);
-    
+
     try {
       // Use empty string if value is less than 2 chars to fetch all clients
-      const searchValue = value && value.length >= 2 ? value : '';
+      const searchValue = value && value.length >= 2 ? value : "";
       const clientsData = await ClientService.search_clients(searchValue); // Use same method as BonLivraisonReception
-      
-      setClientOptions(clientsData.map(client => ({
-        value: client.id,
-        label: `${client.nom_client || client.name || 'Client sans nom'} (ID: ${client.id})`,
-      })));
+
+      setClientOptions(
+        clientsData.map((client) => ({
+          value: client.id,
+          label: `${
+            client.nom_client || client.name || "Client sans nom"
+          } (ID: ${client.id})`,
+        }))
+      );
     } catch (err) {
-      console.error('Error searching clients:', err);
+      console.error("Error searching clients:", err);
       notification.error({
-        message: 'Erreur',
-        description: 'Erreur lors de la recherche des clients.'
+        message: "Erreur",
+        description: "Erreur lors de la recherche des clients.",
       });
     } finally {
       setClientSearchLoading(false);
@@ -244,23 +275,23 @@ const BonLivraisonDecoupe = () => {
 
   // Apply advanced filters
   const applyFilters = (values) => {
-    console.log('Applying filters:', values);
-    
+    console.log("Applying filters:", values);
+
     const newFilters = {
       clientId: values.clientId,
       dateRange: values.dateRange,
       numeroSearch: values.numeroSearch || filters.numeroSearch,
       status: values.status,
     };
-    
-    console.log('New filters state:', newFilters);
-    
+
+    console.log("New filters state:", newFilters);
+
     setFilters(newFilters);
     setPagination({
       current: 1, // Reset to first page
       pageSize: pagination.pageSize,
     });
-    
+
     setFilterDrawerVisible(false);
   };
 
@@ -270,7 +301,7 @@ const BonLivraisonDecoupe = () => {
     setFilters({
       clientId: null,
       dateRange: null,
-      numeroSearch: '',
+      numeroSearch: "",
       status: null,
     });
     setPagination({
@@ -294,203 +325,115 @@ const BonLivraisonDecoupe = () => {
     setDetailDrawerVisible(true);
   };
 
-  // Print invoice function
-  const printInvoice = (invoice) => {
+  // Print invoice function - Updated to use new PDF service
+  const printInvoice = async (invoice) => {
     try {
-      const doc = new jsPDF();
-      
-      // Title and header
-      doc.setFontSize(20);
-      doc.text('FACTURE', 105, 20, { align: 'center' });
-      
-      // Invoice details
-      doc.setFontSize(10);
-      doc.text(`Date: ${invoice.date_emission}`, 170, 30, { align: 'right' });
-      doc.text(`Facture N°: ${invoice.numero_facture}`, 170, 35, { align: 'right' });
-      
-      // Company info
-      doc.setFontSize(16);
-      doc.text('Votre Société', 20, 30);
-      doc.setFontSize(10);
-      doc.text('Adresse: 123 Rue de la Métallurgie, Tunis', 20, 35);
-      doc.text('Tél: +216 xx xxx xxx', 20, 40);
-      doc.text('Email: contact@societe.com', 20, 45);
-      
-      // Divider
-      doc.line(20, 50, 190, 50);
-      
-      // Client Information
-      doc.setFontSize(14);
-      doc.text('Client', 20, 60);
-      doc.setFontSize(10);
-      
-      // Get client details from invoice
-      const clientData = invoice.client_details || {};
-      doc.text(`Nom: ${clientData.nom_client || 'N/A'}`, 20, 65);
-      doc.text(`Adresse: ${clientData.adresse || 'N/A'}`, 20, 70);
-      doc.text(`Matricule Fiscale: ${clientData.numero_fiscal || 'N/A'}`, 20, 75);
-      doc.text(`Tél: ${clientData.telephone || 'N/A'}`, 20, 80);
-      
-      // Table for line items
-      const tableColumn = ["Description", "Quantité", "Prix unitaire (DT)", "Total HT (DT)"];
-      let tableRows = [];
-      let currentY = 90;
-      
-      // Add each line item to the table
-      if (invoice.items && invoice.items.length > 0) {
-        invoice.items.forEach((item) => {
-          // Add product line
-          const productTotal = item.billable?.total_ht || 0;
-          const productDescription = `${item.produit_name || 'Produit'} ${item.description ? `(${item.description})` : ''}`;
-          
-          tableRows.push([
-            productDescription,
-            item.billable?.quantite || 0,
-            (item.billable?.prix_unitaire || 0).toFixed(3),
-            productTotal.toFixed(3)
-          ]);
-          
-          // Add material lines if they exist
-          if (item.matiere_usages && item.matiere_usages.length > 0) {
-            item.matiere_usages.forEach(material => {
-              const materialTotal = material.total || 0;
-              if (materialTotal > 0) {
-                const materialDescription = `  Matériau: ${material.nom_matiere} (${material.type_matiere || ''})`;
-                
-                tableRows.push([
-                  materialDescription,
-                  material.quantite_utilisee,
-                  (material.prix_unitaire || 0).toFixed(3),
-                  materialTotal.toFixed(3)
-                ]);
-              }
-            });
-          }
-        });
-      }
-      
-      try {
-        // Use custom table implementation
-        drawTable(doc, { head: [tableColumn], body: tableRows }, currentY, {
-          columnWidths: [90, 30, 35, 35],
-          fontSize: 9,
-          headerBgColor: [50, 50, 50],
-          headerTextColor: [255, 255, 255]
-        });
-      } catch (error) {
-        console.error('Error creating table:', error);
-        // Fallback to simple text
-        doc.text('Erreur lors de la création de la table.', 20, currentY);
-      }
-      
-      // Calculate and display totals - use backend calculated totals
-      const totals = calculateInvoiceTotal(invoice);
-      const totalsY = 240;
-      
-      doc.setFontSize(10);
-      doc.text(`Total HT:`, 150, totalsY);
-      doc.text(`${totals.totalHT.toFixed(3)} DT`, 190, totalsY, { align: 'right' });
-      
-      doc.text(`TVA (${invoice.tax_rate || 19}%):`, 150, totalsY + 5);
-      doc.text(`${totals.totalTVA.toFixed(3)} DT`, 190, totalsY + 5, { align: 'right' });
-      
-      doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
-      doc.text(`Total TTC:`, 150, totalsY + 15);
-      doc.text(`${totals.totalTTC.toFixed(3)} DT`, 190, totalsY + 15, { align: 'right' });
-      
-      // Add signature area
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      doc.text('Signature et cachet:', 150, totalsY + 35);
-      doc.rect(150, totalsY + 40, 40, 20);
-      
-      // Footer
-      doc.setFontSize(8);
-      doc.text('Merci pour votre confiance !', 105, 280, { align: 'center' });
-      
-      // Save the PDF
-      doc.save(`facture-${invoice.numero_facture}.pdf`);
-      
-      notification.success({
-        message: 'PDF généré',
-        description: `La facture ${invoice.numero_facture} a été générée et téléchargée.`,
+      message.loading({
+        content: "Génération de la facture...",
+        key: "generatePDF",
       });
-      
+
+      // Use the new PDF API service
+      await BonLivraisonDecoupePdfService.generateDecoupeInvoicePDF(
+        invoice,
+        `facture-decoupe-${invoice.numero_facture}.pdf`
+      );
+
+      message.success({
+        content: "Facture générée avec succès!",
+        key: "generatePDF",
+      });
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      message.error('Erreur lors de la génération du PDF');
+      console.error("Error generating PDF:", error);
+      message.error({
+        content: `Erreur lors de la génération: ${error.message}`,
+        key: "generatePDF",
+      });
     }
   };
 
   // Table columns
   const columns = [
     {
-      title: 'N° Facture',
-      dataIndex: 'numero_facture',
-      key: 'numero_facture',
-      width: '15%',
+      title: "N° Facture",
+      dataIndex: "numero_facture",
+      key: "numero_facture",
+      width: "15%",
       render: (text) => <span className="invoice-number">{text}</span>,
     },
     {
-      title: 'Client',
-      dataIndex: ['client_details', 'nom_client'],
-      key: 'client',
-      width: '20%',
+      title: "Client",
+      dataIndex: ["client_details", "nom_client"],
+      key: "client",
+      width: "20%",
       render: (nomClient, record) => {
         // Fallback to getting client name from different possible locations
-        return nomClient || record.client?.nom_client || `Client ID: ${record.client_id}` || '-';
+        return (
+          nomClient ||
+          record.client?.nom_client ||
+          `Client ID: ${record.client_id}` ||
+          "-"
+        );
       },
     },
     {
-      title: 'Date d\'émission',
-      dataIndex: 'date_emission',
-      key: 'date_emission',
-      width: '13%',
-      sorter: (a, b) => moment(a.date_emission).unix() - moment(b.date_emission).unix(),
+      title: "Date d'émission",
+      dataIndex: "date_emission",
+      key: "date_emission",
+      width: "13%",
+      sorter: (a, b) =>
+        moment(a.date_emission).unix() - moment(b.date_emission).unix(),
     },
     {
-      title: 'Articles',
-      dataIndex: 'itemsCount',
-      key: 'itemsCount',
-      width: '10%',
-      render: (count) => <Tag color="blue">{count}</Tag>
+      title: "Articles",
+      dataIndex: "itemsCount",
+      key: "itemsCount",
+      width: "10%",
+      render: (count) => <Tag color="blue">{count}</Tag>,
     },
     {
-      title: 'Total HT',
-      key: 'totalHT',
-      width: '12%',
+      title: "Total HT",
+      key: "totalHT",
+      width: "12%",
       render: (_, record) => (
-        <span>{record.calculatedTotals?.totalHT?.toFixed(3) || '0.000'} DT</span>
+        <span>
+          {record.calculatedTotals?.totalHT?.toFixed(3) || "0.000"} DT
+        </span>
       ),
     },
     {
-      title: 'Total TTC',
-      key: 'totalTTC',
-      width: '12%',
+      title: "Total TTC",
+      key: "totalTTC",
+      width: "12%",
       render: (_, record) => (
-        <span>{record.calculatedTotals?.totalTTC?.toFixed(3) || '0.000'} DT</span>
+        <span>
+          {record.calculatedTotals?.totalTTC?.toFixed(3) || "0.000"} DT
+        </span>
       ),
     },
     {
-      title: 'Statut',
-      dataIndex: 'statut',
-      key: 'statut',
-      width: '10%',
+      title: "Statut",
+      dataIndex: "statut",
+      key: "statut",
+      width: "10%",
       render: (status) => {
         const statusColors = {
-          'draft': 'orange',
-          'sent': 'blue',
-          'paid': 'green',
-          'cancelled': 'red',
+          draft: "orange",
+          sent: "blue",
+          paid: "green",
+          cancelled: "red",
         };
-        return <Tag color={statusColors[status] || 'default'}>{status || 'Draft'}</Tag>;
+        return (
+          <Tag color={statusColors[status] || "default"}>
+            {status || "Draft"}
+          </Tag>
+        );
       },
     },
     {
-      title: 'Actions',
-      key: 'actions',
-      width: '15%',
+      title: "Actions",
+      key: "actions",
+      width: "15%",
       render: (_, record) => (
         <Space size="small">
           <Tooltip title="Détails">
@@ -517,20 +460,27 @@ const BonLivraisonDecoupe = () => {
   return (
     <div className="bon-livraison-decoupe">
       <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20,
+          }}
+        >
           <Title level={2}>Factures Produits</Title>
           <Space size="middle">
             <Tooltip title="Rafraîchir">
-              <Button 
-                icon={<ReloadOutlined />} 
+              <Button
+                icon={<ReloadOutlined />}
                 onClick={() => fetchInvoices()}
               />
             </Tooltip>
           </Space>
         </div>
-        
+
         {/* Quick filters */}
-        <div style={{ display: 'flex', marginBottom: 16, gap: 16 }}>
+        <div style={{ display: "flex", marginBottom: 16, gap: 16 }}>
           <Input.Search
             placeholder="Rechercher par N° facture"
             allowClear
@@ -545,57 +495,79 @@ const BonLivraisonDecoupe = () => {
           >
             Filtres avancés
           </Button>
-          
-          {(filters.clientId || (filters.dateRange && filters.dateRange.length) || filters.status || filters.numeroSearch) && (
-            <Button 
-              danger 
-              onClick={resetFilters}
-            >
+
+          {(filters.clientId ||
+            (filters.dateRange && filters.dateRange.length) ||
+            filters.status ||
+            filters.numeroSearch) && (
+            <Button danger onClick={resetFilters}>
               Réinitialiser les filtres
             </Button>
           )}
         </div>
-        
+
         {/* Active filters display */}
-        {(filters.clientId || (filters.dateRange && filters.dateRange.length) || filters.status || filters.numeroSearch) && (
+        {(filters.clientId ||
+          (filters.dateRange && filters.dateRange.length) ||
+          filters.status ||
+          filters.numeroSearch) && (
           <div style={{ marginBottom: 16 }}>
             <Text type="secondary">Filtres actifs: </Text>
             <Space size="small">
               {filters.clientId && (
-                <Tag color="blue" closable onClose={() => {
-                  setFilters({...filters, clientId: null});
-                }}>
-                  Client: {clientOptions.find(c => c.value === filters.clientId)?.label || `ID: ${filters.clientId}`}
+                <Tag
+                  color="blue"
+                  closable
+                  onClose={() => {
+                    setFilters({ ...filters, clientId: null });
+                  }}
+                >
+                  Client:{" "}
+                  {clientOptions.find((c) => c.value === filters.clientId)
+                    ?.label || `ID: ${filters.clientId}`}
                 </Tag>
               )}
-              
+
               {filters.dateRange && filters.dateRange.length === 2 && (
-                <Tag color="blue" closable onClose={() => {
-                  setFilters({...filters, dateRange: null});
-                }}>
-                  Période: {filters.dateRange[0].format('DD/MM/YYYY')} - {filters.dateRange[1].format('DD/MM/YYYY')}
+                <Tag
+                  color="blue"
+                  closable
+                  onClose={() => {
+                    setFilters({ ...filters, dateRange: null });
+                  }}
+                >
+                  Période: {filters.dateRange[0].format("DD/MM/YYYY")} -{" "}
+                  {filters.dateRange[1].format("DD/MM/YYYY")}
                 </Tag>
               )}
-              
+
               {filters.status && (
-                <Tag color="blue" closable onClose={() => {
-                  setFilters({...filters, status: null});
-                }}>
+                <Tag
+                  color="blue"
+                  closable
+                  onClose={() => {
+                    setFilters({ ...filters, status: null });
+                  }}
+                >
                   Statut: {filters.status}
                 </Tag>
               )}
-              
+
               {filters.numeroSearch && (
-                <Tag color="blue" closable onClose={() => {
-                  setFilters({...filters, numeroSearch: ''});
-                }}>
+                <Tag
+                  color="blue"
+                  closable
+                  onClose={() => {
+                    setFilters({ ...filters, numeroSearch: "" });
+                  }}
+                >
                   N° Facture: {filters.numeroSearch}
                 </Tag>
               )}
             </Space>
           </div>
         )}
-        
+
         {/* Data table */}
         <Table
           columns={columns}
@@ -617,11 +589,11 @@ const BonLivraisonDecoupe = () => {
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description="Aucune facture trouvée"
               />
-            )
+            ),
           }}
         />
       </Card>
-      
+
       {/* Advanced filter drawer */}
       <Drawer
         title="Filtres avancés"
@@ -631,7 +603,9 @@ const BonLivraisonDecoupe = () => {
         bodyStyle={{ paddingBottom: 80 }}
         extra={
           <Space>
-            <Button onClick={() => setFilterDrawerVisible(false)}>Annuler</Button>
+            <Button onClick={() => setFilterDrawerVisible(false)}>
+              Annuler
+            </Button>
             <Button onClick={() => filterForm.submit()} type="primary">
               Appliquer
             </Button>
@@ -660,34 +634,31 @@ const BonLivraisonDecoupe = () => {
               options={clientOptions}
             />
           </Form.Item>
-          
+
           <Form.Item name="dateRange" label="Période d'émission">
-            <RangePicker
-              style={{ width: '100%' }}
-              format="DD/MM/YYYY"
-            />
+            <RangePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
           </Form.Item>
-          
+
           <Form.Item name="numeroSearch" label="N° Facture">
             <Input placeholder="Rechercher par numéro" />
           </Form.Item>
-          
+
           <Form.Item name="status" label="Statut">
             <Select
               allowClear
               placeholder="Sélectionner un statut"
               options={[
-                { value: 'draft', label: 'Brouillon' },
-                { value: 'sent', label: 'Envoyée' },
-                { value: 'paid', label: 'Payée' },
-                { value: 'cancelled', label: 'Annulée' },
+                { value: "draft", label: "Brouillon" },
+                { value: "sent", label: "Envoyée" },
+                { value: "paid", label: "Payée" },
+                { value: "cancelled", label: "Annulée" },
               ]}
             />
           </Form.Item>
-          
+
           <Divider />
-          
-          <div style={{ textAlign: 'right' }}>
+
+          <div style={{ textAlign: "right" }}>
             <Space>
               <Button onClick={() => filterForm.resetFields()}>
                 Effacer les filtres
@@ -699,7 +670,7 @@ const BonLivraisonDecoupe = () => {
           </div>
         </Form>
       </Drawer>
-      
+
       {/* Detail drawer */}
       <Drawer
         title={`Détails de la facture ${selectedInvoice?.numero_facture}`}
@@ -736,15 +707,19 @@ const BonLivraisonDecoupe = () => {
                   <div className="detail-item">
                     <Text type="secondary">Statut</Text>
                     <Title level={4}>
-                      <Tag color={selectedInvoice.statut === 'paid' ? 'green' : 'orange'}>
-                        {selectedInvoice.statut || 'Draft'}
+                      <Tag
+                        color={
+                          selectedInvoice.statut === "paid" ? "green" : "orange"
+                        }
+                      >
+                        {selectedInvoice.statut || "Draft"}
                       </Tag>
                     </Title>
                   </div>
                 </Col>
               </Row>
             </div>
-            
+
             <Divider orientation="left">Informations client</Divider>
             {selectedInvoice.client_details ? (
               <div className="client-details" style={{ marginBottom: 24 }}>
@@ -755,22 +730,24 @@ const BonLivraisonDecoupe = () => {
                   </Col>
                   <Col span={12}>
                     <Text strong>Téléphone: </Text>
-                    <Text>{selectedInvoice.client_details.telephone || '-'}</Text>
+                    <Text>
+                      {selectedInvoice.client_details.telephone || "-"}
+                    </Text>
                   </Col>
                   <Col span={12}>
                     <Text strong>Email: </Text>
-                    <Text>{selectedInvoice.client_details.email || '-'}</Text>
+                    <Text>{selectedInvoice.client_details.email || "-"}</Text>
                   </Col>
                   <Col span={24}>
                     <Text strong>Adresse: </Text>
-                    <Text>{selectedInvoice.client_details.adresse || '-'}</Text>
+                    <Text>{selectedInvoice.client_details.adresse || "-"}</Text>
                   </Col>
                 </Row>
               </div>
             ) : (
               <Empty description="Aucune information client disponible" />
             )}
-            
+
             <Divider orientation="left">Articles facturés</Divider>
             {selectedInvoice.items?.length > 0 ? (
               <>
@@ -778,11 +755,16 @@ const BonLivraisonDecoupe = () => {
                   dataSource={selectedInvoice.items}
                   renderItem={(item, index) => (
                     <List.Item>
-                      <Card title={`Article ${index + 1}: ${item.produit_name || 'Produit'}`} style={{ width: '100%' }}>
+                      <Card
+                        title={`Article ${index + 1}: ${
+                          item.produit_name || "Produit"
+                        }`}
+                        style={{ width: "100%" }}
+                      >
                         <Row gutter={16}>
                           <Col span={12}>
                             <Text strong>Description: </Text>
-                            <Text>{item.description || '-'}</Text>
+                            <Text>{item.description || "-"}</Text>
                           </Col>
                           <Col span={6}>
                             <Text strong>Quantité: </Text>
@@ -790,62 +772,86 @@ const BonLivraisonDecoupe = () => {
                           </Col>
                           <Col span={6}>
                             <Text strong>Prix unitaire: </Text>
-                            <Text>{(item.billable?.prix_unitaire || 0).toFixed(3)} DT</Text>
+                            <Text>
+                              {(item.billable?.prix_unitaire || 0).toFixed(3)}{" "}
+                              DT
+                            </Text>
                           </Col>
                         </Row>
-                        
-                        {item.matiere_usages && item.matiere_usages.length > 0 && (
-                          <div style={{ marginTop: 16 }}>
-                            <Text strong>Matériaux utilisés:</Text>
-                            <Table
-                              size="small"
-                              pagination={false}
-                              dataSource={item.matiere_usages}
-                              columns={[
-                                {
-                                  title: 'Matériau',
-                                  dataIndex: 'nom_matiere',
-                                  key: 'nom_matiere',
-                                },
-                                {
-                                  title: 'Type',
-                                  dataIndex: 'type_matiere',
-                                  key: 'type_matiere',
-                                },
-                                {
-                                  title: 'Quantité',
-                                  dataIndex: 'quantite_utilisee',
-                                  key: 'quantite_utilisee',
-                                },
-                                {
-                                  title: 'Prix unitaire',
-                                  dataIndex: 'prix_unitaire',
-                                  key: 'prix_unitaire',
-                                  render: (val) => `${(val || 0).toFixed(3)} DT`,
-                                },
-                                {
-                                  title: 'Total',
-                                  dataIndex: 'total',
-                                  key: 'total',
-                                  render: (val) => `${(val || 0).toFixed(3)} DT`,
-                                },
-                              ]}
-                            />
-                          </div>
-                        )}
+
+                        {item.matiere_usages &&
+                          item.matiere_usages.length > 0 && (
+                            <div style={{ marginTop: 16 }}>
+                              <Text strong>Matériaux utilisés:</Text>
+                              <Table
+                                size="small"
+                                pagination={false}
+                                dataSource={item.matiere_usages}
+                                columns={[
+                                  {
+                                    title: "Matériau",
+                                    dataIndex: "nom_matiere",
+                                    key: "nom_matiere",
+                                  },
+                                  {
+                                    title: "Type",
+                                    dataIndex: "type_matiere",
+                                    key: "type_matiere",
+                                  },
+                                  {
+                                    title: "Quantité",
+                                    dataIndex: "quantite_utilisee",
+                                    key: "quantite_utilisee",
+                                  },
+                                  {
+                                    title: "Prix unitaire",
+                                    dataIndex: "prix_unitaire",
+                                    key: "prix_unitaire",
+                                    render: (val) =>
+                                      `${(val || 0).toFixed(3)} DT`,
+                                  },
+                                  {
+                                    title: "Total",
+                                    dataIndex: "total",
+                                    key: "total",
+                                    render: (val) =>
+                                      `${(val || 0).toFixed(3)} DT`,
+                                  },
+                                ]}
+                              />
+                            </div>
+                          )}
                       </Card>
                     </List.Item>
                   )}
                 />
-                
+
                 <Card style={{ marginTop: 16 }}>
                   <Row justify="end">
                     <Col span={8}>
-                      <div style={{ textAlign: 'right' }}>
-                        <p><strong>Total HT:</strong> {selectedInvoice.calculatedTotals?.totalHT?.toFixed(3) || '0.000'} DT</p>
-                        <p><strong>TVA ({selectedInvoice.tax_rate || 19}%):</strong> {selectedInvoice.calculatedTotals?.totalTVA?.toFixed(3) || '0.000'} DT</p>
-                        <p style={{ fontSize: '16px', fontWeight: 'bold' }}>
-                          <strong>Total TTC:</strong> {selectedInvoice.calculatedTotals?.totalTTC?.toFixed(3) || '0.000'} DT
+                      <div style={{ textAlign: "right" }}>
+                        <p>
+                          <strong>Total HT:</strong>{" "}
+                          {selectedInvoice.calculatedTotals?.totalHT?.toFixed(
+                            3
+                          ) || "0.000"}{" "}
+                          DT
+                        </p>
+                        <p>
+                          <strong>
+                            TVA ({selectedInvoice.tax_rate || 19}%):
+                          </strong>{" "}
+                          {selectedInvoice.calculatedTotals?.totalTVA?.toFixed(
+                            3
+                          ) || "0.000"}{" "}
+                          DT
+                        </p>
+                        <p style={{ fontSize: "16px", fontWeight: "bold" }}>
+                          <strong>Total TTC:</strong>{" "}
+                          {selectedInvoice.calculatedTotals?.totalTTC?.toFixed(
+                            3
+                          ) || "0.000"}{" "}
+                          DT
                         </p>
                       </div>
                     </Col>
