@@ -1136,7 +1136,7 @@ export default function BonCommande() {
               >
                 {availableClients.map((client) => (
                   <Option key={client.id} value={client.id}>
-                    {client.nom_complet || client.nom}
+                    {client.nom_complet || client.nom || client.nom_client	}
                   </Option>
                 ))}
               </Select>
