@@ -30,9 +30,9 @@ const { Header, Content, Sider } = Layout;
 
 // Simple PrivateRoute component
 const PrivateRoute = ({ children }) => {
-  // const user = AuthService.getCurrentUser();
-  // return user ? children : <Navigate to="/login" />;
-  return children;
+  const user = AuthService.getCurrentUser();
+  return user ? children : <Navigate to="/login" />;
+ 
 };
 
 function App() {

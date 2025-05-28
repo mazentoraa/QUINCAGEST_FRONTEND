@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { InstallmentContext } from '../contexts/InstallmentContext';
+import TraitePrinter from './TraitePrinter';
 import './InstallmentForm.css';
 
 const InstallmentForm = () => {
@@ -31,30 +32,52 @@ const InstallmentForm = () => {
     
     // Informations bancaires
     bankName: '',
-    rib: ''
+    bankAddress: '', // Nouveau champ
+    rip: '', // Renommé de 'rib' à 'rip'
   });
 
-  // États pour la gestion des listes
+  // États pour la gestion des listes et aperçu
   const [clientsList, setClientsList] = useState([
-    { id: 1, name: 'Client A', address: 'Adresse Client A', taxId: 'TAX001' },
-    { id: 2, name: 'Client B', address: 'Adresse Client B', taxId: 'TAX002' },
-    { id: 3, name: 'Client C', address: 'Adresse Client C', taxId: 'TAX003' }
+    { id: 1, name: 'STE ZITOUNA', address: 'SFAX', taxId: '234567890213456789' },
+    { id: 2, name: 'Client B', address: 'Tunis', taxId: 'TAX002' },
+    { id: 3, name: 'Client C', address: 'Sousse', taxId: 'TAX003' }
   ]);
   
-  const [invoicesList, setInvoicesList] = useState([]);
   const [filteredInvoices, setFilteredInvoices] = useState([]);
   const [errors, setErrors] = useState({});
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
 
   // Simuler une base de données de factures par client
   const invoicesDatabase = {
-    'Client A': ['FAC001', 'FAC002', 'FAC003'],
+    'STE ZITOUNA': ['FAC001', 'FAC002', 'FAC003'],
     'Client B': ['FAC004', 'FAC005'],
     'Client C': ['FAC006', 'FAC007', 'FAC008', 'FAC009']
   };
 
+  // Formatage du RIP en temps réel
+  const formatRIPInput = (value) => {
+    // Nettoyer la valeur (enlever tous les espaces)
+    const cleanValue = value.replace(/\s/g, '');
+    
+    // Limiter à 20 chiffres maximum
+    const limitedValue = cleanValue.substring(0, 20);
+    
+    // Appliquer le format: XX XXX XXXXXXXXXXXXXXX XX
+    if (limitedValue.length <= 2) {
+      return limitedValue;
+    } else if (limitedValue.length <= 5) {
+      return limitedValue.replace(/(.{2})(.*)/, '$1 $2');
+    } else if (limitedValue.length <= 18) {
+      return limitedValue.replace(/(.{2})(.{3})(.*)/, '$1 $2 $3');
+    } else {
+      return limitedValue.replace(/(.{2})(.{3})(.{13})(.*)/, '$1 $2 $3 $4');
+    }
+  };
+
   // Effet pour mettre à jour les factures disponibles quand le client change
   useEffect(() => {
-    if (formData.clientName) {
+    if (formData.clientName && formData.clientName !== 'nouveau') {
       const availableInvoices = invoicesDatabase[formData.clientName] || [];
       setFilteredInvoices(availableInvoices);
     } else {
@@ -68,7 +91,7 @@ const InstallmentForm = () => {
     
     const total = parseFloat(formData.totalAmount);
     const count = parseInt(formData.numberOfInstallments);
-    const amountPerInstallment = Math.round((total / count) * 100) / 100;
+    const amountPerInstallment = Math.round((total / count) * 1000) / 1000;
     const startDate = formData.firstDueDate ? new Date(formData.firstDueDate) : new Date();
     
     // Création des traites
@@ -95,7 +118,7 @@ const InstallmentForm = () => {
       
       installments.push({
         index: i + 1,
-        amount: amount.toFixed(2),
+        amount: amount.toFixed(3),
         dueDate: dueDate.toISOString().split('T')[0],
         status: 'non_paye'
       });
@@ -108,17 +131,18 @@ const InstallmentForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    
+    // Formatage spécial pour le RIP
+    if (name === 'rip') {
+      const formattedValue = formatRIPInput(value);
+      setFormData({ ...formData, [name]: formattedValue });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
     
     // Nettoyer l'erreur si l'utilisateur corrige le champ
     if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: null
-      });
+      setErrors({ ...errors, [name]: null });
     }
   };
 
@@ -163,6 +187,22 @@ const InstallmentForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handlePreview = () => {
+    if (validate()) {
+      const installmentDetails = calculateInstallments();
+      const previewInstallment = {
+        ...formData,
+        totalAmount: parseFloat(formData.totalAmount),
+        numberOfInstallments: parseInt(formData.numberOfInstallments),
+        installmentDetails,
+        status: 'non_paye',
+        createdAt: new Date().toISOString()
+      };
+      setPreviewData(previewInstallment);
+      setShowPreview(true);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -179,23 +219,12 @@ const InstallmentForm = () => {
       
       addInstallment(newInstallment);
       
-      // Réinitialiser le formulaire (garder les infos du tireur)
-      setFormData({
-        ...formData,
-        clientName: '',
-        clientTaxId: '',
-        clientAddress: '',
-        invoiceNumber: '',
-        totalAmount: '',
-        numberOfInstallments: 3,
-        firstDueDate: '',
-        notice: '',
-        acceptance: '',
-        bankName: '',
-        rib: ''
-      });
+      // Afficher l'aperçu après sauvegarde
+      setPreviewData(newInstallment);
+      setShowPreview(true);
       
-      alert('Les traites ont été créées avec succès !');
+      // Optionnel: Réinitialiser le formulaire après l'aperçu
+      // setFormData({ ... });
     }
   };
 
@@ -354,9 +383,9 @@ const InstallmentForm = () => {
                 value={formData.totalAmount}
                 onChange={handleChange}
                 min="0"
-                step="0.01"
+                step="0.001"
                 className={`form-input ${errors.totalAmount ? 'error' : ''}`}
-                placeholder="0.00"
+                placeholder="0.000"
               />
               {errors.totalAmount && <p className="error-text">{errors.totalAmount}</p>}
             </div>
@@ -392,7 +421,7 @@ const InstallmentForm = () => {
         {/* Section Informations additionnelles et bancaires */}
         <div className="form-sections">
           <div className="form-section additional-info-section">
-            <h3 className="section-title">Informations:</h3>
+            <h3 className="section-title">Informations additionnelles</h3>
             <div className="section-content">
               <div className="form-group">
                 <label>Aval:</label>
@@ -402,6 +431,7 @@ const InstallmentForm = () => {
                   onChange={handleChange}
                   rows="3"
                   className="form-input"
+                  placeholder="Informations sur l'aval..."
                 ></textarea>
               </div>
               
@@ -413,6 +443,7 @@ const InstallmentForm = () => {
                   onChange={handleChange}
                   rows="3"
                   className="form-input"
+                  placeholder="Informations sur l'acceptation..."
                 ></textarea>
               </div>
             </div>
@@ -420,26 +451,54 @@ const InstallmentForm = () => {
 
           <div className="form-section bank-info-section">
             <h3 className="section-title">Informations bancaires</h3>
-            <div className="section-content">
-              <div className="form-group">
-                <label>Banque:</label>
-                <input
-                  type="text"
-                  name="bankName"
-                  value={formData.bankName}
-                  onChange={handleChange}
-                  className="form-input"
-                />
+            <div className="bank-info-content">
+              <div className="bank-info-row">
+                <div className="form-group">
+                  <label>Banque:</label>
+                  <select
+              name="bankName"
+              value={formData.bankName}
+              onChange={handleChange}
+              className="form-input"
+            >
+              <option value="">-- Sélectionnez une banque --</option>
+              <option value="BCT">Banque Centrale de Tunisie (BCT)</option>
+              <option value="STB">Société Tunisienne de Banque (STB)</option>
+              <option value="BNA">Banque Nationale Agricole (BNA)</option>
+              <option value="BIAT">Banque Internationale Arabe de Tunisie (BIAT)</option>
+              <option value="Attijari_Bank">Attijari Bank</option>
+              <option value="BT">Banque de Tunisie (BT)</option>
+              <option value="UIB">Union Internationale de Banques (UIB)</option>
+              <option value="Amen Bank">Amen Bank</option>
+              <option value="ATB">Arab Tunisian Bank (ATB)</option>
+              <option value="BTK">Banque Tuniso-Koweitienne (BTK)</option>
+              <option value="Autre">Autre</option>
+            </select>
+                </div>
+                
+                <div className="form-group">
+                  <label>Adresse de la banque:</label>
+                  <input
+                    type="text"
+                    name="bankAddress"
+                    value={formData.bankAddress}
+                    onChange={handleChange}
+                    className="form-input"
+                    placeholder="Adresse de la banque..."
+                  />
+                </div>
               </div>
               
-              <div className="form-group">
-                <label>RIB:</label>
+              <div className="form-group rip-group">
+                <label>RIB :</label>
                 <input
                   type="text"
-                  name="rib"
-                  value={formData.rib}
+                  name="rip"
+                  value={formData.rip}
                   onChange={handleChange}
-                  className="form-input"
+                  maxLength="23"
+                  className="form-input rip-input"
+                  placeholder="01 234 567890213456 78"
                 />
               </div>
             </div>
@@ -463,8 +522,13 @@ const InstallmentForm = () => {
                 <tbody>
                   {installmentsList.map((inst) => (
                     <tr key={inst.index}>
-                      <td>{inst.index}</td>
-                      <td className="amount">{inst.amount}</td>
+                      <td className="font-bold">Traite {inst.index}</td>
+                      <td className="amount">
+                        {parseFloat(inst.amount).toLocaleString('fr-FR', { 
+                          minimumFractionDigits: 3, 
+                          maximumFractionDigits: 3 
+                        })}
+                      </td>
                       <td>{new Date(inst.dueDate).toLocaleDateString('fr-FR')}</td>
                       <td>
                         <span className="status-badge non-paye">Non payé</span>
@@ -472,15 +536,71 @@ const InstallmentForm = () => {
                     </tr>
                   ))}
                 </tbody>
+                <tfoot>
+                  <tr className="total-row">
+                    <td className="font-bold">Total:</td>
+                    <td className="amount font-bold">
+                      {parseFloat(formData.totalAmount).toLocaleString('fr-FR', { 
+                        minimumFractionDigits: 3, 
+                        maximumFractionDigits: 3 
+                      })} DT
+                    </td>
+                    <td colSpan="2"></td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </div>
         )}
         
-        <button type="submit" className="submit-btn">
-          Créer des Traites
-        </button>
+        <div className="form-actions">
+          <button type="button" onClick={handlePreview} className="preview-btn">
+            📄 Aperçu et Impression
+          </button>
+          <button type="submit" className="submit-btn">
+            💾 Enregistrer et Voir Traites
+          </button>
+          <button 
+            type="button" 
+            onClick={() => {
+              setFormData({
+                drawerName: 'RM METALASER',
+                drawerTaxId: '191 1419B/M/A/000',
+                drawerAddress: 'Sfax',
+                clientName: '',
+                clientTaxId: '',
+                clientAddress: '',
+                invoiceNumber: '',
+                numberOfInstallments: 3,
+                firstDueDate: '',
+                totalAmount: '',
+                period: 'mensuel',
+                creationDate: new Date().toISOString().split('T')[0],
+                notice: '',
+                acceptance: '',
+                bankName: '',
+                bankAddress: '',
+                rip: ''
+              });
+              setErrors({});
+            }}
+            className="reset-btn"
+          >
+            🔄 Réinitialiser
+          </button>
+        </div>
       </form>
+
+      {/* Modal d'aperçu avec impression */}
+      {showPreview && previewData && (
+        <TraitePrinter
+          installmentData={previewData}
+          onClose={() => {
+            setShowPreview(false);
+            setPreviewData(null);
+          }}
+        />
+      )}
     </div>
   );
 };
