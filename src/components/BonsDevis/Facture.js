@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
+import { InvoiceContext } from "../../contexts/InvoiceContext";
+
 import {
   Table,
   Button,
@@ -1101,10 +1103,12 @@ export default function BonCommande() {
     `;
   };
 
+  const { deleteInvoice } = useContext(InvoiceContext);
+
   const handleDeleteOrder = async (orderId) => {
     try {
       setLoading(true);
-      await cdsService.deleteOrder(orderId);
+      deleteInvoice(orderId);
       message.success("Commande supprimée avec succès");
       fetchOrders();
     } catch (error) {

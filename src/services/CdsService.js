@@ -19,6 +19,16 @@ class CdsService {
     }
   }
 
+  async deleteOrder(id) {
+    try {
+      const response = await axios.delete(`${API_URL}/${id}/`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error deleting order with id ${id}:`, error);
+      throw error;
+    }
+  }
+
   async getOrderById(id) {
     try {
       const response = await axios.get(`${API_URL}/${id}/`);

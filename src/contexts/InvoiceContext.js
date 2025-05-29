@@ -1,4 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { getApiService } from '../services/apiServiceFactory';
+
+const { cdsService } = getApiService();
 
 // Création du contexte
 export const InvoiceContext = createContext();
@@ -19,50 +22,13 @@ export const InvoiceProvider = ({ children }) => {
   const fetchInvoices = async () => {
     setLoading(true);
     try {
-      // Simulation d'appel API - à remplacer par votre vrai API
-      // const response = await fetch('/api/invoices');
-      // const data = await response.json();
-      // setInvoices(data);
-      
-      // Pour le test, utilisons des données fictives
-      setTimeout(() => {
-        setInvoices([
-          {
-            id: '1',
-            number: 'FACT-2025-001',
-            date: '2025-05-10',
-            clientName: 'Entreprise XYZ',
-            totalAmount: 1250.75,
-            status: 'pending', // pending, paid, partially_paid, cancelled
-            paymentMethod: 'comptant', // comptant ou traite
-            items: [
-              { id: '1', description: 'Produit A', quantity: 5, price: 120, total: 600 },
-              { id: '2', description: 'Service B', quantity: 2, price: 325.38, total: 650.75 }
-            ],
-            payments: []
-          },
-          {
-            id: '2',
-            number: 'FACT-2025-002',
-            date: '2025-05-12',
-            clientName: 'Client ABC',
-            totalAmount: 3450.00,
-            status: 'partially_paid',
-            paymentMethod: 'traite',
-            items: [
-              { id: '1', description: 'Matériel C', quantity: 10, price: 345, total: 3450 }
-            ],
-            payments: [
-              { id: '1', date: '2025-05-13', amount: 1150, method: 'traite', reference: 'TR-001' }
-            ]
-          }
-        ]);
-        setLoading(false);
-      }, 500);
+      const data = await cdsService.getOrders();
+      setInvoices(data);
     } catch (err) {
       setError('Erreur lors du chargement des factures');
-      setLoading(false);
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -148,6 +114,20 @@ export const InvoiceProvider = ({ children }) => {
     // updateInvoiceStatusInAPI(invoiceId, 'cancelled');
   };
 
+  // Fonction pour supprimer une facture
+  const deleteInvoice = async (invoiceId) => {
+    setLoading(true);
+    try {
+      await cdsService.deleteOrder(invoiceId);
+      setInvoices(prevInvoices => prevInvoices.filter(invoice => invoice.id !== invoiceId));
+      setLoading(false);
+    } catch (error) {
+      setError('Erreur lors de la suppression de la facture');
+      setLoading(false);
+      throw error;
+    }
+  };
+
   // Valeurs exposées par le contexte
   const contextValue = {
     invoices,
@@ -157,7 +137,8 @@ export const InvoiceProvider = ({ children }) => {
     addInvoice,
     updateInvoice,
     addPayment,
-    cancelInvoice
+    cancelInvoice,
+    deleteInvoice
   };
 
   return (
