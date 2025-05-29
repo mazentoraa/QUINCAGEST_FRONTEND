@@ -85,7 +85,8 @@ export default function BonCommande() {
 
   // Filter and search state variables
   const [searchText, setSearchText] = useState("");
-  const [selectedClientFilter, setSelectedClientFilter] = useState(null);
+  const [clientNameFilter, setClientNameFilter] = useState(""); // New client name filter
+  // Removed selectedClientFilter state
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [dateRange, setDateRange] = useState(null);
   const [priceRange, setPriceRange] = useState([null, null]); // [min, max]
@@ -183,6 +184,7 @@ export default function BonCommande() {
       );
     }
 
+
     // Filter by client
     if (selectedClientFilter) {
       result = result.filter((order) => {
@@ -227,7 +229,7 @@ export default function BonCommande() {
   }, [
     orders,
     searchText,
-    selectedClientFilter,
+    clientNameFilter,
     selectedStatus,
     dateRange,
     priceRange,
@@ -345,6 +347,7 @@ export default function BonCommande() {
         // Populate form with all order data
         drawerForm.setFieldsValue({
           ...fullOrderDetails,
+
           client_id: clientId,
           date_commande: fullOrderDetails.date_commande
             ? moment(fullOrderDetails.date_commande)
@@ -439,6 +442,7 @@ export default function BonCommande() {
         const finalMontantTtc = finalMontantHt + finalMontantTva + timbreFiscal;
 
         const orderPayload = {
+
           client_id: selectedClientId,
           client: selectedClientId,
           numero_commande: randomOrderNumber,
@@ -451,6 +455,7 @@ export default function BonCommande() {
           statut: values.statut || "pending",
           notes: values.notes || "",
           conditions_paiement: values.conditions_paiement || "",
+
           mode_paiement: values.mode_paiement || "cash",
           tax_rate: taxRate,
           timbre_fiscal: timbreFiscal, // Add timbre fiscal
@@ -465,6 +470,7 @@ export default function BonCommande() {
             // prix_total is often calculated by backend or not stored directly on line item for POST
           })),
         };
+
         const createdOrder = await cdsService.createOrder(orderPayload);
         message.success(
           `Commande ${createdOrder.numero_commande} créée avec succès!`
@@ -492,6 +498,7 @@ export default function BonCommande() {
           date_livraison_prevue: values.date_livraison_prevue
             ? values.date_livraison_prevue.format("YYYY-MM-DD")
             : null,
+
           tax_rate: taxRate,
           timbre_fiscal: timbreFiscal, // Add timbre fiscal
           montant_ht: finalMontantHt,
@@ -708,7 +715,7 @@ export default function BonCommande() {
     }
   };
 
-  const handlePrintOrderPDF = async (orderRecord) => {
+const handlePrintOrderPDF = async (orderRecord) => {
     const hideLoading = message.loading("Génération du PDF en cours...", 0);
 
     try {
@@ -736,13 +743,20 @@ export default function BonCommande() {
         );
       }
 
+      // Filter produit_commande to only include products with quantite > 0
+      let filteredProduitCommande = [];
+      if (detailedOrder.produit_commande && detailedOrder.produit_commande.length > 0) {
+        filteredProduitCommande = detailedOrder.produit_commande.filter(
+          (product) => Number(product.quantite) > 0
+        );
+      }
+
       let mappedProduitCommande;
 
       if (
-        detailedOrder.produit_commande &&
-        detailedOrder.produit_commande.length > 0
+        filteredProduitCommande.length > 0
       ) {
-        mappedProduitCommande = detailedOrder.produit_commande.map(
+        mappedProduitCommande = filteredProduitCommande.map(
           (orderProduct) => {
             const productDetailsFromCatalog = availableProducts.find(
               (p) => p.id === (orderProduct.produit_id || orderProduct.produit)
@@ -1148,6 +1162,13 @@ export default function BonCommande() {
       ),
     },
     {
+      title: "Timbre",
+      dataIndex: "timbre",
+      key: "timbre",
+      render: () => formatCurrency(1),
+      sorter: (a, b) => 0, // No sorting needed as value is constant
+    },
+    {
       title: "Mode Paiement", // New Column
       dataIndex: "mode_paiement",
       key: "mode_paiement",
@@ -1159,9 +1180,13 @@ export default function BonCommande() {
       title: "Montant TTC",
       dataIndex: "montant_ttc",
       key: "montant_ttc",
-      render: (amount) => formatCurrency(amount),
+      render: (amount, record) => {
+        // Add timbre (1 TND) to montant_ttc
+        const total = (Number(amount) || 0) + 1;
+        return formatCurrency(total);
+      },
       sorter: (a, b) =>
-        (Number(a.montant_ttc) || 0) - (Number(b.montant_ttc) || 0),
+        ((Number(a.montant_ttc) || 0) + 1) - ((Number(b.montant_ttc) || 0) + 1),
     },
     {
       title: "Actions",
@@ -1208,14 +1233,14 @@ export default function BonCommande() {
 
   const clearFilters = () => {
     setSearchText("");
-    setSelectedClientFilter(null);
+    // Removed clearing selectedClientFilter
     setSelectedStatus(null);
     setDateRange(null);
     setPriceRange([null, null]);
   };
 
   const totalAmount = filteredOrders.reduce(
-    (sum, order) => sum + (Number(order.montant_ttc) || 0),
+    (sum, order) => sum + (Number(order.montant_ttc) || 0) + 1, // Add 1 TND timbre per order
     0
   );
 
@@ -1299,6 +1324,7 @@ export default function BonCommande() {
               />
             </Col>
             <Col span={4}>
+
               <Select
                 placeholder="Client"
                 value={selectedClientFilter}
@@ -1314,33 +1340,42 @@ export default function BonCommande() {
               </Select>
             </Col>
             <Col span={4}>
-              <Select
-                placeholder="Statut"
-                value={selectedStatus}
-                onChange={setSelectedStatus}
+              <Input
+                placeholder="Filtrer par nom client"
+                value={clientNameFilter}
+                onChange={(e) => setClientNameFilter(e.target.value)}
                 allowClear
-                style={{ width: "100%" }}
-              >
-                <Option value="pending">En attente</Option>
-                <Option value="processing">En cours</Option>
-                <Option value="completed">Terminée</Option>
-                <Option value="cancelled">Annulée</Option>
-                <Option value="invoiced">Facturée</Option>
-              </Select>
-            </Col>
-            <Col span={6}>
-              <DatePicker.RangePicker
-                value={dateRange}
-                onChange={setDateRange}
-                format="DD/MM/YYYY"
-                placeholder={["Date début", "Date fin"]}
                 style={{ width: "100%" }}
               />
             </Col>
-            <Col span={4}>
-              <Button onClick={clearFilters}>Effacer filtres</Button>
-            </Col>
-          </Row>
+      <Col span={4}>
+        <Select
+          placeholder="Statut"
+          value={selectedStatus}
+          onChange={setSelectedStatus}
+          allowClear
+          style={{ width: "100%" }}
+        >
+          <Option value="pending">En attente</Option>
+          <Option value="processing">En cours</Option>
+          <Option value="completed">Terminée</Option>
+          <Option value="cancelled">Annulée</Option>
+          <Option value="invoiced">Facturée</Option>
+        </Select>
+      </Col>
+      <Col span={6}>
+        <DatePicker.RangePicker
+          value={dateRange}
+          onChange={setDateRange}
+          format="DD/MM/YYYY"
+          placeholder={["Date début", "Date fin"]}
+          style={{ width: "100%" }}
+        />
+      </Col>
+      <Col span={4}>
+        <Button onClick={clearFilters}>Effacer filtres</Button>
+      </Col>
+    </Row>
 
           {/* Action buttons */}
           <Row gutter={16} style={{ marginBottom: 16 }}>
@@ -1502,6 +1537,28 @@ export default function BonCommande() {
               </Form.Item>
             </Col>
             <Col span={12}>
+              <Form.Item
+                name="mode_paiement"
+                label="Mode de Paiement"
+                rules={[
+                  {
+                    required: true,
+                    message: "Veuillez sélectionner un mode de paiement",
+                  },
+                ]}
+              >
+                <Select placeholder="Sélectionner un mode de paiement">
+                  <Option value="cash">Espèces</Option>
+                  <Option value="credit_card">Carte de crédit</Option>
+                  <Option value="bank_transfer">Virement bancaire</Option>
+                  <Option value="cheque">Chèque</Option>
+                  <Option value="traite">Traite</Option>
+                  {/* Add other payment methods as needed */}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+
               <Form.Item name="timbre_fiscal" label="Timbre Fiscal (TND)">
                 <InputNumber
                   min={0}

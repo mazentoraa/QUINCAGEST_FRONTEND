@@ -351,9 +351,9 @@ function OrderForm({ onComplete, onCancel }) {
                       type="radio" 
                       id="mixed" 
                       name="payment" 
-                      value="mixed" 
-                      checked={paymentMethod === 'mixed'} 
-                      onChange={() => setPaymentMethod('mixed')}
+                      value="mixte" 
+                      checked={paymentMethod === 'mixte'} 
+                      onChange={() => setPaymentMethod('mixte')}
                     />
                     <label htmlFor="mixed">
                       <i className="fas fa-coins"></i>
@@ -365,13 +365,13 @@ function OrderForm({ onComplete, onCancel }) {
                   <div className="payment-option">
                     <input 
                       type="radio" 
-                      id="installments" 
+                      id="traite" 
                       name="payment" 
-                      value="installments" 
-                      checked={paymentMethod === 'installments'} 
-                      onChange={() => setPaymentMethod('installments')}
+                      value="traite" 
+                      checked={paymentMethod === 'traite'} 
+                      onChange={() => setPaymentMethod('traite')}
                     />
-                    <label htmlFor="installments">
+                    <label htmlFor="traite">
                       <i className="fas fa-credit-card"></i>
                       <span>Paiement par traites</span>
                       <small>Échelonnement uniquement</small>
