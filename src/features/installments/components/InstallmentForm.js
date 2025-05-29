@@ -10,7 +10,7 @@ const InstallmentForm = () => {
   const [formData, setFormData] = useState({
     // Informations du tireur (vendeur)
     drawerName: "RM METALASER", // Valeur par défaut
-    drawerTaxId: "191 1419B/A/M//000", // Valeur par défaut
+    drawerTaxId: "191 1419B/A/M/000", // Valeur par défaut
     drawerAddress: "Sfax", // Valeur par défaut
 
     // Informations du tiré (acheteur/client)
@@ -620,7 +620,7 @@ const InstallmentForm = () => {
             onClick={() => {
               setFormData({
                 drawerName: "RM METALASER",
-                drawerTaxId: "191 1419B/A/M//000",
+                drawerTaxId: "191 1419B/A/M/000",
                 drawerAddress: "Sfax",
                 clientName: "",
                 clientTaxId: "",

@@ -205,7 +205,7 @@ class FacturePdfApiService {
             <h2 style="margin: 0;">RM METALASER</h2>
             <p style="margin: 0;">Découpes Métaux<br>
             Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
-            IF: 191 1419B/A/M//000<br>
+            IF: 191 1419B/A/M/000<br>
             Tél. : +216 20 366 150<br>
             Email: contact@rmmetalaser.tn<br>
             Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
