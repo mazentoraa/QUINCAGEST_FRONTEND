@@ -200,15 +200,19 @@ class FacturePdfApiService {
     </style>
 </head>
 <body>
-    <header>
-        <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 190px; margin-bottom: 5px;">
-        <h2>RM METALASER</h2>
-        <p>Découpes Métaux<br>
+    <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+        <div class="company-info" style="text-align: left;">
+            <h2 style="margin: 0;">RM METALASER</h2>
+            <p style="margin: 0;">Découpes Métaux<br>
             Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
             IF: 191 1419B/M/A/000<br>
             Tél. : +216 20 366 150<br>
             Email: contact@rmmetalaser.tn<br>
             Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
+        </div>
+        <div class="logo" style="text-align: right;">
+            <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 190px; margin-bottom: 5px;">
+        </div>
     </header>
 
     <div class="client-info">
@@ -230,7 +234,6 @@ class FacturePdfApiService {
             <strong>Statut:</strong> ${this.translateStatus(
               orderData.statut
             )}<br>
-            <strong>Code Client:</strong> ${orderData.client_id || "N/A"}
         </p>
     </div>
 
@@ -257,6 +260,10 @@ class FacturePdfApiService {
     <div class="totals">
         <table>
             <tr>
+                <td><strong>Totale Timbre</strong></td>
+                <td>${this.formatCurrency(1)}</td>
+            </tr>
+            <tr>
                 <td><strong>Total HT</strong></td>
                 <td>${this.formatCurrency(orderData.montant_ht || 0)}</td>
             </tr>
@@ -267,7 +274,7 @@ class FacturePdfApiService {
             <tr>
                 <td><strong>NET À PAYER</strong></td>
                 <td><strong>${this.formatCurrency(
-                  orderData.montant_ttc || 0
+                  (orderData.montant_ttc || 0) + 1
                 )}</strong></td>
             </tr>
         </table>
