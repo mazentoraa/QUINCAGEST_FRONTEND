@@ -216,6 +216,13 @@ const InstallmentForm = () => {
         createdAt: new Date().toISOString()
       };
       addInstallment(newInstallment);
+      
+      // Afficher l'aperçu après sauvegarde
+      setPreviewData(newInstallment);
+      setShowPreview(true);
+      
+      // Optionnel: Réinitialiser le formulaire après l'aperçu
+      // setFormData({ ... });
       // Afficher la liste après enregistrement
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('switchInstallmentTab', { detail: { tab: 'view' } }));
@@ -450,14 +457,25 @@ const InstallmentForm = () => {
               <div className="bank-info-row">
                 <div className="form-group">
                   <label>Banque:</label>
-                  <input
-                    type="text"
-                    name="bankName"
-                    value={formData.bankName}
-                    onChange={handleChange}
-                    className="form-input"
-                    placeholder="Nom de la banque..."
-                  />
+                  <select
+              name="bankName"
+              value={formData.bankName}
+              onChange={handleChange}
+              className="form-input"
+            >
+              <option value="">-- Sélectionnez une banque --</option>
+              <option value="BCT">Banque Centrale de Tunisie (BCT)</option>
+              <option value="STB">Société Tunisienne de Banque (STB)</option>
+              <option value="BNA">Banque Nationale Agricole (BNA)</option>
+              <option value="BIAT">Banque Internationale Arabe de Tunisie (BIAT)</option>
+              <option value="Attijari_Bank">Attijari Bank</option>
+              <option value="BT">Banque de Tunisie (BT)</option>
+              <option value="UIB">Union Internationale de Banques (UIB)</option>
+              <option value="Amen Bank">Amen Bank</option>
+              <option value="ATB">Arab Tunisian Bank (ATB)</option>
+              <option value="BTK">Banque Tuniso-Koweitienne (BTK)</option>
+              <option value="Autre">Autre</option>
+            </select>
                 </div>
                 
                 <div className="form-group">

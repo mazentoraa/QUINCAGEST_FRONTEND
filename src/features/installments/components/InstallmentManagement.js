@@ -14,6 +14,7 @@ const InstallmentManagement = () => {
   // États pour le filtrage
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // all, paye, non_paye
+  const [bankFilter, setBankFilter] = useState('all');
 
   // Fonction pour filtrer les traites
   const filteredInstallments = installments.filter(installment => {
@@ -22,8 +23,8 @@ const InstallmentManagement = () => {
       installment.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || installment.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+    const matchesBank = bankFilter === 'all' || installment.bankName === bankFilter;
+    return matchesSearch && matchesStatus && matchesBank;
   });
 
   // Fonction pour changer le statut d'une traite
@@ -135,6 +136,26 @@ const InstallmentManagement = () => {
                       <option value="paye">Payé</option>
                     </select>
                   </div>
+                  <div className="bank-filter">
+                <select
+                  value={bankFilter}
+                  onChange={(e) => setBankFilter(e.target.value)}
+                  className="bank-select"
+                >
+                  <option value="all">Toutes les banques</option>
+                  <option value="BCT">Banque Centrale de Tunisie (BCT)</option>
+                  <option value="STB">Société Tunisienne de Banque (STB)</option>
+                  <option value="BNA">Banque Nationale Agricole (BNA)</option>
+                  <option value="BIAT">Banque Internationale Arabe de Tunisie (BIAT)</option>
+                  <option value="Attijari_Bank">Attijari Bank</option>
+                  <option value="BT">Banque de Tunisie (BT)</option>
+                  <option value="UIB">Union Internationale de Banques (UIB)</option>
+                  <option value="Amen Bank">Amen Bank</option>
+                  <option value="ATB">Arab Tunisian Bank (ATB)</option>
+                  <option value="BTK">Banque Tuniso-Koweitienne (BTK)</option>
+                 
+                </select>
+              </div>
                 </div>
               </div>
 
