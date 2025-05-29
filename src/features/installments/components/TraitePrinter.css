@@ -110,7 +110,7 @@
   height: 11.5cm;
   position: relative;
   /* Ajout de l'image de fond avec chemin absolu */
-  background-image: url('../../../../public/images/traite-vide.png');
+  background-image: url('file:///C:/YUCCAINFO/YUCCAINFO_ERP_FRT_F/metalGest/public/images/traite-vide.jpeg');
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;
@@ -371,4 +371,20 @@
 .info-grid div {
   padding: 5px 0;
 }
+
+@media print {
+  .toolbar, .no-print {
+    display: none !important;
+  }
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .traite-container {
+    page-break-after: always;
+    border: none !important;
+  }
+}
+
+
 

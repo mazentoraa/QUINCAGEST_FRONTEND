@@ -108,22 +108,33 @@ export default function BonCommande() {
   const [newOrderProducts, setNewOrderProducts] = useState([]);
 
   const recalculateTotalsInDrawer = (products, taxRate) => {
-    const montantHt = products.reduce((sum, p) => sum + p.prix_total, 0);
-    const montantTva = montantHt * (taxRate / 100);
-    const montantTtc = montantHt + montantTva;
+    const currentTaxRate =
+      typeof taxRate === "number"
+        ? taxRate
+        : parseFloat(drawerForm.getFieldValue("tax_rate")) || 0;
+    const timbreFiscal =
+      parseFloat(drawerForm.getFieldValue("timbre_fiscal")) || 0;
+
+    const montantHt = products.reduce((sum, p) => sum + (p.prix_total || 0), 0);
+    const montantTva = montantHt * (currentTaxRate / 100);
+    const montantTtc = montantHt + montantTva + timbreFiscal;
+
     drawerForm.setFieldsValue({
       montant_ht_display: montantHt,
       montant_tva_display: montantTva,
       montant_ttc_display: montantTtc,
     });
+
     if (editingOrder) {
       setEditingOrder((prev) => ({
         ...prev,
         montant_ht: montantHt,
         montant_tva: montantTva,
         montant_ttc: montantTtc,
+        timbre_fiscal: timbreFiscal,
       }));
     }
+    // For new orders, the form fields are the source of truth for totals until save.
   };
 
   // Update ClientService method to match the implementation
@@ -173,14 +184,19 @@ export default function BonCommande() {
       );
     }
 
-    // Filter by client name (new filter)
-    if (clientNameFilter) {
-      const clientNameLower = clientNameFilter.toLowerCase();
-      result = result.filter(
-        (order) =>
-          order.nom_client &&
-          order.nom_client.toLowerCase().includes(clientNameLower)
-      );
+
+    // Filter by client
+    if (selectedClientFilter) {
+      result = result.filter((order) => {
+        // Accommodate client ID being in order.client_id or order.client (if it's a number)
+        const orderClientIdentifier =
+          order.client_id !== undefined && order.client_id !== null
+            ? order.client_id
+            : typeof order.client === "number"
+            ? order.client
+            : null;
+        return orderClientIdentifier === selectedClientFilter;
+      });
     }
 
     // Filter by status
@@ -255,23 +271,108 @@ export default function BonCommande() {
       const fullOrderDetails = await cdsService.getOrderById(order.id);
       if (fullOrderDetails) {
         setEditingOrder(fullOrderDetails);
-        setCurrentProductsInDrawer(fullOrderDetails.produit_commande || []);
+
+        // Map products from produits_details or produit_commande
+        let mappedProducts = [];
+
+        if (
+          fullOrderDetails.produit_commande &&
+          fullOrderDetails.produit_commande.length > 0
+        ) {
+          // Use produit_commande if available (preferred)
+          mappedProducts = fullOrderDetails.produit_commande.map((product) => ({
+            id: product.id,
+            produit_id: product.produit_id || product.produit,
+            nom_produit: product.nom_produit,
+            quantite: Number(product.quantite) || 1,
+            prix_unitaire: Number(product.prix_unitaire) || 0,
+            remise_pourcentage: Number(product.remise_pourcentage) || 0,
+            prix_total: Number(product.prix_total) || 0,
+          }));
+        } else if (
+          fullOrderDetails.produits_details &&
+          fullOrderDetails.produits_details.length > 0
+        ) {
+          // Fallback to produits_details and calculate missing fields
+          const totalAmount = Number(fullOrderDetails.montant_ht) || 0;
+          const productsCount = fullOrderDetails.produits_details.length;
+
+          mappedProducts = fullOrderDetails.produits_details.map(
+            (product, index) => {
+              // Calculate quantity based on total amount and product price
+              const unitPrice = Number(product.prix) || 0;
+              let calculatedQuantity = 1;
+              let calculatedTotal = unitPrice;
+
+              // If we have total amount and this is the only product, calculate quantity
+              if (productsCount === 1 && totalAmount > 0 && unitPrice > 0) {
+                calculatedQuantity = Math.round(totalAmount / unitPrice);
+                calculatedTotal = totalAmount;
+              } else if (productsCount > 1) {
+                // For multiple products, distribute the total amount proportionally
+                const productPortion = totalAmount / productsCount;
+                if (unitPrice > 0) {
+                  calculatedQuantity = Math.round(productPortion / unitPrice);
+                }
+                calculatedTotal = calculatedQuantity * unitPrice;
+              }
+
+              return {
+                id: `temp-${product.id}-${index}`, // Temporary ID for UI
+                produit_id: product.id,
+                nom_produit: product.nom_produit,
+                quantite: calculatedQuantity,
+                prix_unitaire: unitPrice,
+                remise_pourcentage: 0, // No discount info available
+                prix_total: calculatedTotal,
+              };
+            }
+          );
+        }
+
+        setCurrentProductsInDrawer(mappedProducts);
+
+        // Extract client ID from various possible locations
+        const clientId =
+          fullOrderDetails.client_id ||
+          (typeof fullOrderDetails.client === "number"
+            ? fullOrderDetails.client
+            : null) ||
+          fullOrderDetails.client?.id ||
+          null;
+
+        // Set the selected client ID for the dropdown
+        setSelectedClientId(clientId);
+
+        // Populate form with all order data
         drawerForm.setFieldsValue({
           ...fullOrderDetails,
-          client_id: fullOrderDetails.client_id || fullOrderDetails.client || null,
+
+          client_id: clientId,
           date_commande: fullOrderDetails.date_commande
             ? moment(fullOrderDetails.date_commande)
             : null,
           date_livraison_prevue: fullOrderDetails.date_livraison_prevue
             ? moment(fullOrderDetails.date_livraison_prevue)
             : null,
-          mode_paiement: fullOrderDetails.mode_paiement || undefined, // Add this
+          mode_paiement: fullOrderDetails.mode_paiement || "cash",
+          statut: fullOrderDetails.statut || "pending",
+          tax_rate: fullOrderDetails.tax_rate || 20,
+          timbre_fiscal: fullOrderDetails.timbre_fiscal || 1, // Add timbre fiscal
+          conditions_paiement: fullOrderDetails.conditions_paiement || "",
+          notes: fullOrderDetails.notes || "",
+          // Set display fields for totals
+          montant_ht_display: fullOrderDetails.montant_ht || 0,
+          montant_tva_display: fullOrderDetails.montant_tva || 0,
+          montant_ttc_display: fullOrderDetails.montant_ttc || 0,
         });
+
         setIsDrawerVisible(true);
       } else {
         message.error("Order details not found.");
       }
     } catch (err) {
+      console.error("Error fetching order details:", err);
       message.error("Failed to fetch order details: " + err.message);
     }
     setLoading(false);
@@ -289,6 +390,7 @@ export default function BonCommande() {
       date_commande: moment(),
       date_livraison_prevue: moment().add(7, "days"),
       tax_rate: 20,
+      timbre_fiscal: 0, // Default timbre fiscal
       statut: "pending",
       conditions_paiement: "À régler dans les 30 jours",
       mode_paiement: "cash", // Default payment method
@@ -309,30 +411,41 @@ export default function BonCommande() {
 
   const handleDrawerSave = async () => {
     try {
-      const values = await drawerForm.validateFields();
+      const values = await drawerForm.validateFields(); // Contains form fields like tax_rate, client_id etc.
       setLoading(true);
 
+      const taxRate = parseFloat(values.tax_rate) || 0;
+      const timbreFiscal = parseFloat(values.timbre_fiscal) || 1;
+
       if (isCreating) {
-        // Creating a new order
         if (!selectedClientId) {
           message.error("Veuillez sélectionner un client");
           setLoading(false);
           return;
         }
-
         if (newOrderProducts.length === 0) {
           message.error("Veuillez ajouter au moins un produit à la commande");
           setLoading(false);
           return;
         }
 
-        // Generate a random order number
         const randomOrderNumber = `FAC-${new Date().getFullYear()}-${Math.floor(
           10000 + Math.random() * 90000
         )}`;
 
+        // Recalculate totals based on the final product list (newOrderProducts) and tax rate
+        const finalMontantHt = newOrderProducts.reduce(
+          (sum, p) => sum + (p.prix_total || 0),
+          0
+        );
+        const finalMontantTva = finalMontantHt * (taxRate / 100);
+        const finalMontantTtc = finalMontantHt + finalMontantTva + timbreFiscal;
+
         const orderPayload = {
-          numero_commande: randomOrderNumber, // Add randomly generated order number
+
+          client_id: selectedClientId,
+          client: selectedClientId,
+          numero_commande: randomOrderNumber,
           date_commande: values.date_commande
             ? values.date_commande.format("YYYY-MM-DD")
             : moment().format("YYYY-MM-DD"),
@@ -342,64 +455,87 @@ export default function BonCommande() {
           statut: values.statut || "pending",
           notes: values.notes || "",
           conditions_paiement: values.conditions_paiement || "",
-          mode_paiement: values.mode_paiement || "cash", // Add this
-          tax_rate: values.tax_rate || 20,
-          timbre: 1, // Add timbre field with default 1 TND
+
+          mode_paiement: values.mode_paiement || "cash",
+          tax_rate: taxRate,
+          timbre_fiscal: timbreFiscal, // Add timbre fiscal
+          montant_ht: finalMontantHt,
+          montant_tva: finalMontantTva,
+          montant_ttc: finalMontantTtc,
           produits: newOrderProducts.map((p) => ({
-            produit: p.produit_id,
+            produit: p.produit_id || p.produit, // ID of the product from catalog
             quantite: p.quantite,
             prix_unitaire: p.prix_unitaire,
             remise_pourcentage: p.remise_pourcentage || 0,
+            // prix_total is often calculated by backend or not stored directly on line item for POST
           })),
         };
 
-        console.log("Creating order with payload:", orderPayload);
-        try {
-          const createdOrder = await cdsService.createOrder(orderPayload);
-          message.success(
-            `Commande ${createdOrder.numero_commande} créée avec succès!`
-          );
-        } catch (createError) {
-          console.error("Error creating order:", createError);
-          message.error("Erreur lors de la création de la commande: " + createError.message);
-          setLoading(false);
-          return;
-        }
+        const createdOrder = await cdsService.createOrder(orderPayload);
+        message.success(
+          `Commande ${createdOrder.numero_commande} créée avec succès!`
+        );
       } else {
         // Updating an existing order
+        // Recalculate totals based on currentProductsInDrawer and tax rate from form
+        const finalMontantHt = currentProductsInDrawer.reduce(
+          (sum, p) => sum + (p.prix_total || 0),
+          0
+        );
+        const finalMontantTva = finalMontantHt * (taxRate / 100);
+        const finalMontantTtc = finalMontantHt + finalMontantTva + timbreFiscal;
+
+        // Destructure to safely separate product lists from the rest of the order data
+        const { produit_commande, produits, ...restOfEditingOrder } =
+          editingOrder;
+
         const orderPayload = {
-          ...editingOrder,
-          ...values,
+          ...restOfEditingOrder, // Base with existing data (excluding old product lists)
+          ...values, // Override with form values (like notes, dates, status, client_id if changed)
           date_commande: values.date_commande
             ? values.date_commande.format("YYYY-MM-DD")
             : null,
           date_livraison_prevue: values.date_livraison_prevue
             ? values.date_livraison_prevue.format("YYYY-MM-DD")
             : null,
-          timbre: 1, // Add timbre field with default 1 TND
-          produits: currentProductsInDrawer.map((p) => ({
-            produit: p.produit_id,
+
+          tax_rate: taxRate,
+          timbre_fiscal: timbreFiscal, // Add timbre fiscal
+          montant_ht: finalMontantHt,
+          montant_tva: finalMontantTva,
+          montant_ttc: finalMontantTtc,
+          // Use 'produit_commande' as the key for line items
+          produit_commande: currentProductsInDrawer.map((p) => ({
+            id: p.id, // ID of the produit_commande line item, crucial for updates
+            produit: p.produit_id || p.produit, // ID of the product from catalog
             quantite: p.quantite,
             prix_unitaire: p.prix_unitaire,
             remise_pourcentage: p.remise_pourcentage || 0,
           })),
-          tax_rate: values.tax_rate,
-          mode_paiement: values.mode_paiement, // Add this
+          mode_paiement: values.mode_paiement,
         };
-        delete orderPayload.montant_ht_display;
+        // If client_id is in `values` (meaning it could have been changed in the form for an existing order)
+        if (values.client_id) {
+          orderPayload.client_id = values.client_id;
+          orderPayload.client = values.client_id; // Ensure backend compatibility
+        }
+
+        delete orderPayload.montant_ht_display; // These are UI only
         delete orderPayload.montant_tva_display;
         delete orderPayload.montant_ttc_display;
+        // Remove other client fields if client_id is the source of truth and `editingOrder` had expanded client object
+        if (orderPayload.client && typeof orderPayload.client === "object") {
+          orderPayload.client = orderPayload.client_id;
+        }
 
         const updatedOrder = await cdsService.updateOrder(
           editingOrder.id,
           orderPayload
         );
-
-        setEditingOrder(updatedOrder);
-        recalculateTotalsInDrawer(
-          updatedOrder.produits || currentProductsInDrawer,
-          updatedOrder.tax_rate || values.tax_rate
-        );
+        // The setEditingOrder and recalculateTotalsInDrawer might be redundant here if closing drawer
+        // but good for consistency if drawer remained open.
+        // setEditingOrder(updatedOrder);
+        // recalculateTotalsInDrawer(updatedOrder.produit_commande || currentProductsInDrawer, updatedOrder.tax_rate || taxRate);
         message.success("Commande mise à jour avec succès!");
       }
 
@@ -433,7 +569,8 @@ export default function BonCommande() {
       }
 
       const newProductData = {
-        produit: values.produit_id,
+        produit: values.produit_id, // This is the actual product ID
+        produit_id: values.produit_id, // Keep for consistency if used elsewhere
         nom_produit: productDetails.nom_produit,
         quantite: values.quantite,
         prix_unitaire:
@@ -447,16 +584,17 @@ export default function BonCommande() {
         newProductData.prix_unitaire *
         (1 - newProductData.remise_pourcentage / 100);
 
+      const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
+
       if (isCreating) {
-        // Check if the product already exists in the order
-        const existingProduct = newOrderProducts.find(
-          (p) => p.produit_id === values.produit_id
+        const existingProductIndex = newOrderProducts.findIndex(
+          (p) => (p.produit_id || p.produit) === values.produit_id
         );
 
-        if (existingProduct) {
-          // If product exists, update the quantity instead of adding a duplicate
-          const updatedProducts = newOrderProducts.map((p) =>
-            p.produit_id === values.produit_id
+        let updatedNewOrderProducts;
+        if (existingProductIndex > -1) {
+          updatedNewOrderProducts = newOrderProducts.map((p, index) =>
+            index === existingProductIndex
               ? {
                   ...p,
                   quantite: p.quantite + values.quantite,
@@ -467,87 +605,108 @@ export default function BonCommande() {
                 }
               : p
           );
-          setNewOrderProducts(updatedProducts);
-          setCurrentProductsInDrawer(updatedProducts);
           message.success("Quantité du produit mise à jour");
         } else {
-          // For new order, just add to local state if product doesn't exist yet
           const tempId = `temp-${Date.now()}-${Math.floor(
             Math.random() * 1000
           )}`;
-          setNewOrderProducts([
-            ...newOrderProducts,
-            { ...newProductData, id: tempId },
-          ]);
-          setCurrentProductsInDrawer([
-            ...newOrderProducts,
-            { ...newProductData, id: tempId },
-          ]);
+          const productToAdd = { ...newProductData, id: tempId };
+          updatedNewOrderProducts = [...newOrderProducts, productToAdd];
           message.success("Produit ajouté à la commande");
         }
+        setNewOrderProducts(updatedNewOrderProducts);
+        setCurrentProductsInDrawer(updatedNewOrderProducts);
+        recalculateTotalsInDrawer(updatedNewOrderProducts, currentTaxRate);
       } else {
-        // For existing order, check if product already exists
-        const existingProduct = currentProductsInDrawer.find(
-          (p) => p.produit_id === values.produit_id
+        // For existing order
+        const existingProductInDrawerIndex = currentProductsInDrawer.findIndex(
+          (p) => (p.produit_id || p.produit) === values.produit_id
         );
 
-        if (existingProduct) {
-          // If product exists, show warning and don't add
-          message.warning(
-            "Ce produit existe déjà dans la commande. Veuillez le supprimer et le rajouter avec la quantité totale souhaitée."
+        if (existingProductInDrawerIndex > -1) {
+          // Logic to update existing product quantity in an existing order
+          // This might involve an API call to update the line item or you might prefer
+          // the user to remove and re-add. For simplicity, let's assume an update:
+          const updatedProductsInDrawer = currentProductsInDrawer.map(
+            (p, index) =>
+              index === existingProductInDrawerIndex
+                ? {
+                    ...p,
+                    quantite: p.quantite + values.quantite, // Or replace: values.quantite
+                    prix_unitaire: newProductData.prix_unitaire, // Update price if changed
+                    remise_pourcentage: newProductData.remise_pourcentage,
+                    prix_total:
+                      (p.quantite + values.quantite) *
+                      newProductData.prix_unitaire *
+                      (1 - (newProductData.remise_pourcentage || 0) / 100),
+                  }
+                : p
           );
-          setIsProductModalVisible(false);
-          return;
+          setCurrentProductsInDrawer(updatedProductsInDrawer);
+          recalculateTotalsInDrawer(updatedProductsInDrawer, currentTaxRate);
+          message.success("Produit mis à jour dans la commande");
+          // Note: You'd typically need to reflect this change in `editingOrder.produit_commande`
+          // and the backend would need to handle updates to existing line items.
+          // The current `addProductToOrder` might just add a new line.
+          // If `addProductToOrder` handles updates, this local update might be redundant before API call.
+        } else {
+          // Call API to add product if it doesn't exist already
+          // The backend should return the full product line item, including its own ID
+          const addedProductFromApi = await cdsService.addProductToOrder(
+            editingOrder.id,
+            newProductData // Send newProductData, backend assigns ID to the line item
+          );
+          // Ensure addedProductFromApi has prix_total or calculate it
+          if (
+            addedProductFromApi &&
+            typeof addedProductFromApi.prix_total === "undefined"
+          ) {
+            addedProductFromApi.prix_total =
+              (addedProductFromApi.quantite || 0) *
+              (addedProductFromApi.prix_unitaire || 0) *
+              (1 - (addedProductFromApi.remise_pourcentage || 0) / 100);
+          }
+          const newProductsList = [
+            ...currentProductsInDrawer,
+            addedProductFromApi,
+          ];
+          setCurrentProductsInDrawer(newProductsList);
+          recalculateTotalsInDrawer(newProductsList, currentTaxRate);
+          message.success("Produit ajouté à la commande");
         }
-
-        // Call API to add product if it doesn't exist already
-        const addedProductFromApi = await cdsService.addProductToOrder(
-          editingOrder.id,
-          newProductData
-        );
-        setCurrentProductsInDrawer([
-          ...currentProductsInDrawer,
-          addedProductFromApi,
-        ]);
-        recalculateTotalsInDrawer(
-          [...currentProductsInDrawer, addedProductFromApi],
-          drawerForm.getFieldValue("tax_rate")
-        );
-        message.success("Produit ajouté à la commande");
       }
-
       setIsProductModalVisible(false);
     } catch (errorInfo) {
       console.log("Product modal save failed:", errorInfo);
-      message.error("Failed to add product.");
+      message.error(
+        "Failed to add product: " + (errorInfo.message || "Unknown error")
+      );
     }
   };
 
   const handleRemoveProductFromDrawerOrder = async (
-    produitCommandeIdToRemove
+    produitIdToRemove // This could be tempId for new orders, or actual DB ID for existing
   ) => {
     try {
+      const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
       if (isCreating) {
-        // For new order, just remove from local state
         const updatedProducts = newOrderProducts.filter(
-          (p) => p.id !== produitCommandeIdToRemove
+          (p) => p.id !== produitIdToRemove // tempId comparison
         );
         setNewOrderProducts(updatedProducts);
         setCurrentProductsInDrawer(updatedProducts);
+        recalculateTotalsInDrawer(updatedProducts, currentTaxRate);
       } else {
-        // For existing order, call API
+        // For existing order, produitIdToRemove should be the ID of the produit_commande item
         await cdsService.removeProductFromOrder(
           editingOrder.id,
-          produitCommandeIdToRemove
+          produitIdToRemove
         );
         const updatedProducts = currentProductsInDrawer.filter(
-          (p) => p.id !== produitCommandeIdToRemove
+          (p) => p.id !== produitIdToRemove
         );
         setCurrentProductsInDrawer(updatedProducts);
-        recalculateTotalsInDrawer(
-          updatedProducts,
-          drawerForm.getFieldValue("tax_rate")
-        );
+        recalculateTotalsInDrawer(updatedProducts, currentTaxRate);
       }
       message.success("Product removed.");
     } catch (error) {
@@ -729,6 +888,7 @@ const handlePrintOrderPDF = async (orderRecord) => {
         conditions_paiement: detailedOrder.conditions_paiement || "",
         mode_paiement: translatePaymentMethod(detailedOrder.mode_paiement), // Add this
         notes: detailedOrder.notes || "",
+        timbre_fiscal: detailedOrder.timbre_fiscal || 1, // Add timbre fiscal
         montant_ht: detailedOrder.montant_ht || 0,
         montant_tva: detailedOrder.montant_tva || 0,
         montant_ttc: detailedOrder.montant_ttc || 0,
@@ -908,6 +1068,12 @@ const handlePrintOrderPDF = async (orderRecord) => {
                 .join("")}
             </tbody>
           </table>
+          <tr>
+            <td colspan="4" style="text-align: right; font-weight: bold;">Timbre Fiscal:</td>
+            <td style="text-align: right; font-weight: bold;">${formatCurrency(
+              summaryData.timbreFiscal || 0
+            )}</td>
+          </tr>
         </body>
       </html>
     `;
@@ -1158,7 +1324,20 @@ const handlePrintOrderPDF = async (orderRecord) => {
               />
             </Col>
             <Col span={4}>
-              {/* Removed client ID filter dropdown */}
+
+              <Select
+                placeholder="Client"
+                value={selectedClientFilter}
+                onChange={setSelectedClientFilter}
+                allowClear
+                style={{ width: "100%" }}
+              >
+                {availableClients.map((client) => (
+                  <Option key={client.id} value={client.id}>
+                    {client.nom_complet || client.nom || client.nom_client}
+                  </Option>
+                ))}
+              </Select>
             </Col>
             <Col span={4}>
               <Input
@@ -1378,6 +1557,19 @@ const handlePrintOrderPDF = async (orderRecord) => {
                 </Select>
               </Form.Item>
             </Col>
+            <Col span={12}>
+
+              <Form.Item name="timbre_fiscal" label="Timbre Fiscal (TND)">
+                <InputNumber
+                  min={0}
+                  style={{ width: "100%" }}
+                  step={0.01}
+                  onChange={(value) => {
+                    recalculateTotalsInDrawer(currentProductsInDrawer);
+                  }}
+                />
+              </Form.Item>
+            </Col>
           </Row>
 
           <Form.Item name="conditions_paiement" label="Conditions de Paiement">
@@ -1464,6 +1656,15 @@ const handlePrintOrderPDF = async (orderRecord) => {
             </Col>
             <Col span={8}>
               <Form.Item name="montant_tva_display" label="Montant TVA">
+                <InputNumber
+                  style={{ width: "100%" }}
+                  formatter={(value) => formatCurrency(value)}
+                  disabled
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="timbre_fiscal" label="Timbre Fiscal">
                 <InputNumber
                   style={{ width: "100%" }}
                   formatter={(value) => formatCurrency(value)}

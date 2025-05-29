@@ -226,7 +226,9 @@ class FacturePdfApiService {
         <p><strong>Facture N°:</strong> ${
           orderData.numero_commande || "N/A"
         }<br>
-            <strong>Methode du Paiement:</strong> ${orderData.mode_paiement || "N/A"}<br>
+            <strong>Methode du Paiement:</strong> ${
+              orderData.mode_paiement || "N/A"
+            }<br>
             <strong>Date:</strong> ${orderData.date_commande || "N/A"}<br>
             <strong>Date Livraison Prévue:</strong> ${
               orderData.date_livraison_prevue || "N/A"
@@ -270,6 +272,10 @@ class FacturePdfApiService {
             <tr>
                 <td><strong>Total TVA</strong></td>
                 <td>${this.formatCurrency(orderData.montant_tva || 0)}</td>
+            </tr>
+            <tr>
+                <td><strong>Timbre Fiscal</strong></td>
+                <td>${this.formatCurrency(orderData.timbre_fiscal || 0)}</td>
             </tr>
             <tr>
                 <td><strong>NET À PAYER</strong></td>
