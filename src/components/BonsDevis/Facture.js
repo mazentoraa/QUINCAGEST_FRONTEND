@@ -174,9 +174,16 @@ export default function BonCommande() {
 
     // Filter by client
     if (selectedClientFilter) {
-      result = result.filter(
-        (order) => order.client_id === selectedClientFilter
-      );
+      result = result.filter((order) => {
+        // Accommodate client ID being in order.client_id or order.client (if it's a number)
+        const orderClientIdentifier =
+          order.client_id !== undefined && order.client_id !== null
+            ? order.client_id
+            : typeof order.client === "number"
+            ? order.client
+            : null;
+        return orderClientIdentifier === selectedClientFilter;
+      });
     }
 
     // Filter by status
@@ -1136,7 +1143,7 @@ export default function BonCommande() {
               >
                 {availableClients.map((client) => (
                   <Option key={client.id} value={client.id}>
-                    {client.nom_complet || client.nom || client.nom_client	}
+                    {client.nom_complet || client.nom || client.nom_client}
                   </Option>
                 ))}
               </Select>
