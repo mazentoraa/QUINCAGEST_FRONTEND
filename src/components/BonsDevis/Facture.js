@@ -329,7 +329,7 @@ export default function BonCommande() {
               }
 
               return {
-                id: `temp-${product.id}-${index}`, // Temporary ID for UI
+                id: `${product.id}`,
                 produit_id: product.id,
                 nom_produit: product.nom_produit,
                 quantite: calculatedQuantity,
@@ -707,10 +707,23 @@ export default function BonCommande() {
         setCurrentProductsInDrawer(updatedProducts);
         recalculateTotalsInDrawer(updatedProducts, currentTaxRate);
       } else {
-        // For existing order, produitIdToRemove should be the ID of the produit_commande item
+        // For existing order, find the product to get the correct produit_id
+        const productToRemove = currentProductsInDrawer.find(
+          (p) => p.id === produitIdToRemove
+        );
+
+        if (!productToRemove) {
+          message.error("Produit non trouvé");
+          return;
+        }
+
+        // Use produit_id instead of the PdC id for removal
+        const actualProductId =
+          productToRemove.produit_id || productToRemove.produit;
+
         await cdsService.removeProductFromOrder(
-          editingOrder.product_id,
-          produitIdToRemove
+          editingOrder.id,
+          actualProductId // Send the actual product ID, not the PdC ID
         );
         const updatedProducts = currentProductsInDrawer.filter(
           (p) => p.id !== produitIdToRemove
@@ -1642,7 +1655,9 @@ export default function BonCommande() {
                     size="small"
                     icon={<DeleteOutlined />}
                     onClick={() =>
-                      handleRemoveProductFromDrawerOrder(record.id)
+                      handleRemoveProductFromDrawerOrder(
+                        record.product_id || record.id
+                      )
                     }
                   />
                 ),
