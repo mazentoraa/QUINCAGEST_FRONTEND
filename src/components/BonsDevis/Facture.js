@@ -87,6 +87,7 @@ export default function BonCommande() {
   const [searchText, setSearchText] = useState("");
   const [clientNameFilter, setClientNameFilter] = useState(""); // New client name filter
   // Removed selectedClientFilter state
+  const [selectedClientFilter, setSelectedClientFilter] = useState(null); // Client ID for filtering
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [dateRange, setDateRange] = useState(null);
   const [priceRange, setPriceRange] = useState([null, null]); // [min, max]
