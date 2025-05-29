@@ -1263,7 +1263,7 @@ export default function BonCommande() {
   };
 
   const totalAmount = filteredOrders.reduce(
-    (sum, order) => sum + (Number(order.montant_ttc) || 0) + 1, // Add 1 TND timbre per order
+    (sum, order) => sum + (Number(order.montant_ttc) || 0),
     0
   );
 
