@@ -107,22 +107,30 @@ export default function BonCommande() {
   const [newOrderProducts, setNewOrderProducts] = useState([]);
 
   const recalculateTotalsInDrawer = (products, taxRate) => {
-    const montantHt = products.reduce((sum, p) => sum + p.prix_total, 0);
-    const montantTva = montantHt * (taxRate / 100);
+    const currentTaxRate =
+      typeof taxRate === "number"
+        ? taxRate
+        : parseFloat(drawerForm.getFieldValue("tax_rate")) || 0;
+    const montantHt = products.reduce((sum, p) => sum + (p.prix_total || 0), 0);
+    const montantTva = montantHt * (currentTaxRate / 100);
     const montantTtc = montantHt + montantTva;
+
     drawerForm.setFieldsValue({
       montant_ht_display: montantHt,
       montant_tva_display: montantTva,
       montant_ttc_display: montantTtc,
     });
+
     if (editingOrder) {
       setEditingOrder((prev) => ({
         ...prev,
         montant_ht: montantHt,
         montant_tva: montantTva,
         montant_ttc: montantTtc,
+        // tax_rate: currentTaxRate, // tax_rate is already part of form values or editingOrder
       }));
     }
+    // For new orders, the form fields are the source of truth for totals until save.
   };
 
   // Update ClientService method to match the implementation
@@ -311,32 +319,39 @@ export default function BonCommande() {
 
   const handleDrawerSave = async () => {
     try {
-      const values = await drawerForm.validateFields();
+      const values = await drawerForm.validateFields(); // Contains form fields like tax_rate, client_id etc.
       setLoading(true);
 
+      const taxRate = parseFloat(values.tax_rate) || 0; // Ensure taxRate is a number
+
       if (isCreating) {
-        // Creating a new order
         if (!selectedClientId) {
           message.error("Veuillez sélectionner un client");
           setLoading(false);
           return;
         }
-
         if (newOrderProducts.length === 0) {
           message.error("Veuillez ajouter au moins un produit à la commande");
           setLoading(false);
           return;
         }
 
-        // Generate a random order number
         const randomOrderNumber = `FAC-${new Date().getFullYear()}-${Math.floor(
           10000 + Math.random() * 90000
         )}`;
 
+        // Recalculate totals based on the final product list (newOrderProducts) and tax rate
+        const finalMontantHt = newOrderProducts.reduce(
+          (sum, p) => sum + (p.prix_total || 0),
+          0
+        );
+        const finalMontantTva = finalMontantHt * (taxRate / 100);
+        const finalMontantTtc = finalMontantHt + finalMontantTva;
+
         const orderPayload = {
           client_id: selectedClientId,
-          client: selectedClientId, // Add client field as required by backend
-          numero_commande: randomOrderNumber, // Add randomly generated order number
+          client: selectedClientId,
+          numero_commande: randomOrderNumber,
           date_commande: values.date_commande
             ? values.date_commande.format("YYYY-MM-DD")
             : moment().format("YYYY-MM-DD"),
@@ -346,54 +361,77 @@ export default function BonCommande() {
           statut: values.statut || "pending",
           notes: values.notes || "",
           conditions_paiement: values.conditions_paiement || "",
-          mode_paiement: values.mode_paiement || "cash", // Add this
-          tax_rate: values.tax_rate || 20,
+          mode_paiement: values.mode_paiement || "cash",
+          tax_rate: taxRate,
+          montant_ht: finalMontantHt,
+          montant_tva: finalMontantTva,
+          montant_ttc: finalMontantTtc,
           produits: newOrderProducts.map((p) => ({
-            produit: p.produit_id,
+            produit: p.produit_id || p.produit, // ID of the product from catalog
             quantite: p.quantite,
             prix_unitaire: p.prix_unitaire,
             remise_pourcentage: p.remise_pourcentage || 0,
+            // prix_total is often calculated by backend or not stored directly on line item for POST
           })),
         };
-
         const createdOrder = await cdsService.createOrder(orderPayload);
         message.success(
           `Commande ${createdOrder.numero_commande} créée avec succès!`
         );
       } else {
         // Updating an existing order
+        // Recalculate totals based on currentProductsInDrawer and tax rate from form
+        const finalMontantHt = currentProductsInDrawer.reduce(
+          (sum, p) => sum + (p.prix_total || 0),
+          0
+        );
+        const finalMontantTva = finalMontantHt * (taxRate / 100);
+        const finalMontantTtc = finalMontantHt + finalMontantTva;
+
         const orderPayload = {
-          ...editingOrder,
-          ...values,
+          ...editingOrder, // Base with existing data
+          ...values, // Override with form values (like notes, dates, status, client_id if changed)
           date_commande: values.date_commande
             ? values.date_commande.format("YYYY-MM-DD")
             : null,
           date_livraison_prevue: values.date_livraison_prevue
             ? values.date_livraison_prevue.format("YYYY-MM-DD")
             : null,
+          tax_rate: taxRate,
+          montant_ht: finalMontantHt,
+          montant_tva: finalMontantTva,
+          montant_ttc: finalMontantTtc,
           produits: currentProductsInDrawer.map((p) => ({
-            produit: p.produit_id,
+            id: p.id, // ID of the produit_commande line item, if backend needs it for updates
+            produit: p.produit_id || p.produit, // ID of the product from catalog
             quantite: p.quantite,
             prix_unitaire: p.prix_unitaire,
             remise_pourcentage: p.remise_pourcentage || 0,
           })),
-          tax_rate: values.tax_rate,
-          mode_paiement: values.mode_paiement, // Add this
+          mode_paiement: values.mode_paiement,
         };
-        delete orderPayload.montant_ht_display;
+        // If client_id is in `values` (meaning it could have been changed in the form for an existing order)
+        if (values.client_id) {
+          orderPayload.client_id = values.client_id;
+          orderPayload.client = values.client_id; // Ensure backend compatibility
+        }
+
+        delete orderPayload.montant_ht_display; // These are UI only
         delete orderPayload.montant_tva_display;
         delete orderPayload.montant_ttc_display;
+        // Remove other client fields if client_id is the source of truth and `editingOrder` had expanded client object
+        if (orderPayload.client && typeof orderPayload.client === "object") {
+          orderPayload.client = orderPayload.client_id;
+        }
 
         const updatedOrder = await cdsService.updateOrder(
           editingOrder.id,
           orderPayload
         );
-
-        setEditingOrder(updatedOrder);
-        recalculateTotalsInDrawer(
-          updatedOrder.produits || currentProductsInDrawer,
-          updatedOrder.tax_rate || values.tax_rate
-        );
+        // The setEditingOrder and recalculateTotalsInDrawer might be redundant here if closing drawer
+        // but good for consistency if drawer remained open.
+        // setEditingOrder(updatedOrder);
+        // recalculateTotalsInDrawer(updatedOrder.produit_commande || currentProductsInDrawer, updatedOrder.tax_rate || taxRate);
         message.success("Commande mise à jour avec succès!");
       }
 
@@ -427,7 +465,8 @@ export default function BonCommande() {
       }
 
       const newProductData = {
-        produit: values.produit_id,
+        produit: values.produit_id, // This is the actual product ID
+        produit_id: values.produit_id, // Keep for consistency if used elsewhere
         nom_produit: productDetails.nom_produit,
         quantite: values.quantite,
         prix_unitaire:
@@ -441,16 +480,17 @@ export default function BonCommande() {
         newProductData.prix_unitaire *
         (1 - newProductData.remise_pourcentage / 100);
 
+      const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
+
       if (isCreating) {
-        // Check if the product already exists in the order
-        const existingProduct = newOrderProducts.find(
-          (p) => p.produit_id === values.produit_id
+        const existingProductIndex = newOrderProducts.findIndex(
+          (p) => (p.produit_id || p.produit) === values.produit_id
         );
 
-        if (existingProduct) {
-          // If product exists, update the quantity instead of adding a duplicate
-          const updatedProducts = newOrderProducts.map((p) =>
-            p.produit_id === values.produit_id
+        let updatedNewOrderProducts;
+        if (existingProductIndex > -1) {
+          updatedNewOrderProducts = newOrderProducts.map((p, index) =>
+            index === existingProductIndex
               ? {
                   ...p,
                   quantite: p.quantite + values.quantite,
@@ -461,87 +501,109 @@ export default function BonCommande() {
                 }
               : p
           );
-          setNewOrderProducts(updatedProducts);
-          setCurrentProductsInDrawer(updatedProducts);
           message.success("Quantité du produit mise à jour");
         } else {
-          // For new order, just add to local state if product doesn't exist yet
           const tempId = `temp-${Date.now()}-${Math.floor(
             Math.random() * 1000
           )}`;
-          setNewOrderProducts([
-            ...newOrderProducts,
-            { ...newProductData, id: tempId },
-          ]);
-          setCurrentProductsInDrawer([
-            ...newOrderProducts,
-            { ...newProductData, id: tempId },
-          ]);
+          const productToAdd = { ...newProductData, id: tempId };
+          updatedNewOrderProducts = [...newOrderProducts, productToAdd];
           message.success("Produit ajouté à la commande");
         }
+        setNewOrderProducts(updatedNewOrderProducts);
+        setCurrentProductsInDrawer(updatedNewOrderProducts);
+        recalculateTotalsInDrawer(updatedNewOrderProducts, currentTaxRate);
       } else {
-        // For existing order, check if product already exists
-        const existingProduct = currentProductsInDrawer.find(
-          (p) => p.produit_id === values.produit_id
+        // For existing order
+        const existingProductInDrawerIndex = currentProductsInDrawer.findIndex(
+          (p) => (p.produit_id || p.produit) === values.produit_id
         );
 
-        if (existingProduct) {
-          // If product exists, show warning and don't add
-          message.warning(
-            "Ce produit existe déjà dans la commande. Veuillez le supprimer et le rajouter avec la quantité totale souhaitée."
+        if (existingProductInDrawerIndex > -1) {
+          // Logic to update existing product quantity in an existing order
+          // This might involve an API call to update the line item or you might prefer
+          // the user to remove and re-add. For simplicity, let's assume an update:
+          const updatedProductsInDrawer = currentProductsInDrawer.map(
+            (p, index) =>
+              index === existingProductInDrawerIndex
+                ? {
+                    ...p,
+                    quantite: p.quantite + values.quantite, // Or replace: values.quantite
+                    prix_unitaire: newProductData.prix_unitaire, // Update price if changed
+                    remise_pourcentage: newProductData.remise_pourcentage,
+                    prix_total:
+                      (p.quantite + values.quantite) *
+                      newProductData.prix_unitaire *
+                      (1 - (newProductData.remise_pourcentage || 0) / 100),
+                  }
+                : p
           );
-          setIsProductModalVisible(false);
-          return;
+          setCurrentProductsInDrawer(updatedProductsInDrawer);
+          recalculateTotalsInDrawer(updatedProductsInDrawer, currentTaxRate);
+          message.success("Produit mis à jour dans la commande");
+          // Note: You'd typically need to reflect this change in `editingOrder.produit_commande`
+          // and the backend would need to handle updates to existing line items.
+          // The current `addProductToOrder` might just add a new line.
+          // If `addProductToOrder` handles updates, this local update might be redundant before API call.
+          // For now, this updates UI then `handleDrawerSave` sends the whole list.
+        } else {
+          // Call API to add product if it doesn't exist already
+          // The backend should return the full product line item, including its own ID
+          const addedProductFromApi = await cdsService.addProductToOrder(
+            editingOrder.id,
+            newProductData // Send newProductData, backend assigns ID to the line item
+          );
+          // Ensure addedProductFromApi has prix_total or calculate it
+          if (
+            addedProductFromApi &&
+            typeof addedProductFromApi.prix_total === "undefined"
+          ) {
+            addedProductFromApi.prix_total =
+              (addedProductFromApi.quantite || 0) *
+              (addedProductFromApi.prix_unitaire || 0) *
+              (1 - (addedProductFromApi.remise_pourcentage || 0) / 100);
+          }
+          const newProductsList = [
+            ...currentProductsInDrawer,
+            addedProductFromApi,
+          ];
+          setCurrentProductsInDrawer(newProductsList);
+          recalculateTotalsInDrawer(newProductsList, currentTaxRate);
+          message.success("Produit ajouté à la commande");
         }
-
-        // Call API to add product if it doesn't exist already
-        const addedProductFromApi = await cdsService.addProductToOrder(
-          editingOrder.id,
-          newProductData
-        );
-        setCurrentProductsInDrawer([
-          ...currentProductsInDrawer,
-          addedProductFromApi,
-        ]);
-        recalculateTotalsInDrawer(
-          [...currentProductsInDrawer, addedProductFromApi],
-          drawerForm.getFieldValue("tax_rate")
-        );
-        message.success("Produit ajouté à la commande");
       }
-
       setIsProductModalVisible(false);
     } catch (errorInfo) {
       console.log("Product modal save failed:", errorInfo);
-      message.error("Failed to add product.");
+      message.error(
+        "Failed to add product: " + (errorInfo.message || "Unknown error")
+      );
     }
   };
 
   const handleRemoveProductFromDrawerOrder = async (
-    produitCommandeIdToRemove
+    produitIdToRemove // This could be tempId for new orders, or actual DB ID for existing
   ) => {
     try {
+      const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
       if (isCreating) {
-        // For new order, just remove from local state
         const updatedProducts = newOrderProducts.filter(
-          (p) => p.id !== produitCommandeIdToRemove
+          (p) => p.id !== produitIdToRemove // tempId comparison
         );
         setNewOrderProducts(updatedProducts);
         setCurrentProductsInDrawer(updatedProducts);
+        recalculateTotalsInDrawer(updatedProducts, currentTaxRate);
       } else {
-        // For existing order, call API
+        // For existing order, produitIdToRemove should be the ID of the produit_commande item
         await cdsService.removeProductFromOrder(
           editingOrder.id,
-          produitCommandeIdToRemove
+          produitIdToRemove
         );
         const updatedProducts = currentProductsInDrawer.filter(
-          (p) => p.id !== produitCommandeIdToRemove
+          (p) => p.id !== produitIdToRemove
         );
         setCurrentProductsInDrawer(updatedProducts);
-        recalculateTotalsInDrawer(
-          updatedProducts,
-          drawerForm.getFieldValue("tax_rate")
-        );
+        recalculateTotalsInDrawer(updatedProducts, currentTaxRate);
       }
       message.success("Product removed.");
     } catch (error) {
