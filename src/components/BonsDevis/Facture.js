@@ -111,9 +111,12 @@ export default function BonCommande() {
       typeof taxRate === "number"
         ? taxRate
         : parseFloat(drawerForm.getFieldValue("tax_rate")) || 0;
+    const timbreFiscal =
+      parseFloat(drawerForm.getFieldValue("timbre_fiscal")) || 0;
+
     const montantHt = products.reduce((sum, p) => sum + (p.prix_total || 0), 0);
     const montantTva = montantHt * (currentTaxRate / 100);
-    const montantTtc = montantHt + montantTva;
+    const montantTtc = montantHt + montantTva + timbreFiscal;
 
     drawerForm.setFieldsValue({
       montant_ht_display: montantHt,
@@ -127,7 +130,7 @@ export default function BonCommande() {
         montant_ht: montantHt,
         montant_tva: montantTva,
         montant_ttc: montantTtc,
-        // tax_rate: currentTaxRate, // tax_rate is already part of form values or editingOrder
+        timbre_fiscal: timbreFiscal,
       }));
     }
     // For new orders, the form fields are the source of truth for totals until save.
@@ -266,22 +269,107 @@ export default function BonCommande() {
       const fullOrderDetails = await cdsService.getOrderById(order.id);
       if (fullOrderDetails) {
         setEditingOrder(fullOrderDetails);
-        setCurrentProductsInDrawer(fullOrderDetails.produit_commande || []);
+
+        // Map products from produits_details or produit_commande
+        let mappedProducts = [];
+
+        if (
+          fullOrderDetails.produit_commande &&
+          fullOrderDetails.produit_commande.length > 0
+        ) {
+          // Use produit_commande if available (preferred)
+          mappedProducts = fullOrderDetails.produit_commande.map((product) => ({
+            id: product.id,
+            produit_id: product.produit_id || product.produit,
+            nom_produit: product.nom_produit,
+            quantite: Number(product.quantite) || 1,
+            prix_unitaire: Number(product.prix_unitaire) || 0,
+            remise_pourcentage: Number(product.remise_pourcentage) || 0,
+            prix_total: Number(product.prix_total) || 0,
+          }));
+        } else if (
+          fullOrderDetails.produits_details &&
+          fullOrderDetails.produits_details.length > 0
+        ) {
+          // Fallback to produits_details and calculate missing fields
+          const totalAmount = Number(fullOrderDetails.montant_ht) || 0;
+          const productsCount = fullOrderDetails.produits_details.length;
+
+          mappedProducts = fullOrderDetails.produits_details.map(
+            (product, index) => {
+              // Calculate quantity based on total amount and product price
+              const unitPrice = Number(product.prix) || 0;
+              let calculatedQuantity = 1;
+              let calculatedTotal = unitPrice;
+
+              // If we have total amount and this is the only product, calculate quantity
+              if (productsCount === 1 && totalAmount > 0 && unitPrice > 0) {
+                calculatedQuantity = Math.round(totalAmount / unitPrice);
+                calculatedTotal = totalAmount;
+              } else if (productsCount > 1) {
+                // For multiple products, distribute the total amount proportionally
+                const productPortion = totalAmount / productsCount;
+                if (unitPrice > 0) {
+                  calculatedQuantity = Math.round(productPortion / unitPrice);
+                }
+                calculatedTotal = calculatedQuantity * unitPrice;
+              }
+
+              return {
+                id: `temp-${product.id}-${index}`, // Temporary ID for UI
+                produit_id: product.id,
+                nom_produit: product.nom_produit,
+                quantite: calculatedQuantity,
+                prix_unitaire: unitPrice,
+                remise_pourcentage: 0, // No discount info available
+                prix_total: calculatedTotal,
+              };
+            }
+          );
+        }
+
+        setCurrentProductsInDrawer(mappedProducts);
+
+        // Extract client ID from various possible locations
+        const clientId =
+          fullOrderDetails.client_id ||
+          (typeof fullOrderDetails.client === "number"
+            ? fullOrderDetails.client
+            : null) ||
+          fullOrderDetails.client?.id ||
+          null;
+
+        // Set the selected client ID for the dropdown
+        setSelectedClientId(clientId);
+
+        // Populate form with all order data
         drawerForm.setFieldsValue({
           ...fullOrderDetails,
+          client_id: clientId,
           date_commande: fullOrderDetails.date_commande
             ? moment(fullOrderDetails.date_commande)
             : null,
           date_livraison_prevue: fullOrderDetails.date_livraison_prevue
             ? moment(fullOrderDetails.date_livraison_prevue)
             : null,
-          mode_paiement: fullOrderDetails.mode_paiement || undefined, // Add this
+          mode_paiement: fullOrderDetails.mode_paiement || "cash",
+          statut: fullOrderDetails.statut || "pending",
+          tax_rate: fullOrderDetails.tax_rate || 20,
+          timbre_fiscal: fullOrderDetails.timbre_fiscal || 1, // Add timbre fiscal
+          conditions_paiement: fullOrderDetails.conditions_paiement || "",
+          notes: fullOrderDetails.notes || "",
+          // Set display fields for totals
+          montant_ht_display: fullOrderDetails.montant_ht || 0,
+          montant_tva_display: fullOrderDetails.montant_tva || 0,
+          montant_ttc_display: fullOrderDetails.montant_ttc || 0,
         });
+
         setIsDrawerVisible(true);
       } else {
         message.error("Order details not found.");
       }
     } catch (err) {
+      console.error("Error fetching order details:", err);
       message.error("Failed to fetch order details: " + err.message);
     }
     setLoading(false);
@@ -299,6 +387,7 @@ export default function BonCommande() {
       date_commande: moment(),
       date_livraison_prevue: moment().add(7, "days"),
       tax_rate: 20,
+      timbre_fiscal: 0, // Default timbre fiscal
       statut: "pending",
       conditions_paiement: "À régler dans les 30 jours",
       mode_paiement: "cash", // Default payment method
@@ -322,7 +411,8 @@ export default function BonCommande() {
       const values = await drawerForm.validateFields(); // Contains form fields like tax_rate, client_id etc.
       setLoading(true);
 
-      const taxRate = parseFloat(values.tax_rate) || 0; // Ensure taxRate is a number
+      const taxRate = parseFloat(values.tax_rate) || 0;
+      const timbreFiscal = parseFloat(values.timbre_fiscal) || 1;
 
       if (isCreating) {
         if (!selectedClientId) {
@@ -346,7 +436,7 @@ export default function BonCommande() {
           0
         );
         const finalMontantTva = finalMontantHt * (taxRate / 100);
-        const finalMontantTtc = finalMontantHt + finalMontantTva;
+        const finalMontantTtc = finalMontantHt + finalMontantTva + timbreFiscal;
 
         const orderPayload = {
           client_id: selectedClientId,
@@ -363,6 +453,7 @@ export default function BonCommande() {
           conditions_paiement: values.conditions_paiement || "",
           mode_paiement: values.mode_paiement || "cash",
           tax_rate: taxRate,
+          timbre_fiscal: timbreFiscal, // Add timbre fiscal
           montant_ht: finalMontantHt,
           montant_tva: finalMontantTva,
           montant_ttc: finalMontantTtc,
@@ -386,10 +477,14 @@ export default function BonCommande() {
           0
         );
         const finalMontantTva = finalMontantHt * (taxRate / 100);
-        const finalMontantTtc = finalMontantHt + finalMontantTva;
+        const finalMontantTtc = finalMontantHt + finalMontantTva + timbreFiscal;
+
+        // Destructure to safely separate product lists from the rest of the order data
+        const { produit_commande, produits, ...restOfEditingOrder } =
+          editingOrder;
 
         const orderPayload = {
-          ...editingOrder, // Base with existing data
+          ...restOfEditingOrder, // Base with existing data (excluding old product lists)
           ...values, // Override with form values (like notes, dates, status, client_id if changed)
           date_commande: values.date_commande
             ? values.date_commande.format("YYYY-MM-DD")
@@ -398,11 +493,13 @@ export default function BonCommande() {
             ? values.date_livraison_prevue.format("YYYY-MM-DD")
             : null,
           tax_rate: taxRate,
+          timbre_fiscal: timbreFiscal, // Add timbre fiscal
           montant_ht: finalMontantHt,
           montant_tva: finalMontantTva,
           montant_ttc: finalMontantTtc,
-          produits: currentProductsInDrawer.map((p) => ({
-            id: p.id, // ID of the produit_commande line item, if backend needs it for updates
+          // Use 'produit_commande' as the key for line items
+          produit_commande: currentProductsInDrawer.map((p) => ({
+            id: p.id, // ID of the produit_commande line item, crucial for updates
             produit: p.produit_id || p.produit, // ID of the product from catalog
             quantite: p.quantite,
             prix_unitaire: p.prix_unitaire,
@@ -545,7 +642,6 @@ export default function BonCommande() {
           // and the backend would need to handle updates to existing line items.
           // The current `addProductToOrder` might just add a new line.
           // If `addProductToOrder` handles updates, this local update might be redundant before API call.
-          // For now, this updates UI then `handleDrawerSave` sends the whole list.
         } else {
           // Call API to add product if it doesn't exist already
           // The backend should return the full product line item, including its own ID
@@ -778,6 +874,7 @@ export default function BonCommande() {
         conditions_paiement: detailedOrder.conditions_paiement || "",
         mode_paiement: translatePaymentMethod(detailedOrder.mode_paiement), // Add this
         notes: detailedOrder.notes || "",
+        timbre_fiscal: detailedOrder.timbre_fiscal || 1, // Add timbre fiscal
         montant_ht: detailedOrder.montant_ht || 0,
         montant_tva: detailedOrder.montant_tva || 0,
         montant_ttc: detailedOrder.montant_ttc || 0,
@@ -957,6 +1054,12 @@ export default function BonCommande() {
                 .join("")}
             </tbody>
           </table>
+          <tr>
+            <td colspan="4" style="text-align: right; font-weight: bold;">Timbre Fiscal:</td>
+            <td style="text-align: right; font-weight: bold;">${formatCurrency(
+              summaryData.timbreFiscal || 0
+            )}</td>
+          </tr>
         </body>
       </html>
     `;
@@ -1399,23 +1502,15 @@ export default function BonCommande() {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item
-                name="mode_paiement"
-                label="Mode de Paiement"
-                rules={[
-                  {
-                    required: true,
-                    message: "Veuillez sélectionner un mode de paiement",
-                  },
-                ]}
-              >
-                <Select placeholder="Sélectionner un mode de paiement">
-                  <Option value="cash">Espèces</Option>
-                  <Option value="credit_card">Carte de crédit</Option>
-                  <Option value="bank_transfer">Virement bancaire</Option>
-                  <Option value="cheque">Chèque</Option>
-                  {/* Add other payment methods as needed */}
-                </Select>
+              <Form.Item name="timbre_fiscal" label="Timbre Fiscal (TND)">
+                <InputNumber
+                  min={0}
+                  style={{ width: "100%" }}
+                  step={0.01}
+                  onChange={(value) => {
+                    recalculateTotalsInDrawer(currentProductsInDrawer);
+                  }}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -1504,6 +1599,15 @@ export default function BonCommande() {
             </Col>
             <Col span={8}>
               <Form.Item name="montant_tva_display" label="Montant TVA">
+                <InputNumber
+                  style={{ width: "100%" }}
+                  formatter={(value) => formatCurrency(value)}
+                  disabled
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="timbre_fiscal" label="Timbre Fiscal">
                 <InputNumber
                   style={{ width: "100%" }}
                   formatter={(value) => formatCurrency(value)}
