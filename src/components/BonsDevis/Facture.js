@@ -1266,6 +1266,7 @@ export default function BonCommande() {
     setPriceRange([null, null]);
   };
 
+  
   const totalAmount = filteredOrders.reduce(
     (sum, order) => sum + (Number(order.montant_ttc) || 0),
     0
