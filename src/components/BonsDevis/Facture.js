@@ -709,7 +709,7 @@ export default function BonCommande() {
       } else {
         // For existing order, produitIdToRemove should be the ID of the produit_commande item
         await cdsService.removeProductFromOrder(
-          editingOrder.id,
+          editingOrder.product_id,
           produitIdToRemove
         );
         const updatedProducts = currentProductsInDrawer.filter(
