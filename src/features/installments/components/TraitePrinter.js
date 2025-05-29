@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import './TraitePrinter.css';
+import traiteVideImage from '../../../assets/images/traite-vide.jpeg'; // Assurez-vous que le chemin est correct
 
 
 const TraitePrinter = ({ installmentData, onClose , hideControls = false , fromParent = false }) => {
@@ -214,6 +215,7 @@ const TraitePrinter = ({ installmentData, onClose , hideControls = false , fromP
           <div 
             ref={printRef}
             className="traite-container"
+            style={{backgroundImage: `url(${traiteVideImage})`}}
           >
             {/* Dates d'échéance - Version principale et dupliquée */}
             {/* <div className="field-overlay due-date-main">
