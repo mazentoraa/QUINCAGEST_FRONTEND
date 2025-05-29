@@ -314,9 +314,6 @@ class PdfGenerationService {
 
       // DEBUGGING: Let's pause here so you can see the div
 
-
-
-
       // Use the exact dimensions we set, not the measured ones
       const options = {
         margin: [5, 5, 5, 5], // Smaller margins
@@ -535,7 +532,7 @@ class PdfGenerationService {
             <p>
                 Découpes Métaux<br>
                 Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
-                IF: 191 1419B/M/A/000<br>
+                IF: 191 1419B/A/M//000<br>
                 Tél. : +216 20 366 150<br>
                 Email: contact@rmmetalaser.tn<br>
                 Site Web: www.rmmetalaser.tn
