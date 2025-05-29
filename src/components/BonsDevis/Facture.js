@@ -185,6 +185,15 @@ export default function BonCommande() {
       );
     }
 
+    // Filter by client name (separate from search text)
+    if (clientNameFilter) {
+      const clientNameLower = clientNameFilter.toLowerCase();
+      result = result.filter(
+        (order) =>
+          order.nom_client &&
+          order.nom_client.toLowerCase().includes(clientNameLower)
+      );
+    }
 
     // Filter by client
     if (selectedClientFilter) {
@@ -231,6 +240,7 @@ export default function BonCommande() {
     orders,
     searchText,
     clientNameFilter,
+    selectedClientFilter,
     selectedStatus,
     dateRange,
     priceRange,
@@ -443,7 +453,6 @@ export default function BonCommande() {
         const finalMontantTtc = finalMontantHt + finalMontantTva + timbreFiscal;
 
         const orderPayload = {
-
           client_id: selectedClientId,
           client: selectedClientId,
           numero_commande: randomOrderNumber,
@@ -716,7 +725,7 @@ export default function BonCommande() {
     }
   };
 
-const handlePrintOrderPDF = async (orderRecord) => {
+  const handlePrintOrderPDF = async (orderRecord) => {
     const hideLoading = message.loading("Génération du PDF en cours...", 0);
 
     try {
@@ -746,7 +755,10 @@ const handlePrintOrderPDF = async (orderRecord) => {
 
       // Filter produit_commande to only include products with quantite > 0
       let filteredProduitCommande = [];
-      if (detailedOrder.produit_commande && detailedOrder.produit_commande.length > 0) {
+      if (
+        detailedOrder.produit_commande &&
+        detailedOrder.produit_commande.length > 0
+      ) {
         filteredProduitCommande = detailedOrder.produit_commande.filter(
           (product) => Number(product.quantite) > 0
         );
@@ -754,50 +766,46 @@ const handlePrintOrderPDF = async (orderRecord) => {
 
       let mappedProduitCommande;
 
-      if (
-        filteredProduitCommande.length > 0
-      ) {
-        mappedProduitCommande = filteredProduitCommande.map(
-          (orderProduct) => {
-            const productDetailsFromCatalog = availableProducts.find(
-              (p) => p.id === (orderProduct.produit_id || orderProduct.produit)
-            );
+      if (filteredProduitCommande.length > 0) {
+        mappedProduitCommande = filteredProduitCommande.map((orderProduct) => {
+          const productDetailsFromCatalog = availableProducts.find(
+            (p) => p.id === (orderProduct.produit_id || orderProduct.produit)
+          );
 
-            const nomProduit =
-              orderProduct.nom_produit ||
-              productDetailsFromCatalog?.nom_produit ||
-              `Produit ID ${
-                orderProduct.produit_id || orderProduct.produit || "N/A"
-              }`;
+          const nomProduit =
+            orderProduct.nom_produit ||
+            productDetailsFromCatalog?.nom_produit ||
+            `Produit ID ${
+              orderProduct.produit_id || orderProduct.produit || "N/A"
+            }`;
 
-            const prixUnitaire =
-              orderProduct.prix_unitaire ??
-              productDetailsFromCatalog?.prix_unitaire ??
-              0;
+          const prixUnitaire =
+            orderProduct.prix_unitaire ??
+            productDetailsFromCatalog?.prix_unitaire ??
+            0;
 
-            const quantite = Number(orderProduct.quantite) || 0;
-            const remisePourcentage =
-              Number(orderProduct.remise_pourcentage) || 0;
+          const quantite = Number(orderProduct.quantite) || 0;
+          const remisePourcentage =
+            Number(orderProduct.remise_pourcentage) || 0;
 
-            const calculatedLineTotal =
-              quantite * prixUnitaire * (1 - remisePourcentage / 100);
+          const calculatedLineTotal =
+            quantite * prixUnitaire * (1 - remisePourcentage / 100);
 
-            const prixTotal =
-              typeof orderProduct.prix_total === "number"
-                ? orderProduct.prix_total
-                : calculatedLineTotal;
+          const prixTotal =
+            typeof orderProduct.prix_total === "number"
+              ? orderProduct.prix_total
+              : calculatedLineTotal;
 
-            return {
-              id: orderProduct.id,
-              produit_id: orderProduct.produit_id || orderProduct.produit,
-              nom_produit: nomProduit,
-              quantite: quantite,
-              prix_unitaire: prixUnitaire,
-              remise_pourcentage: remisePourcentage,
-              prix_total: prixTotal,
-            };
-          }
-        );
+          return {
+            id: orderProduct.id,
+            produit_id: orderProduct.produit_id || orderProduct.produit,
+            nom_produit: nomProduit,
+            quantite: quantite,
+            prix_unitaire: prixUnitaire,
+            remise_pourcentage: remisePourcentage,
+            prix_total: prixTotal,
+          };
+        });
       } else if (
         detailedOrder.produits_details &&
         detailedOrder.produits_details.length > 0
@@ -1187,7 +1195,7 @@ const handlePrintOrderPDF = async (orderRecord) => {
         return formatCurrency(total);
       },
       sorter: (a, b) =>
-        ((Number(a.montant_ttc) || 0) + 1) - ((Number(b.montant_ttc) || 0) + 1),
+        (Number(a.montant_ttc) || 0) + 1 - ((Number(b.montant_ttc) || 0) + 1),
     },
     {
       title: "Actions",
@@ -1234,7 +1242,8 @@ const handlePrintOrderPDF = async (orderRecord) => {
 
   const clearFilters = () => {
     setSearchText("");
-    // Removed clearing selectedClientFilter
+    setClientNameFilter("");
+    setSelectedClientFilter(null);
     setSelectedStatus(null);
     setDateRange(null);
     setPriceRange([null, null]);
@@ -1325,7 +1334,6 @@ const handlePrintOrderPDF = async (orderRecord) => {
               />
             </Col>
             <Col span={4}>
-
               <Select
                 placeholder="Client"
                 value={selectedClientFilter}
@@ -1349,34 +1357,34 @@ const handlePrintOrderPDF = async (orderRecord) => {
                 style={{ width: "100%" }}
               />
             </Col>
-      <Col span={4}>
-        <Select
-          placeholder="Statut"
-          value={selectedStatus}
-          onChange={setSelectedStatus}
-          allowClear
-          style={{ width: "100%" }}
-        >
-          <Option value="pending">En attente</Option>
-          <Option value="processing">En cours</Option>
-          <Option value="completed">Terminée</Option>
-          <Option value="cancelled">Annulée</Option>
-          <Option value="invoiced">Facturée</Option>
-        </Select>
-      </Col>
-      <Col span={6}>
-        <DatePicker.RangePicker
-          value={dateRange}
-          onChange={setDateRange}
-          format="DD/MM/YYYY"
-          placeholder={["Date début", "Date fin"]}
-          style={{ width: "100%" }}
-        />
-      </Col>
-      <Col span={4}>
-        <Button onClick={clearFilters}>Effacer filtres</Button>
-      </Col>
-    </Row>
+            <Col span={4}>
+              <Select
+                placeholder="Statut"
+                value={selectedStatus}
+                onChange={setSelectedStatus}
+                allowClear
+                style={{ width: "100%" }}
+              >
+                <Option value="pending">En attente</Option>
+                <Option value="processing">En cours</Option>
+                <Option value="completed">Terminée</Option>
+                <Option value="cancelled">Annulée</Option>
+                <Option value="invoiced">Facturée</Option>
+              </Select>
+            </Col>
+            <Col span={6}>
+              <DatePicker.RangePicker
+                value={dateRange}
+                onChange={setDateRange}
+                format="DD/MM/YYYY"
+                placeholder={["Date début", "Date fin"]}
+                style={{ width: "100%" }}
+              />
+            </Col>
+            <Col span={4}>
+              <Button onClick={clearFilters}>Effacer filtres</Button>
+            </Col>
+          </Row>
 
           {/* Action buttons */}
           <Row gutter={16} style={{ marginBottom: 16 }}>
@@ -1559,7 +1567,6 @@ const handlePrintOrderPDF = async (orderRecord) => {
               </Form.Item>
             </Col>
             <Col span={12}>
-
               <Form.Item name="timbre_fiscal" label="Timbre Fiscal (TND)">
                 <InputNumber
                   min={0}
