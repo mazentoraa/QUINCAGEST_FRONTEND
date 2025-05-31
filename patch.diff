@@ -1,0 +1,97 @@
+<<<<<<< import React, { useState, useContext, useEffect } from "react";
+import { InstallmentContext } from "../contexts/InstallmentContext";
+import TraitePrinter from "./TraitePrinter";
+import "./InstallmentForm.css";
+=======
+import React, { useState, useContext, useEffect } from "react";
+import { InstallmentContext } from "../contexts/InstallmentContext";
+import TraitePrinter from "./TraitePrinter";
+import ClientService from "../../clientManagement/services/ClientService";
+import "./InstallmentForm.css";
+>>>>>>> import React, { useState, useContext, useEffect } from "react";
+
+<<<<<<<   // États pour la gestion des listes et aperçu
+  const [clientsList, setClientsList] = useState([
+    {
+      id: 1,
+      name: "STE ZITOUNA",
+      address: "SFAX",
+      taxId: "234567890213456789",
+    },
+    { id: 2, name: "Client B", address: "Tunis", taxId: "TAX002" },
+    { id: 3, name: "Client C", address: "Sousse", taxId: "TAX003" },
+  ]);
+=======
+  // États pour la gestion des listes et aperçu
+  const [clientsList, setClientsList] = useState([]);
+>>>>>>>   // États pour la gestion des listes et aperçu
+
+<<<<<<<   // Simuler une base de données de factures par client
+  const invoicesDatabase = {
+    "STE ZITOUNA": ["FAC001", "FAC002", "FAC003"],
+    "Client B": ["FAC004", "FAC005"],
+    "Client C": ["FAC006", "FAC007", "FAC008", "FAC009"],
+  };
+
+  // Charger la liste des clients depuis le backend
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const clients = await ClientService.get_all_clients();
+        setClientsList(clients);
+      } catch (error) {
+        console.error("Erreur lors du chargement des clients :", error);
+      }
+    };
+    fetchClients();
+  }, []);
+>>>>>>>   // Simuler une base de données de factures par client
+
+<<<<<<<               <select
+                  name="clientName"
+                  value={formData.clientName}
+                  onChange={handleClientSelect}
+                  className={`form-input ${errors.clientName ? "error" : ""}`}
+                >
+                  <option value="">Sélectionner un client</option>
+-                  {clientsList.map((client) => (
+-                    <option key={client.id} value={client.name}>
+-                      {client.name}
+-                    </option>
+-                  ))}
++                  {clientsList.map((client) => (
++                    <option key={client.id} value={client.name}>
++                      {client.name}
++                    </option>
++                  ))}
+                  <option value="nouveau">+ Nouveau client</option>
+                </select>
+>>>>>>>               <select
+                  name="clientName"
+                  value={formData.clientName}
+                  onChange={handleClientSelect}
+                  className={`form-input ${errors.clientName ? "error" : ""}`}
+                >
+                  <option value="">Sélectionner un client</option>
+                  {clientsList.map((client) => (
+                    <option key={client.id} value={client.name}>
+                      {client.name}
+                    </option>
+                  ))}
+                  <option value="nouveau">+ Nouveau client</option>
+                </select>
+>>>>>>>               <select
+                  name="clientName"
+                  value={formData.clientName}
+                  onChange={handleClientSelect}
+                  className={`form-input ${errors.clientName ? "error" : ""}`}
+                >
+                  <option value="">Sélectionner un client</option>
+                  {clientsList.map((client) => (
+                    <option key={client.id} value={client.name}>
+                      {client.name}
+                    </option>
+                  ))}
+                  <option value="nouveau">+ Nouveau client</option>
+                </select>
+>>>>>>> 

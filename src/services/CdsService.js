@@ -19,6 +19,54 @@ class CdsService {
     }
   }
 
+  async getPlansTraite() {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/plans-traite/`);
+      if (response.data && response.data.results !== undefined) {
+        return response.data.results;
+      }
+      return response.data || [];
+    } catch (error) {
+      console.error("Error fetching plans-traite:", error);
+      throw error;
+    }
+  }
+
+async createPlanTraite(planData) {
+  const payload = {
+    facture_id: planData.facture_id,
+    nombre_traite: planData.nombre_traite,
+    date_premier_echeance: planData.date_premier_echeance,
+    periode: planData.periode || 30,
+  };
+
+  console.log("Payload envoyé à /plans-traite/ :", payload);
+
+  try {
+    const response = await axios.post(`${API_BASE_URL}/plans-traite/`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating plan-traite:", error);
+    if (error.response) {
+      console.error("Response data:", error.response.data);
+      console.error("Response status:", error.response.status);
+      console.error("Response headers:", error.response.headers);
+    }
+    throw error;
+  }
+}
+
+
+  async updateTraiteStatus(traiteId, statusData) {
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/traites/${traiteId}/update_status/`, statusData);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating traite status:", error);
+      throw error;
+    }
+  }
+
   async deleteOrder(id) {
     try {
       const response = await axios.delete(`${API_URL}/${id}/`);
@@ -113,6 +161,7 @@ class CdsService {
       throw error;
     }
   }
+  
 }
 
 export default  new CdsService();

@@ -18,9 +18,11 @@ const InstallmentManagement = () => {
 
   // Fonction pour filtrer les traites
   const filteredInstallments = installments.filter(installment => {
+    const clientName = installment.clientName || "";
+    const invoiceNumber = installment.invoiceNumber || "";
     const matchesSearch = 
-      installment.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      installment.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || installment.status === statusFilter;
     const matchesBank = bankFilter === 'all' || installment.bankName === bankFilter;
