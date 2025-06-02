@@ -1,61 +1,176 @@
 import React, { createContext, useState, useEffect } from 'react';
+import * as InstallmentService from '../services/InstallmentService';
+import ClientService from '../../clientManagement/services/ClientService';
 
-// Création du contexte
 export const InstallmentContext = createContext();
 
-// Provider du contexte
 export const InstallmentProvider = ({ children }) => {
-  // État pour stocker les traites
   const [installments, setInstallments] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Charger les données depuis le localStorage au démarrage
   useEffect(() => {
-    const savedInstallments = localStorage.getItem('installments');
-    if (savedInstallments) {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        setInstallments(JSON.parse(savedInstallments));
-      } catch (error) {
-        console.error('Erreur lors du chargement des traites:', error);
-        // Réinitialiser en cas d'erreur
-        localStorage.removeItem('installments');
+        const [installmentsData, clientsData] = await Promise.all([
+          InstallmentService.getPlanTraitess(),
+          getClients()
+        ]);
+
+        const mappedInstallments = installmentsData.map(item => ({
+          ...item,
+          clientName: item.nom_raison_sociale || item.client?.nom_client || 'N/A',
+          invoiceNumber: item.facture?.numero_facture || item.numero_facture || 'N/A',
+          totalAmount: item.montant_total || item.facture?.montant_ttc || 0,
+          numberOfInstallments: item.nombre_traite || 0,
+          status: item.status || 'EN_COURS',
+          installmentDetails: item.traites || [],
+        }));
+
+        setInstallments(mappedInstallments);
+        setClients(clientsData);
+      } catch (err) {
+        console.error(err);
+        setError('Erreur lors du chargement des données');
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+    fetchData();
   }, []);
 
-  // Sauvegarder les données dans le localStorage à chaque modification
-  useEffect(() => {
-    localStorage.setItem('installments', JSON.stringify(installments));
-  }, [installments]);
-
-  // Fonction pour ajouter une nouvelle traite
-  const addInstallment = (newInstallment) => {
-    setInstallments([...installments, newInstallment]);
+  const getClients = async () => {
+    try {
+      const data = await ClientService.getClients?.();
+      return data || [];
+    } catch (err) {
+      console.error('Erreur lors de la récupération des clients:', err);
+      return [];
+    }
   };
 
-  // Fonction pour supprimer une traite
+  const addClient = async (newClient) => {
+    try {
+      const created = await ClientService.createClient?.(newClient);
+      if (created) {
+        setClients((prev) => [...prev, created]);
+        return created;
+      }
+    } catch (err) {
+      console.error("Erreur lors de l'ajout du client:", err);
+      throw err;
+    }
+  };
+
+  const updateClientsFromInstallment = (installmentData) => {
+    const exists = clients.some(c => c.name === installmentData.clientName);
+    if (!exists) {
+      setClients(prev => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          name: installmentData.clientName,
+          taxId: installmentData.clientTaxId,
+          address: installmentData.clientAddress,
+        },
+      ]);
+    }
+  };
+
+  const addInstallment = async (newInstallment) => {
+    setLoading(true);
+    try {
+const payload = {
+  numero_commande: newInstallment.numero_commande,
+  nombre_traite: newInstallment.nombre_traite,
+  date_premier_echeance: newInstallment.date_premier_echeance,
+  periode: newInstallment.periode || 30,
+  montant_total: newInstallment.montant_total || 0,
+  nom_raison_sociale: newInstallment.nom_raison_sociale,
+  matricule_fiscal: newInstallment.tire_matricule,
+  mode_paiement: 'traite'
+};
+
+
+      const created = await InstallmentService.createPlanTraite(payload);
+
+const enriched = {
+  ...created,
+  clientName: payload.nom_raison_sociale,
+  invoiceNumber: newInstallment.numero_commande,
+  totalAmount: payload.montant_total,
+  numberOfInstallments: payload.nombre_traite,
+  status: created.status || "EN_COURS",
+  installmentDetails: created.traites || [],
+};
+
+      setInstallments(prev => [...prev, enriched]);
+      updateClientsFromInstallment(enriched);
+
+      return created;
+    } catch (err) {
+      console.error('Erreur lors de la création de la traite :', err);
+      setError("Erreur lors de la création de la traite");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateInstallment = async (updatedInstallment) => {
+    setLoading(true);
+    try {
+      const updated = await InstallmentService.updateTraiteStatus(
+        updatedInstallment.traiteId,
+        { status: updatedInstallment.status }
+      );
+      setInstallments((prev) =>
+        prev.map((item) =>
+          item.id === updatedInstallment.id ? { ...item, ...updated } : item
+        )
+      );
+      return updated;
+    } catch (err) {
+      console.error(err);
+      setError("Erreur lors de la mise à jour de la traite");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const deleteInstallment = (installmentId) => {
-    setInstallments(installments.filter(item => item.id !== installmentId));
+    setInstallments((prev) => prev.filter((item) => item.id !== installmentId));
   };
 
-  // Fonction pour mettre à jour une traite existante
-  const updateInstallment = (updatedInstallment) => {
-    setInstallments(
-      installments.map(item => 
-        item.id === updatedInstallment.id ? updatedInstallment : item
-      )
-    );
-  };
-
-  // Valeur exposée par le contexte
-  const value = {
-    installments,
-    addInstallment,
-    deleteInstallment,
-    updateInstallment
+  const refreshClients = async () => {
+    try {
+      const clientsData = await getClients();
+      setClients(clientsData);
+      return clientsData;
+    } catch (err) {
+      console.error('Erreur lors du rafraîchissement des clients:', err);
+      return [];
+    }
   };
 
   return (
-    <InstallmentContext.Provider value={value}>
+    <InstallmentContext.Provider
+      value={{
+        installments,
+        addInstallment,
+        updateInstallment,
+        deleteInstallment,
+        clients,
+        getClients,
+        addClient,
+        refreshClients,
+        loading,
+        error,
+      }}
+    >
       {children}
     </InstallmentContext.Provider>
   );

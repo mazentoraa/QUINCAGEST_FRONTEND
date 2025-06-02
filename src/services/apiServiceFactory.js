@@ -102,7 +102,7 @@ export const getApiService = () => {
   // Return the real services
   return {
     orderService: OrderService,
-    cdsService: CdsService
+    cdsService: CdsService,
     // Include other services as needed
   };
 };

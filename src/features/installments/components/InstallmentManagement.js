@@ -18,9 +18,11 @@ const InstallmentManagement = () => {
 
   // Fonction pour filtrer les traites
   const filteredInstallments = installments.filter(installment => {
+    const clientName = installment.client_nom || installment.clientName || "";
+    const invoiceNumber = installment.numero_commande || installment.invoiceNumber || "";
     const matchesSearch = 
-      installment.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      installment.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || installment.status === statusFilter;
     const matchesBank = bankFilter === 'all' || installment.bankName === bankFilter;
@@ -186,38 +188,37 @@ const InstallmentManagement = () => {
                     <tbody>
                       {filteredInstallments.map((installment) => (
                         <tr key={installment.id}>
-                          <td>
-                            <button
-                              className="client-name-button"
-                              onClick={() => handleClientClick(installment)}
-                            >
-                              {installment.clientName}
-                            </button>
-                          </td>
-                          <td>{installment.invoiceNumber}</td>
-                          <td>{installment.totalAmount} DT</td>
-                          <td>{installment.numberOfInstallments}</td>
-                          <td>
-                            <select
-                              value={installment.status || 'non_paye'}
-                              onChange={(e) => handleStatusChange(installment.id, e.target.value)}
-                              className={`status-select-table ${installment.status === 'paye' ? 'paid' : 'unpaid'}`}
-                            >
-                              <option value="non_paye">Non payé</option>
-                              <option value="paye">Payé</option>
-                            </select>
-                          </td>
-                          <td>
-                            <button 
-                              className="action-button print-button"
-                              onClick={() => {
-                                setSelectedInstallment(installment);
-                                setActiveTab('print');
-                              }}
-                            >
-                              <i className="fas fa-print"></i> Imprimer
-                            </button>
-                          </td>
+                      <td>
+                        <button
+                          className="client-name-button"
+                          onClick={() => handleClientClick(installment)}
+                        >
+                          {installment.client_nom || installment.clientName || 'N/A'}
+                        </button>
+                      </td>
+                      <td>{installment.numero_commande || installment.invoiceNumber || 'N/A'}</td>
+                      <td>{installment.montant_total?.toFixed(3) || installment.nombre_traite || installment.numberOfInstallments || 'N/A'}</td>
+                      <td>
+                        <select
+                          value={installment.status || 'non_paye'}
+                          onChange={(e) => handleStatusChange(installment.id, e.target.value)}
+                          className={`status-select-table ${installment.status === 'paye' ? 'paid' : 'unpaid'}`}
+                        >
+                          <option value="non_paye">Non payé</option>
+                          <option value="paye">Payé</option>
+                        </select>
+                      </td>
+                      <td>
+                        <button 
+                          className="action-button print-button"
+                          onClick={() => {
+                            setSelectedInstallment(installment);
+                            setActiveTab('print');
+                          }}
+                        >
+                          <i className="fas fa-print"></i> Imprimer
+                        </button>
+                      </td>
                         </tr>
                       ))}
                     </tbody>

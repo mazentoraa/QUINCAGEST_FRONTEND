@@ -19,6 +19,57 @@ class CdsService {
     }
   }
 
+  async getPlansTraite() {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/plans-traite/`);
+      if (response.data && response.data.results !== undefined) {
+        return response.data.results;
+      }
+      return response.data || [];
+    } catch (error) {
+      console.error("Error fetching plans-traite:", error);
+      throw error;
+    }
+  }
+
+async createPlanTraite(planData) {
+  const payload = {
+    numero_commande: planData.numero_commande,
+    nombre_traite: planData.nombre_traite,
+    date_premier_echeance: planData.date_premier_echeance,
+    periode: planData.periode || 30,
+    montant_total: planData.montant_total || 0,
+    nom_raison_sociale: planData.nom_raison_sociale || '',
+    matricule_fiscal: planData.matricule_fiscal || '',
+    mode_paiement: planData.mode_paiement || 'traite',
+  };
+
+  console.log("✅ Payload envoyé à /plans-traite/ :", payload);
+
+  try {
+    const response = await axios.post(`${API_BASE_URL}/plans-traite/`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Erreur création plan-traite :", error);
+    if (error.response) {
+      console.error("Response data:", error.response.data);
+    }
+    throw error;
+  }
+}
+
+
+
+  async updateTraiteStatus(traiteId, statusData) {
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/traites/${traiteId}/update_status/`, statusData);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating traite status:", error);
+      throw error;
+    }
+  }
+
   async deleteOrder(id) {
     try {
       const response = await axios.delete(`${API_URL}/${id}/`);
@@ -113,6 +164,7 @@ class CdsService {
       throw error;
     }
   }
+  
 }
 
 export default  new CdsService();

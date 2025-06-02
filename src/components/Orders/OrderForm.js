@@ -147,16 +147,16 @@ function OrderForm({ onComplete, onCancel }) {
     // Créer le plan d'échelonnement si nécessaire
     if (paymentMethod === 'installments') {
       addInstallment({
-        invoice: newInvoice,
-        count: actualInstallmentsCount,
-        amount: calculateTotal()
+        numero_commande: newInvoice.numero_commande,
+        nombre_traite: actualInstallmentsCount,
+        montant: calculateTotal()
       });
     } else if (paymentMethod === 'mixed') {
       const installmentAmount = calculateTotal() - mixedCashAmount;
       addInstallment({
-        invoice: newInvoice,
-        count: actualInstallmentsCount,
-        amount: installmentAmount
+        numero_commande: newInvoice.numero_commande,
+        nombre_traite: actualInstallmentsCount,
+        montant: installmentAmount
       });
     }
     

@@ -1108,8 +1108,11 @@ export default function BonCommande() {
   const handleDeleteOrder = async (orderId) => {
     try {
       setLoading(true);
-      deleteInvoice(orderId);
+      await deleteInvoice(orderId);
+      // Optimistically update UI by removing deleted order immediately
+      setOrders((prevOrders) => prevOrders.filter((order) => order.id !== orderId));
       message.success("Commande supprimée avec succès");
+      // Optionally refresh orders from backend to ensure consistency
       fetchOrders();
     } catch (error) {
       message.error("Erreur lors de la suppression: " + error.message);
@@ -1126,12 +1129,18 @@ export default function BonCommande() {
 
     try {
       setLoading(true);
+      // Optimistically update UI by removing selected orders immediately
+      setOrders((prevOrders) =>
+        prevOrders.filter((order) => !selectedRowKeys.includes(order.id))
+      );
+      // Use deleteInvoice from InvoiceContext for consistent state management
       await Promise.all(
-        selectedRowKeys.map((id) => cdsService.deleteOrder(id))
+        selectedRowKeys.map((id) => deleteInvoice(id))
       );
       message.success(`${selectedRowKeys.length} commande(s) supprimée(s)`);
       setSelectedRowKeys([]);
       setSelectedRows([]);
+      // Refresh orders from backend to ensure consistency
       fetchOrders();
     } catch (error) {
       message.error("Erreur lors de la suppression: " + error.message);

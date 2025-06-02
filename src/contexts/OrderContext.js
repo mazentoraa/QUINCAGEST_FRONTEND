@@ -29,9 +29,20 @@ export const OrderProvider = ({ children }) => {
   };
 
   const addOrder = (order) => {
+    // Find the max current order id as number
+    const maxId = orders.reduce((max, o) => {
+      const idNum = parseInt(o.id, 10);
+      return !isNaN(idNum) && idNum > max ? idNum : max;
+    }, 0);
+
+    // Generate numero_commande as "FAC-YYYY-XXXXX"
+    const year = new Date().getFullYear();
+    const numero_commande = `FAC-${year}-${(maxId + 1).toString().padStart(5, '0')}`;
+
     const newOrder = {
       ...order,
-      id: Date.now().toString(),
+      id: (maxId + 1).toString(),
+      numero_commande,
       date: new Date().toISOString(),
     };
     
