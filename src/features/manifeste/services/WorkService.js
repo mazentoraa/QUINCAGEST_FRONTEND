@@ -6,23 +6,40 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:800
 const API_URL = `${API_BASE_URL}/traveaux`;
 
 const WorkService = {
-  getAllWorks: async () => {
+   getAllWorks: async () => {
     try {
-      const response = await axios.get(API_URL + '/');
+    let worksData = [];
+    let currentPage = 1;
+    let hasMore = true;
+    while (hasMore) {
+      const response = await axios.get(API_URL + '/',{
+         params : {
+          page: currentPage
+        }
+    });
+      console.log(`Page ${currentPage} response:`, {
+        data: response.data,
+        headers: response.headers
+      });
+
       // Handle both array and paginated response formats
-      let worksData;
-      if (response.data && response.data.results !== undefined) {
-        worksData = response.data.results;
-      } else {
-        worksData = response.data || [];
-      }
       
+      if (response.data?.results) {
+        worksData = [...worksData, ...response.data.results];
+      } else {
+        worksData = [...worksData, ...(response.data || [])];
+      }
+      hasMore = response.data.next !== null;
+      currentPage++;
+    
+    }
       return worksData.map(work => new WorkModel(work));
     } catch (error) {
       console.error('Error fetching works:', error);
       throw error;
     }
   },
+
 
   getWorksByClientId: async (client_id) => {
     try {
