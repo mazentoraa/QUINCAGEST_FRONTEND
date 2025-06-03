@@ -90,7 +90,7 @@ function OrderList({ orders }) {
             <tbody>
               {orders.map((order, index) => (
                 <tr key={order.id || index}>
-                  <td>{order.id.substring(0, 8)}</td>
+                  <td>{index + 1}</td>
                   <td>{formatDate(order.date)}</td>
                   <td>{findClient(order.clientId) ? `${findClient(order.clientId).firstName} ${findClient(order.clientId).lastName}` : 'Client inconnu'}</td>
                   <td>{calculateTotal(order.items).toFixed(2)} DT</td>

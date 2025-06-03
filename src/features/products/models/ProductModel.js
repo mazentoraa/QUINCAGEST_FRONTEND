@@ -35,6 +35,7 @@ class ProductModel {
       data.type_matiere || data.material_type || data.material;
     this.epaisseur = this.thickness; // Use the converted numeric value
     this.longueur = this.length; // Use the converted numeric value
+    this.largeur = data.largeur ?? null;
     this.date_creation = data.date_creation;
     this.derniere_mise_a_jour = data.derniere_mise_a_jour;
   }

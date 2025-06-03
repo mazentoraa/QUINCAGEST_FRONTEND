@@ -1,10 +1,17 @@
 import React, { useState, useContext, useEffect } from "react";
 import { InstallmentContext } from "../contexts/InstallmentContext";
+import { InvoiceContext } from "../../../contexts/InvoiceContext";
 import TraitePrinter from "./TraitePrinter";
 import "./InstallmentForm.css";
+import axios from 'axios';
+
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
+
 
 const InstallmentForm = () => {
-  const { addInstallment } = useContext(InstallmentContext);
+  const { addInstallment, refreshInstallments } = useContext(InstallmentContext);
+  const { invoices } = useContext(InvoiceContext);
 
   // État pour les données du formulaire
   const [formData, setFormData] = useState({
@@ -19,7 +26,7 @@ const InstallmentForm = () => {
     clientAddress: "",
 
     // Informations principales
-    invoiceNumber: "",
+    numero_commande: "", // à la place de factureTravauxId
     numberOfInstallments: 3,
     firstDueDate: "",
     totalAmount: "",
@@ -37,28 +44,51 @@ const InstallmentForm = () => {
   });
 
   // États pour la gestion des listes et aperçu
-  const [clientsList, setClientsList] = useState([
-    {
-      id: 1,
-      name: "STE ZITOUNA",
-      address: "SFAX",
-      taxId: "234567890213456789",
-    },
-    { id: 2, name: "Client B", address: "Tunis", taxId: "TAX002" },
-    { id: 3, name: "Client C", address: "Sousse", taxId: "TAX003" },
-  ]);
-
+  const [clientsList, setClientsList] = useState([]);
   const [filteredInvoices, setFilteredInvoices] = useState([]);
+  // Removed selectedInvoiceId state as per user request
   const [errors, setErrors] = useState({});
   const [showPreview, setShowPreview] = useState(false);
   const [previewData, setPreviewData] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Simuler une base de données de factures par client
-  const invoicesDatabase = {
-    "STE ZITOUNA": ["FAC001", "FAC002", "FAC003"],
-    "Client B": ["FAC004", "FAC005"],
-    "Client C": ["FAC006", "FAC007", "FAC008", "FAC009"],
+  // Map period string to days integer
+  const periodToDays = {
+    mensuel: 30,
+    trimestriel: 90,
+    semestriel: 180,
+    annuel: 365,
   };
+
+  // Chargement des clients
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const token = user ? user.token : null;
+
+    fetch("http://localhost:8000/api/clients/", {
+      headers: {
+        Authorization: `Token ${token}`,
+      },
+    })
+      .then((res) => {
+          if (!res.ok) {
+            throw new Error(`Erreur HTTP ${res.status}`);
+          }
+        return res.json();
+      })
+      .then((data) => {
+        const formattedClients = (data.results || data).map((client) => ({
+          id: client.id,
+          name: client.nom_raison_sociale || client.nom_client,
+          address: client.adresse || "",
+          taxId: client.numero_fiscal,
+        }));
+        setClientsList(formattedClients);
+      })
+      .catch((error) => {
+        console.error("❌ Erreur lors du chargement des clients :", error);
+      });
+  }, []);
 
   // Formatage du RIP en temps réel
   const formatRIPInput = (value) => {
@@ -82,19 +112,35 @@ const InstallmentForm = () => {
 
   // Effet pour mettre à jour les factures disponibles quand le client change
   useEffect(() => {
+    console.log("Invoices:", invoices);
+    console.log("Selected clientName:", formData.clientName);
     if (formData.clientName && formData.clientName !== "nouveau") {
-      const availableInvoices = invoicesDatabase[formData.clientName] || [];
+      // Filter invoices from context by matching clientName or clientTaxId (case-insensitive)
+      const availableInvoices = invoices
+        .filter(
+          (invoice) =>
+            invoice.nom_client &&
+            formData.clientName &&
+            invoice.nom_client.trim().toLowerCase() === formData.clientName.trim().toLowerCase()
+        )
+.map((invoice) => ({
+  id: invoice.id,
+  number: invoice.numero_commande || invoice.numero_facture || invoice.id || "",
+  numero_commande: invoice.numero_commande || null
+}));
+
+      console.log("Filtered invoices:", availableInvoices);
       setFilteredInvoices(availableInvoices);
     } else {
       setFilteredInvoices([]);
     }
-  }, [formData.clientName]);
+  }, [formData.clientName, formData.clientTaxId, invoices]);
 
   // Calcul des montants de traites
   const calculateInstallments = () => {
-    if (!formData.totalAmount || !formData.numberOfInstallments) return [];
+    if (!formData.numberOfInstallments) return [];
 
-    const total = parseFloat(formData.totalAmount);
+    const total = parseFloat(formData.totalAmount || 0);
     const count = parseInt(formData.numberOfInstallments);
     const amountPerInstallment = Math.round((total / count) * 1000) / 1000;
     const startDate = formData.firstDueDate
@@ -139,6 +185,15 @@ const InstallmentForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
+    // Removed logic related to selectedInvoiceId for factureTravauxId
+    if (name === "numero_commande") {
+      setFormData({ ...formData, numero_commande: value });
+      if (errors.numero_commande) {
+        setErrors({ ...errors, numero_commande: null });
+      }
+      return;
+    }
+    // Mise à jour des données du formulaire
     // Formatage spécial pour le RIP
     if (name === "rip") {
       const formattedValue = formatRIPInput(value);
@@ -166,7 +221,7 @@ const InstallmentForm = () => {
         clientName: selectedClientName,
         clientAddress: selectedClient.address,
         clientTaxId: selectedClient.taxId,
-        invoiceNumber: "", // Reset invoice number when client changes
+        numero_commande: "", // Reset facture travaux id when client changes
       });
     } else {
       setFormData({
@@ -174,7 +229,7 @@ const InstallmentForm = () => {
         clientName: selectedClientName,
         clientAddress: "",
         clientTaxId: "",
-        invoiceNumber: "",
+        numero_commande: "",
       });
     }
   };
@@ -183,8 +238,8 @@ const InstallmentForm = () => {
     const newErrors = {};
     if (!formData.drawerName) newErrors.drawerName = "Nom du tireur requis";
     if (!formData.clientName) newErrors.clientName = "Nom du client requis";
-    if (!formData.invoiceNumber)
-      newErrors.invoiceNumber = "Numéro de facture requis";
+    if (!formData.numero_commande)
+    newErrors.numero_commande = "Numéro de commande requis";
     if (
       !formData.totalAmount ||
       isNaN(formData.totalAmount) ||
@@ -218,34 +273,135 @@ const InstallmentForm = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  // Fonction pour réinitialiser le formulaire
+  const resetForm = () => {
+    setFormData({
+      drawerName: "RM METALASER",
+      drawerTaxId: "191 1419B/A/M/000",
+      drawerAddress: "Sfax",
+      clientName: "",
+      clientTaxId: "",
+      clientAddress: "",
+      numero_commande: "",
+      numberOfInstallments: 3,
+      firstDueDate: "",
+      totalAmount: "",
+      period: "mensuel",
+      creationDate: new Date().toISOString().split("T")[0],
+      notice: "",
+      acceptance: "",
+      bankName: "",
+      bankAddress: "",
+      rip: "",
+    });
+    setErrors({});
+    setFilteredInvoices([]);
+  };
+
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validate()) {
-      const newInstallment = {
-        id: Date.now().toString(),
+
+
+
+    if (!validate()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Map formData to API expected payload
+      const payload = {
+      numero_commande: formData.numero_commande,
+
+        nombre_traite: parseInt(formData.numberOfInstallments),
+        date_premier_echeance: formData.firstDueDate,
+        periode: periodToDays[formData.period] || 30,
+        
+        // Ajouter les informations supplémentaires si nécessaire
+        tireur_nom: formData.drawerName,
+        tireur_matricule: formData.drawerTaxId,
+        tireur_adresse: formData.drawerAddress,
+        nom_raison_sociale: formData.clientName,
+        tire_nom: formData.clientName,
+        tire_matricule: formData.clientTaxId,
+        tire_adresse: formData.clientAddress,
+        montant_total: parseFloat(formData.totalAmount),
+        periode_str: formData.period,
+        aval: formData.notice,
+        acceptation: formData.acceptance,
+        banque: formData.bankName,
+        adresse_banque: formData.bankAddress,
+        rip: formData.rip.replace(/\s/g, ''), // Enlever les espaces du RIP
+        date_creation: formData.creationDate,
+      };
+
+      console.log("Submitting payload to addInstallment:", payload);
+
+      // Appeler la fonction addInstallment du contexte
+      const createdInstallment = await addInstallment(payload);
+
+      console.log("Installment created successfully:", createdInstallment);
+
+      // Préparer les données pour l'aperçu
+      const previewInstallment = {
         ...formData,
+        id: createdInstallment.id || Date.now(),
         totalAmount: parseFloat(formData.totalAmount),
         numberOfInstallments: parseInt(formData.numberOfInstallments),
         installmentDetails: installmentsList,
         status: "non_paye",
         createdAt: new Date().toISOString(),
       };
-      addInstallment(newInstallment);
 
-      // Afficher l'aperçu après sauvegarde
-      setPreviewData(newInstallment);
+      // Afficher l'aperçu
+      setPreviewData(previewInstallment);
       setShowPreview(true);
 
-      // Optionnel: Réinitialiser le formulaire après l'aperçu
-      // setFormData({ ... });
-      // Afficher la liste après enregistrement
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new CustomEvent("switchInstallmentTab", { detail: { tab: "view" } })
-        );
+      // Rafraîchir la liste des traites dans le contexte
+      if (refreshInstallments) {
+        await refreshInstallments();
       }
+
+      // Réinitialiser le formulaire après succès
+      resetForm();
+
+      // Notifier le succès
+      alert("Traite créée avec succès!");
+
+      // Changer d'onglet vers "Voir traites" après un délai
+      setTimeout(() => {
+        if (typeof window !== "undefined") {
+          const event = new CustomEvent("switchInstallmentTab", {
+            detail: { tab: "view" }
+          });
+          window.dispatchEvent(event);
+        }
+      }, 2000);
+
+    } catch (error) {
+      console.error("Error creating installment:", error);
+      alert("Erreur lors de la création de la traite: " + (error.message || "Erreur inconnue"));
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  // Gestionnaire d'événement pour changer d'onglet
+  useEffect(() => {
+    const handleTabSwitch = (e) => {
+      const { tab } = e.detail;
+      console.log("Changer d'onglet vers:", tab);
+      // La logique de changement d'onglet sera gérée par le composant parent
+    };
+
+    window.addEventListener("switchInstallmentTab", handleTabSwitch);
+    
+    return () => {
+      window.removeEventListener("switchInstallmentTab", handleTabSwitch);
+    };
+  }, []);
 
   return (
     <div className="installment-form">
@@ -357,31 +513,28 @@ const InstallmentForm = () => {
           <div className="main-info-grid">
             <div className="form-group">
               <label>Numéro de Facture:</label>
-              <select
-                name="invoiceNumber"
-                value={formData.invoiceNumber}
-                onChange={handleChange}
-                className={`form-input ${errors.invoiceNumber ? "error" : ""}`}
-                disabled={
-                  !formData.clientName || formData.clientName === "nouveau"
-                }
-              >
-                <option value="">
-                  {formData.clientName
-                    ? "Sélectionner une facture"
-                    : "Sélectionner d'abord un client"}
-                </option>
-                {filteredInvoices.map((invoice) => (
-                  <option key={invoice} value={invoice}>
-                    {invoice}
-                  </option>
-                ))}
-              </select>
-              {errors.invoiceNumber && (
-                <p className="error-text">{errors.invoiceNumber}</p>
-              )}
+<select
+  name="numero_commande"
+  value={formData.numero_commande}
+  onChange={handleChange}
+  className={`form-input ${errors.numero_commande ? "error" : ""}`}
+  disabled={!formData.clientName || formData.clientName === "nouveau"}
+>
+  <option value="">
+    {formData.clientName
+      ? "Sélectionner une facture"
+      : "Sélectionner d'abord un client"}
+  </option>
+  {filteredInvoices.map((invoice) => (
+    <option key={invoice.numero_commande} value={invoice.numero_commande}>
+      {invoice.number}
+    </option>
+  ))}
+</select>
+{errors.numero_commande && (
+  <p className="error-text">{errors.numero_commande}</p>
+)}
             </div>
-
             <div className="form-group">
               <label>Nombre de Traites:</label>
               <input
@@ -391,9 +544,7 @@ const InstallmentForm = () => {
                 onChange={handleChange}
                 min="1"
                 max="24"
-                className={`form-input ${
-                  errors.numberOfInstallments ? "error" : ""
-                }`}
+                className={`form-input ${errors.numberOfInstallments ? "error" : ""}`}
               />
               {errors.numberOfInstallments && (
                 <p className="error-text">{errors.numberOfInstallments}</p>
@@ -545,7 +696,7 @@ const InstallmentForm = () => {
                   name="rip"
                   value={formData.rip}
                   onChange={handleChange}
-                  maxLength="23"
+                  maxLength="30"
                   className="form-input rip-input"
                   placeholder="01 234 567890213456 78"
                 />
@@ -612,34 +763,18 @@ const InstallmentForm = () => {
           <button type="button" onClick={handlePreview} className="preview-btn">
             📄 Aperçu et Impression
           </button>
-          <button type="submit" className="submit-btn">
-            💾 Enregistrer et Voir Traites
+          <button 
+            type="submit" 
+            className="submit-btn"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "⏳ Enregistrement..." : "💾 Enregistrer et Voir Traites"}
           </button>
           <button
             type="button"
-            onClick={() => {
-              setFormData({
-                drawerName: "RM METALASER",
-                drawerTaxId: "191 1419B/A/M/000",
-                drawerAddress: "Sfax",
-                clientName: "",
-                clientTaxId: "",
-                clientAddress: "",
-                invoiceNumber: "",
-                numberOfInstallments: 3,
-                firstDueDate: "",
-                totalAmount: "",
-                period: "mensuel",
-                creationDate: new Date().toISOString().split("T")[0],
-                notice: "",
-                acceptance: "",
-                bankName: "",
-                bankAddress: "",
-                rip: "",
-              });
-              setErrors({});
-            }}
+            onClick={resetForm}
             className="reset-btn"
+            disabled={isSubmitting}
           >
             🔄 Réinitialiser
           </button>
@@ -661,13 +796,3 @@ const InstallmentForm = () => {
 };
 
 export default InstallmentForm;
-
-// En haut du fichier ou dans useEffect :
-// Permet à InstallmentManagement d'écouter l'événement pour changer d'onglet
-window.addEventListener("switchInstallmentTab", (e) => {
-  const { tab } = e.detail;
-  // Logique pour changer d'onglet dans InstallmentManagement
-  console.log("Changer d'onglet vers:", tab);
-  // Ici, vous pouvez ajouter le code pour changer l'onglet, par exemple:
-  // setActiveTab(tab);
-});
