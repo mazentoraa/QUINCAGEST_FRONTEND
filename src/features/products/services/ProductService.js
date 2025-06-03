@@ -18,6 +18,38 @@ class ProductService {
     }
   }
 
+  // New method to fetch all products across all pages
+  static async getAllProductsPaginated() {
+    try {
+      let allProducts = [];
+      let page = 1;
+      let totalPages = 1;
+
+      while (page <= totalPages) {
+        const response = await axios.get(API_BASE_URL + `/produits/?page=${page}`);
+        const data = response.data;
+        const productsPage = data.results || data;
+        allProducts = allProducts.concat(productsPage.map(product => new ProductModel(product)));
+
+        if (data.total_pages) {
+          totalPages = data.total_pages;
+        } else if (data.count && data.results) {
+          totalPages = Math.ceil(data.count / data.results.length);
+        } else {
+          // If no pagination info, assume single page
+          totalPages = 1;
+        }
+
+        page++;
+      }
+
+      return allProducts;
+    } catch (error) {
+      console.error('Error fetching all paginated products:', error);
+      throw error;
+    }
+  }
+
   static async getProductById(id) {
     try {
       const response = await axios.get(`${API_BASE_URL}/produits/${id}/`);
