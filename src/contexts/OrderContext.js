@@ -28,37 +28,40 @@ export const OrderProvider = ({ children }) => {
     return clients.find(client => client.id === id);
   };
 
-  const addOrder = (order) => {
-    // Find the max current order id as number
-    const maxId = orders.reduce((max, o) => {
-      const idNum = parseInt(o.id, 10);
-      return !isNaN(idNum) && idNum > max ? idNum : max;
-    }, 0);
+const addOrder = (order) => {
+  // Trouver l'ID le plus élevé existant
+  const maxId = orders.reduce((max, o) => {
+    const idNum = parseInt(o.id, 10);
+    return !isNaN(idNum) && idNum > max ? idNum : max;
+  }, 0);
 
-    // Generate numero_commande as "FAC-YYYY-XXXXX"
-    const year = new Date().getFullYear();
-    const numero_commande = `FAC-${year}-${(maxId + 1).toString().padStart(5, '0')}`;
+  // Nouvel ID auto-incrémenté
+  const nextId = maxId + 1;
 
-    const newOrder = {
-      ...order,
-      id: (maxId + 1).toString(),
-      numero_commande,
-      date: new Date().toISOString(),
-    };
-    
-    // Mise à jour des stocks
-    if (order.items) {
-      order.items.forEach(item => {
-        const product = products.find(p => p.id === item.productId);
-        if (product) {
-          updateStock(product.id, product.quantity - item.quantity);
-        }
-      });
-    }
-    
-    setOrders([...orders, newOrder]);
-    return newOrder;
+  // numero_commande = id
+  const numero_commande = nextId.toString();
+
+  const newOrder = {
+    ...order,
+    id: numero_commande,
+    numero_commande: numero_commande,
+    date: new Date().toISOString(),
   };
+
+  // Mise à jour des stocks
+  if (order.items) {
+    order.items.forEach(item => {
+      const product = products.find(p => p.id === item.productId);
+      if (product) {
+        updateStock(product.id, product.quantity - item.quantity);
+      }
+    });
+  }
+
+  setOrders([...orders, newOrder]);
+  return newOrder;
+};
+
 
   const updateOrder = (id, updatedOrder) => {
     const updatedOrders = orders.map(order => 

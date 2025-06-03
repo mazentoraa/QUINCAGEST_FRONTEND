@@ -86,6 +86,16 @@ class FacturePdfApiService {
   static generateOrderHTML(orderData) {
     const items = orderData.produit_commande || [];
 
+    // Helper to format invoice number as FAC-YYYY-NNNNN
+    const formatInvoiceNumber = (order) => {
+      const prefix = "FAC";
+      const date = order.date_commande ? new Date(order.date_commande) : new Date();
+      const year = date.getFullYear();
+      // Pad id with leading zeros to 5 digits
+      const sequence = order.id ? order.id.toString().padStart(5, "0") : "00000";
+      return `${prefix}-${year}-${sequence}`;
+    };
+
     const itemsHTML = items
       .map(
         (item) => `
@@ -223,9 +233,7 @@ class FacturePdfApiService {
     </div>
 
     <div class="order-header">
-        <p><strong>Facture N°:</strong> ${
-          orderData.numero_commande || "N/A"
-        }<br>
+        <p><strong>Facture N°:</strong> ${formatInvoiceNumber(orderData)}<br>
             <strong>Methode du Paiement:</strong> ${
               orderData.mode_paiement || "N/A"
             }<br>
@@ -233,9 +241,7 @@ class FacturePdfApiService {
             <strong>Date Livraison Prévue:</strong> ${
               orderData.date_livraison_prevue || "N/A"
             }<br>
-            <strong>Statut:</strong> ${this.translateStatus(
-              orderData.statut
-            )}<br>
+            <!-- Statut removed as per user request -->
         </p>
     </div>
 

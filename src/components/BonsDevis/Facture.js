@@ -57,6 +57,16 @@ const formatCurrency = (amount, currency = "TND") => {
   }).format(amount || 0);
 };
 
+// Helper to format invoice number as FAC-YYYY-NNNNN
+const formatInvoiceNumber = (order) => {
+  const prefix = "FAC";
+  const date = order.date_commande ? new Date(order.date_commande) : new Date();
+  const year = date.getFullYear();
+  // Pad id with leading zeros to 5 digits
+  const sequence = order.id ? order.id.toString().padStart(5, "0") : "00000";
+  return `${prefix}-${year}-${sequence}`;
+};
+
 const translateOrderStatus = (status) => {
   const statusMap = {
     pending: "En attente",
@@ -880,7 +890,7 @@ export default function BonCommande() {
           ? moment(detailedOrder.date_livraison_prevue).format("DD/MM/YYYY")
           : "",
         // Ensure all required fields are present
-        numero_commande: detailedOrder.numero_commande || "",
+        numero_commande: detailedOrder.id || "",
 
         // Correctly source client information
         nom_client:
@@ -908,7 +918,7 @@ export default function BonCommande() {
           detailedOrder.client_phone ||
           detailedOrder.telephone_client ||
           "",
-        statut: detailedOrder.statut || "",
+        // Removed statut from printed invoice as per user request
         conditions_paiement: detailedOrder.conditions_paiement || "",
         mode_paiement: translatePaymentMethod(detailedOrder.mode_paiement), // Add this
         notes: detailedOrder.notes || "",
@@ -1060,14 +1070,14 @@ export default function BonCommande() {
           </div>
           <table>
             <thead>
-              <tr>
-                <th>N° Facture</th>
-                <th>Client</th>
-                <th>Date</th>
-                <th>Statut</th>
-                <th>Mode Paiement</th> {/* Added Mode Paiement header */}
-                <th>Montant TTC</th>
-              </tr>
+      <tr>
+        <th>N° Facture</th>
+        <th>Client</th>
+        <th>Date</th>
+        <!-- Removed Statut column as per user request -->
+        <th>Mode Paiement</th> {/* Added Mode Paiement header */}
+        <th>Montant TTC</th>
+      </tr>
             </thead>
             <tbody>
               ${summaryData.orders
@@ -1081,13 +1091,13 @@ export default function BonCommande() {
                       ? moment(order.date_commande).format("DD/MM/YYYY")
                       : ""
                   }</td>
-                  <td>${translateOrderStatus(order.statut)}</td>
-                  <td>${translatePaymentMethod(
-                    order.mode_paiement
-                  )}</td> {/* Added Mode Paiement data */}
-                  <td>${formatCurrency(order.montant_ttc)}</td>
-                </tr>
-              `
+              <!-- Removed Statut cell as per user request -->
+              <td>${translatePaymentMethod(
+                order.mode_paiement
+              )}</td> {/* Added Mode Paiement data */}
+              <td>${formatCurrency(order.montant_ttc)}</td>
+            </tr>
+          `
                 )
                 .join("")}
             </tbody>
@@ -1163,10 +1173,11 @@ export default function BonCommande() {
   const columns = [
     {
       title: "N° Facture",
-      dataIndex: "numero_commande",
-      key: "numero_commande",
+      dataIndex: "id",
+      key: "id",
       sorter: (a, b) =>
-        (a.numero_commande || "").localeCompare(b.numero_commande || ""),
+        (a.id || 0) - (b.id || 0),
+      render: (id, record) => formatInvoiceNumber(record),
     },
     {
       title: "Client",

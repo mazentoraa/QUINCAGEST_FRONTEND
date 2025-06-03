@@ -15,6 +15,6 @@ export const createPlanTraite = async (planData) => {
 };
 
 export const updateTraiteStatus = async (traiteId, statusData) => {
-  const response = await cdsService.patch(`/api/traites/${traiteId}/update_status/`, statusData);
-  return response.data;
+  const response = await cdsService.updateTraiteStatus(traiteId, statusData);
+  return response;
 };

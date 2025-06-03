@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { InstallmentContext } from '../contexts/InstallmentContext';
 import InstallmentForm from './InstallmentForm';
 import InstallmentsPrinter from './InstallmentsPrinter';
@@ -10,26 +10,23 @@ const InstallmentManagement = () => {
   const [activeTab, setActiveTab] = useState('create');
   const [selectedInstallment, setSelectedInstallment] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
-  
-  // États pour le filtrage
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all'); // all, paye, non_paye
+  const [statusFilter, setStatusFilter] = useState('all');
   const [bankFilter, setBankFilter] = useState('all');
 
-  // Fonction pour filtrer les traites
   const filteredInstallments = installments.filter(installment => {
     const clientName = installment.client_nom || installment.clientName || "";
     const invoiceNumber = installment.numero_commande || installment.invoiceNumber || "";
-    const matchesSearch = 
+    const matchesSearch =
       clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'all' || installment.status === statusFilter;
     const matchesBank = bankFilter === 'all' || installment.bankName === bankFilter;
     return matchesSearch && matchesStatus && matchesBank;
   });
 
-  // Fonction pour changer le statut d'une traite
   const handleStatusChange = (installmentId, newStatus) => {
     const installmentToUpdate = installments.find(item => item.id === installmentId);
     if (installmentToUpdate) {
@@ -41,20 +38,17 @@ const InstallmentManagement = () => {
     }
   };
 
-  // Fonction pour afficher les détails d'un client
   const handleClientClick = (installment) => {
     setSelectedInstallment(installment);
     setShowDetails(true);
   };
 
-  // Fonction pour revenir à la liste
   const handleBackToList = () => {
     setShowDetails(false);
     setSelectedInstallment(null);
   };
 
-  // Ajout : écoute l'événement pour changer d'onglet après enregistrement
-  React.useEffect(() => {
+  useEffect(() => {
     const handler = (e) => {
       if (e.detail && e.detail.tab === 'view') {
         setActiveTab('view');
@@ -79,30 +73,19 @@ const InstallmentManagement = () => {
       <div className="installment-header">
         <h1>Gestion des Traites</h1>
       </div>
-      
-      {/* Navigation des onglets */}
+
       <div className="tab-navigation">
-        <button
-          className={`tab-button ${activeTab === 'create' ? 'active' : ''}`}
-          onClick={() => setActiveTab('create')}
-        >
+        <button className={`tab-button ${activeTab === 'create' ? 'active' : ''}`} onClick={() => setActiveTab('create')}>
           <i className="fas fa-plus-circle"></i> Créer des Traites
         </button>
-        <button
-          className={`tab-button ${activeTab === 'view' ? 'active' : ''}`}
-          onClick={() => setActiveTab('view')}
-        >
+        <button className={`tab-button ${activeTab === 'view' ? 'active' : ''}`} onClick={() => setActiveTab('view')}>
           <i className="fas fa-list-alt"></i> Voir les Traites
         </button>
-        <button
-          className={`tab-button ${activeTab === 'print' ? 'active' : ''}`}
-          onClick={() => setActiveTab('print')}
-        >
+        <button className={`tab-button ${activeTab === 'print' ? 'active' : ''}`} onClick={() => setActiveTab('print')}>
           <i className="fas fa-print"></i> Imprimer les Traites
         </button>
       </div>
 
-      {/* Contenu de l'onglet actif */}
       <div className="tab-content">
         <div className={`tab-panel ${activeTab === 'create' ? 'active' : ''}`}>
           {activeTab === 'create' && <InstallmentForm />}
@@ -112,8 +95,7 @@ const InstallmentManagement = () => {
           {activeTab === 'view' && (
             <>
               <h2 className="panel-title">Traites Existantes</h2>
-              
-              {/* Section de filtrage */}
+
               <div className="filter-section">
                 <div className="filter-row">
                   <div className="search-container">
@@ -126,7 +108,7 @@ const InstallmentManagement = () => {
                     />
                     <i className="fas fa-search search-icon"></i>
                   </div>
-                  
+
                   <div className="status-filter">
                     <select
                       value={statusFilter}
@@ -138,26 +120,26 @@ const InstallmentManagement = () => {
                       <option value="paye">Payé</option>
                     </select>
                   </div>
+
                   <div className="bank-filter">
-                <select
-                  value={bankFilter}
-                  onChange={(e) => setBankFilter(e.target.value)}
-                  className="bank-select"
-                >
-                  <option value="all">Toutes les banques</option>
-                  <option value="BCT">Banque Centrale de Tunisie (BCT)</option>
-                  <option value="STB">Société Tunisienne de Banque (STB)</option>
-                  <option value="BNA">Banque Nationale Agricole (BNA)</option>
-                  <option value="BIAT">Banque Internationale Arabe de Tunisie (BIAT)</option>
-                  <option value="Attijari_Bank">Attijari Bank</option>
-                  <option value="BT">Banque de Tunisie (BT)</option>
-                  <option value="UIB">Union Internationale de Banques (UIB)</option>
-                  <option value="Amen Bank">Amen Bank</option>
-                  <option value="ATB">Arab Tunisian Bank (ATB)</option>
-                  <option value="BTK">Banque Tuniso-Koweitienne (BTK)</option>
-                 
-                </select>
-              </div>
+                    <select
+                      value={bankFilter}
+                      onChange={(e) => setBankFilter(e.target.value)}
+                      className="bank-select"
+                    >
+                      <option value="all">Toutes les banques</option>
+                      <option value="BCT">Banque Centrale de Tunisie (BCT)</option>
+                      <option value="STB">Société Tunisienne de Banque (STB)</option>
+                      <option value="BNA">Banque Nationale Agricole (BNA)</option>
+                      <option value="BIAT">Banque Internationale Arabe de Tunisie (BIAT)</option>
+                      <option value="Attijari_Bank">Attijari Bank</option>
+                      <option value="BT">Banque de Tunisie (BT)</option>
+                      <option value="UIB">Union Internationale de Banques (UIB)</option>
+                      <option value="Amen Bank">Amen Bank</option>
+                      <option value="ATB">Arab Tunisian Bank (ATB)</option>
+                      <option value="BTK">Banque Tuniso-Koweitienne (BTK)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -188,37 +170,42 @@ const InstallmentManagement = () => {
                     <tbody>
                       {filteredInstallments.map((installment) => (
                         <tr key={installment.id}>
-                      <td>
-                        <button
-                          className="client-name-button"
-                          onClick={() => handleClientClick(installment)}
-                        >
-                          {installment.client_nom || installment.clientName || 'N/A'}
-                        </button>
-                      </td>
-                      <td>{installment.numero_commande || installment.invoiceNumber || 'N/A'}</td>
-                      <td>{installment.montant_total?.toFixed(3) || installment.nombre_traite || installment.numberOfInstallments || 'N/A'}</td>
-                      <td>
-                        <select
-                          value={installment.status || 'non_paye'}
-                          onChange={(e) => handleStatusChange(installment.id, e.target.value)}
-                          className={`status-select-table ${installment.status === 'paye' ? 'paid' : 'unpaid'}`}
-                        >
-                          <option value="non_paye">Non payé</option>
-                          <option value="paye">Payé</option>
-                        </select>
-                      </td>
-                      <td>
-                        <button 
-                          className="action-button print-button"
-                          onClick={() => {
-                            setSelectedInstallment(installment);
-                            setActiveTab('print');
-                          }}
-                        >
-                          <i className="fas fa-print"></i> Imprimer
-                        </button>
-                      </td>
+                          <td>
+                            <button
+                              className="client-name-button"
+                              onClick={() => handleClientClick(installment)}
+                            >
+                              {installment.client_nom || installment.clientName || 'N/A'}
+                            </button>
+                          </td>
+                          <td>{installment.numero_commande || installment.invoiceNumber || 'N/A'}</td>
+                          <td>
+                            {installment.montant_total
+                              ? parseFloat(installment.montant_total).toFixed(3)
+                              : 'N/A'}
+                          </td>
+                          <td>{installment.nombre_traite || installment.numberOfInstallments || 'N/A'}</td>
+                          <td>
+                            <select
+                              value={installment.status || 'non_paye'}
+                              onChange={(e) => handleStatusChange(installment.id, e.target.value)}
+                              className={`status-select-table ${installment.status === 'paye' ? 'paid' : 'unpaid'}`}
+                            >
+                              <option value="non_paye">Non payé</option>
+                              <option value="paye">Payé</option>
+                            </select>
+                          </td>
+                          <td>
+                            <button
+                              className="action-button print-button"
+                              onClick={() => {
+                                setSelectedInstallment(installment);
+                                setActiveTab('print');
+                              }}
+                            >
+                              <i className="fas fa-print"></i> Imprimer
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
