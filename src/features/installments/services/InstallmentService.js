@@ -4,7 +4,7 @@ const { cdsService } = getApiService();
 
 const BASE_URL = '/api/plans-traite/';
 
-export const getPlanTraitess = async () => {
+export const getPlansTraite = async () => {
   const data = await cdsService.getPlansTraite();
   return data;
 };
@@ -15,6 +15,6 @@ export const createPlanTraite = async (planData) => {
 };
 
 export const updateTraiteStatus = async (traiteId, statusData) => {
-  const response = await cdsService.updateTraiteStatus(traiteId, statusData);
-  return response;
+  const response = await cdsService.patch(`/api/traites/${traiteId}/update_status/`, statusData);
+  return response.data;
 };

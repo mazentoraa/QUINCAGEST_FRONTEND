@@ -15,28 +15,20 @@ export const InstallmentProvider = ({ children }) => {
       setLoading(true);
       try {
         const [installmentsData, clientsData] = await Promise.all([
-          InstallmentService.getPlanTraitess(),
+          InstallmentService.getPlansTraite(),
           getClients()
         ]);
 
-        const mappedInstallments = installmentsData.map(item => {
-          // Determine status from traites array if available
-          let status = item.status || 'EN_COURS';
-          if (item.traites && item.traites.length > 0) {
-            // If all traites are paid, status is 'paye', else 'non_paye'
-            const allPaid = item.traites.every(t => t.status === 'paye');
-            status = allPaid ? 'paye' : 'non_paye';
-          }
-          return {
-            ...item,
-            clientName: item.nom_raison_sociale || item.client?.nom_client || 'N/A',
-            invoiceNumber: item.facture?.numero_facture || item.numero_facture || 'N/A',
-            totalAmount: item.montant_total || item.facture?.montant_ttc || 0,
-            numberOfInstallments: item.nombre_traite || 0,
-            status,
-            installmentDetails: item.traites || [],
-          };
-        });
+        const mappedInstallments = installmentsData.map(item => ({
+          ...item,
+          clientName: item.nom_raison_sociale || item.client?.nom_client || 'N/A',
+          invoiceNumber: item.numero_facture || 'N/A',
+          totalAmount: item.montant_total || 0,
+          numberOfInstallments: item.nombre_traite || 0,
+          status: item.status || 'EN_COURS',
+          installmentDetails: item.traites || [],
+          bankName: item.banque || '',
+        }));
 
         setInstallments(mappedInstallments);
         setClients(clientsData);
@@ -91,29 +83,28 @@ export const InstallmentProvider = ({ children }) => {
   const addInstallment = async (newInstallment) => {
     setLoading(true);
     try {
-const payload = {
-  numero_commande: newInstallment.numero_commande,
-  nombre_traite: newInstallment.nombre_traite,
-  date_premier_echeance: newInstallment.date_premier_echeance,
-  periode: newInstallment.periode || 30,
-  montant_total: newInstallment.montant_total || 0,
-  nom_raison_sociale: newInstallment.nom_raison_sociale,
-  matricule_fiscal: newInstallment.tire_matricule,
-  mode_paiement: 'traite'
-};
-
+      const payload = {
+        numero_commande: newInstallment.numero_commande,
+        nombre_traite: newInstallment.nombre_traite,
+        date_premier_echeance: newInstallment.date_premier_echeance,
+        periode: newInstallment.periode || 30,
+        montant_total: newInstallment.montant_total || 0,
+        nom_raison_sociale: newInstallment.nom_raison_sociale,
+        matricule_fiscal: newInstallment.tire_matricule,
+        mode_paiement: 'traite'
+      };
 
       const created = await InstallmentService.createPlanTraite(payload);
 
-const enriched = {
-  ...created,
-  clientName: payload.nom_raison_sociale,
-  invoiceNumber: newInstallment.numero_commande,
-  totalAmount: payload.montant_total,
-  numberOfInstallments: payload.nombre_traite,
-  status: created.status || "EN_COURS",
-  installmentDetails: created.traites || [],
-};
+      const enriched = {
+        ...created,
+        clientName: payload.nom_raison_sociale,
+        invoiceNumber: created.numero_facture,
+        totalAmount: payload.montant_total,
+        numberOfInstallments: payload.nombre_traite,
+        status: created.status || "EN_COURS",
+        installmentDetails: created.traites || [],
+      };
 
       setInstallments(prev => [...prev, enriched]);
       updateClientsFromInstallment(enriched);
@@ -131,18 +122,16 @@ const enriched = {
   const updateInstallment = async (updatedInstallment) => {
     setLoading(true);
     try {
-      const response = await InstallmentService.updateTraiteStatus(
-        updatedInstallment.id,
+      const updated = await InstallmentService.updateTraiteStatus(
+        updatedInstallment.id, // 👈 Assure-toi que c'est l'ID du Traite
         { status: updatedInstallment.status }
       );
-      // The backend returns { status: "success", new_status: "paye" }
-      // Update the local state with the new status
       setInstallments((prev) =>
         prev.map((item) =>
-          item.id === updatedInstallment.id ? { ...item, status: response.new_status || updatedInstallment.status } : item
+          item.id === updatedInstallment.id ? { ...item, ...updated } : item
         )
       );
-      return response;
+      return updated;
     } catch (err) {
       console.error(err);
       setError("Erreur lors de la mise à jour de la traite");
