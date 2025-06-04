@@ -88,12 +88,7 @@ class FacturePdfApiService {
 
     // Helper to format invoice number as FAC-YYYY-NNNNN
     const formatInvoiceNumber = (order) => {
-      const prefix = "FAC";
-      const date = order.date_commande ? new Date(order.date_commande) : new Date();
-      const year = date.getFullYear();
-      // Pad id with leading zeros to 5 digits
-      const sequence = order.id ? order.id.toString().padStart(5, "0") : "00000";
-      return `${prefix}-${year}-${sequence}`;
+      return order.numero_commande;
     };
 
     const itemsHTML = items

@@ -59,12 +59,7 @@ const formatCurrency = (amount, currency = "TND") => {
 
 // Helper to format invoice number as FAC-YYYY-NNNNN
 const formatInvoiceNumber = (order) => {
-  const prefix = "FAC";
-  const date = order.date_commande ? new Date(order.date_commande) : new Date();
-  const year = date.getFullYear();
-  // Pad id with leading zeros to 5 digits
-  const sequence = order.id ? order.id.toString().padStart(5, "0") : "00000";
-  return `${prefix}-${year}-${sequence}`;
+    return order.numero_commande;
 };
 
 const translateOrderStatus = (status) => {
@@ -452,9 +447,10 @@ export default function BonCommande() {
           return;
         }
 
-        const randomOrderNumber = `FAC-${new Date().getFullYear()}-${Math.floor(
-          10000 + Math.random() * 90000
-        )}`;
+        // Remove random number generation - let backend handle it
+        // const randomOrderNumber = `FAC-${new Date().getFullYear()}-${Math.floor(
+        //   10000 + Math.random() * 90000
+        // )}`;
 
         // Recalculate totals based on the final product list (newOrderProducts) and tax rate
         const finalMontantHt = newOrderProducts.reduce(
@@ -467,7 +463,7 @@ export default function BonCommande() {
         const orderPayload = {
           client_id: selectedClientId,
           client: selectedClientId,
-          numero_commande: randomOrderNumber,
+          // numero_commande: randomOrderNumber, // Remove this line - backend will generate
           date_commande: values.date_commande
             ? values.date_commande.format("YYYY-MM-DD")
             : moment().format("YYYY-MM-DD"),
@@ -477,25 +473,25 @@ export default function BonCommande() {
           statut: values.statut || "pending",
           notes: values.notes || "",
           conditions_paiement: values.conditions_paiement || "",
-
           mode_paiement: values.mode_paiement || "cash",
           tax_rate: taxRate,
-          timbre_fiscal: timbreFiscal, // Add timbre fiscal
+          timbre_fiscal: timbreFiscal,
           montant_ht: finalMontantHt,
           montant_tva: finalMontantTva,
           montant_ttc: finalMontantTtc,
           produits: newOrderProducts.map((p) => ({
-            produit: p.produit_id || p.produit, // ID of the product from catalog
+            produit: p.produit_id || p.produit,
             quantite: p.quantite,
             prix_unitaire: p.prix_unitaire,
             remise_pourcentage: p.remise_pourcentage || 0,
-            // prix_total is often calculated by backend or not stored directly on line item for POST
           })),
         };
 
         const createdOrder = await cdsService.createOrder(orderPayload);
         message.success(
-          `Commande ${createdOrder.numero_commande} créée avec succès!`
+          `Commande ${
+            createdOrder.numero_commande || formatInvoiceNumber(createdOrder)
+          } créée avec succès!`
         );
       } else {
         // Updating an existing order
@@ -890,7 +886,7 @@ export default function BonCommande() {
           ? moment(detailedOrder.date_livraison_prevue).format("DD/MM/YYYY")
           : "",
         // Ensure all required fields are present
-        numero_commande: detailedOrder.id || "",
+        numero_commande: detailedOrder.numero_commande || "",
 
         // Correctly source client information
         nom_client:
@@ -1120,7 +1116,9 @@ export default function BonCommande() {
       setLoading(true);
       await deleteInvoice(orderId);
       // Optimistically update UI by removing deleted order immediately
-      setOrders((prevOrders) => prevOrders.filter((order) => order.id !== orderId));
+      setOrders((prevOrders) =>
+        prevOrders.filter((order) => order.id !== orderId)
+      );
       message.success("Commande supprimée avec succès");
       // Optionally refresh orders from backend to ensure consistency
       fetchOrders();
@@ -1144,9 +1142,7 @@ export default function BonCommande() {
         prevOrders.filter((order) => !selectedRowKeys.includes(order.id))
       );
       // Use deleteInvoice from InvoiceContext for consistent state management
-      await Promise.all(
-        selectedRowKeys.map((id) => deleteInvoice(id))
-      );
+      await Promise.all(selectedRowKeys.map((id) => deleteInvoice(id)));
       message.success(`${selectedRowKeys.length} commande(s) supprimée(s)`);
       setSelectedRowKeys([]);
       setSelectedRows([]);
@@ -1175,8 +1171,7 @@ export default function BonCommande() {
       title: "N° Facture",
       dataIndex: "id",
       key: "id",
-      sorter: (a, b) =>
-        (a.id || 0) - (b.id || 0),
+      sorter: (a, b) => (a.id || 0) - (b.id || 0),
       render: (id, record) => formatInvoiceNumber(record),
     },
     {
@@ -1286,7 +1281,6 @@ export default function BonCommande() {
     setPriceRange([null, null]);
   };
 
-  
   const totalAmount = filteredOrders.reduce(
     (sum, order) => sum + (Number(order.montant_ttc) || 0),
     0
