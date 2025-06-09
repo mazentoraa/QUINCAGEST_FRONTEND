@@ -27,17 +27,6 @@ const InstallmentManagement = () => {
     return matchesSearch && matchesStatus && matchesBank;
   });
 
-  const handleStatusChange = (installmentId, newStatus) => {
-    const installmentToUpdate = installments.find(item => item.id === installmentId);
-    if (installmentToUpdate) {
-      const updatedInstallment = {
-        ...installmentToUpdate,
-        status: newStatus
-      };
-      updateInstallment(updatedInstallment);
-    }
-  };
-
   const handleClientClick = (installment) => {
     setSelectedInstallment(installment);
     setShowDetails(true);
@@ -163,7 +152,6 @@ const InstallmentManagement = () => {
                         <th>Numéro de Facture</th>
                         <th>Montant Total</th>
                         <th>Nombre de Traites</th>
-                        <th>Statut</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
@@ -185,16 +173,6 @@ const InstallmentManagement = () => {
                               : 'N/A'}
                           </td>
                           <td>{installment.nombre_traite || installment.numberOfInstallments || 'N/A'}</td>
-                          <td>
-                            <select
-                              value={installment.status || 'non_paye'}
-                              onChange={(e) => handleStatusChange(installment.id, e.target.value)}
-                              className={`status-select-table ${installment.status === 'paye' ? 'paid' : 'unpaid'}`}
-                            >
-                              <option value="non_paye">Non payé</option>
-                              <option value="paye">Payé</option>
-                            </select>
-                          </td>
                           <td>
                             <button
                               className="action-button print-button"

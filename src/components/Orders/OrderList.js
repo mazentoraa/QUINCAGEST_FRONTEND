@@ -34,9 +34,14 @@ function OrderList({ orders }) {
           }
         }
       );
-      const data = response.result;
-      setFactures(data);
-    }catch (error) {
+      response.then(res => {
+        const data = res.data;
+        setFactures(data);
+      }).catch(error => {
+        console.error("Erreur lors de la récupération des factures :", error);
+      });
+    }
+    catch (error) {
       console.error("Erreur lors de la récupération des factures :", error);
     }
   }
