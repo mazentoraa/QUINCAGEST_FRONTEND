@@ -19,16 +19,26 @@ export const InstallmentProvider = ({ children }) => {
           getClients()
         ]);
 
-        const mappedInstallments = installmentsData.map(item => ({
-          ...item,
-          clientName: item.nom_raison_sociale || item.client?.nom_client || 'N/A',
-          invoiceNumber: item.numero_facture || 'N/A',
-          totalAmount: item.montant_total || 0,
-          numberOfInstallments: item.nombre_traite || 0,
-          status: item.status || 'EN_COURS',
-          installmentDetails: item.traites || [],
-          bankName: item.banque || '',
-        }));
+        const mappedInstallments = installmentsData.map(item => {
+          const seen = new Set();
+          const uniqueTraites = (item.traites || []).filter((tr) => {
+            const key = `${tr.montant}-${tr.date_echeance}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+
+          return {
+            ...item,
+            clientName: item.nom_raison_sociale || item.client?.nom_client || 'N/A',
+            invoiceNumber: item.numero_facture || 'N/A',
+            totalAmount: item.montant_total || 0,
+            numberOfInstallments: item.nombre_traite || uniqueTraites.length,
+            status: item.status || 'non_paye',
+            traites: uniqueTraites,
+            bankName: item.banque || '',
+          };
+        });
 
         setInstallments(mappedInstallments);
         setClients(clientsData);
@@ -39,6 +49,7 @@ export const InstallmentProvider = ({ children }) => {
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
@@ -91,10 +102,19 @@ export const InstallmentProvider = ({ children }) => {
         montant_total: newInstallment.montant_total || 0,
         nom_raison_sociale: newInstallment.nom_raison_sociale,
         matricule_fiscal: newInstallment.tire_matricule,
-        mode_paiement: 'traite'
+        mode_paiement: 'traite',
+        banque: newInstallment.banque || '',
       };
 
       const created = await InstallmentService.createPlanTraite(payload);
+
+      const seen = new Set();
+      const cleanTraites = (created.traites || []).filter(tr => {
+        const key = `${tr.montant}-${tr.date_echeance}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
       const enriched = {
         ...created,
@@ -102,8 +122,9 @@ export const InstallmentProvider = ({ children }) => {
         invoiceNumber: created.numero_facture,
         totalAmount: payload.montant_total,
         numberOfInstallments: payload.nombre_traite,
-        status: created.status || "EN_COURS",
-        installmentDetails: created.traites || [],
+        status: created.status || 'non_paye',
+        traites: cleanTraites,
+        bankName: payload.banque,
       };
 
       setInstallments(prev => [...prev, enriched]);
@@ -122,16 +143,20 @@ export const InstallmentProvider = ({ children }) => {
   const updateInstallment = async (updatedInstallment) => {
     setLoading(true);
     try {
-      const updated = await InstallmentService.updateTraiteStatus(
-        updatedInstallment.id, // 👈 Assure-toi que c'est l'ID du Traite
-        { status: updatedInstallment.status }
+      const updateRequests = updatedInstallment.traites.map(traite =>
+        InstallmentService.updateTraiteStatus(traite.id, { status: traite.status })
       );
-      setInstallments((prev) =>
-        prev.map((item) =>
-          item.id === updatedInstallment.id ? { ...item, ...updated } : item
+      await Promise.all(updateRequests);
+
+      setInstallments(prev =>
+        prev.map(item =>
+          item.id === updatedInstallment.id
+            ? { ...item, ...updatedInstallment }
+            : item
         )
       );
-      return updated;
+
+      return updatedInstallment;
     } catch (err) {
       console.error(err);
       setError("Erreur lors de la mise à jour de la traite");
@@ -142,7 +167,7 @@ export const InstallmentProvider = ({ children }) => {
   };
 
   const deleteInstallment = (installmentId) => {
-    setInstallments((prev) => prev.filter((item) => item.id !== installmentId));
+    setInstallments(prev => prev.filter(item => item.id !== installmentId));
   };
 
   const refreshClients = async () => {

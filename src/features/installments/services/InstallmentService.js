@@ -1,8 +1,7 @@
+import axios from 'axios';
 import { getApiService } from '../../../services/apiServiceFactory';
 
 const { cdsService } = getApiService();
-
-const BASE_URL = '/api/plans-traite/';
 
 export const getPlansTraite = async () => {
   const data = await cdsService.getPlansTraite();
@@ -15,6 +14,6 @@ export const createPlanTraite = async (planData) => {
 };
 
 export const updateTraiteStatus = async (traiteId, statusData) => {
-  const response = await cdsService.patch(`/api/traites/${traiteId}/update_status/`, statusData);
+  const response = await axios.patch(`http://localhost:8000/api/traites/${traiteId}/update-status/`, statusData);
   return response.data;
 };

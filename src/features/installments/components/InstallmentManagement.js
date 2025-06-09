@@ -59,6 +59,7 @@ const InstallmentManagement = () => {
   }, []);
 
   if (showDetails && selectedInstallment) {
+    console.log('Selected Installment passed to InstallmentDetails:', selectedInstallment);
     return (
       <InstallmentDetails
         installment={selectedInstallment}
