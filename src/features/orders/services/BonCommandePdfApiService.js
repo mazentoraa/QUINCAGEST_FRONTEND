@@ -145,10 +145,12 @@ class BonCommandePdfApiService {
         }
 
         .client-info {
-            margin-top: 20px;
+            margin-top: 40px;
             border: 1px solid #000;
             padding: 10px;
-            width: fit-content;
+             text-align: left; 
+            width:300px ; 
+            line-height : 1.2 ; 
         }
 
         .order-details {
@@ -190,7 +192,14 @@ class BonCommandePdfApiService {
         }
 
         .order-header {
-            margin-bottom: 20px;
+                        border: 1px solid #000; 
+    padding: 2px 10px;
+    margin-top: 18px;
+    display: flex;
+    flex-direction:column; 
+    justify-content: center;
+    width: fit-content;
+   line-height: 1.5 ;
         }
 
         .conditions {
@@ -200,16 +209,17 @@ class BonCommandePdfApiService {
     </style>
 </head>
 <body>
-    <header>
-        <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 190px; margin-bottom: 5px;">
-        <h2>RM METALASER</h2>
-        <p>Découpes Métaux<br>
-            Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
-            IF: 191 1419B/A/M/000<br>
+    
+<header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;"> 
+        <div class="company-info" style="text-align: left;">
+            <h2 style="margin-buttom: 1px;">RM METALASER</h2>
+            <p style="margin: 0; line-height: 1.5;"> <span style="color:grey; font-weight: bold;  ">Découpes Métaux </span><br>
+            Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
+            MF: 191 1419B/A/M/000<br>
             Tél. : +216 20 366 150<br>
             Email: contact@rmmetalaser.tn<br>
             Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
-    </header>
+  
 
     <div class="client-info">
         <strong>Nom Client :</strong> ${orderData.nom_client || "N/A"}<br>
@@ -229,9 +239,22 @@ class BonCommandePdfApiService {
             <strong>Statut:</strong> ${this.translateStatus(
               orderData.statut
             )}<br>
-            <strong>Code Client:</strong> ${orderData.client_id || "N/A"}
+            <strong>Code Client:</strong> ${orderData.code_client || "N/A"}
         </p>
     </div>
+      </div> 
+       <div class="logo" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
+  <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
+
+  <div class="client-info">
+        <strong>Nom Client :</strong> ${orderData.nom_client || "N/A"}<br>
+        <strong>Adresse :</strong> ${orderData.client_address || "N/A"}<br>
+        <strong>M.F :</strong> ${orderData.client_tax_id || "N/A"}<br>
+        <strong>Tél. :</strong> ${orderData.client_phone || "N/A"}
+    </div>
+</div>
+
+    </header>
 
     <div class="order-details">
         <table>

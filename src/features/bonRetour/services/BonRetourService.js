@@ -172,14 +172,26 @@ class BonRetourService {
   /**
    * Generate bon retour number
    */
-  generateBonRetourNumber() {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const time = String(date.getHours()).padStart(2, '0') + String(date.getMinutes()).padStart(2, '0');
-    
-    return `BR-${year}${month}${day}-${time}`;
+  generateBonRetourNumber(getAllBonsRetour =[]) {
+    const currentYear = new Date().getFullYear();
+        const currentYearBonsRetour = getAllBonsRetour.filter(bonRetour => 
+          bonRetour.numero_bon?.includes(`-${currentYear}-`)
+        );
+        let maxSequence = 0;
+         currentYearBonsRetour.forEach(order => {
+           const parts = order.numero_bon.split('-');
+           const sequencePart = parts[parts.length - 1];
+           const sequenceNumber = parseInt(sequencePart, 10) || 0;
+
+           if (sequenceNumber > maxSequence) {
+             maxSequence = sequenceNumber;
+           }
+         });
+         const newSequence = String(maxSequence + 1).padStart(5, '0');
+
+       
+        const randomOrderNumber = `BR-${new Date().getFullYear()}-${newSequence}`;
+          return randomOrderNumber;
   }
 }
 

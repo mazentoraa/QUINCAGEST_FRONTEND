@@ -15,16 +15,19 @@ import {
   Empty,
   Spin,
   Divider,
+  Popconfirm,
   Row,
   Col,
   message,
   notification,
+  
 } from "antd";
 import {
   FilterOutlined,
   ReloadOutlined,
   FileSearchOutlined,
   PrinterOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import { debounce } from "lodash";
@@ -67,7 +70,20 @@ const BonLivraisonReception = () => {
 
   // Form for filters
   const [filterForm] = Form.useForm();
-
+   const handleDeleteInvoice = async (Id) => {
+      try {
+        setLoading(true);
+        await ClientMaterialService.deleteMaterialInvoice(Id)
+        message.success("Bon de Livraison  supprimée avec succès"); 
+        setDeliveryNotes(prevNotes => prevNotes.filter(note => note.id !== Id));
+        setTotalRecords(prevTotal => prevTotal - 1);
+      } catch(error){
+        message.error("Erreur lors de la suppression: " + error.message);
+      } finally {
+        setLoading(false)
+      }
+  
+    }
   // Material types options for display
   const material_types = [
     { value: "acier", label: "Acier" },
@@ -87,6 +103,38 @@ const BonLivraisonReception = () => {
       0
     );
   }, []); // No dependencies, it's a pure function of its arguments
+
+  const [data, setData] = useState([]) ; 
+  const fetchData = async () => {
+    try {
+      const res = await ClientMaterialService.getAllMaterialInvoices();
+      setData(res);
+    } catch (error) {
+      message.error('Échec du chargement des données');
+    }
+  };
+  
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleDelete = async (id) => {
+  
+    setDeliveryNotes(prev =>
+      Array.isArray(prev) ? prev.filter(note => note.id !== id) : []);
+  
+  
+    setTotalRecords(prev => prev - 1);
+  
+    try {
+      await ClientMaterialService.deleteMaterialInvoice(id);
+      message.success("Supprimé avec succès");
+    } catch (err) {
+      message.error("Échec de la suppression – annulation");
+    
+      fetchDeliveryNotes();            
+    }
+  };
 
   // Fetch delivery notes based on current filters and pagination
   const fetchDeliveryNotes = useCallback(async () => {
@@ -430,6 +478,16 @@ const BonLivraisonReception = () => {
               icon={<PrinterOutlined />}
               onClick={() => printDeliveryNote(record)}
             />
+          </Tooltip>
+          <Tooltip title="Supprimer">
+           <Popconfirm
+              title="Êtes-vous sûr de vouloir supprimer cette commande ?"
+              onConfirm={() => handleDeleteInvoice(record.id)}
+              okText="Oui"
+              cancelText="Non"
+            >
+              <Button danger icon={<DeleteOutlined />} size="small" />
+            </Popconfirm>
           </Tooltip>
         </Space>
       ),

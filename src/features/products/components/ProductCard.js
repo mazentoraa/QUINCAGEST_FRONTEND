@@ -269,6 +269,23 @@ const ProductCard = ({ product }) => {
           {product.surface !== null && product.surface !== undefined && (
             <Text>Surface : {product.surface} m²</Text>
           )}
+            {product.created_at !== null && product.created_at !== undefined && (
+            <Text>Crée Le : { new Date(product.created_at).toLocaleDateString('fr-FR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric'
+            })} </Text>
+            
+          )}
+          {product.updated_at !== null && product.updated_at !== undefined && (
+            <Text>Dernière Modification Le : {
+                new Date(product.updated_at).toLocaleDateString('fr-FR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric'
+                })} </Text>
+            
+          )}
         </Space>
 
         {product.description && (

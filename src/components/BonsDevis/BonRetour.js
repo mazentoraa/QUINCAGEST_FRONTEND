@@ -168,7 +168,7 @@ const BonRetour = () => {
 
     // Set default values
     form.setFieldsValue({
-      numero_bon: BonRetourService.generateBonRetourNumber(),
+      numero_bon: BonRetourService.generateBonRetourNumber(bonsRetour),
       date_reception: moment(),
       date_retour: moment(),
       status: "draft",

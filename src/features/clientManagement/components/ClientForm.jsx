@@ -42,6 +42,13 @@ const ClientForm = ({ initial_values, on_finish, on_cancel, loading, is_edit }) 
     }
     return Promise.resolve();
   };
+  const validate_matricule_fiscal = (_, value) => {
+  const regex = /^\d{3}\s\d{4}[A-Z]\/[A-Z]\/[A-Z]\/\d{3}$/;
+  if (value && !regex.test(value)) {
+    return Promise.reject(new Error("Format attendu : 000 0000X/X/X/000"));
+  }
+  return Promise.resolve();
+};
 
   const handle_finish = (values) => {
     // Convert the form values directly to the format expected by the API
@@ -87,9 +94,12 @@ const ClientForm = ({ initial_values, on_finish, on_cancel, loading, is_edit }) 
         <Form.Item
           name="numero_fiscal"
           label="Numéro d'enregistrement fiscal"
-          rules={[{ required: true, message: 'Le numéro d\'enregistrement fiscal est obligatoire' }]}
+         rules={[
+            { required: true, message: 'Le numéro d\'enregistrement fiscal est obligatoire' },
+            { validator: validate_matricule_fiscal }
+          ]}
         >
-          <Input placeholder="Entrez le numéro d'enregistrement fiscal" />
+        <Input placeholder="000 0000X/X/X/000" />
         </Form.Item>
 
         <Form.Item

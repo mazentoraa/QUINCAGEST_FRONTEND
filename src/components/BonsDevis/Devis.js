@@ -110,15 +110,32 @@ export default function Devis() {
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [dateRange, setDateRange] = useState(null);
   const [priceRange, setPriceRange] = useState([null, null]); // [min, max]
-  const API_BASE_URL =
-    process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
   // randomId of 2 letter and 3 digits placed randomly in the string
   const randomId = `ID-${Math.random()
     .toString(36)
     .substring(2, 4)
     .toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
+  const currentYear = new Date().getFullYear();
+        const currentYearsDevis = filteredDevisList.filter(devis =>
+          devis.numero_devis?.includes(`DEV-${currentYear}-`)
+        );
+        let maxSequence = 0;
+         currentYearsDevis.forEach(dev => {
+           const parts = dev.numero_devis.split('-');
+           const sequencePart = parts[parts.length - 1];
+           const sequenceNumber = parseInt(sequencePart, 10) || 0;
+
+           if (sequenceNumber > maxSequence) {
+             maxSequence = sequenceNumber;
+           }
+         });
+         const newSequence = String(maxSequence + 1).padStart(5, '0');
+
+        // Generate a random order number
+        const randomOrderNumber = `DEV-${new Date().getFullYear()}-${newSequence}`;
   const initialFormValues = {
-    numero_devis: `DEV-${new Date().getFullYear()}-${randomId}`,
+    numero_devis:randomOrderNumber,
     client: undefined,
     date_emission: dayjs(),
     date_validite: dayjs().add(15, "days"),

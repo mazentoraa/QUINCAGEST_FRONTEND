@@ -93,6 +93,7 @@ export default function BonCommande() {
   // Filter and search state variables
   const [searchText, setSearchText] = useState("");
   const [clientNameFilter, setClientNameFilter] = useState(""); // New client name filter
+  const [clientCodeFilter, setClientCodeFilter] = useState("");
   // Removed selectedClientFilter state
   const [selectedClientFilter, setSelectedClientFilter] = useState(null); // Client ID for filtering
   const [selectedStatus, setSelectedStatus] = useState(null);
@@ -201,6 +202,14 @@ export default function BonCommande() {
           order.nom_client.toLowerCase().includes(clientNameLower)
       );
     }
+    if (clientCodeFilter) {
+      const clientCodeLower = clientCodeFilter.toLowerCase();
+      result = result.filter(
+        (order) =>
+          order.code_client &&
+          order.code_client.toLowerCase().includes(clientCodeLower)
+      );
+    }
 
     // Filter by client
     if (selectedClientFilter) {
@@ -247,6 +256,7 @@ export default function BonCommande() {
     orders,
     searchText,
     clientNameFilter,
+    clientCodeFilter,
     selectedClientFilter,
     selectedStatus,
     dateRange,
@@ -1180,6 +1190,12 @@ export default function BonCommande() {
       key: "nom_client",
       sorter: (a, b) => (a.nom_client || "").localeCompare(b.nom_client || ""),
     },
+     {
+      title: "Code Client",
+      dataIndex: "code_client",
+      key: "code_client",
+      sorter: (a, b) => (a.code_client || "").localeCompare(b.code_client || ""),
+    },
     {
       title: "Date Facture",
       dataIndex: "date_commande",
@@ -1275,6 +1291,7 @@ export default function BonCommande() {
   const clearFilters = () => {
     setSearchText("");
     setClientNameFilter("");
+    setClientCodeFilter("");
     setSelectedClientFilter(null);
     setSelectedStatus(null);
     setDateRange(null);
@@ -1379,6 +1396,16 @@ export default function BonCommande() {
                   </Option>
                 ))}
               </Select>
+            </Col>
+            <Col span={4}>
+              <Input
+                placeholder="Code Client"
+                value={clientCodeFilter}
+                onChange={(e) => setClientCodeFilter(e.target.value)}
+                allowClear
+                style={{ width: "100%" }}
+              />
+                
             </Col>
             <Col span={4}>
               <Input

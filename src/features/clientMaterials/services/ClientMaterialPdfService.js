@@ -201,7 +201,7 @@ class ClientMaterialPdfService {
           <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
             material.reception_date || ""
           }</td>
-          <td style="border: 1px solid #000; padding: 8px; font-size: 11px;">
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px;text-align: center;">
             <span style="background-color: ${this.getMaterialTypeColor(
               material.type_matiere
             )}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">
@@ -268,21 +268,25 @@ class ClientMaterialPdfService {
                   color: #1890ff;
                   text-decoration: none;
               }
-              .client-info {
-                  margin: 20px 0;
-                  border: 2px solid #000;
-                  padding: 12px;
-                  background: #f9f9f9;
-                  display: inline-block;
-                  font-size: 11px;
-              }
+                     .client-info {
+            margin-top: 40px;
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: left; 
+            width:300px ; 
+            line-height : 1.2 ; 
+        }
               .delivery-details {
-                  margin: 20px 0;
+                  border: 1px solid #000;
+    padding: 2px 10px;
+    margin-top: 18px;
+    display: flex;
+    flex-direction:column; 
+    justify-content: center;
+    width: fit-content;
+   line-height: 1.5 ;
               }
-              .delivery-details p {
-                  margin: 6px 0;
-                  font-size: 12px;
-              }
+             
               .materials-table {
                   width: 100%;
                   border-collapse: collapse;
@@ -290,7 +294,7 @@ class ClientMaterialPdfService {
                   font-size: 10px;
               }
               .materials-table th {
-                  border: 2px solid #000;
+                  border: 1px solid #000;
                   padding: 8px 4px;
                   text-align: center;
                   background-color: #f0f0f0;
@@ -300,7 +304,7 @@ class ClientMaterialPdfService {
               .materials-table td {
                   border: 1px solid #000;
                   padding: 6px 4px;
-                  text-align: left;
+                  text-align: center;
                   font-size: 10px;
               }
               .summary {
@@ -318,57 +322,66 @@ class ClientMaterialPdfService {
                   border: 1px solid #000;
               }
               .signature {
-                  margin-top: 30px;
-                  text-align: right;
-                  font-size: 10px;
-              }
+            margin-top: 40px;
+            display : flex ;
+            justify-content : space-between ; 
+           
+        }
               .remarks {
                   margin-top: 20px;
                   font-size: 10px;
                   font-style: italic;
               }
+                   .rectangle {
+      width: 300px;
+      height: 100px;
+      border: 2px dashed grey;
+      background-color: #fff;
+      
+    }
           </style>
       </head>
       <body>
-          <div class="header">
-              <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo">
-              <h2>RM METALASER</h2>
-              <p>
-                  Découpes Métaux<br>
-                  Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
-                  IF: 191 1419B/A/M/000<br>
-                  Tél. : +216 20 366 150<br>
-                  Email: contact@rmmetalaser.tn<br>
-                  Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
-              </p>
-          </div>
-
-          <div class="client-info">
-              <strong>Nom Client :</strong> ${data.clientName || ""}<br>
-              <strong>Adresse :</strong> ${data.clientAddress || ""}<br>
-              <strong>M.F :</strong> ${data.clientTaxId || ""}<br>
-              <strong>Tél. :</strong> ${data.clientPhone || ""}
-          </div>
-
-          <div class="delivery-details">
+        <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+        <div class="company-info" style="text-align: left;">
+            <h2 style="margin-buttom: 1px;">RM METALASER</h2>
+            <p style="margin: 0; line-height: 1.5;"> <span style="color:grey; font-weight: bold;  ">Découpes Métaux </span><br>
+            Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
+            MF: 191 1419B/A/M/000<br>
+            Tél. : +216 20 366 150<br>
+            Email: contact@rmmetalaser.tn<br>
+            Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
+             <div class="delivery-details">
               <p><strong>Bon de Livraison N°:</strong> ${
-                data.deliveryNumber || ""
-              }</p>
-              <p><strong>Date:</strong> ${data.deliveryDate || ""}</p>
-              <p><strong>Code Client:</strong> ${data.clientCode || ""}</p>
+                data.deliveryNumber || "N/A"
+              } <br>
+              <strong>Date:</strong> ${data.deliveryDate || "N/A"}<br>
+              <strong>Code Client:</strong> ${data.code_client || "N/A"}</p>
           </div>
+        </div>
+       <div class="logo" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
+  <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
 
+  <div class="client-info">
+    <strong>Nom Client :</strong> ${data.clientName || ""}<br>
+    <strong>Adresse :</strong> ${data.clientAddress || ""}<br>
+    <strong>M.F :</strong> ${data.clientTaxId || ""}<br>
+    <strong>Tél. :</strong> ${data.clientPhone || ""}
+  </div>
+</div>
+
+    </header>
           <table class="materials-table">
               <thead>
                   <tr>
-                      <th style="width: 12%;">N° Bon</th>
-                      <th style="width: 12%;">Date réception</th>
-                      <th style="width: 15%;">Type</th>
-                      <th style="width: 10%;">Épaisseur (mm)</th>
-                      <th style="width: 10%;">Longueur (mm)</th>
-                      <th style="width: 10%;">Largeur (mm)</th>
-                      <th style="width: 8%;">Quantité</th>
-                      <th style="width: 23%;">Description</th>
+                      <th style="width: 19%;text-align: center; vertical-align: middle">N° Bon</th>
+                      <th style="width: 12%;text-align: center; vertical-align: middle">Date réception</th>
+                      <th style="width: 12%;text-align: center; vertical-align: middle">Type</th>
+                      <th style="width: 8%;text-align: center; vertical-align: middle">Épaisseur (mm)</th>
+                      <th style="width: 8%;text-align: center; vertical-align: middle">Longueur (mm)</th>
+                      <th style="width: 8%;text-align: center; vertical-align: middle">Largeur (mm)</th>
+                      <th style="width: 8%;text-align: center; vertical-align: middle">Quantité</th>
+                      <th style="width: 25%;text-align: center; vertical-align: middle">Description</th>
                   </tr>
               </thead>
               <tbody>
@@ -379,14 +392,14 @@ class ClientMaterialPdfService {
           <div class="summary">
               <table class="summary-table">
                   <tr>
-                      <td><strong>Total quantité</strong></td>
-                      <td style="text-align: right;"><strong>${
+                      <td style="text-align: left;"><strong>Total quantité</strong></td>
+                      <td style="text-align: center;"><strong>${
                         data.totalQuantity || "0"
                       }</strong></td>
                   </tr>
                   <tr>
-                      <td><strong>Nombre de matières</strong></td>
-                      <td style="text-align: right;"><strong>${
+                      <td style="text-align: left;"><strong>Nombre de matières</strong></td>
+                      <td style="text-align: center;"><strong>${
                         data.materials ? data.materials.length : "0"
                       }</strong></td>
                   </tr>
@@ -403,18 +416,17 @@ class ClientMaterialPdfService {
           </div>
 
           <div class="signature">
-              <p><strong>Signature Responsable :</strong></p>
-              <br><br>
-              <p><strong>Cachet et Signature</strong></p>
-              <br><br>
-              <p style="font-size: 9px;">
-                  Date d'émission: ${data.deliveryDate || ""} — 
-                  Total matières: ${
-                    data.materials ? data.materials.length : "0"
-                  } — 
-                  Quantité totale: ${data.totalQuantity || "0"}
-              </p>
-          </div>
+    <div>
+            <p><strong>Cachet et Signature Responsable </strong></p>
+              <div class="rectangle"></div>
+     </div>
+         <div>
+            <p><strong>Cachet et Signature du RM METALASER</strong></p>
+              <div class="rectangle"></div>
+     </div>
+       
+    </div>
+  
       </body>
       </html>
     `;

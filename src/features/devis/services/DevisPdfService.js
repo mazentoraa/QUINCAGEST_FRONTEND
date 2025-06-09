@@ -204,19 +204,19 @@ class DevisPdfService {
             (1 - (item.remise_pourcentage || 0) / 100);
         return `
         <tr>
-          <td style="border: 1px solid #000; padding: 8px; font-size: 11px;">${
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px;text-align: center;">${
             item.nom_produit || `Produit ID ${item.produit}`
           }</td>
           <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
             item.quantite || ""
           }</td>
-          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: right;">${this.formatCurrency(
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${this.formatCurrency(
             item.prix_unitaire
           )}</td>
           <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
             item.remise_pourcentage || 0
           }%</td>
-          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: right; font-weight: bold;">${this.formatCurrency(
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; font-weight: bold;">${this.formatCurrency(
             total
           )}</td>
         </tr>
@@ -277,18 +277,21 @@ class DevisPdfService {
                   margin: 20px 0;
               }
               .client-info {
-                  width: 48%;
-                  border: 2px solid #000;
-                  padding: 12px;
-                  background: #f9f9f9;
-                  font-size: 11px;
+                margin-top: 40px;
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: left; 
+            width:300px ; 
+            line-height : 1.2 ; 
               }
               .devis-details {
-                  width: 48%;
-                  border: 2px solid #000;
-                  padding: 12px;
-                  background: #f0f8ff;
-                  font-size: 11px;
+                border: 1px solid #000;
+    padding: 8px 24px;
+    margin-top: 18px;
+    display: flex;
+    flex-direction:column ; 
+    justify-content: center;
+    width: fit-content;
               }
               .products-table {
                   width: 100%;
@@ -297,16 +300,17 @@ class DevisPdfService {
                   font-size: 10px;
               }
               .products-table th {
-                  border: 2px solid #000;
+                  border: 1px solid #000;
                   padding: 10px 6px;
                   text-align: center;
-                  background-color: #e6f7ff;
+                  background-color: #f0f0f0;
                   font-weight: bold;
                   font-size: 10px;
               }
               .products-table td {
                   border: 1px solid #000;
                   padding: 8px 6px;
+                  text-align: center;
                   font-size: 10px;
               }
               .totals-section {
@@ -326,11 +330,8 @@ class DevisPdfService {
               .totals-table .total-ht {
                   background-color: #f5f5f5;
               }
-              .totals-table .total-tva {
-                  background-color: #fff7e6;
-              }
+            
               .totals-table .total-ttc {
-                  background-color: #e6f7ff;
                   font-weight: bold;
                   font-size: 12px;
               }
@@ -352,23 +353,12 @@ class DevisPdfService {
                   line-height: 1.5;
                   white-space: pre-line;
               }
-              .signature-section {
-                  margin-top: 40px;
-                  display: flex;
-                  justify-content: space-between;
-              }
-              .signature-box {
-                  width: 45%;
-                  text-align: center;
-                  border: 1px solid #ccc;
-                  padding: 15px;
-                  min-height: 60px;
-              }
-              .signature-title {
-                  font-weight: bold;
-                  margin-bottom: 10px;
-                  font-size: 11px;
-              }
+              .signature {
+            margin-top: 40px;
+            display : flex ;
+            justify-content : space-between ; 
+           
+        }
               .footer {
                   margin-top: 30px;
                   text-align: center;
@@ -377,46 +367,52 @@ class DevisPdfService {
                   border-top: 1px solid #ddd;
                   padding-top: 10px;
               }
+                        .rectangle {
+      width: 300px;
+      height: 100px;
+      border: 2px dashed grey;
+      background-color: #fff;
+      
+    }
           </style>
       </head>
       <body>
-          <div class="header">
-              <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo">
-              <h1>DEVIS</h1>
-              <h2>RM METALASER</h2>
-              <p>
-                  Découpes Métaux<br>
-                  Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
-                  IF: 191 1419B/A/M/000<br>
-                  Tél. : +216 20 366 150<br>
-                  Email: contact@rmmetalaser.tn<br>
-                  Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
-              </p>
-          </div>
+      <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+        <div class="company-info" style="text-align: left;">
+            <h2 style="margin-buttom: 1px;">RM METALASER</h2>
+            <p style="margin: 0; line-height: 1.5;"> <span style="color:grey; font-weight: bold; ">Découpes Métaux </span><br>
+            Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
+            MF: 191 1419B/A/M/000<br>
+            Tél. : +216 20 366 150<br>
+            Email: contact@rmmetalaser.tn<br>
+            Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
+              <div class="devis-details">
+                <p>  <strong>N° Devis :</strong> ${data.numero_devis || "N/A"}<br>
+                  <strong>Date d'émission :</strong> ${
+                    data.date_emission || "N/A"
+                  }<br>
+                  <strong>Valide jusqu'au :</strong> ${
+                    data.date_validite || "N/A"
+                  }<br>
+                  <strong>Conditions :</strong> ${
+                    data.conditions_paiement || "N/A"
+                  }
+                   </p>
+              </div>
+    </div>
+        </div>
+        <div class="logo" style="text-align: right;">
+            <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
 
-          <div class="devis-info">
-              <div class="client-info">
-                  <strong>FACTURÉ À :</strong><br><br>
+        <div class="client-info">
                   <strong>Nom Client :</strong> ${data.nom_client || ""}<br>
                   <strong>Adresse :</strong> ${data.client_address || ""}<br>
                   <strong>M.F :</strong> ${data.client_tax_id || ""}<br>
                   <strong>Tél. :</strong> ${data.client_phone || ""}
               </div>
-              
-              <div class="devis-details">
-                  <strong>DÉTAILS DU DEVIS :</strong><br><br>
-                  <strong>N° Devis :</strong> ${data.numero_devis || ""}<br>
-                  <strong>Date d'émission :</strong> ${
-                    data.date_emission || ""
-                  }<br>
-                  <strong>Valide jusqu'au :</strong> ${
-                    data.date_validite || ""
-                  }<br>
-                  <strong>Conditions :</strong> ${
-                    data.conditions_paiement || ""
-                  }
-              </div>
-          </div>
+        </div>
+    </header>
+          
 
           <table class="products-table">
               <thead>
@@ -432,29 +428,8 @@ class DevisPdfService {
                   ${tableRows}
               </tbody>
           </table>
-
-          <div class="totals-section">
-              <table class="totals-table">
-                  <tr class="total-ht">
-                      <td><strong>Total HT</strong></td>
-                      <td style="text-align: right;"><strong>${this.formatCurrency(
-                        data.montant_ht || 0
-                      )}</strong></td>
-                  </tr>
-                  <tr class="total-tva">
-                      <td><strong>TVA (${data.tax_rate || 0}%)</strong></td>
-                      <td style="text-align: right;"><strong>${this.formatCurrency(
-                        data.montant_tva || 0
-                      )}</strong></td>
-                  </tr>
-                  <tr class="total-ttc">
-                      <td><strong>TOTAL TTC</strong></td>
-                      <td style="text-align: right;"><strong>${this.formatCurrency(
-                        data.montant_ttc || 0
-                      )}</strong></td>
-                  </tr>
-              </table>
-          </div>
+          <div style ="display:flex; justify-content : space-between" >
+         
 
           <div class="terms-section">
               <div class="terms-title">Remarques et Conditions :</div>
@@ -473,40 +448,42 @@ class DevisPdfService {
           `
               : ""
           }
-
-          <div class="signature-section">
-              <div class="signature-box">
-                  <div class="signature-title">SIGNATURE CLIENT</div>
-                  <div style="margin-top: 20px;">
-                      Date : ___________<br><br>
-                      Signature :
-                  </div>
-              </div>
-              
-              <div class="signature-box">
-                  <div class="signature-title">SIGNATURE RM METALASER</div>
-                  <div style="margin-top: 20px;">
-                      Date : ___________<br><br>
-                      Cachet et Signature :
-                  </div>
-              </div>
+           <div class="totals-section">
+              <table class="totals-table">
+                  <tr class="total-ht">
+                      <td><strong>Total HT</strong></td>
+                      <td style="text-align: center;"><strong>${this.formatCurrency(
+                        data.montant_ht || 0
+                      )}</strong></td>
+                  </tr>
+                  <tr class="total-tva">
+                      <td><strong>TVA (${data.tax_rate || 0}%)</strong></td>
+                      <td style="text-align: center;"><strong>${this.formatCurrency(
+                        data.montant_tva || 0
+                      )}</strong></td>
+                  </tr>
+                  <tr class="total-ttc">
+                      <td><strong>TOTAL TTC</strong></td>
+                      <td style="text-align: center;"><strong>${this.formatCurrency(
+                        data.montant_ttc || 0
+                      )}</strong></td>
+                  </tr>
+              </table>
           </div>
+            </div>
+            <div class="signature">
+    <div>
+            <p><strong>Cachet et Signature Client </strong></p>
+              <div class="rectangle"></div>
+     </div>
+         <div>
+            <p><strong>Cachet et Signature du RM METALASER</strong></p>
+              <div class="rectangle"></div>
+     </div>
+       
+    </div>
+          
 
-          <div class="footer">
-              <p>
-                  Ce devis est valable ${
-                    data.date_validite
-                      ? `jusqu'au ${data.date_validite}`
-                      : "15 jours"
-                  } — 
-                  Total produits: ${(data.produit_devis || []).length} — 
-                  Montant TTC: ${this.formatCurrency(data.montant_ttc || 0)}
-              </p>
-              <p style="margin-top: 5px;">
-                  <strong>Conditions générales :</strong> Ce devis doit être accepté et signé pour valider la commande. 
-                  Les prix sont exprimés en TND et peuvent être sujets à modification.
-              </p>
-          </div>
       </body>
       </html>
     `;

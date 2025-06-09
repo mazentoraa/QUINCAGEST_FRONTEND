@@ -114,6 +114,7 @@ class ClientMaterialService {
         console.log('Empty response data from API');
         return []; // Return empty array instead of null/undefined
       }
+       console.log('Delivery note record:', response.data);
       
       return response.data;
     } catch (error) {

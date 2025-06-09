@@ -309,10 +309,24 @@ export default function BonCommande() {
           return;
         }
 
+             const allOrders = await orderService.getOrders();
+        const currentYear = new Date().getFullYear();
+        const currentYearOrders = allOrders.filter(order => 
+          order.numero_commande?.includes(`-${currentYear}-`)
+        );
+        let maxSequence = 0;
+         currentYearOrders.forEach(order => {
+           const parts = order.numero_commande.split('-');
+           const sequencePart = parts[parts.length - 1];
+           const sequenceNumber = parseInt(sequencePart, 10) || 0;
+
+           if (sequenceNumber > maxSequence) {
+             maxSequence = sequenceNumber;
+           }
+         });
+         const newSequence = String(maxSequence + 1).padStart(5, '0');
         // Generate a random order number
-        const randomOrderNumber = `CMD-${new Date().getFullYear()}-${Math.floor(
-          10000 + Math.random() * 90000
-        )}`;
+        const randomOrderNumber =  `CMD-${new Date().getFullYear()}-${newSequence}`;
 
         const orderPayload = {
           client_id: selectedClientId,

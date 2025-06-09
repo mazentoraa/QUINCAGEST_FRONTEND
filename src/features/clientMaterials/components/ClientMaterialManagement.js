@@ -572,7 +572,7 @@ const ClientRawMaterialsPage = () => {
 
     try {
       // Generate new random invoice number for matiere premiere
-      const newInvoiceNumber = generateInvoiceNumber();
+      const newInvoiceNumber = await generateInvoiceNumber();
       setInvoiceNumber(newInvoiceNumber);
 
       // Set current date as default
@@ -815,13 +815,45 @@ const ClientRawMaterialsPage = () => {
   };
 
   // Generate invoice number
-  const generateInvoiceNumber = () => {
-    const date = moment().format("YYYYMMDD");
-    // Use MAT- prefix to match the backend format from FactureMatiereSerializer
-    return `MAT-${date}-${String(Math.floor(Math.random() * 1000)).padStart(
-      3,
-      "0"
-    )}`;
+  const generateInvoiceNumber =  async () => {
+     try {
+        const currentYear = new Date().getFullYear();
+        const response = await ClientMaterialService.getAllMaterialInvoices();
+        
+        // Vérification et normalisation des données
+        let allInvoices = [];
+        
+        if (Array.isArray(response)) {
+            allInvoices = response;
+        } else if (response?.data && Array.isArray(response.data)) {
+            allInvoices = response.data;
+        } else if (response?.results && Array.isArray(response.results)) {
+            allInvoices = response.results;
+        } else {
+            console.error('Format de réponse inattendu:', response);
+            return `BL-${currentYear}-00001`; // Fallback
+        }
+        
+        // Filtrage et calcul du numéro
+        const currentYearInvoices = allInvoices.filter(invoice => 
+            invoice?.numero_bon?.startsWith(`BL-${currentYear}-`)
+        );
+
+        const maxNumber = currentYearInvoices.reduce((max, invoice) => {
+            const parts = invoice.numero_bon?.split('-') || [];
+            if (parts.length === 3) {
+                const num = parseInt(parts[2]);
+                return !isNaN(num) ? Math.max(max, num) : max;
+            }
+            return max;
+        }, 0);
+
+        return `BL-${currentYear}-${String(maxNumber + 1).padStart(5, '0')}`;
+        
+    } catch (error) {
+        console.error('Erreur lors de la génération du numéro:', error);
+        return `BL-${new Date().getFullYear()}-00001`; // Fallback en cas d'erreur
+    }
   };
 
   // Row selection for table

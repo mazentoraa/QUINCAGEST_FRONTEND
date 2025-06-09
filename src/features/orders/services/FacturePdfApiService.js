@@ -1,3 +1,5 @@
+import n2words from 'n2words';
+
 class FacturePdfApiService {
   // Use the same APDF.io API as ClientMaterialPdfService
   static API_TOKEN = "kMZrwMgVmmej90g7wimNOcvwFaGRQhXndOVKfTSPf540b6d3";
@@ -95,34 +97,45 @@ class FacturePdfApiService {
       .map(
         (item) => `
       <tr>
-        <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
-          item.produit_id || ""
-        }</td>
-        <td style="border: 1px solid #000; padding: 8px; font-size: 11px;">${
-          item.nom_produit || "N/A"
-        }</td>
-        <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
-          item.quantite || 0
-        }</td>
-        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-size: 11px;">${this.formatCurrency(
-          item.prix_unitaire || 0
-        )}</td>
-        <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
-          item.remise_pourcentage || 0
-        }%</td>
-        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-size: 11px;">${this.formatCurrency(
-          item.prix_total || 0
-        )}</td>
-        <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
-          orderData.tax_rate || 20
-        }%</td>
-        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-size: 11px;">${this.formatCurrency(
-          (item.prix_total || 0) * (1 + (orderData.tax_rate || 20) / 100)
-        )}</td>
-      </tr>
+  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${item.nom_produit || "N/A"}
+  </td>
+  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${item.quantite || 0}
+  </td>
+  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${this.formatCurrency(item.prix_unitaire || 0)}
+  </td>
+  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${item.remise_pourcentage || 0}%
+  </td>
+  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${this.formatCurrency(item.prix_total || 0)}
+  </td>
+  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${orderData.tax_rate || 20}%
+  </td>
+  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${this.formatCurrency(
+      (item.prix_total || 0) * (1 + (orderData.tax_rate || 20) / 100)
+    )}
+  </td>
+</tr>
     `
       )
       .join("");
+    const totalBrut = items.reduce((acc, item) => {
+      return acc + (item.prix_unitaire || 0) * (item.quantite || 0);
+    }, 0);
+
+    const totalRemise = items.reduce((acc, item) => {
+      const prixUnitaire = item.prix_unitaire || 0;
+      const quantite = item.quantite || 0;
+      const remisePourcentage = item.remise_pourcentage || 0;
+
+      const remise = prixUnitaire * quantite * (remisePourcentage / 100);
+      return acc + remise;
+    }, 0);
 
     return `
 <!DOCTYPE html>
@@ -130,6 +143,7 @@ class FacturePdfApiService {
 <head>
     <meta charset="UTF-8">
     <title>Facture RM METALASER</title>
+    <script src="https://cdn.jsdelivr.net/npm/n2words/dist/n2words.umd.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -150,33 +164,32 @@ class FacturePdfApiService {
         }
 
         .client-info {
-            margin-top: 20px;
+            margin-top: 40px;
             border: 1px solid #000;
             padding: 10px;
-            width: fit-content;
-        }
-
-        .order-details {
-            margin-top: 20px;
-        }
-
-        .order-details table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .order-details th,
-        .order-details td {
-            border: 1px solid #000;
-            padding: 8px;
             text-align: left;
+            width:300px;
+            line-height : 1.2 ; 
         }
+
+        .order-details table, .totals table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+        .order-details th, .order-details td,
+  .totals th, .totals td {
+ 
+    border: 1px solid #ddd;
+    text-align: center;
+   
+  }
 
         .totals {
             margin-top: 20px;
             width: 100%;
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between ; 
         }
 
         .totals table {
@@ -185,75 +198,88 @@ class FacturePdfApiService {
         }
 
         .totals td {
-            padding: 4px 8px;
+         
+            padding: 10px ;
             border: 1px solid #000;
+             text-align: start ;
+            font-size: bold;
         }
 
         .signature {
             margin-top: 40px;
-            text-align: right;
+           display : flex ;
+            justify-content : space-between ; 
         }
+            .order-header {
+    border: 1px solid #000;
+    padding: 8px 24px;
+    margin-top: 18px;
+    display: flex;
+    justify-content: center;
+    width: fit-content;
+    line-height: 1.5 ;
+}
 
-        .order-header {
-            margin-bottom: 20px;
-        }
+        
 
         .conditions {
             margin-top: 20px;
             font-size: 12px;
         }
+            .rectangle {
+      width: 300px;
+      height: 100px;
+      border: 2px dashed grey;
+      background-color: #fff;
+      
+    }
     </style>
 </head>
 <body>
     <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
         <div class="company-info" style="text-align: left;">
-            <h2 style="margin: 0;">RM METALASER</h2>
-            <p style="margin: 0;">Découpes Métaux<br>
-            Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
-            IF: 191 1419B/A/M/000<br>
+           <h2 style="margin-buttom: 1px;">RM METALASER</h2>
+            <p style="margin: 0; line-height: 1.5;"> <span style="color:grey; font-weight: bold; ">Découpes Métaux </span><br>
+            Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
+            MF: 191 1419B/A/M/000<br>
             Tél. : +216 20 366 150<br>
             Email: contact@rmmetalaser.tn<br>
             Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
+              <div class="order-header">
+        <p><strong>Facture N°: ${formatInvoiceNumber(orderData)}</strong><br>
+            Date: ${orderData.date_commande || "N/A"}<br>
+            
+        </p>
+        </div>
         </div>
         <div class="logo" style="text-align: right;">
-            <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 190px; margin-bottom: 5px;">
-        </div>
+             <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
+             <div class="client-info"> 
+        <strong>Nom Client : ${orderData.nom_client || "N/A"} </strong><br>
+         Code Client : ${orderData.code_client || "N/A"}<br>
+       Adresse :${orderData.client_address || "N/A"}<br>
+       M.F :${orderData.client_tax_id || "N/A"}<br>
+       Tél. :${orderData.client_phone || "N/A"}
+    </div>
+             </div>
     </header>
 
-    <div class="client-info">
-        <strong>Nom Client :</strong> ${orderData.nom_client || "N/A"}<br>
-        <strong>Adresse :</strong> ${orderData.client_address || "N/A"}<br>
-        <strong>M.F :</strong> ${orderData.client_tax_id || "N/A"}<br>
-        <strong>Tél. :</strong> ${orderData.client_phone || "N/A"}
-    </div>
-
-    <div class="order-header">
-        <p><strong>Facture N°:</strong> ${formatInvoiceNumber(orderData)}<br>
-            <strong>Methode du Paiement:</strong> ${
-              orderData.mode_paiement || "N/A"
-            }<br>
-            <strong>Date:</strong> ${orderData.date_commande || "N/A"}<br>
-            <strong>Date Livraison Prévue:</strong> ${
-              orderData.date_livraison_prevue || "N/A"
-            }<br>
-            <!-- Statut removed as per user request -->
-        </p>
-    </div>
+   
 
     <div class="order-details">
         <table>
             <thead>
-                <tr>
-                    <th>CODE</th>
-                    <th>DESIGNATION</th>
-                    <th>QTE</th>
-                    <th>P.U. HT (TND)</th>
-                    <th>REMISE (%)</th>
-                    <th>Total P. HT (TND)</th>
-                    <th>TVA</th>
-                    <th>TOTAL P. TTC (TND)</th>
-                </tr>
-            </thead>
+              
+            <tr>
+    <th style="width: 28%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
+    <th style="width: 8%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
+    <th style="width: 16%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
+    <th style=" width: 8%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
+    <th style="width: 16%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
+    <th style="width: 8%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
+    <th style="width: 16%;text-align: center; vertical-align: middle; border: 1px solid #000;">TOTAL P. TTC</th>
+  </tr>
+</thead>
             <tbody>
                 ${itemsHTML}
             </tbody>
@@ -261,63 +287,74 @@ class FacturePdfApiService {
     </div>
 
     <div class="totals">
+    <div style = "display:"flex">
+         <p>
+         <strong>
+         Arrêtée la présente facture à la somme de:
+         </strong> <br>
+         ${this.formatMontantEnLettres((orderData.montant_ttc || 0)+1)}
+    
+         </p>
+        <p>
+        
+        <p>
+      </div>
         <table>
             <tr>
-                <td><strong>Totale Timbre</strong></td>
-                <td>${this.formatCurrency(1)}</td>
+            <td><strong>Totale Brut </strong></td>
+               <td>${this.formatCurrency(
+                 (orderData.montant_ttc || 0) + 1
+               )}</td>
+             </tr>
+               <tr>
+             <td><strong>Total Remise </strong></td>
+      <td>${this.formatCurrency(totalRemise)}</td>
+             </tr>
+              <tr>
+                <td><strong>Timbre Fiscal </strong></td>
+                <td>${this.formatCurrency(orderData.timbre_fiscal || 0)}</td>
             </tr>
             <tr>
-                <td><strong>Total HT</strong></td>
+                <td><strong>Total HTVA</strong></td>
                 <td>${this.formatCurrency(orderData.montant_ht || 0)}</td>
             </tr>
             <tr>
                 <td><strong>Total TVA</strong></td>
                 <td>${this.formatCurrency(orderData.montant_tva || 0)}</td>
             </tr>
-            <tr>
-                <td><strong>Timbre Fiscal</strong></td>
-                <td>${this.formatCurrency(orderData.timbre_fiscal || 0)}</td>
-            </tr>
-            <tr>
-                <td><strong>NET À PAYER</strong></td>
-                <td><strong>${this.formatCurrency(
-                  (orderData.montant_ttc || 0) + 1
-                )}</strong></td>
+           <tr>
+                <td><strong>Totale Fiscal </strong></td>
+                <td>${this.formatCurrency(1)}</td>
             </tr>
         </table>
     </div>
 
-    ${
-      orderData.conditions_paiement
-        ? `
-    <div class="conditions">
-        <p><strong>Conditions de paiement:</strong> ${orderData.conditions_paiement}</p>
-    </div>`
-        : ""
-    }
-
-    ${
-      orderData.notes
-        ? `
-    <div class="conditions">
-        <p><strong>Notes:</strong> ${orderData.notes}</p>
-    </div>`
-        : ""
-    }
+   
+    
 
     <div class="signature">
-        <p><strong>Cachet et Signature</strong></p>
-        <p>Base: ${this.formatCurrency(
-          orderData.montant_ht || 0
-        )} — Taux TVA: ${
-      orderData.tax_rate || 20
-    }% — Montant TVA: ${this.formatCurrency(orderData.montant_tva || 0)}</p>
+        <div>
+            <p><strong>Cachet et Signature du client</strong></p>
+              <div class="rectangle"></div>
+     </div>
+         <div>
+            <p><strong>Cachet et Signature du RM METALASER</strong></p>
+              <div class="rectangle"></div>
+     </div>
     </div>
 </body>
 </html>
     `;
   }
-
+static formatMontantEnLettres(amount) {
+    const dinars = Math.floor(amount);
+    const millimes = Math.round((amount - dinars) * 1000);
+  
+    const dinarsEnLettres = n2words(dinars, { lang: 'fr' });
+    const millimesEnLettres = millimes > 0 ? `et ${n2words(millimes, { lang: 'fr' })} millimes` : '';
+  
+    return `${dinarsEnLettres} dinars ${millimesEnLettres}`;
+  }
   static formatCurrency(amount) {
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",

@@ -20,6 +20,9 @@ function StockManagement() {
   const handleCancel = () => {
     setIsModalVisible(false);
   };
+  const handleProductAdded = () => {
+    setIsModalVisible(false);
+  };
 
   return (
     <Content className="stock-management">

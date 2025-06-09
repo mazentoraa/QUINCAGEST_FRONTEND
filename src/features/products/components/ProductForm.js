@@ -92,11 +92,11 @@ const ProductForm = ({ onSuccess, onCancel, isModal = false, productToEdit = nul
         const changedFields = {};
         if (values.name !== productToEdit.nom_produit) changedFields.nom_produit = values.name;
         if (values.material !== productToEdit.type_matiere) changedFields.type_matiere = values.material;
-        if (values.thickness !== productToEdit.epaisseur) changedFields.epaisseur = values.thickness;
-        if ((values.length || 0) !== productToEdit.longueur) changedFields.longueur = values.length || 0;
+        if (values.thickness !== productToEdit.epaisseur) changedFields.epaisseur = values.thickness;      if ((values.length || 0) !== productToEdit.longueur) changedFields.longueur = values.length || 0;
         if ((values.width || 0) !== productToEdit.largeur) {
   changedFields.largeur = values.width || 0;
 }
+
 
         if (values.surface !== productToEdit.surface) changedFields.surface = values.surface;
         if ((values.price || 0) !== productToEdit.prix) changedFields.prix = values.price || 0;
@@ -149,7 +149,7 @@ const productPayload = {
   type_matiere: values.material,
   epaisseur: values.thickness,
   longueur: values.length || 0,
-  largeur: values.width || 0, // ✅ ceci est correct
+  largeur: values.width || 0,
   surface: values.surface,
   prix: values.price || 0,
   description: values.description || "",
@@ -185,7 +185,7 @@ const productPayload = {
       extra={isModal && <Button icon={<CloseOutlined />} onClick={onCancel} />}
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
-        <Form.Item name="name" label="Nom du produit">
+        <Form.Item name="name" label="Nom du produit"  rules={[{ required: true, message: "Le nom du produit est obligatoire" }]}>
           <Input placeholder="Nom du produit" />
         </Form.Item>
 

@@ -22,6 +22,7 @@ import {
   Modal,
   List,
   Badge,
+  Popconfirm
 } from "antd";
 import {
   FilterOutlined,
@@ -29,6 +30,7 @@ import {
   FileSearchOutlined,
   PrinterOutlined,
   EyeOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import { debounce } from "lodash";
@@ -325,6 +327,19 @@ const BonLivraisonDecoupe = () => {
     setDetailDrawerVisible(true);
   };
 
+    const handleDeleteInvoice = async (Id) => {
+    try {
+      setLoading(true);
+      await InvoiceService.deleteInvoice(Id)
+      message.success("Bon de Livraison  supprimée avec succès"); 
+      fetchInvoices()
+    } catch(error){
+      message.error("Erreur lors de la suppression: " + error.message);
+    } finally {
+      setLoading(false)
+    }
+
+  }
   // Print invoice function - Updated to use new PDF service
   const printInvoice = async (invoice) => {
     try {
@@ -355,7 +370,7 @@ const BonLivraisonDecoupe = () => {
   // Table columns
   const columns = [
     {
-      title: "N° Facture",
+      title: "N° Bon",
       dataIndex: "numero_facture",
       key: "numero_facture",
       width: "15%",
@@ -452,6 +467,16 @@ const BonLivraisonDecoupe = () => {
               onClick={() => printInvoice(record)}
             />
           </Tooltip>
+           <Tooltip title="Supprimer"> 
+           <Popconfirm
+              title="Êtes-vous sûr de vouloir supprimer cette commande ?"
+              onConfirm={() => handleDeleteInvoice(record.id)}
+              okText="Oui"
+              cancelText="Non"
+            >
+              <Button danger icon={<DeleteOutlined />} size="small" />
+            </Popconfirm>
+          </Tooltip>
         </Space>
       ),
     },
@@ -482,7 +507,7 @@ const BonLivraisonDecoupe = () => {
         {/* Quick filters */}
         <div style={{ display: "flex", marginBottom: 16, gap: 16 }}>
           <Input.Search
-            placeholder="Rechercher par N° facture"
+            placeholder="Rechercher par N° Bon"
             allowClear
             style={{ width: 300 }}
             value={filters.numeroSearch}
@@ -561,7 +586,7 @@ const BonLivraisonDecoupe = () => {
                     setFilters({ ...filters, numeroSearch: "" });
                   }}
                 >
-                  N° Facture: {filters.numeroSearch}
+                  N° Bon: {filters.numeroSearch}
                 </Tag>
               )}
             </Space>
@@ -587,7 +612,7 @@ const BonLivraisonDecoupe = () => {
             emptyText: (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="Aucune facture trouvée"
+                description="Aucune Bon trouvée"
               />
             ),
           }}
@@ -639,7 +664,7 @@ const BonLivraisonDecoupe = () => {
             <RangePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
           </Form.Item>
 
-          <Form.Item name="numeroSearch" label="N° Facture">
+          <Form.Item name="numeroSearch" label="N° Bon">
             <Input placeholder="Rechercher par numéro" />
           </Form.Item>
 
@@ -673,7 +698,7 @@ const BonLivraisonDecoupe = () => {
 
       {/* Detail drawer */}
       <Drawer
-        title={`Détails de la facture ${selectedInvoice?.numero_facture}`}
+        title={`Détails de la Bon ${selectedInvoice?.numero_facture}`}
         width={800}
         onClose={() => setDetailDrawerVisible(false)}
         open={detailDrawerVisible}
@@ -693,7 +718,7 @@ const BonLivraisonDecoupe = () => {
               <Row gutter={16}>
                 <Col span={8}>
                   <div className="detail-item">
-                    <Text type="secondary">N° Facture</Text>
+                    <Text type="secondary">N° Bon</Text>
                     <Title level={4}>{selectedInvoice.numero_facture}</Title>
                   </div>
                 </Col>

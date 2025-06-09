@@ -382,9 +382,9 @@ const WorkManagementPage = () => {
 
       // Set the billable data
       setBillableData(enrichedWorksData);
-
+      const invoicesData = await InvoiceService.getAllInvoices();
       // Generate invoice number using InvoiceService
-      const generatedInvoiceNumber = InvoiceService.generateInvoiceNumber();
+      const generatedInvoiceNumber = InvoiceService.generateInvoiceNumber(invoicesData.results);
       setInvoiceNumber(generatedInvoiceNumber);
 
       // Show the bill modal

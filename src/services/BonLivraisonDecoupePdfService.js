@@ -153,6 +153,7 @@ class BonLivraisonDecoupePdfService {
    * Generate HTML for decoupe invoice
    */
   static generateDecoupeInvoiceHTML(invoice) {
+    console.log(invoice);
     const tableRows =
       invoice.items
         ?.map((item) => {
@@ -163,6 +164,7 @@ class BonLivraisonDecoupePdfService {
 
           let rows = `
         <tr>
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px;">${invoice.numero_facture}</td>
           <td style="border: 1px solid #000; padding: 8px; font-size: 11px;">${productDescription}</td>
           <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
             item.billable?.quantite || 0
@@ -263,15 +265,22 @@ class BonLivraisonDecoupePdfService {
                   width: 48%;
               }
               .invoice-details {
-                  width: 48%;
-                  text-align: right;
+                 border: 1px solid #000;
+    padding: 2px 10px;
+    margin-top: 18px;
+    display: flex;
+    flex-direction:column; 
+    justify-content: center;
+    width: fit-content;
+   line-height: 1.5 ;
               }
               .client-info {
-                  margin: 20px 0;
-                  border: 2px solid #000;
-                  padding: 12px;
-                  background: #f9f9f9;
-                  font-size: 11px;
+              margin-top: 40px;
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: left; 
+            width:300px ; 
+            line-height : 1.2 ; 
               }
               .items-table {
                   width: 100%;
@@ -280,17 +289,17 @@ class BonLivraisonDecoupePdfService {
                   font-size: 10px;
               }
               .items-table th {
-                  border: 2px solid #000;
+                   border: 1px solid #000;
                   padding: 8px 4px;
                   text-align: center;
-                  background-color: #333;
-                  color: white;
+                  background-color: #f0f0f0;
                   font-weight: bold;
-                  font-size: 10px;
+                  font-size: 9px;
               }
               .items-table td {
-                  border: 1px solid #000;
+                    border: 1px solid #000;
                   padding: 6px 4px;
+                  text-align: center;
                   font-size: 10px;
               }
               .totals {
@@ -312,18 +321,17 @@ class BonLivraisonDecoupePdfService {
                   font-weight: bold;
               }
               .signature {
-                  margin-top: 30px;
-                  display: flex;
-                  justify-content: space-between;
-                  font-size: 10px;
+                  margin-top: 40px;
+            display : flex ;
+            justify-content : space-between ; 
               }
-              .signature-box {
-                  width: 200px;
-                  height: 80px;
-                  border: 1px solid #000;
-                  text-align: center;
-                  padding: 10px;
-              }
+              .rectangle {
+      width: 300px;
+      height: 100px;
+      border: 2px dashed grey;
+      background-color: #fff;
+      
+    }
               .footer {
                   margin-top: 30px;
                   text-align: center;
@@ -333,51 +341,44 @@ class BonLivraisonDecoupePdfService {
           </style>
       </head>
       <body>
-          <div class="header">
-              <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo">
-              <h1>FACTURE</h1>
-              <p>
-                  RM METALASER - Découpes Métaux<br>
-                  Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
-                  IF: 191 1419B/A/M/000<br>
-                  Tél. : +216 20 366 150<br>
-                  Email: contact@rmmetalaser.tn<br>
-                  Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
-              </p>
-          </div>
-
-          <div class="invoice-info">
-              <div class="invoice-details">
-                  <p><strong>Date:</strong> ${invoice.date_emission || ""}</p>
+              <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+        <div class="company-info" style="text-align: left;">
+            <h2 style="margin-buttom: 1px;">RM METALASER</h2>
+            <p style="margin: 0; line-height: 1.5;"> <span style="color:grey; font-weight: bold;  ">Découpes Métaux </span><br>
+            Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
+            MF: 191 1419B/A/M/000<br>
+            Tél. : +216 20 366 150<br>
+            Email: contact@rmmetalaser.tn<br>
+            Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
+             <div class="invoice-details">
                   <p><strong>Facture N°:</strong> ${
                     invoice.numero_facture || ""
                   }</p>
+                    <p><strong>Date:</strong> ${invoice.date_emission || ""}</p>
               </div>
-          </div>
+        </div>
+       <div class="logo" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
+  <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
 
-          <div class="client-info">
-              <h4>Client</h4>
-              <strong>Nom:</strong> ${
-                invoice.client_details?.nom_client || "N/A"
-              }<br>
-              <strong>Adresse:</strong> ${
-                invoice.client_details?.adresse || "N/A"
-              }<br>
-              <strong>Matricule Fiscale:</strong> ${
-                invoice.client_details?.numero_fiscal || "N/A"
-              }<br>
-              <strong>Tél.:</strong> ${
-                invoice.client_details?.telephone || "N/A"
-              }
-          </div>
+  <div class="client-info">
+    <strong>Nom Client :</strong> ${  invoice.client_details?.nom_client || "N/A"}<br>
+    <strong>Adresse :</strong> ${ invoice.client_details?.adresse || "N/A"}<br>
+    <strong>M.F :</strong> ${ invoice.client_details?.numero_fiscal || "N/A"}<br>
+    <strong>Tél. :</strong> ${invoice.client_details?.telephone || "N/A"}
+  </div>
+</div>
 
+    </header>
+          
           <table class="items-table">
               <thead>
                   <tr>
-                      <th style="width: 50%;">Description</th>
-                      <th style="width: 15%;">Quantité</th>
-                      <th style="width: 17.5%;">Prix unitaire (DT)</th>
-                      <th style="width: 17.5%;">Total HT (DT)</th>
+                       <th style="width: 20%;;text-align: center; vertical-align: middle">N° Bon</th>
+                      <th style="width: 40%;;text-align: center; vertical-align: middle">Description</th>
+                      <th style="width: 10%;;text-align: center; vertical-align: middle">Quantité</th>
+                      <th style="width: 15%;;text-align: center; vertical-align: middle">Prix unitaire (DT)</th>
+                      <th style="width: 15%;;text-align: center; vertical-align: middle">Total HT (DT)</th>
+
                   </tr>
               </thead>
               <tbody>
@@ -388,49 +389,39 @@ class BonLivraisonDecoupePdfService {
           <div class="totals">
               <table class="totals-table">
                   <tr>
-                      <td><strong>Total HT</strong></td>
-                      <td style="text-align: right;">${totals.totalHT.toFixed(
+                      <td style="text-align: center;"><strong>Total HT</strong></td>
+                      <td style="text-align: center;">${totals.totalHT.toFixed(
                         3
                       )} DT</td>
                   </tr>
                   <tr>
-                      <td><strong>TVA (${invoice.tax_rate || 19}%)</strong></td>
-                      <td style="text-align: right;">${totals.totalTVA.toFixed(
+                      <td style="text-align: center;"><strong>TVA (${invoice.tax_rate || 19}%)</strong></td>
+                      <td style="text-align: center;">${totals.totalTVA.toFixed(
                         3
                       )} DT</td>
                   </tr>
                   <tr class="total-row">
-                      <td><strong>Total TTC</strong></td>
-                      <td style="text-align: right;"><strong>${totals.totalTTC.toFixed(
+                      <td style="text-align: center;"><strong>Total TTC</strong></td>
+                      <td style="text-align: center;"><strong>${totals.totalTTC.toFixed(
                         3
                       )} DT</strong></td>
                   </tr>
               </table>
           </div>
 
-          <div class="signature">
-              <div>
-                  <p><strong>Signature Client:</strong></p>
-                  <div class="signature-box">
-                      <p style="margin-top: 50px;">Signature et cachet</p>
-                  </div>
-              </div>
-              <div>
-                  <p><strong>Signature R.C:</strong></p>
-                  <div class="signature-box">
-                      <p style="margin-top: 50px;">Signature et cachet</p>
-                  </div>
-              </div>
-          </div>
+         <div class="signature">
+    <div>
+            <p><strong>Cachet et Signature client</strong></p>
+              <div class="rectangle"></div>
+     </div>
+         <div>
+            <p><strong>Cachet et Signature du RM METALASER</strong></p>
+              <div class="rectangle"></div>
+     </div>
+       
+    </div>
 
-          <div class="footer">
-              <p>Merci pour votre confiance !</p>
-              <p>
-                  Date d'émission: ${invoice.date_emission || ""} — 
-                  Facture N°: ${invoice.numero_facture || ""} — 
-                  Total TTC: ${totals.totalTTC.toFixed(3)} DT
-              </p>
-          </div>
+          
       </body>
       </html>
     `;

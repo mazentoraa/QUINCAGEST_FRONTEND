@@ -129,13 +129,24 @@ class InvoiceService {
    * Generate a unique invoice number
    * @returns {string} - A unique invoice number
    */
-  generateInvoiceNumber() {
-    const today = new Date();
-    const year = today.getFullYear().toString().substr(-2);
-    const month = (today.getMonth() + 1).toString().padStart(2, '0');
-    const day = today.getDate().toString().padStart(2, '0');
-    const sequence = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `F${year}${month}${day}-${sequence}`;
+  generateInvoiceNumber(existingData = []) {
+    const currentYear = new Date().getFullYear();
+    console.log("Existing data:", existingData);
+      const current = existingData.filter(invoice => {
+     return invoice.numero_bon && invoice.numero_bon.startsWith(`BL-${currentYear}-`);
+      });
+    let maxNumber = 0;
+    existingData.forEach(invoice => {
+    const parts = invoice.numero_facture.split('-');
+    if (parts.length === 3) {
+      const num = parseInt(parts[2]);
+      if (!isNaN(num) && num > maxNumber) {
+        maxNumber = num;
+      }
+    }
+  });
+  const newNumber = maxNumber + 1;
+    return`BL-${currentYear}-${String(newNumber).padStart(5, '0')}`;
   }
 }
 
