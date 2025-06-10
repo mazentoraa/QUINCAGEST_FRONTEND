@@ -10,7 +10,8 @@ import {
   DatabaseOutlined,
   FileOutlined,
   BankOutlined,
-  BarChartOutlined
+  BarChartOutlined,
+  ShoppingCartOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -78,6 +79,7 @@ function SideMenu() {
               Bon de Retour
             </Menu.Item>
           </SubMenu>
+          
 
           {/* <Menu.Item key="/manifeste/inventaire" icon={<DatabaseOutlined />} onClick={() => handleMenuClick('/manifeste/inventaire')}>
             Inventaire
@@ -96,7 +98,9 @@ function SideMenu() {
           </Menu.Item>
         </SubMenu>
 
-
+        {/* <Menu.Item key="/purshase" icon={<ShoppingCartOutlined />} onClick={() => handleMenuClick('/purshase')}>
+          Achats
+          </Menu.Item> */}
       </Menu>
     </div>
   );

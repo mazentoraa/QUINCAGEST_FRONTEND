@@ -311,6 +311,12 @@ class FacturePdfApiService {
       <td>${this.formatCurrency(totalRemise)}</td>
              </tr>
               <tr>
+      <td><strong>Net à Payer</strong></td>
+      <td>${this.formatCurrency(
+        (orderData.montant_ttc || 0) - totalRemise + (orderData.timbre_fiscal || 0)
+      )}</td>
+    </tr>
+              <tr>
                 <td><strong>Timbre Fiscal </strong></td>
                 <td>${this.formatCurrency(orderData.timbre_fiscal || 0)}</td>
             </tr>

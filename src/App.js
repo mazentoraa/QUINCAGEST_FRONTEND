@@ -19,6 +19,7 @@ import { StockProvider } from "./features/stock/contexts/StockContext";
 import { ClientMaterialProvider } from "./features/clientMaterials/contexts/ClientMaterialContext";
 import { OrderProvider } from "./contexts/OrderContext";
 import { InstallmentProvider } from "./features/installments/contexts/InstallmentContext";
+
 import {
   AuthProvider,
   AuthContext,
@@ -37,6 +38,7 @@ import BonRetour from "./components/BonsDevis/BonRetour";
 import BonCommande from "./components/BonsDevis/BonCommande";
 import Facture from "./components/BonsDevis/Facture";
 import Devis from "./components/BonsDevis/Devis";
+import PurshaseMatiere from "./features/purshase/purshase_matiere";
 
 import { Spin } from "antd"; // Import Spin
 
@@ -184,6 +186,10 @@ function App() {
                                     path="/bons/devis"
                                     element={<Devis />}
                                   />
+                                  <Route
+                                  path="/purshase"
+                                  element={<PurshaseMatiere />}
+                                />
                                 </Routes>
                               </Content>
                             </Layout>
