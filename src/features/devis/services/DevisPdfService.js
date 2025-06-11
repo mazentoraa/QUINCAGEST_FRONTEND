@@ -204,25 +204,39 @@ class DevisPdfService {
             (1 - (item.remise_pourcentage || 0) / 100);
         return `
         <tr>
-          <td style="border: 1px solid #000; padding: 8px; font-size: 11px;text-align: center;">${
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px;text-align: center;">${
             item.nom_produit || `Produit ID ${item.produit}`
           }</td>
-          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center;">${
             item.quantite || ""
           }</td>
-          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${this.formatCurrency(
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center;">${this.formatCurrency(
             item.prix_unitaire
           )}</td>
-          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center;">${
             item.remise_pourcentage || 0
           }%</td>
-          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; font-weight: bold;">${this.formatCurrency(
-            total
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center;">${
+              total
+          }</td>
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; font-weight: bold;">${this.formatCurrency(
+            item.tax_rate
+          )}</td>
+           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; font-weight: bold;">${this.formatCurrency(
+            total * (1 + (item.tax_rate || 0 )/100)
           )}</td>
         </tr>
       `;
       })
       .join("");
+       const totalRemise = data.produit_devis.reduce((acc, item) => {
+        const prixUnitaire = item.prix_unitaire || 0;
+        const quantite = item.quantite || 0;
+        const remisePourcentage = item.remise_pourcentage || 0;
+  
+        const remise = prixUnitaire * quantite * (remisePourcentage / 100);
+        return acc + remise;
+      }, 0);
 
     return `
       <!DOCTYPE html>
@@ -231,18 +245,14 @@ class DevisPdfService {
           <meta charset="UTF-8">
           <title>Devis ${data.numero_devis} - RM METALASER</title>
           <style>
-              body {
+                body {
                   font-family: Arial, sans-serif;
-                  font-size: 12px;
-                  color: black;
-                  margin: 0;
-                  padding: 15px;
-                  line-height: 1.4;
-              }
-              .header {
-                  text-align: center;
-                  margin-bottom: 25px;
-              }
+                  font-size: 14px;
+                  color: #000;
+        }
+                header,footer {
+            text-align: center;
+            }
               .header img {
                   width: 190px;
                   margin-bottom: 5px;
@@ -251,14 +261,14 @@ class DevisPdfService {
                   margin-right: auto;
               }
               .header h1 {
-                  margin: 15px 0 8px 0;
+                  
                   color: #333;
                   font-size: 24px;
                   text-transform: uppercase;
                   letter-spacing: 2px;
               }
               .header h2 {
-                  margin: 8px 0;
+                  
                   color: #333;
                   font-size: 18px;
               }
@@ -274,7 +284,7 @@ class DevisPdfService {
               .devis-info {
                   display: flex;
                   justify-content: space-between;
-                  margin: 20px 0;
+                
               }
               .client-info {
                 margin-top: 40px;
@@ -285,46 +295,44 @@ class DevisPdfService {
             line-height : 1.2 ; 
               }
               .devis-details {
-                border: 1px solid #000;
-    padding: 8px 24px;
-    margin-top: 18px;
+                      border: 1px solid #000;
+    padding: 0 10px ;
+      margin : 0 px ; 
     display: flex;
-    flex-direction:column ; 
+    
     justify-content: center;
     width: fit-content;
+    line-height: 1.5 ;
               }
               .products-table {
                   width: 100%;
                   border-collapse: collapse;
-                  margin: 20px 0;
-                  font-size: 10px;
+                 
               }
               .products-table th {
                   border: 1px solid #000;
-                  padding: 10px 6px;
+                  
                   text-align: center;
-                  background-color: #f0f0f0;
-                  font-weight: bold;
-                  font-size: 10px;
+                 
               }
               .products-table td {
                   border: 1px solid #000;
-                  padding: 8px 6px;
+                
                   text-align: center;
-                  font-size: 10px;
+                
               }
               .totals-section {
-                  margin: 20px 0;
+                  margin: 8px 0;
                   display: flex;
                   justify-content: flex-end;
               }
               .totals-table {
                   width: 350px;
                   border-collapse: collapse;
-                  font-size: 11px;
+                 
               }
               .totals-table td {
-                  padding: 8px 12px;
+                  padding: 2px;
                   border: 1px solid #000;
               }
               .totals-table .total-ht {
@@ -333,11 +341,10 @@ class DevisPdfService {
             
               .totals-table .total-ttc {
                   font-weight: bold;
-                  font-size: 12px;
               }
               .terms-section {
-                  margin-top: 25px;
-                  padding: 15px;
+                  margin-top: 10px;
+                  padding: 10px;
                   background: #f9f9f9;
                   border: 1px solid #d9d9d9;
                   border-radius: 4px;
@@ -406,6 +413,7 @@ class DevisPdfService {
 
         <div class="client-info">
                   <strong>Nom Client :</strong> ${data.nom_client || ""}<br>
+                  <strong>Code Client :</strong> ${data.code_client || ""}<br>
                   <strong>Adresse :</strong> ${data.client_address || ""}<br>
                   <strong>M.F :</strong> ${data.client_tax_id || ""}<br>
                   <strong>Tél. :</strong> ${data.client_phone || ""}
@@ -417,11 +425,13 @@ class DevisPdfService {
           <table class="products-table">
               <thead>
                   <tr>
-                      <th style="width: 40%;">DÉSIGNATION</th>
-                      <th style="width: 12%;">QTÉ</th>
-                      <th style="width: 16%;">PRIX UNIT. HT</th>
-                      <th style="width: 12%;">REMISE (%)</th>
-                      <th style="width: 20%;">TOTAL HT</th>
+                    <th style="width: 28%;">DÉSIGNATION</th>
+                      <th style="width: 8%;">QTÉ</th>
+                      <th style="width: 16%;">P.U. HT</th>
+                      <th style="width: 8%;">REMISE</th>
+                         <th style="width: 16%;">TOTAL P. HT</th>
+                       <th style="width: 8%;">TVA</th>
+                          <th style="width: 16%">TOTAL P. TTC</th>
                   </tr>
               </thead>
               <tbody>
@@ -441,7 +451,7 @@ class DevisPdfService {
           ${
             data.notes
               ? `
-          <div class="terms-section" style="margin-top: 15px;">
+          <div class="terms-section" style="margin-top: 8px;">
               <div class="terms-title">Notes internes :</div>
               <div class="terms-content">${data.notes}</div>
           </div>
@@ -450,6 +460,24 @@ class DevisPdfService {
           }
            <div class="totals-section">
               <table class="totals-table">
+                 <tr class="total-ttc">
+                      <td><strong>Totale Brut </strong></td>
+                      <td style="text-align: center;"><strong>${this.formatCurrency(
+                       ( data.montant_ttc || 0 ) +1 
+                      )}</strong></td>
+                  </tr>
+                   <tr class="Totale Remise">
+                      <td><strong>total-remise </strong></td>
+                      <td style="text-align: center;"><strong>${this.formatCurrency(
+                       totalRemise
+                      )}</strong></td>
+                  </tr>
+                   <tr class="total-ttc">
+                      <td><strong>Net a payer  </strong></td>
+                      <td style="text-align: center;"><strong>${this.formatCurrency(
+                        (data.montant_ttc || 0) - totalRemise + (data.timbre_fiscal || 1)
+                      )}</strong></td>
+                  </tr>
                   <tr class="total-ht">
                       <td><strong>Total HT</strong></td>
                       <td style="text-align: center;"><strong>${this.formatCurrency(
@@ -457,15 +485,15 @@ class DevisPdfService {
                       )}</strong></td>
                   </tr>
                   <tr class="total-tva">
-                      <td><strong>TVA (${data.tax_rate || 0}%)</strong></td>
+                      <td><strong>TVA </strong></td>
                       <td style="text-align: center;"><strong>${this.formatCurrency(
                         data.montant_tva || 0
                       )}</strong></td>
                   </tr>
                   <tr class="total-ttc">
-                      <td><strong>TOTAL TTC</strong></td>
+                      <td><strong>Timbre Fiscal </strong></td>
                       <td style="text-align: center;"><strong>${this.formatCurrency(
-                        data.montant_ttc || 0
+                        data.amount_fiscal || 0
                       )}</strong></td>
                   </tr>
               </table>
@@ -474,11 +502,11 @@ class DevisPdfService {
             <div class="signature">
     <div>
             <p><strong>Cachet et Signature Client </strong></p>
-              <div class="rectangle"></div>
+          
      </div>
          <div>
             <p><strong>Cachet et Signature du RM METALASER</strong></p>
-              <div class="rectangle"></div>
+           
      </div>
        
     </div>

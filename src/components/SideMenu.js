@@ -56,6 +56,9 @@ function SideMenu() {
           <Menu.Item key="/stock/matieres" onClick={() => handleMenuClick('/stock/matieres')}>
             Matières Premières
           </Menu.Item>
+          <Menu.Item key="/purshase" onClick={() => handleMenuClick('/purshase')}>
+            Achats
+          </Menu.Item>
         </SubMenu>
         
         <SubMenu key="manifeste" icon={<FileTextOutlined />} title="Manifeste">

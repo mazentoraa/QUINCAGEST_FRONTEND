@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+
 import {
   Button,
   Table,
@@ -24,6 +25,7 @@ import {
   Tooltip,
   Popconfirm,
   Badge,
+  message
 } from "antd";
 import {
   PlusOutlined,
@@ -140,7 +142,7 @@ export default function Devis() {
     date_emission: dayjs(),
     date_validite: dayjs().add(15, "days"),
     statut: "draft",
-    tax_rate: 20,
+    tax_rate: 0,
     notes: "",
     remarques:
       "Remarques :\n_ Validité du devis : 15 jours.\n_ Ce devis doit être accepté et signé pour valider la commande",
@@ -342,6 +344,7 @@ export default function Devis() {
   }, [id]);
 
   // Handle editing a devis
+  
   const handleEditDevis = async (devis) => {
     setLoading(true);
     try {
@@ -381,7 +384,22 @@ export default function Devis() {
       setLoading(false);
     }
   };
-
+   const handleDeleteDevis = async (Id) => {
+      try {
+          setLoading(true);
+          await axios.delete(`${API_BASE_URL}/devis/${Id}/`);
+          
+          message.success("Bon supprimé avec succès"); 
+          fetchDevisList();
+          // setDevisList(prevDevis => prevDevis.filter(note => note.id !== Id));
+          // setTotalRecords(prevTotal => prevTotal - 1);
+      } catch(error){
+          message.error("Erreur lors de la suppression: " + error.message);
+      } finally {
+          setLoading(false)
+      }
+  
+    }
   // Create new devis
   const handleCreateDevis = () => {
     form.resetFields();
@@ -469,7 +487,7 @@ export default function Devis() {
       // Remove the form.setFieldsValue for produits since we're handling it differently
       recalculateTotalsInDrawer(
         updatedProducts,
-        form.getFieldValue("tax_rate") || 20
+        form.getFieldValue("tax_rate") || 0
       );
       notification.success({
         message: "Succès",
@@ -492,7 +510,7 @@ export default function Devis() {
     // Recalculate totals with updated products
     recalculateTotalsInDrawer(
       updatedProducts,
-      form.getFieldValue("tax_rate") || 20
+      form.getFieldValue("tax_rate") || 0
     );
   };
 
@@ -680,6 +698,7 @@ export default function Devis() {
         client_address: clientDetails?.adresse || "",
         client_tax_id: clientDetails?.numero_fiscal || "",
         client_phone: clientDetails?.telephone || "",
+        code_client: clientDetails?.code_client || "",
         date_emission: dayjs(detailedDevis.date_emission).format("DD/MM/YYYY"),
         date_validite: dayjs(detailedDevis.date_validite).format("DD/MM/YYYY"),
       };
@@ -789,6 +808,16 @@ export default function Devis() {
               size="small"
             />
           </Tooltip>
+          <Tooltip title="Supprimer">
+           <Popconfirm
+              title="Êtes-vous sûr de vouloir supprimer cette devis ?"
+              onConfirm={() =>  handleDeleteDevis(record.id)}
+              okText="Oui"
+              cancelText="Non"
+            >
+              <Button danger icon={<DeleteOutlined />} size="small" />
+            </Popconfirm>
+          </Tooltip>
           {record.statut === "draft" && (
             <Tooltip title="Marquer comme envoyé">
               <Button
@@ -817,6 +846,7 @@ export default function Devis() {
                   danger
                 />
               </Tooltip>
+              
             </>
           )}
           {record.statut === "accepted" && (
@@ -832,6 +862,7 @@ export default function Devis() {
                 style={{ backgroundColor: "#1890ff", borderColor: "#1890ff" }}
               />
             </Tooltip>
+            
           )}
         </Space>
       ),
@@ -1485,15 +1516,23 @@ export default function Devis() {
               label="Taux TVA (%)"
               name="tax_rate"
               rules={[
-                { required: true, message: "Veuillez saisir le taux de TVA" },
+                { required: true, message: "Veuillez sélectionner le taux de TVA" },
               ]}
             >
-              <InputNumber
+              <Select
+                placeholder="Sélectionnez un taux"
+                style={{ width: "100%" }}
+              >
+                <Option value={0}>0%</Option>
+                <Option value={7}>7%</Option>
+                <Option value={19}>19%</Option>
+              </Select>
+              {/* <InputNumber
                 min={0}
                 max={100}
                 style={{ width: "100%" }}
                 precision={2}
-              />
+              /> */}
             </Form.Item>
           </Col>
           <Col span={12}>

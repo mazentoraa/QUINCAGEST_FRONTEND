@@ -636,7 +636,7 @@ const BonRetour = () => {
           columns={columns}
           dataSource={bonsRetour}
           rowKey="id"
-          rowSelection={rowSelection}
+          // rowSelection={rowSelection}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,

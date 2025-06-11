@@ -484,7 +484,7 @@ const WorkManagementPage = () => {
       ),
     },
     {
-      title: 'Durée (heures)',
+      title: 'Durée (minutes)',
       dataIndex: 'duree',
       key: 'duree',
     },
@@ -963,7 +963,7 @@ const WorkManagementPage = () => {
 
             <Form.Item
               name="duree"
-              label="Durée (heures)"
+              label="Durée (minutes)"
               rules={[{ required: true, message: 'Veuillez saisir la durée' }]}
             >
               <InputNumber min={1} style={{ width: '100%' }} />
@@ -1047,7 +1047,7 @@ const WorkManagementPage = () => {
           <div className="bill-form-container">
             {/* Invoice Number */}
             <div style={{ textAlign: 'right', marginBottom: '10px' }}>
-              <Text strong>Facture N°: </Text>
+              <Text strong>Bon N°: </Text>
               <Text>{invoiceNumber}</Text>
             </div>
             

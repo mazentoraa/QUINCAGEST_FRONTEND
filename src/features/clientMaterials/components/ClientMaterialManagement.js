@@ -105,6 +105,7 @@ const ClientRawMaterialsPage = () => {
     };
 
     fetchInitialClients();
+    fetchAllMaterials();
 
     // If view all materials is enabled, fetch all materials
     if (viewAllMaterials) {
@@ -152,9 +153,9 @@ const ClientRawMaterialsPage = () => {
   // Handle client selection
   const handleClientSelect = (value, option) => {
     // If we switch to showing specific client materials, disable "view all" mode
-    if (viewAllMaterials) {
-      setViewAllMaterials(false);
-    }
+    // if (viewAllMaterials) {
+    //   setViewAllMaterials(false);
+    // }
     setSelectedClient(option.client);
     fetchClientMaterials(option.value);
   };
@@ -277,12 +278,12 @@ const ClientRawMaterialsPage = () => {
 
     return [
       ...clientColumn,
-      {
-        title: "N° Bon de livraison",
-        dataIndex: "numero_bon",
-        key: "numero_bon",
-        render: (numero_bon, record) => record.numero_bon || "-",
-      },
+      // {
+      //   title: "N° Bon de livraison",
+      //   dataIndex: "numero_bon",
+      //   key: "numero_bon",
+      //   render: (numero_bon, record) => record.numero_bon || "-",
+      // },
       {
         title: "Date de réception",
         dataIndex: "reception_date",
@@ -892,7 +893,7 @@ const ClientRawMaterialsPage = () => {
               marginBottom: 10,
             }}
           >
-            <Title level={4}>Rechercher un client</Title>
+            {/* <Title level={4}>Rechercher un client</Title>
             <div>
               <Switch
                 checked={viewAllMaterials}
@@ -900,17 +901,17 @@ const ClientRawMaterialsPage = () => {
                 style={{ marginRight: 8 }}
               />
               <Text>Voir toutes les matières premières</Text>
-            </div>
+            </div> */}
           </div>
 
-          {!viewAllMaterials && (
-            <div style={{ display: "flex", gap: 16 }}>
+          
+            {/* <div style={{ display: "flex", gap: 16 }}>
               <AutoComplete
                 style={{ width: "100%" }}
                 options={searchOptions}
                 onSearch={(value) => debouncedSearch(value)}
                 onSelect={handleClientSelect}
-                placeholder="Rechercher par nom ou ID client"
+                // placeholder="Rechercher par nom ou ID client"
                 value={searchText}
                 onChange={setSearchText}
                 notFoundContent={
@@ -921,10 +922,10 @@ const ClientRawMaterialsPage = () => {
                   )
                 }
               />
-            </div>
-          )}
+            </div> */}
+          
         </div>
-        {(selectedClient || viewAllMaterials) && (
+        {(selectedClient ||  materials.length > 0) && (
           <>
             {" "}
             {/* Show client info card only when a client is selected and not when viewing all materials only */}
@@ -951,7 +952,7 @@ const ClientRawMaterialsPage = () => {
               </div>
             )}
             {/* Show status message when in "view all" mode */}
-            {viewAllMaterials && !selectedClient && (
+            { !selectedClient && (
               <div style={{ marginBottom: 16 }}>
                 <Card size="small">
                   <Text strong>
@@ -970,7 +971,7 @@ const ClientRawMaterialsPage = () => {
             >
               <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
                 {/* Only show Add material button when not in "view all" mode */}
-                {!viewAllMaterials && (
+                {selectedClient && (
                   <Button
                     type="primary"
                     icon={<PlusOutlined />}
@@ -981,7 +982,7 @@ const ClientRawMaterialsPage = () => {
                 )}
 
                 {/* Add filter dropdown */}
-                <Select
+                {/* <Select
                   style={{ width: 200 }}
                   placeholder="Filtrer par type de matériau"
                   onChange={handleMaterialTypeFilterChange}
@@ -998,7 +999,7 @@ const ClientRawMaterialsPage = () => {
                       </Tag>
                     </Option>
                   ))}
-                </Select>
+                </Select> */}
               </div>
 
               {/* Only show right-side button if we have selections */}
@@ -1024,7 +1025,7 @@ const ClientRawMaterialsPage = () => {
             />
           </>
         )}{" "}
-        {!selectedClient && !viewAllMaterials && !loading && (
+        {!selectedClient && materials.length === 0 && !loading && (
           <Empty
             description="Veuillez sélectionner un client ou utiliser l'option 'Voir toutes les matières premières'"
             image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -1233,7 +1234,7 @@ const ClientRawMaterialsPage = () => {
         </div>
 
         <div style={{ textAlign: "right", marginBottom: "10px" }}>
-          <Text strong>Facture N°: </Text>
+          <Text strong>Bon N°: </Text>
           <Input
             value={invoiceNumber}
             onChange={(e) => setInvoiceNumber(e.target.value)}
@@ -1259,21 +1260,21 @@ const ClientRawMaterialsPage = () => {
             rowKey="id"
             pagination={false}
             columns={[
-              {
-                title: "N° Bon de livraison",
-                dataIndex: "numero_bon",
-                key: "numero_bon",
-                render: (text, record, idx) => (
-                  <Input
-                    value={record.numero_bon}
-                    onChange={(e) => {
-                      const newData = [...billableData];
-                      newData[idx].numero_bon = e.target.value;
-                      setBillableData(newData);
-                    }}
-                  />
-                ),
-              },
+              // {
+              //   title: "N° Bon de livraison",
+              //   dataIndex: "numero_bon",
+              //   key: "numero_bon",
+              //   render: (text, record, idx) => (
+              //     <Input
+              //       value={record.numero_bon}
+              //       onChange={(e) => {
+              //         const newData = [...billableData];
+              //         newData[idx].numero_bon = e.target.value;
+              //         setBillableData(newData);
+              //       }}
+              //     />
+              //   ),
+              // },
               {
                 title: "Date de réception",
                 dataIndex: "reception_date",

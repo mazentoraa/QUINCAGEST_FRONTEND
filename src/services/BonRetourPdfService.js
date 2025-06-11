@@ -139,9 +139,9 @@ class BonRetourPdfService {
 
         materialRows += `
           <tr>
-            <td style="border: 1px solid #000; padding: 6px 4px; font-size: 10px;">${type}</td>
-            <td style="border: 1px solid #000; padding: 6px 4px; font-size: 10px;">${description}</td>
-            <td style="border: 1px solid #000; padding: 6px 4px; font-size: 10px;">${dimensions}</td>
+           <td style="border: 1px solid #000; padding: 6px 4px; font-size: 10px;text-align:center;">${type}</td>
+            <td style="border: 1px solid #000; padding: 6px 4px; font-size: 10px;text-align:center;">${description}</td>
+            <td style="border: 1px solid #000; padding: 6px 4px; font-size: 10px;text-align:center;">${dimensions}</td>
             <td style="border: 1px solid #000; padding: 6px 4px; font-size: 10px; text-align: center;">${quantity}</td>
           </tr>
         `;
@@ -213,15 +213,23 @@ class BonRetourPdfService {
                   width: 55%; /* Adjusted width */
               }
               .bon-details-inline { /* For bon details */
-                  width: 40%; /* Adjusted width */
-                  text-align: right;
+                 .bon-details-inline { 
+               border: 1px solid #000;
+                padding: 2px 10px;
+                margin-top: 15px ;
+                display: flex;
+                flex-direction:column; 
+                justify-content: center;
+                width: fit-content;
+                line-height : 1.5 ; 
               }
               .client-info-box { /* Replaces .client-info */
-                  margin: 20px 0;
-                  border: 2px solid #000; /* Consistent border */
-                  padding: 12px;
-                  background: #f9f9f9; /* Consistent background */
-                  font-size: 11px;
+                  margin-top: 40px;
+                  border: 1px solid #000;
+                  padding: 10px;
+                  text-align: left; 
+                  width:300px ; 
+                  line-height : 1.5 ;
               }
               .items-table { /* Replaces .items-table from invoice */
                   width: 100%;
@@ -229,11 +237,10 @@ class BonRetourPdfService {
                   margin: 15px 0;
               }
               .items-table th {
-                  border: 2px solid #000; /* Consistent th border */
+                  border: 1px solid #000; /* Consistent th border */
                   padding: 8px 4px;
                   text-align: center;
-                  background-color: #333; /* Consistent th background */
-                  color: white;
+                  background-color: #f0f0f0; /* Consistent th background */
                   font-weight: bold;
                   font-size: 10px; /* Consistent th font size */
               }
@@ -249,68 +256,50 @@ class BonRetourPdfService {
                   background-color: #f9f9f9;
                   font-size: 10px;
               }
-              .signatures {
-                  margin-top: 30px; /* Consistent margin */
-                  display: flex;
-                  justify-content: space-between;
-                  font-size: 10px;
-              }
-              .signature-box {
-                  width: 200px; /* Consistent width */
-                  height: 80px; /* Consistent height */
-                  border: 1px solid #000;
-                  text-align: center;
-                  padding: 10px;
-              }
-              .signature-box p {
-                  margin-top: 50px; /* Text at bottom */
-              }
-              .footer {
-                  margin-top: 30px; /* Consistent margin */
-                  text-align: center;
-                  font-size: 9px; /* Consistent font size */
-                  font-style: italic;
-              }
+               .signature {
+               margin-top: 40px;
+              display : flex ;
+              justify-content : space-between ; 
+        }
+             .rectangle {
+              width: 300px;
+              height: 100px;
+              border: 2px dashed grey;
+              background-color: #fff;
+      
+    }
           </style>
       </head>
       <body>
-          <div class="header">
-              <img src="${company.logoUrl}" alt="${company.name} Logo">
-              <h1>BON DE RETOUR</h1>
-              <p>
-                  ${company.name} - Découpes Métaux<br>
-                  ${company.address}<br>
-                  IF: ${company.if}<br>
-                  Tél. : ${company.tel}<br>
-                  Email: <a href="mailto:${company.email}">${
-      company.email
-    }</a><br>
-                  Site Web: <a href="http://${company.website}">${
-      company.website
-    }</a>
-              </p>
-          </div>
-
-          <div class="info-section">
-              <div class="bon-details-inline">
-                  <p><strong>Bon N°:</strong> ${bonData.numero_bon || "N/A"}</p>
-                  <p><strong>Date d'émission:</strong> ${
+            <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+        <div class="company-info" style="text-align: left;">
+            <h2 style="margin-buttom: 1px;">RM METALASER</h2>
+            <p style="margin: 0; line-height: 1.5;"> <span style="color:grey; font-weight: bold;  ">Découpes Métaux </span><br>
+            Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
+            MF: 191 1419B/A/M/000<br>
+            Tél. : +216 20 366 150<br>
+            Email: contact@rmmetalaser.tn<br>
+            Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
+             <div class="bon-details-inline">
+                  <p><strong>Bon N°:</strong> ${bonData.numero_bon || "N/A"}<br>
+                  <strong>Date d'émission:</strong> ${
                     bonData.date_emission
                       ? moment(bonData.date_emission).format("DD/MM/YYYY")
                       : moment(bonData.date_retour).format("DD/MM/YYYY") // Fallback to date_retour if emission not present
                   }</p>
-                  <p><strong>Date de retour effective:</strong> ${moment(
+                }<br>
+                 <strong>Date de retour effective:</strong> ${moment(
                     bonData.date_retour
-                  ).format("DD/MM/YYYY")}</p>
-                  <p><strong>Date de réception effective:</strong> ${moment(
+                   ).format("DD/MM/YYYY")}<br>
+                  <strong>Date de réception effective:</strong> ${moment(
                     bonData.date_reception
-                  ).format("DD/MM/YYYY")}</p>
-                  <p><strong>Statut:</strong> ${statusLabel}</p>
+                  ).format("DD/MM/YYYY")}<br>
+                  <strong>Statut:</strong> ${statusLabel}</p>
               </div>
-          </div>
-          
-          <div class="client-info-box">
-              <h4>Client</h4>
+         </div>
+          <div class="logo" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
+  <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
+<div class="client-info-box">
               <strong>Nom:</strong> ${client.nom_client || "N/A"}<br>
               <strong>Adresse:</strong> ${client.adresse || "N/A"}<br>
               <strong>Matricule Fiscale:</strong> ${
@@ -318,7 +307,8 @@ class BonRetourPdfService {
               }<br>
               <strong>Tél.:</strong> ${client.telephone || "N/A"}
           </div>
-
+</div>
+</header>
           <table class="items-table">
               <thead>
                   <tr>
@@ -344,28 +334,18 @@ class BonRetourPdfService {
               : ""
           }
 
-          <div class="signatures">
-              <div>
-                  <p><strong>Signature Client:</strong></p>
-                  <div class="signature-box">
-                      <p>Signature et cachet</p>
-                  </div>
-              </div>
-              <div>
-                  <p><strong>Signature ${company.name}:</strong></p>
-                  <div class="signature-box">
-                      <p>Signature et cachet</p>
-                  </div>
-              </div>
-          </div>
-
-          <div class="footer">
-              <p>Merci pour votre collaboration !</p>
-              <p>
-                  Bon de Retour N°: ${bonData.numero_bon || ""} — 
-                  Date: ${moment(bonData.date_retour).format("DD/MM/YYYY")}
-              </p>
-          </div>
+          
+               <div class="signature">
+    <div>
+            <p><strong>Cachet et Signature Client </strong></p>
+              <div class="rectangle"></div>
+     </div>
+         <div>
+            <p><strong>Cachet et Signature du RM METALASER</strong></p>
+              <div class="rectangle"></div>
+     </div>
+       
+    </div>
       </body>
       </html>
     `;

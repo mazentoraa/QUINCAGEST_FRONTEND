@@ -272,7 +272,7 @@ export default function BonCommande() {
     drawerForm.setFieldsValue({
       date_commande: moment(),
       date_livraison_prevue: moment().add(7, "days"),
-      tax_rate: 20,
+      tax_rate: 0,
       statut: "pending",
       conditions_paiement: "À régler dans les 30 jours",
     });
@@ -341,7 +341,7 @@ export default function BonCommande() {
           statut: values.statut || "pending",
           notes: values.notes || "",
           conditions_paiement: values.conditions_paiement || "",
-          tax_rate: values.tax_rate || 20,
+          tax_rate: values.tax_rate || 0,
           produits: newOrderProducts.map((p) => ({
             produit: p.produit_id,
             quantite: p.quantite,
@@ -711,7 +711,7 @@ export default function BonCommande() {
         montant_ht: detailedOrder.montant_ht || 0,
         montant_tva: detailedOrder.montant_tva || 0,
         montant_ttc: detailedOrder.montant_ttc || 0,
-        tax_rate: detailedOrder.tax_rate || 20,
+        tax_rate: detailedOrder.tax_rate || 0,
       };
 
       console.log("Order data for PDF:", orderDataForPDF); // Debug log
@@ -1214,7 +1214,7 @@ export default function BonCommande() {
             columns={columns}
             dataSource={filteredOrders}
             rowKey="id"
-            rowSelection={rowSelection}
+            // rowSelection={rowSelection}
             pagination={{
               total: filteredOrders.length,
               pageSize: 10,
@@ -1308,16 +1308,24 @@ export default function BonCommande() {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="tax_rate" label="Taux TVA (%)">
-                <InputNumber
-                  min={0}
-                  max={100}
-                  style={{ width: "100%" }}
-                  onChange={(value) => {
-                    recalculateTotalsInDrawer(currentProductsInDrawer, value);
-                  }}
-                />
-              </Form.Item>
+              <Form.Item 
+    name="tax_rate" 
+    label="Taux TVA (%)"
+    // rules={[{ required: true, message: "Veuillez sélectionner un taux de TVA" }]}
+  >
+    <Select
+      style={{ width: "100%" }}
+      onChange={(value) => {
+        recalculateTotalsInDrawer(currentProductsInDrawer, value);
+      }}
+    >
+      
+      <Option value={0}>0%</Option>
+      <Option value={7}>7%</Option>
+      <Option value={19}>19%</Option>
+    </Select>
+  </Form.Item>
+
             </Col>
           </Row>
 

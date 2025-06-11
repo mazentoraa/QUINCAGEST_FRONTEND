@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useContext } from "react";
 import { InvoiceContext } from "../../contexts/InvoiceContext";
-
+// import {DatePicker} from "@heroui/react";
 import {
   Table,
   Button,
@@ -26,6 +26,7 @@ import {
   Spin,
   Card,
   Badge,
+  Radio,
 } from "antd";
 import {
   PrinterOutlined,
@@ -44,6 +45,9 @@ import ProductService from "../../components/BonsDevis/ProductService";
 
 import moment from "moment";
 import FacturePdfApiService from "../../features/orders/services/FacturePdfApiService";
+import InvoiceService from "../../features/manifeste/services/InvoiceService";
+
+
 
 const { cdsService } = getApiService();
 const { Option } = Select;
@@ -97,7 +101,7 @@ export default function BonCommande() {
   // Removed selectedClientFilter state
   const [selectedClientFilter, setSelectedClientFilter] = useState(null); // Client ID for filtering
   const [selectedStatus, setSelectedStatus] = useState(null);
-  const [dateRange, setDateRange] = useState(null);
+  const [dateRange, setDateRange] = useState(new Date());
   const [priceRange, setPriceRange] = useState([null, null]); // [min, max]
   const [filteredOrders, setFilteredOrders] = useState([]);
 
@@ -106,17 +110,22 @@ export default function BonCommande() {
   const [drawerForm] = Form.useForm();
 
   const [availableProducts, setAvailableProducts] = useState([]);
+   const [availableBon, setAvailableBon] = useState([]);
   const [isProductModalVisible, setIsProductModalVisible] = useState(false);
+   const [isBonModalVisible, setIsBonModalVisible] = useState(false);
   const [productForm] = Form.useForm();
+   const [BonForm] = Form.useForm();
   const [currentProductsInDrawer, setCurrentProductsInDrawer] = useState([]);
+  const [currentBonInDrawer, setCurrentBonInDrawer] = useState([]);
 
   // New state variables for creating orders
   const [isCreating, setIsCreating] = useState(false);
   const [availableClients, setAvailableClients] = useState([]);
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [newOrderProducts, setNewOrderProducts] = useState([]);
+   const [newOrderBon, setNewOrderBon] = useState([]);
 
-  const recalculateTotalsInDrawer = (products, taxRate) => {
+  const recalculateTotalsInDrawer = (products, taxRate, bons) => {
     const currentTaxRate =
       typeof taxRate === "number"
         ? taxRate
@@ -124,7 +133,10 @@ export default function BonCommande() {
     const timbreFiscal =
       parseFloat(drawerForm.getFieldValue("timbre_fiscal")) || 0;
 
-    const montantHt = products.reduce((sum, p) => sum + (p.prix_total || 0), 0);
+    
+     const montantHtB = bons.reduce((sum,b)=>sum+(b.total_ttc || 0 ) , 0);
+    const montantHtP = products.reduce((sum, p) => sum + (p.prix_total || 0), 0);
+    const montantHt = montantHtB + montantHtP;
     const montantTva = montantHt * (currentTaxRate / 100);
     const montantTtc = montantHt + montantTva + timbreFiscal;
 
@@ -268,6 +280,35 @@ export default function BonCommande() {
     filterOrders();
   }, [filterOrders]);
 
+   const fetchAvailableBons = useCallback(async () => {
+    try {
+      const response = await InvoiceService.getAllInvoices();
+      
+      const Bons = Array.isArray(response.results) ? response.results : [];
+      
+      const mappedBons = Bons.map((bon) => ({
+        ...bon,
+        numero_facture: bon.numero_facture, // redundant but okay
+      }));
+  
+      
+       const filteredBons = selectedClientId
+        ? mappedBons.filter((bon) => bon.client_details?.id === selectedClientId)
+        : [];
+  
+      console.log("Selected client:", selectedClientId);
+      console.log("Filtered bons:", filteredBons);
+      setAvailableBon(filteredBons);
+    } catch (err) {
+      console.error("Error fetching bons:", err);
+      message.error("Failed to fetch available bons: " + err.message);
+    }
+   }, [selectedClientId]);
+  
+  useEffect(() => {
+    fetchAvailableBons();
+  }, [fetchAvailableBons]);
+  
   const fetchAvailableProducts = useCallback(async () => {
     try {
       const response = await ProductService.getProducts();
@@ -291,7 +332,8 @@ export default function BonCommande() {
     fetchOrders();
     fetchAvailableProducts();
     fetchAvailableClients();
-  }, [fetchOrders, fetchAvailableProducts, fetchAvailableClients]);
+    fetchAvailableBons();
+  }, [fetchOrders, fetchAvailableProducts, fetchAvailableClients,fetchAvailableBons]);
 
   const handleEditOrder = async (order) => {
     setLoading(true);
@@ -385,7 +427,7 @@ export default function BonCommande() {
             : null,
           mode_paiement: fullOrderDetails.mode_paiement || "cash",
           statut: fullOrderDetails.statut || "pending",
-          tax_rate: fullOrderDetails.tax_rate || 20,
+          tax_rate: fullOrderDetails.tax_rate || 0,
           timbre_fiscal: fullOrderDetails.timbre_fiscal || 1, // Add timbre fiscal
           conditions_paiement: fullOrderDetails.conditions_paiement || "",
           notes: fullOrderDetails.notes || "",
@@ -411,13 +453,13 @@ export default function BonCommande() {
     setIsCreating(true);
     setEditingOrder(null);
     setCurrentProductsInDrawer([]);
-
+     setCurrentBonInDrawer([]);
     // Initialize with default values
     drawerForm.resetFields();
     drawerForm.setFieldsValue({
       date_commande: moment(),
       date_livraison_prevue: moment().add(7, "days"),
-      tax_rate: 20,
+      tax_rate: 0,
       timbre_fiscal: 0, // Default timbre fiscal
       statut: "pending",
       conditions_paiement: "À régler dans les 30 jours",
@@ -431,7 +473,9 @@ export default function BonCommande() {
     setIsDrawerVisible(false);
     setEditingOrder(null);
     setCurrentProductsInDrawer([]);
+    setCurrentBonInDrawer([]);
     setNewOrderProducts([]);
+    setNewOrderBon([]);
     setIsCreating(false);
     setSelectedClientId(null);
     drawerForm.resetFields();
@@ -451,7 +495,7 @@ export default function BonCommande() {
           setLoading(false);
           return;
         }
-        if (newOrderProducts.length === 0) {
+        if ((newOrderProducts.length === 0)&& (newOrderBon.length === 0)) {
           message.error("Veuillez ajouter au moins un produit à la commande");
           setLoading(false);
           return;
@@ -463,10 +507,14 @@ export default function BonCommande() {
         // )}`;
 
         // Recalculate totals based on the final product list (newOrderProducts) and tax rate
-        const finalMontantHt = newOrderProducts.reduce(
+        const ProdMontantHt  = newOrderProducts.reduce(
           (sum, p) => sum + (p.prix_total || 0),
           0
         );
+         const BonMontant = newOrderBon.reduce(
+          (sum, b) => sum + (b.billable?.prix_unitaire || 0 ) ,0
+        );
+        const finalMontantHt = ProdMontantHt + BonMontant;
         const finalMontantTva = finalMontantHt * (taxRate / 100);
         const finalMontantTtc = finalMontantHt + finalMontantTva + timbreFiscal;
 
@@ -489,12 +537,23 @@ export default function BonCommande() {
           montant_ht: finalMontantHt,
           montant_tva: finalMontantTva,
           montant_ttc: finalMontantTtc,
-          produits: newOrderProducts.map((p) => ({
-            produit: p.produit_id || p.produit,
-            quantite: p.quantite,
-            prix_unitaire: p.prix_unitaire,
-            remise_pourcentage: p.remise_pourcentage || 0,
-          })),
+          produits: [
+            // Manual products
+            ...newOrderProducts.map((p) => ({
+              produit: p.produit_id || p.produit,
+              quantite: p.quantite,
+              prix_unitaire: p.prix_unitaire,
+              remise_pourcentage: p.remise_pourcentage || 0,
+            })),
+            // Bon products
+            ...newOrderBon.map((item) => ({
+              produit: item.id, // or map this to your real `produit` ID if needed
+    quantite: item.billable?.quantite || 0,
+    prix_unitaire: item.billable?.prix_unitaire || 0,
+                //  remise_pourcentage: 0,
+              }))
+          
+          ],
         };
 
         const createdOrder = await cdsService.createOrder(orderPayload);
@@ -533,13 +592,24 @@ export default function BonCommande() {
           montant_tva: finalMontantTva,
           montant_ttc: finalMontantTtc,
           // Use 'produit_commande' as the key for line items
-          produit_commande: currentProductsInDrawer.map((p) => ({
-            id: p.id, // ID of the produit_commande line item, crucial for updates
-            produit: p.produit_id || p.produit, // ID of the product from catalog
-            quantite: p.quantite,
-            prix_unitaire: p.prix_unitaire,
-            remise_pourcentage: p.remise_pourcentage || 0,
-          })),
+          produit_commande: [
+            ...currentProductsInDrawer.map((p) => ({
+              id: p.id,
+              produit: p.produit_id || p.produit,
+              quantite: p.quantite,
+              prix_unitaire: p.prix_unitaire,
+              remise_pourcentage: p.remise_pourcentage || 0,
+            })),
+          
+            // 2. Products from bons
+            ...newOrderBon.map((item) => ({
+              produit_nom: item.produit_name, // or map this to your real `produit` ID if needed
+    quantite: item.billable?.quantite || 0,
+    prix_unitaire: item.billable?.prix_unitaire || 0,
+                //  remise_pourcentage: 0,
+              }))
+            
+          ],
           mode_paiement: values.mode_paiement,
         };
         // If client_id is in `values` (meaning it could have been changed in the form for an existing order)
@@ -584,7 +654,76 @@ export default function BonCommande() {
     productForm.resetFields();
     setIsProductModalVisible(true);
   };
+ const handleAddBonToDrawerOrder = () => {
+  if (!selectedClientId) {
+      message.warning("Veuillez d'abord sélectionner un client.");
+      return;
+    }
+  
+    fetchAvailableBons(); 
+    BonForm.resetFields();
+    setIsBonModalVisible(true);
+  }
+  const handleBonModalSave = async () => {
 
+    try {
+      const values = await BonForm.validateFields();
+    
+      const selectedBon = availableBon.find(
+        (bon) => bon.numero_facture === values.numero_facture
+      );
+  
+      if (!selectedBon) {
+        message.error("Bon de livraison non trouvable");
+        return;
+      }
+  
+     
+      const newBonData = {
+        bon_id: selectedBon.id,
+        bon_numero: selectedBon.numero_facture,
+        nom_client: selectedBon.client_details?.nom_client || "",
+        date_emission: selectedBon.date_emission,
+        statut: selectedBon.statut,
+        total_ttc: selectedBon.total_ttc,
+        items_count: selectedBon.items?.length || 0,
+
+      };
+      
+      console.log("Détails du bon sélectionné:", newBonData);
+  
+      setCurrentBonInDrawer((prev) => {
+        const alreadyExists = prev.some(
+          (bon) => bon.bon_numero === newBonData.bon_numero
+        );
+        if (alreadyExists) {
+          message.warning("Ce bon a déjà été ajouté.");
+          return prev;
+        }
+        return [...prev, newBonData];
+      });
+       const updatedBonList = [...currentBonInDrawer, newBonData];
+setCurrentBonInDrawer(updatedBonList);
+      setNewOrderBon((prev) => {
+        const newItems = selectedBon.items || [];
+        const existingProductIds = new Set(prev.map(item => item.produit_id || item.produit));
+        const uniqueNewItems = newItems.filter(
+          (item) => !existingProductIds.has(item.produit_id || item.produit)
+        );
+       const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
+        recalculateTotalsInDrawer(newOrderProducts, currentTaxRate, updatedBonList);
+        return [...prev, ...uniqueNewItems];
+      });
+      
+      
+      message.success("Bon ajouté avec succès !");
+      setIsBonModalVisible(false);
+    } catch (err) {
+      console.error("Erreur lors de la validation du bon:", err);
+      message.error("Échec de l'ajout du bon");
+    }
+  };
+  
   const handleProductModalSave = async () => {
     try {
       const values = await productForm.validateFields();
@@ -645,6 +784,7 @@ export default function BonCommande() {
         setNewOrderProducts(updatedNewOrderProducts);
         setCurrentProductsInDrawer(updatedNewOrderProducts);
         recalculateTotalsInDrawer(updatedNewOrderProducts, currentTaxRate);
+         recalculateTotalsInDrawer(updatedNewOrderProducts, currentTaxRate ,  currentBonInDrawer);
       } else {
         // For existing order
         const existingProductInDrawerIndex = currentProductsInDrawer.findIndex(
@@ -671,7 +811,7 @@ export default function BonCommande() {
                 : p
           );
           setCurrentProductsInDrawer(updatedProductsInDrawer);
-          recalculateTotalsInDrawer(updatedProductsInDrawer, currentTaxRate);
+          recalculateTotalsInDrawer(updatedProductsInDrawer, currentTaxRate,currentBonInDrawer);
           message.success("Produit mis à jour dans la commande");
           // Note: You'd typically need to reflect this change in `editingOrder.produit_commande`
           // and the backend would need to handle updates to existing line items.
@@ -699,7 +839,8 @@ export default function BonCommande() {
             addedProductFromApi,
           ];
           setCurrentProductsInDrawer(newProductsList);
-          recalculateTotalsInDrawer(newProductsList, currentTaxRate);
+          recalculateTotalsInDrawer(newProductsList, currentTaxRate ,  currentBonInDrawer);
+
           message.success("Produit ajouté à la commande");
         }
       }
@@ -712,6 +853,37 @@ export default function BonCommande() {
     }
   };
 
+  const handleRemoveBonFromDrawer = async (bonId) => {
+    console.log("bonIdToRemove:", bonId);
+console.log("Current bon IDs:", currentBonInDrawer.map(b => b.bon_id));
+
+    try {
+      // Remove bon from the drawer UI
+      const updatedBonList = currentBonInDrawer.filter((bon) => bon.bon_numero !== bonId);
+      console.log(currentBonInDrawer);
+      setCurrentBonInDrawer(updatedBonList);
+      
+      // Remove corresponding items from the newOrderBon list
+      const updatedNewOrderBon = newOrderBon.filter(
+        (item) => item.bon_numero !== bonId // If your bon items have `bon_id`
+      );
+  
+      // If the bon items don't include `bon_id`, you may need to filter based on their origin
+      // In that case, keep track when you add them
+  
+      setNewOrderBon(updatedNewOrderBon);
+  
+      // Recalculate totals after removal
+      const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
+      recalculateTotalsInDrawer(newOrderProducts, currentTaxRate, updatedBonList);
+  
+      message.success("Bon supprimé avec succès !");
+    } catch (error) {
+      console.error("Erreur lors de la suppression du bon:", error);
+      message.error("Échec de la suppression du bon");
+    }
+  };
+   
   const handleRemoveProductFromDrawerOrder = async (
     produitIdToRemove // This could be tempId for new orders, or actual DB ID for existing
   ) => {
@@ -723,7 +895,7 @@ export default function BonCommande() {
         );
         setNewOrderProducts(updatedProducts);
         setCurrentProductsInDrawer(updatedProducts);
-        recalculateTotalsInDrawer(updatedProducts, currentTaxRate);
+        recalculateTotalsInDrawer(updatedProducts, currentTaxRate,currentBonInDrawer);
       } else {
         // For existing order, find the product to get the correct produit_id
         const productToRemove = currentProductsInDrawer.find(
@@ -747,7 +919,7 @@ export default function BonCommande() {
           (p) => p.id !== produitIdToRemove
         );
         setCurrentProductsInDrawer(updatedProducts);
-        recalculateTotalsInDrawer(updatedProducts, currentTaxRate);
+        recalculateTotalsInDrawer(updatedProducts, currentTaxRate,currentBonInDrawer);
       }
       message.success("Product removed.");
     } catch (error) {
@@ -932,7 +1104,7 @@ export default function BonCommande() {
         montant_ht: detailedOrder.montant_ht || 0,
         montant_tva: detailedOrder.montant_tva || 0,
         montant_ttc: detailedOrder.montant_ttc || 0,
-        tax_rate: detailedOrder.tax_rate || 20,
+        tax_rate: detailedOrder.tax_rate || 0,
       };
 
       console.log("Order data for PDF:", orderDataForPDF); // Debug log
@@ -1431,13 +1603,14 @@ export default function BonCommande() {
                 <Option value="invoiced">Facturée</Option>
               </Select>
             </Col>
-            <Col span={6}>
+            <Col  xs={24} sm={12} md={8} lg={6}>
               <DatePicker.RangePicker
-                value={dateRange}
-                onChange={setDateRange}
+                style={{ width: "100%" }}
+                // value={dateRange}
+                // onChange={(dates) => setDateRange(dates)}
                 format="DD/MM/YYYY"
                 placeholder={["Date début", "Date fin"]}
-                style={{ width: "100%" }}
+                
               />
             </Col>
             <Col span={4}>
@@ -1499,7 +1672,7 @@ export default function BonCommande() {
             columns={columns}
             dataSource={filteredOrders}
             rowKey="id"
-            rowSelection={rowSelection}
+            // rowSelection={rowSelection}
             pagination={{
               total: filteredOrders.length,
               pageSize: 10,
@@ -1577,30 +1750,43 @@ export default function BonCommande() {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="date_commande" label="Date Facture">
-                <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+              <Form.Item 
+              label="Date Facture" 
+              name="date_commande" >
+                <DatePicker 
+                selected={dateRange}
+                onChange={(date)=>setDateRange(date)}
+                dateFormat="DD/MM/YYYY"
+                style={{ width: "100%" }} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="date_livraison_prevue"
                 label="Date Livraison Prévue"
+                initialValue={moment()} 
               >
-                <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+                <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY"  picker="date" />
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="tax_rate" label="Taux TVA (%)">
-                <InputNumber
-                  min={0}
-                  max={100}
+              <Form.Item 
+                name="tax_rate" 
+                label="Taux TVA (%)"
+              
+              >
+                <Select
                   style={{ width: "100%" }}
-                  onChange={(value) => {
-                    recalculateTotalsInDrawer(currentProductsInDrawer, value);
-                  }}
+                  onChange={(value) => recalculateTotalsInDrawer(currentProductsInDrawer, value,currentBonInDrawer)}
+                  options={[
+                     { value: 0, label: "0%" },
+                    { value: 7, label: "7%" },
+                    { value: 19, label: "19%" }
+                  ]}
+                  placeholder="Sélectionnez un taux"
                 />
               </Form.Item>
             </Col>
@@ -1646,7 +1832,67 @@ export default function BonCommande() {
           <Form.Item name="notes" label="Notes">
             <Input.TextArea rows={3} />
           </Form.Item>
-
+          <Divider>Bon de livraison</Divider>
+          <Button
+            type="dashed"
+            onClick={handleAddBonToDrawerOrder}
+            style={{ width: "100%", marginBottom: 16 }}
+            icon={<PlusOutlined />}
+          >
+            Ajouter un Bon
+          </Button>
+          <Table
+            dataSource={currentBonInDrawer}
+            rowKey="id"
+            pagination={false}
+            size="small"
+            columns={[
+              {
+                title: "Bon de livraison",
+                dataIndex: "bon_numero",
+                key: "bon_numero",
+              },
+              {
+                title: "Client",
+                dataIndex: "nom_client",
+                key: "nom_client",
+              },
+              {
+                title: "Dat",
+                dataIndex: "date_emission",
+                key: "date_emission",
+                
+              },
+              {
+                title: "Status",
+                dataIndex: "statut",
+                key: "statut",
+                
+              },
+              {
+                title: "Prix Total",
+                dataIndex: "total_ttc",
+                key: "total_ttc",
+                render: (prix) => formatCurrency(prix),
+              },
+              {
+                title: "Actions",
+                key: "actions",
+                render: (_, record) => (
+                  <Button
+                    danger
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    onClick={() =>
+                      handleRemoveBonFromDrawer(
+                       record.bon_numero || record.id
+                      )
+                    }
+                  />
+                ),
+              },
+            ]}
+          />
           <Divider>Produits</Divider>
 
           <Button
@@ -1812,6 +2058,60 @@ export default function BonCommande() {
             <InputNumber min={0} max={100} style={{ width: "100%" }} />
           </Form.Item>
         </Form>
+      </Modal>
+         {/* Bon Modal */}
+      <Modal
+      title="Ajouter un Bon"
+      open={isBonModalVisible}
+       onOk={handleBonModalSave}
+      onCancel={() => setIsBonModalVisible(false)}
+      okText="Ajouter"
+      cancelText="Annuler"
+      >
+     <Form form={BonForm} layout="vertical">
+  <Form.Item
+    name="numero_facture"
+    label="Bon de livraison"
+    rules={[
+      { required: true, message: "Veuillez sélectionner un Bon" },
+    ]}
+  >
+    {availableBon.length === 0 ? (
+      <Alert
+        message="Il n'y a pas de bon de livraison disponible"
+        type="info"
+        showIcon
+      />
+    ) : (
+      <Radio.Group style={{ width: "100%" }}>
+        <Space direction="vertical" style={{ width: "100%" }}>
+          {availableBon.map((bon) => (
+            <Radio
+              key={bon.numero_facture}
+              value={bon.numero_facture}
+              style={{
+                padding: "8px",
+                border: "1px solid #d9d9d9",
+                borderRadius: "6px",
+                width: "100%",
+              }}
+            >
+              <div>
+                <strong style={{ color: "black" }}>{bon.numero_facture}</strong>
+                <p style={{ margin: 0, color: "grey" }}>
+                  Date: {bon.date_emission} - {bon.items.length} articles -{" "}
+                  {bon.total_ttc} TND
+                </p>
+                <p style={{ margin: 0, color: "green" }}>{bon.statut}</p>
+              </div>
+            </Radio>
+          ))}
+        </Space>
+      </Radio.Group>
+    )}
+  </Form.Item>
+</Form>
+
       </Modal>
     </Layout.Content>
   );

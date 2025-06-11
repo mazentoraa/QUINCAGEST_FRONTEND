@@ -97,27 +97,27 @@ class FacturePdfApiService {
       .map(
         (item) => `
       <tr>
-  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+  <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     ${item.nom_produit || "N/A"}
   </td>
-  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+  <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     ${item.quantite || 0}
   </td>
-  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+  <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     ${this.formatCurrency(item.prix_unitaire || 0)}
   </td>
-  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+  <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     ${item.remise_pourcentage || 0}%
   </td>
-  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+  <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     ${this.formatCurrency(item.prix_total || 0)}
   </td>
-  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+  <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     ${orderData.tax_rate || 20}%
   </td>
-  <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; vertical-align: middle;">
+  <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     ${this.formatCurrency(
-      (item.prix_total || 0) * (1 + (orderData.tax_rate || 20) / 100)
+      (item.prix_total || 0) * (1 + (orderData.tax_rate || 0) / 100)
     )}
   </td>
 </tr>
@@ -147,7 +147,7 @@ class FacturePdfApiService {
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 40px;
+           
             font-size: 14px;
             color: #000;
         }
@@ -155,7 +155,7 @@ class FacturePdfApiService {
         header,
         footer {
             text-align: center;
-            margin-bottom: 20px;
+           
         }
 
         .company-info {
@@ -164,7 +164,7 @@ class FacturePdfApiService {
         }
 
         .client-info {
-            margin-top: 40px;
+            margin-top: 20px;
             border: 1px solid #000;
             padding: 10px;
             text-align: left;
@@ -175,6 +175,7 @@ class FacturePdfApiService {
         .order-details table, .totals table {
     border-collapse: collapse;
     width: 100%;
+    margin-top: 5px;
   }
 
         .order-details th, .order-details td,
@@ -186,7 +187,7 @@ class FacturePdfApiService {
   }
 
         .totals {
-            margin-top: 20px;
+            margin-top: 10px;
             width: 100%;
             display: flex;
             justify-content: space-between ; 
@@ -199,7 +200,7 @@ class FacturePdfApiService {
 
         .totals td {
          
-            padding: 10px ;
+            padding: 2px ;
             border: 1px solid #000;
              text-align: start ;
             font-size: bold;
@@ -212,8 +213,8 @@ class FacturePdfApiService {
         }
             .order-header {
     border: 1px solid #000;
-    padding: 8px 24px;
-    margin-top: 18px;
+    padding: 4px 20px;
+    margin-top: 12px;
     display: flex;
     justify-content: center;
     width: fit-content;
@@ -236,7 +237,7 @@ class FacturePdfApiService {
     </style>
 </head>
 <body>
-    <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+    <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
         <div class="company-info" style="text-align: left;">
            <h2 style="margin-buttom: 1px;">RM METALASER</h2>
             <p style="margin: 0; line-height: 1.5;"> <span style="color:grey; font-weight: bold; ">Découpes Métaux </span><br>
@@ -307,7 +308,7 @@ class FacturePdfApiService {
                )}</td>
              </tr>
                <tr>
-             <td><strong>Total Remise </strong></td>
+             <td><strong>Totale Remise </strong></td>
       <td>${this.formatCurrency(totalRemise)}</td>
              </tr>
               <tr>
@@ -316,10 +317,7 @@ class FacturePdfApiService {
         (orderData.montant_ttc || 0) - totalRemise + (orderData.timbre_fiscal || 0)
       )}</td>
     </tr>
-              <tr>
-                <td><strong>Timbre Fiscal </strong></td>
-                <td>${this.formatCurrency(orderData.timbre_fiscal || 0)}</td>
-            </tr>
+              
             <tr>
                 <td><strong>Total HTVA</strong></td>
                 <td>${this.formatCurrency(orderData.montant_ht || 0)}</td>
@@ -329,8 +327,8 @@ class FacturePdfApiService {
                 <td>${this.formatCurrency(orderData.montant_tva || 0)}</td>
             </tr>
            <tr>
-                <td><strong>Totale Fiscal </strong></td>
-                <td>${this.formatCurrency(1)}</td>
+               <td><strong>Timbre Fiscal </strong></td>
+                <td>${this.formatCurrency(orderData.timbre_fiscal || 0)}</td>
             </tr>
         </table>
     </div>
@@ -341,11 +339,11 @@ class FacturePdfApiService {
     <div class="signature">
         <div>
             <p><strong>Cachet et Signature du client</strong></p>
-              <div class="rectangle"></div>
+              
      </div>
          <div>
             <p><strong>Cachet et Signature du RM METALASER</strong></p>
-              <div class="rectangle"></div>
+              
      </div>
     </div>
 </body>
