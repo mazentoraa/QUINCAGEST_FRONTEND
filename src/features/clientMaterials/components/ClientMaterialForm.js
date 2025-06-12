@@ -95,7 +95,7 @@ function ClientMaterialForm() {
         </div>
 
         <div className="form-row">
-          <div className="form-group">
+          {/* <div className="form-group">
             <label htmlFor="deliveryNote">N° Bon de livraison</label>
             <input
               type="text"
@@ -105,7 +105,7 @@ function ClientMaterialForm() {
               onChange={handleChange}
               placeholder="Généré automatiquement si vide"
             />
-          </div>
+          </div> */}
 
           <div className="form-group">
             <label htmlFor="receiptDate">Date de réception</label>

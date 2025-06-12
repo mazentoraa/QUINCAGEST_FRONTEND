@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,useCallback} from 'react';
+
 import { 
   Typography, 
   Card, 
@@ -13,7 +14,8 @@ import {
   Divider, 
   Space, 
   notification,
-  Popconfirm
+  Popconfirm,
+  message
 } from 'antd';
 import { PlusOutlined, PrinterOutlined, SaveOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import RawMaterialService from '../services/RawMaterialService';
@@ -21,7 +23,10 @@ import moment from 'moment';
 import { useParams, useLocation } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
+import InvoiceService from '../../../services/InvoiceService'
+import ClientMaterialService from '../../clientMaterials/services/ClientMaterialService';
+import ClientMaterialPdfService from '../../clientMaterials/services/ClientMaterialPdfService';
+import ClientService from '../services/ClientService';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
@@ -36,6 +41,7 @@ const ClientRawMaterialsPage = () => {
   const [editing_material, set_editing_material] = useState(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedRowsData, setSelectedRowsData] = useState([]); // Ajout pour stocker les données sélectionnées
+  const [clientDetails, setClientDetails] = useState(null);
   const [form] = Form.useForm();
 
   // Modal de préparation de la facture
@@ -63,6 +69,28 @@ const ClientRawMaterialsPage = () => {
 
   // Fetch client materials
   useEffect(() => {
+    const fetchClientDetails = async () => {
+    if (client_id) {
+    try {
+      console.log("Fetching client details for ID:", client_id);
+      const clientData = await ClientService.getClientById(client_id); 
+      console.log("Client data received:", clientData);
+      
+      if (clientData) {
+        setClientDetails(clientData); 
+      } else {
+        console.warn("Aucune donnée client reçue");
+        notification.warning({ message: "Aucune donnée trouvée pour ce client" });
+      }
+    } catch (error) {
+      console.error('Erreur récupération client:', error);
+      notification.error({
+        message: 'Erreur',
+        description: `Impossible de charger les détails du client: ${error.message}`
+      });
+    }
+  }
+  };
     const fetch_materials = async () => {
       set_loading(true);
       try {
@@ -88,17 +116,18 @@ const ClientRawMaterialsPage = () => {
 
     if (client_id) {
       fetch_materials();
+      fetchClientDetails();
     }
   }, [client_id]);
 
   // Table columns
   const columns = [
-    {
-      title: 'N° Bon de livraison',
-      dataIndex: 'numero_bon',
-      key: 'numero_bon',
-      render: (numero_bon, record) => record.numero_bon || '-', // Utilise la valeur du record
-    },
+    // {
+    //   title: 'N° Bon de livraison',
+    //   dataIndex: 'numero_bon',
+    //   key: 'numero_bon',
+    //   render: (numero_bon, record) => record.numero_bon || '-', // Utilise la valeur du record
+    // },
     {
       title: 'Date de réception',
       dataIndex: 'reception_date',
@@ -248,17 +277,96 @@ const ClientRawMaterialsPage = () => {
   };
 
   // Handler pour préparer la facture à partir des matières sélectionnées
-  const handleProcessSelectedMaterials = () => {
+  const handleProcessSelectedMaterials = async () => {
     if (!selectedRowsData || selectedRowsData.length === 0) {
       notification.error({ message: 'Aucune matière sélectionnée' });
       return;
     }
     setBillableData(selectedRowsData);
-    setInvoiceNumber(generateInvoiceNumber());
+     const newInvoiceNumber = await generateInvoiceNumber();
+    setInvoiceNumber(newInvoiceNumber);
     setBillDate(moment().format('YYYY-MM-DD'));
     setIsBillModalVisible(true);
   };
 
+  const calculateTotalQuantity = useCallback((materials) => {
+      if (!materials || !Array.isArray(materials)) return 0;
+      return materials.reduce(
+        (sum, item) => sum + (parseFloat(item.quantite) || 0),
+        0
+      );
+    }, []);
+  
+  const printDeliveryNote = async (record) => {
+  try {
+    if (!record || !Array.isArray(billableData) || billableData.length === 0) {
+      notification.error({
+        message: "Aucune matière à imprimer",
+        description: "Aucune matière sélectionnée pour le bon de livraison.",
+      });
+      return;
+    }
+
+    message.loading({
+      content: "Génération du bon de livraison...",
+      key: "generatePDF",
+    });
+
+    // Préparer les informations client
+    const clientInfo = {
+      nom_client: client_name || "Client non spécifié",
+      adresse: "", // Vous pourriez ajouter ces infos si disponibles
+      telephone: "",
+      email: "",
+      numero_fiscal: "",
+      id: client_id || "N/A"
+    };
+
+    // Préparer les données pour le PDF
+    const pdfData = {
+      deliveryNumber: invoiceNumber,
+      deliveryDate: billDate,
+      clientName: client_name,
+      clientAddress:  clientDetails?.adresse || "",
+      clientTaxId: clientDetails?.numero_fiscal || "N/A",
+      clientPhone: clientDetails?.telephone || "N/A",
+      clientCode: clientInfo.id,
+      materials: billableData.map(item => ({
+        numero_bon: invoiceNumber,
+        reception_date: item.reception_date || billDate,
+        type_matiere: getMaterialTypeLabel(item.type_matiere),
+        thickness: item.thickness || "-",
+        length: item.length || "-",
+        width: item.width || "-",
+        quantite: item.quantite || 0,
+        description: item.description || "",
+        surface: "-" // Ajoutez cette info si disponible
+      })),
+      totalQuantity: calculateTotalQuantity(billableData),
+      notes: "" // Ajoutez des notes si nécessaire
+    };
+     console.log("pdfData:", pdfData);
+    await ClientMaterialPdfService.generateClientMaterialsPDF(
+      pdfData,
+      `bon-livraison-${invoiceNumber}.pdf`
+    );
+
+    message.success({
+      content: "Bon de livraison généré avec succès!",
+      key: "generatePDF",
+    });
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    message.error({
+      content: `Erreur lors de la génération: ${error.message}`,
+      key: "generatePDF",
+    });
+    notification.error({
+      message: "Erreur PDF",
+      description: `Impossible de générer le PDF: ${error.message}`,
+    });
+  }
+};
   // Génération et téléchargement du PDF lors de l'impression
   const handlePrintBill = () => {
     // Génération du PDF avec jsPDF et autoTable
@@ -375,11 +483,32 @@ const ClientRawMaterialsPage = () => {
   };
 
   // Générer un numéro de facture simple (à adapter selon votre logique)
-  const generateInvoiceNumber = () => {
-    const date = moment().format('YYYYMMDD');
-    return `INV-${date}-${Math.floor(Math.random() * 1000)}`;
-  };
-
+  // const generateInvoiceNumber = () => {
+  //   const date = moment().format('YYYYMMDD');
+  //   return `INV-${date}-${Math.floor(Math.random() * 1000)}`;
+  // };
+ 
+    const generateInvoiceNumber = async ()=> {
+      const currentYear = new Date().getFullYear();
+      const existingData1  =await ClientMaterialService.getAllMaterialInvoices()
+      const existingData  = existingData1.results;
+       const current = existingData.filter(invoice => {
+     return invoice.numero_bon && invoice.numero_bon.startsWith(`BL-${currentYear}-`);
+      });
+    let maxNumber = 0;
+    existingData.forEach(invoice => {
+    const parts = invoice.numero_bon.split('-');
+    if (parts.length === 3) {
+      const num = parseInt(parts[2]);
+      if (!isNaN(num) && num > maxNumber) {
+        maxNumber = num;
+      }
+    }
+  });
+  const newNumber = maxNumber + 1;
+    return`BL-${currentYear}-${String(newNumber).padStart(5, '0')}`;
+    }
+  
   // rowSelection pour Table
   const rowSelection = {
     selectedRowKeys,
@@ -410,7 +539,7 @@ const ClientRawMaterialsPage = () => {
             {selectedRowKeys.length > 0 && (
               <Button
                 type="primary"
-                onClick={handleProcessSelectedMaterials}
+                onClick={ handleProcessSelectedMaterials}
                 style={{ marginBottom: 8 }}
               >
                 Préparer le bon de livraison ({selectedRowKeys.length} matière(s) sélectionnée(s))
@@ -473,18 +602,18 @@ const ClientRawMaterialsPage = () => {
           <div style={{ marginBottom: 16 }}>
             <Title level={4}>Informations livraison</Title>
             <div style={{ display: 'flex', gap: 16 }}>
-              <Form.Item
+              {/* <Form.Item
                 name="numero_bon"
                 label="N° Bon de livraison"
                 rules={[{ required: true, message: 'Veuillez saisir le numéro de bon de livraison' }]}
                 style={{ flex: 1 }}
               >
                 <Input placeholder="Ex: BL-2023-001" disabled />
-              </Form.Item>
+              </Form.Item> */}
               <Form.Item
                 name="reception_date"
                 label="Date de réception"
-                rules={[{ required: true, message: 'Veuillez sélectionner une date' }]}
+                // rules={[{ required: true, message: 'Veuillez sélectionner une date' }]}
                 style={{ flex: 1 }}
               >
                 <DatePicker style={{ width: '100%' }} />
@@ -510,7 +639,7 @@ const ClientRawMaterialsPage = () => {
               <Form.Item
                 name="thickness"
                 label="Épaisseur (mm)"
-                rules={[{ required: true, message: 'Veuillez saisir l\'épaisseur' }]}
+                // rules={[{ required: true, message: 'Veuillez saisir l\'épaisseur' }]}
                 style={{ flex: 1 }}
               >
                 <InputNumber style={{ width: '100%' }} min={0} step={0.1} precision={1} />
@@ -521,7 +650,7 @@ const ClientRawMaterialsPage = () => {
               <Form.Item
                 name="length"
                 label="Longueur (mm)"
-                rules={[{ required: true, message: 'Veuillez saisir la longueur' }]}
+                // rules={[{ required: true, message: 'Veuillez saisir la longueur' }]}
                 style={{ flex: 1 }}
               >
                 <InputNumber style={{ width: '100%' }} min={0} />
@@ -529,7 +658,7 @@ const ClientRawMaterialsPage = () => {
               <Form.Item
                 name="width"
                 label="Largeur (mm)"
-                rules={[{ required: true, message: 'Veuillez saisir la largeur' }]}
+                // rules={[{ required: true, message: 'Veuillez saisir la largeur' }]}
                 style={{ flex: 1 }}
               >
                 <InputNumber style={{ width: '100%' }} min={0} />
@@ -537,7 +666,7 @@ const ClientRawMaterialsPage = () => {
               <Form.Item
                 name="quantite"
                 label="Quantité"
-                rules={[{ required: true, message: 'Veuillez saisir la quantité' }]}
+                // rules={[{ required: true, message: 'Veuillez saisir la quantité' }]}
                 style={{ flex: 1 }}
               >
                 <InputNumber style={{ width: '100%' }} min={1} precision={0} />
@@ -586,14 +715,23 @@ const ClientRawMaterialsPage = () => {
             key="print" 
             type="primary" 
             icon={<PrinterOutlined />}
-            onClick={handlePrintBill}
+            // onClick={handlePrintBill}
+            onClick={() => printDeliveryNote({
+    numero_bon: invoiceNumber,
+    date_reception: billDate,
+    client_details: {
+      nom_client: client_name,
+      id: client_id
+    },
+    matieres_details: billableData
+  })}
           >
             Imprimer la facture
           </Button>
         ]}
       >
         <div style={{ textAlign: 'right', marginBottom: '10px' }}>
-          <Text strong>Facture N°: </Text>
+          <Text strong>Bon N°: </Text>
           <Input
             value={invoiceNumber}
             onChange={e => setInvoiceNumber(e.target.value)}
@@ -616,21 +754,21 @@ const ClientRawMaterialsPage = () => {
             rowKey="id"
             pagination={false}
             columns={[
-              {
-                title: 'N° Bon de livraison',
-                dataIndex: 'numero_bon',
-                key: 'numero_bon',
-                render: (text, record, idx) => (
-                  <Input
-                    value={record.numero_bon}
-                    onChange={e => {
-                      const newData = [...billableData];
-                      newData[idx].numero_bon = e.target.value;
-                      setBillableData(newData);
-                    }}
-                  />
-                )
-              },
+              // {
+              //   title: 'N° Bon de livraison',
+              //   dataIndex: 'numero_bon',
+              //   key: 'numero_bon',
+              //   render: (text, record, idx) => (
+              //     <Input
+              //       value={record.numero_bon}
+              //       onChange={e => {
+              //         const newData = [...billableData];
+              //         newData[idx].numero_bon = e.target.value;
+              //         setBillableData(newData);
+              //       }}
+              //     />
+              //   )
+              // },
               {
                 title: 'Date de réception',
                 dataIndex: 'reception_date',

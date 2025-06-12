@@ -74,6 +74,7 @@ class ProductService {
 
   static async createProduct(product) {
     try {
+      console.log("product", product)
       const response = await axios.post(`${API_BASE_URL}/produits/`, product);
       return new ProductModel(response.data);
     } catch (error) {

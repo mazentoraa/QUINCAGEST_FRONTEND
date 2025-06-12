@@ -1293,7 +1293,9 @@ export default function BonCommande() {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="date_commande" label="Date Commande">
+                <div>
                 <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+                </div>
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -1301,7 +1303,9 @@ export default function BonCommande() {
                 name="date_livraison_prevue"
                 label="Date Livraison Prévue"
               >
+                <div>
                 <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+                </div>
               </Form.Item>
             </Col>
           </Row>

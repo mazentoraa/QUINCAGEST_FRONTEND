@@ -38,6 +38,8 @@ class ProductModel {
     this.largeur = data.largeur ?? null;
     this.date_creation = data.date_creation;
     this.derniere_mise_a_jour = data.derniere_mise_a_jour;
+    this.code = data.code_produit || data.code;
+     this.code_produit = data.code_produit || data.code;
   }
 
   // Add any methods you want the model to have

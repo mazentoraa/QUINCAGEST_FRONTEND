@@ -734,7 +734,9 @@ const BonRetour = () => {
                     },
                   ]}
                 >
-                  <DatePicker style={{ width: "100%" }} />
+                  <div>
+                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+                  </div>
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -748,7 +750,9 @@ const BonRetour = () => {
                     },
                   ]}
                 >
-                  <DatePicker style={{ width: "100%" }} />
+                  <div>
+                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY"/>
+                  </div>
                 </Form.Item>
               </Col>
             </Row>

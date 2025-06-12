@@ -329,6 +329,7 @@ const BonLivraisonReception = () => {
 
   // Print delivery note - Updated to use PDF API service like ClientMaterialManagement
   const printDeliveryNote = async (record) => {
+    console.log("Printing delivery note with data:", record);
     try {
       if (!record.matieres_details || record.matieres_details.length === 0) {
         notification.error({

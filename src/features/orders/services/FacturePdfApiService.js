@@ -97,6 +97,10 @@ class FacturePdfApiService {
       .map(
         (item) => `
       <tr>
+      <tr>
+       <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${item.code_produit || "N/A"}
+  </td>
   <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     ${item.nom_produit || "N/A"}
   </td>
@@ -158,10 +162,7 @@ class FacturePdfApiService {
            
         }
 
-        .company-info {
-            text-align: left;
-            margin-bottom: 20px;
-        }
+       
 
         .client-info {
             margin-top: 20px;
@@ -213,12 +214,7 @@ class FacturePdfApiService {
         }
             .order-header {
     border: 1px solid #000;
-    padding: 4px 20px;
-    margin-top: 12px;
-    display: flex;
-    justify-content: center;
-    width: fit-content;
-    line-height: 1.5 ;
+    
 }
 
         
@@ -237,48 +233,67 @@ class FacturePdfApiService {
     </style>
 </head>
 <body>
-    <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-        <div class="company-info" style="text-align: left;">
-           <h2 style="margin-buttom: 1px;">RM METALASER</h2>
-            <p style="margin: 0; line-height: 1.5;"> <span style="color:grey; font-weight: bold; ">Découpes Métaux </span><br>
-            Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
-            MF: 191 1419B/A/M/000<br>
-            Tél. : +216 20 366 150<br>
-            Email: contact@rmmetalaser.tn<br>
-            Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
-              <div class="order-header">
-        <p><strong>Facture N°: ${formatInvoiceNumber(orderData)}</strong><br>
-            Date: ${orderData.date_commande || "N/A"}<br>
-            
-        </p>
-        </div>
+    <header style="display: flex; flex-direction: column;">
+  <div style="display: flex; flex-direction: row; justify-content: space-between;">
+    <div class="company-info">
+      <h2 style="margin-bottom: 1px;">RM METALASER</h2>
+      <p style="margin: 0; line-height: 1.5;">
+        <span style="color: grey; font-weight: bold;">Découpes Métaux</span><br>
+        Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
+        MF: 191 1419B/A/M/000<br>
+        Tél. : +216 20 366 150<br>
+        Email: contact@rmmetalaser.tn<br>
+        Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
+      </p>
         </div>
         <div class="logo" style="text-align: right;">
-             <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
-             <div class="client-info"> 
-        <strong>Nom Client : ${orderData.nom_client || "N/A"} </strong><br>
-         Code Client : ${orderData.code_client || "N/A"}<br>
-       Adresse :${orderData.client_address || "N/A"}<br>
-       M.F :${orderData.client_tax_id || "N/A"}<br>
-       Tél. :${orderData.client_phone || "N/A"}
+      <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
     </div>
-             </div>
-    </header>
+          </div>
 
-   
+  <!-- Facture and Client info, each 50% -->
+  <!-- Facture and Client info, each 50% -->
+<div style="display: flex; flex-direction: row; margin-top: 20px; gap: 20px;">
+  <!-- Facture Section -->
+  <div style="width: 50%;">
+    <div class="order-header" style="margin-bottom: 10px;">
+      <h2>Facture</h2>
+    </div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 10px;">
+      <div class="order-header">
+        <p><strong>Facture N°:</strong> ${formatInvoiceNumber(orderData)}</p>
+      </div>
+      <div class="order-header">
+        <p><strong>Date:</strong> ${orderData.date_commande || "N/A"}</p>
+      </div>
+      <div class="order-header">
+        <p><strong>Code Client:</strong> ${orderData.code_client || "N/A"}</p>
+      </div>
+    </div>
+  </div>
+   <!-- Client Info -->
+  <div class="order-header" style="width: 50%; text-align: left; padding-left:20px">
+    <p><strong>Nom Client:</strong> ${orderData.nom_client || "N/A"}</p>
+    <p>Adresse: ${orderData.client_address || "N/A"}</p>
+    <p>M.F: ${orderData.client_tax_id || "N/A"}</p>
+    <p>Tél.: ${orderData.client_phone || "N/A"}</p>
+  </div>
+</div>
+   </header>
 
-    <div class="order-details">
+    <div style="margin-top: 20px;" class="order-details">
         <table>
             <thead>
               
             <tr>
-    <th style="width: 28%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
-    <th style="width: 8%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
+    <th style="width: 8%; text-align: center; vertical-align: middle; border: 1px solid #000;">Code</th>
+    <th style="width: 25%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
+    <th style="width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
     <th style="width: 16%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
-    <th style=" width: 8%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
-    <th style="width: 16%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
-    <th style="width: 8%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
-    <th style="width: 16%;text-align: center; vertical-align: middle; border: 1px solid #000;">TOTAL P. TTC</th>
+    <th style=" width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
+    <th style="width: 18%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
+    <th style="width: 7%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
+    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">TOTAL P. TTC</th>
   </tr>
 </thead>
             <tbody>
@@ -287,64 +302,83 @@ class FacturePdfApiService {
         </table>
     </div>
 
-    <div class="totals">
-    <div style = "display:"flex">
-         <p>
+    <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
+  
+  <!-- Table 1: TVA -->
+  <table style=" width:32% ; border-collapse: collapse; text-align: center; font-family: Arial, sans-serif;">
+    <thead>
+      <tr>
+        <th style="border: 1px solid black; padding: 8px;">Base</th>
+        <th style="border: 1px solid black; padding: 8px;">Taux</th>
+        <th style="border: 1px solid black; padding: 8px;">Montant TVA</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="height: 80px;">
+        <td style="border: 1px solid black; padding: 8px;">10 187,600</td>
+        <td style="border: 1px solid black; padding: 8px;">19%</td>
+        <td style="border: 1px solid black; padding: 8px;">1 935,644</td>
+      </tr>
+      <tr style="height: 20px;">
+        <td colspan="2" style="border: 1px solid black; padding: 8px;">10 187,600</td>
+        <td style="border: 1px solid black; padding: 8px;">1 935,644</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Signature Box -->
+  <div style=" width:32% ; height: 150px; border: 1px solid black; padding: 8px; margin-left: 10px; text-align:center">
+    <p><strong>Cachet et Signature</strong></p>
+  </div>
+
+  <!-- Totals Table -->
+  <table style=" width:32% ; border-collapse: collapse; font-family: Arial, sans-serif; margin-left: 10px; font-size: 12px;">
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Totale Brut</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((orderData.montant_ttc || 0) + 1)}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalRemise)}</td>
+    </tr>
+        <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(orderData.timbre_fiscal || 0)}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(orderData.montant_ht || 0)}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(orderData.montant_tva || 0)}</td>
+    </tr>
+
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((orderData.montant_ttc || 0) - totalRemise + (orderData.timbre_fiscal || 0))}</td>
+    </tr>
+  </table>
+</div>
+
+
+  <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
+  <div style="width:70% ; border: 1px solid black; padding: 5px ;">
+   <p>
          <strong>
          Arrêtée la présente facture à la somme de:
          </strong> <br>
          ${this.formatMontantEnLettres((orderData.montant_ttc || 0)+1)}
     
          </p>
-        <p>
-        
-        <p>
-      </div>
-        <table>
-            <tr>
-            <td><strong>Totale Brut </strong></td>
-               <td>${this.formatCurrency(
-                 (orderData.montant_ttc || 0) + 1
-               )}</td>
-             </tr>
-               <tr>
-             <td><strong>Totale Remise </strong></td>
-      <td>${this.formatCurrency(totalRemise)}</td>
-             </tr>
-              <tr>
-      <td><strong>Net à Payer</strong></td>
-      <td>${this.formatCurrency(
-        (orderData.montant_ttc || 0) - totalRemise + (orderData.timbre_fiscal || 0)
-      )}</td>
-    </tr>
-              
-            <tr>
-                <td><strong>Total HTVA</strong></td>
-                <td>${this.formatCurrency(orderData.montant_ht || 0)}</td>
-            </tr>
-            <tr>
-                <td><strong>Total TVA</strong></td>
-                <td>${this.formatCurrency(orderData.montant_tva || 0)}</td>
-            </tr>
-           <tr>
-               <td><strong>Timbre Fiscal </strong></td>
-                <td>${this.formatCurrency(orderData.timbre_fiscal || 0)}</td>
-            </tr>
-        </table>
+         </div>
+   <div style="width:30% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
+    <p><strong>Cachet et Signature</strong></p>
     </div>
-
+   </div>
    
     
 
-    <div class="signature">
-        <div>
-            <p><strong>Cachet et Signature du client</strong></p>
-              
-     </div>
-         <div>
-            <p><strong>Cachet et Signature du RM METALASER</strong></p>
-              
-     </div>
     </div>
 </body>
 </html>

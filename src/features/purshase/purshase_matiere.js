@@ -11,7 +11,8 @@ import {
   Card,
   Spin,
   message,
-  Popconfirm
+  Popconfirm,
+  DatePicker
 } from "antd";
 import {
   PlusOutlined,
@@ -66,6 +67,7 @@ export default function PurchaseMatiere() {
      
       prix_unitaire: values.prix_unitaire ? parseFloat(values.prix_unitaire) : null,
       quantite: parseInt(values.quantite),
+      // purshase_date: values.date_achat ? values.date_achat : null,
     
     };
 
@@ -119,10 +121,16 @@ export default function PurchaseMatiere() {
       key: "quantity"
     },
     {
+      title: "Date d'Achat",
+      dataIndex: "purshase_date",
+      key: "purshase_date"
+    },
+    {
       title: "Description",
       dataIndex: "description",
       key: "description"
     },
+    
     {
       title: "Actions",
       key: "actions",
@@ -200,6 +208,7 @@ export default function PurchaseMatiere() {
           >
             <TextArea rows={2} />
           </Form.Item>
+          
 
 
           <Space size="large" style={{ width: "100%" }}>
@@ -218,6 +227,16 @@ export default function PurchaseMatiere() {
             >
               <Input type="number" />
             </Form.Item>
+            <Form.Item
+            name="purshase_date"
+            label="Date d'achat"
+          >
+            <DatePicker 
+            format="DD/MM/YYYY"
+            style={{ width: "100%" }}
+            />
+
+          </Form.Item>
           </Space>
         </Form>
       </Modal>

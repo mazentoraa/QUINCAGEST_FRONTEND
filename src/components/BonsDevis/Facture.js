@@ -109,6 +109,11 @@ export default function BonCommande() {
   const [editingOrder, setEditingOrder] = useState(null);
   const [drawerForm] = Form.useForm();
 
+  const date_commande_value = drawerForm.getFieldValue("date_commande");
+  const date_commande_str = moment.isMoment(date_commande_value)
+    ? date_commande_value.format("yyyy-MM-dd")
+    : ""; 
+
   const [availableProducts, setAvailableProducts] = useState([]);
    const [availableBon, setAvailableBon] = useState([]);
   const [isProductModalVisible, setIsProductModalVisible] = useState(false);
@@ -1002,6 +1007,7 @@ console.log("Current bon IDs:", currentBonInDrawer.map(b => b.bon_id));
           return {
             id: orderProduct.id,
             produit_id: orderProduct.produit_id || orderProduct.produit,
+            code_produit: orderProduct.code_produit || productDetailsFromCatalog?.code_produit || "XX",
             nom_produit: nomProduit,
             quantite: quantite,
             prix_unitaire: prixUnitaire,
@@ -1439,7 +1445,7 @@ console.log("Current bon IDs:", currentBonInDrawer.map(b => b.bon_id));
           </Tooltip>
           <Tooltip title="Supprimer">
             <Popconfirm
-              title="Êtes-vous sûr de vouloir supprimer cette commande ?"
+              title="Êtes-vous sûr de vouloir supprimer cette facture ?"
               onConfirm={() => handleDeleteOrder(record.id)}
               okText="Oui"
               cancelText="Non"
@@ -1751,22 +1757,28 @@ console.log("Current bon IDs:", currentBonInDrawer.map(b => b.bon_id));
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item 
-              label="Date Facture" 
-              name="date_commande" >
-                <DatePicker 
-                selected={dateRange}
-                onChange={(date)=>setDateRange(date)}
-                dateFormat="DD/MM/YYYY"
-                style={{ width: "100%" }} />
+              name="date_commande"
+              label="Date Facture"
+              rules={[{ required: true, message: 'Veuillez entrer une date' }]}>
+                <div>
+           <DatePicker
+          style={{ width: "100%" }}
+          format="DD/MM/YYYY"
+
+        /> 
+        </div>
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="date_livraison_prevue"
                 label="Date Livraison Prévue"
-                initialValue={moment()} 
+                 rules={[{ required: true, message: 'Veuillez entrer une date' }]}
               >
-                <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY"  picker="date" />
+                <div>
+                <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+                </div>
+                
               </Form.Item>
             </Col>
           </Row>
