@@ -235,8 +235,8 @@ class FacturePdfApiService {
 <body>
     <header style="display: flex; flex-direction: column;">
   <div style="display: flex; flex-direction: row; justify-content: space-between;">
-    <div class="company-info">
-      <h2 style="margin-bottom: 1px;">RM METALASER</h2>
+    <div style="text-align:left" class="company-info">
+      <h2 style="margin-bottom: 6px;">RM METALASER</h2>
       <p style="margin: 0; line-height: 1.5;">
         <span style="color: grey; font-weight: bold;">Découpes Métaux</span><br>
         Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
@@ -261,7 +261,7 @@ class FacturePdfApiService {
     </div>
     <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 10px;">
       <div class="order-header">
-        <p><strong>Facture N°:</strong> ${formatInvoiceNumber(orderData)}</p>
+        <p><strong>Facture N°:</strong> <br> ${formatInvoiceNumber(orderData)}</p>
       </div>
       <div class="order-header">
         <p><strong>Date:</strong> ${orderData.date_commande || "N/A"}</p>
@@ -315,13 +315,13 @@ class FacturePdfApiService {
     </thead>
     <tbody>
       <tr style="height: 80px;">
-        <td style="border: 1px solid black; padding: 8px;">10 187,600</td>
-        <td style="border: 1px solid black; padding: 8px;">19%</td>
-        <td style="border: 1px solid black; padding: 8px;">1 935,644</td>
+       <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(orderData.montant_ht || 0)}</td>s
+        <td style="border: 1px solid black; padding: 8px;">${orderData.tax_rate}</td>
+        <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(orderData.montant_tva || 0)}</td>
       </tr>
       <tr style="height: 20px;">
-        <td colspan="2" style="border: 1px solid black; padding: 8px;">10 187,600</td>
-        <td style="border: 1px solid black; padding: 8px;">1 935,644</td>
+         <td colspan="2" style="border: 1px solid black; padding: 8px;">${this.formatCurrency(orderData.montant_ht || 0)}</td>
+        <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(orderData.montant_tva || 0)}</td>
       </tr>
     </tbody>
   </table>
@@ -341,10 +341,7 @@ class FacturePdfApiService {
       <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
       <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalRemise)}</td>
     </tr>
-        <tr>
-      <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(orderData.timbre_fiscal || 0)}</td>
-    </tr>
+        
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
       <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(orderData.montant_ht || 0)}</td>
@@ -353,7 +350,10 @@ class FacturePdfApiService {
       <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
       <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(orderData.montant_tva || 0)}</td>
     </tr>
-
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(orderData.timbre_fiscal || 0)}</td>
+    </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
       <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((orderData.montant_ttc || 0) - totalRemise + (orderData.timbre_fiscal || 0))}</td>

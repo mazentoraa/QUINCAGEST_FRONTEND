@@ -1,3 +1,5 @@
+import n2words from 'n2words';
+
 class DevisPdfService {
   // Your APDF.io API token
   static API_TOKEN = "kMZrwMgVmmej90g7wimNOcvwFaGRQhXndOVKfTSPf540b6d3";
@@ -204,25 +206,28 @@ class DevisPdfService {
             (1 - (item.remise_pourcentage || 0) / 100);
         return `
         <tr>
-          <td style="border: 1px solid #000; padding: 4px; font-size: 11px;text-align: center;">${
-            item.nom_produit || `Produit ID ${item.produit}`
-          }</td>
-          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center;">${
-            item.quantite || ""
-          }</td>
+           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${item.code_produit || "N/A"}
+  </td>
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${item.nom_produit || "N/A"}
+  </td>
+            <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${item.quantite || 0}
+  </td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center;">${this.formatCurrency(
             item.prix_unitaire
           )}</td>
-          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center;">${
-            item.remise_pourcentage || 0
-          }%</td>
-          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center;">${
-              total
-          }</td>
-          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; font-weight: bold;">${this.formatCurrency(
-            item.tax_rate
-          )}</td>
-           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; font-weight: bold;">${this.formatCurrency(
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${item.remise_pourcentage || 0}%
+  </td>
+              <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${total}
+  </td>
+ <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+    ${item.tax_rate || 20}%
+  </td>
+           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">${this.formatCurrency(
             total * (1 + (item.tax_rate || 0 )/100)
           )}</td>
         </tr>
@@ -244,6 +249,7 @@ class DevisPdfService {
       <head>
           <meta charset="UTF-8">
           <title>Devis ${data.numero_devis} - RM METALASER</title>
+          <script src="https://cdn.jsdelivr.net/npm/n2words/dist/n2words.umd.min.js"></script>
           <style>
                 body {
                   font-family: Arial, sans-serif;
@@ -253,269 +259,171 @@ class DevisPdfService {
                 header,footer {
             text-align: center;
             }
-              .header img {
-                  width: 190px;
-                  margin-bottom: 5px;
-                  display: block;
-                  margin-left: auto;
-                  margin-right: auto;
-              }
-              .header h1 {
-                  
-                  color: #333;
-                  font-size: 24px;
-                  text-transform: uppercase;
-                  letter-spacing: 2px;
-              }
-              .header h2 {
-                  
-                  color: #333;
-                  font-size: 18px;
-              }
-              .header p {
-                  margin: 3px 0;
-                  line-height: 1.3;
-                  font-size: 11px;
-              }
-              .header a {
-                  color: #1890ff;
-                  text-decoration: none;
-              }
-              .devis-info {
-                  display: flex;
-                  justify-content: space-between;
-                
-              }
-              .client-info {
-                margin-top: 40px;
-            border: 1px solid #000;
-            padding: 10px;
-            text-align: left; 
-            width:300px ; 
-            line-height : 1.2 ; 
-              }
-              .devis-details {
-                      border: 1px solid #000;
-    padding: 0 10px ;
-      margin : 0 px ; 
-    display: flex;
-    
-    justify-content: center;
-    width: fit-content;
-    line-height: 1.5 ;
-              }
-              .products-table {
-                  width: 100%;
-                  border-collapse: collapse;
-                 
-              }
-              .products-table th {
-                  border: 1px solid #000;
-                  
-                  text-align: center;
-                 
-              }
-              .products-table td {
-                  border: 1px solid #000;
-                
-                  text-align: center;
-                
-              }
-              .totals-section {
-                  margin: 8px 0;
-                  display: flex;
-                  justify-content: flex-end;
-              }
-              .totals-table {
-                  width: 350px;
-                  border-collapse: collapse;
-                 
-              }
-              .totals-table td {
-                  padding: 2px;
-                  border: 1px solid #000;
-              }
-              .totals-table .total-ht {
-                  background-color: #f5f5f5;
-              }
-            
-              .totals-table .total-ttc {
-                  font-weight: bold;
-              }
-              .terms-section {
-                  margin-top: 10px;
-                  padding: 10px;
-                  background: #f9f9f9;
-                  border: 1px solid #d9d9d9;
-                  border-radius: 4px;
-              }
-              .terms-title {
-                  font-weight: bold;
-                  margin-bottom: 10px;
-                  font-size: 12px;
-                  color: #333;
-              }
-              .terms-content {
-                  font-size: 10px;
-                  line-height: 1.5;
-                  white-space: pre-line;
-              }
-              .signature {
-            margin-top: 40px;
-            display : flex ;
-            justify-content : space-between ; 
-           
-        }
-              .footer {
-                  margin-top: 30px;
-                  text-align: center;
-                  font-size: 9px;
-                  color: #666;
-                  border-top: 1px solid #ddd;
-                  padding-top: 10px;
-              }
-                        .rectangle {
-      width: 300px;
-      height: 100px;
-      border: 2px dashed grey;
-      background-color: #fff;
-      
-    }
+              .order-header {
+    border: 1px solid #000;
+}
+   table {
+  border-collapse: collapse;
+}
           </style>
       </head>
       <body>
-      <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-        <div class="company-info" style="text-align: left;">
-            <h2 style="margin-buttom: 1px;">RM METALASER</h2>
-            <p style="margin: 0; line-height: 1.5;"> <span style="color:grey; font-weight: bold; ">Découpes Métaux </span><br>
-            Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
-            MF: 191 1419B/A/M/000<br>
-            Tél. : +216 20 366 150<br>
-            Email: contact@rmmetalaser.tn<br>
-            Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
-              <div class="devis-details">
-                <p>  <strong>N° Devis :</strong> ${data.numero_devis || "N/A"}<br>
-                  <strong>Date d'émission :</strong> ${
-                    data.date_emission || "N/A"
-                  }<br>
-                  <strong>Valide jusqu'au :</strong> ${
-                    data.date_validite || "N/A"
-                  }<br>
-                  <strong>Conditions :</strong> ${
-                    data.conditions_paiement || "N/A"
-                  }
-                   </p>
-              </div>
+      <header style="display: flex; flex-direction: column;">
+  <div style="display: flex; flex-direction: row; justify-content: space-between;">
+    <div style="text-align:left" class="company-info">
+      <h2 style="margin-bottom: 6px;">RM METALASER</h2>
+      <p style="margin: 0; line-height: 1.5;">
+        <span style="color: grey; font-weight: bold;">Découpes Métaux</span><br>
+        Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
+        MF: 191 1419B/A/M/000<br>
+        Tél. : +216 20 366 150<br>
+        Email: contact@rmmetalaser.tn<br>
+        Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
+      </p>
     </div>
         </div>
         <div class="logo" style="text-align: right;">
-            <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
-
-        <div class="client-info">
-                  <strong>Nom Client :</strong> ${data.nom_client || ""}<br>
-                  <strong>Code Client :</strong> ${data.code_client || ""}<br>
-                  <strong>Adresse :</strong> ${data.client_address || ""}<br>
-                  <strong>M.F :</strong> ${data.client_tax_id || ""}<br>
-                  <strong>Tél. :</strong> ${data.client_phone || ""}
-              </div>
-        </div>
-    </header>
-          
-
-          <table class="products-table">
-              <thead>
-                  <tr>
-                    <th style="width: 28%;">DÉSIGNATION</th>
-                      <th style="width: 8%;">QTÉ</th>
-                      <th style="width: 16%;">P.U. HT</th>
-                      <th style="width: 8%;">REMISE</th>
-                         <th style="width: 16%;">TOTAL P. HT</th>
-                       <th style="width: 8%;">TVA</th>
-                          <th style="width: 16%">TOTAL P. TTC</th>
-                  </tr>
-              </thead>
-              <tbody>
-                  ${tableRows}
-              </tbody>
-          </table>
-          <div style ="display:flex; justify-content : space-between" >
-         
-
-          <div class="terms-section">
-              <div class="terms-title">Remarques et Conditions :</div>
-              <div class="terms-content">${
-                data.remarques || "Aucune remarque spécifiée."
-              }</div>
-          </div>
-
-          ${
-            data.notes
-              ? `
-          <div class="terms-section" style="margin-top: 8px;">
-              <div class="terms-title">Notes internes :</div>
-              <div class="terms-content">${data.notes}</div>
-          </div>
-          `
-              : ""
-          }
-           <div class="totals-section">
-              <table class="totals-table">
-                 <tr class="total-ttc">
-                      <td><strong>Totale Brut </strong></td>
-                      <td style="text-align: center;"><strong>${this.formatCurrency(
-                       ( data.montant_ttc || 0 ) +1 
-                      )}</strong></td>
-                  </tr>
-                   <tr class="Totale Remise">
-                      <td><strong>total-remise </strong></td>
-                      <td style="text-align: center;"><strong>${this.formatCurrency(
-                       totalRemise
-                      )}</strong></td>
-                  </tr>
-                   <tr class="total-ttc">
-                      <td><strong>Net a payer  </strong></td>
-                      <td style="text-align: center;"><strong>${this.formatCurrency(
-                        (data.montant_ttc || 0) - totalRemise + (data.timbre_fiscal || 1)
-                      )}</strong></td>
-                  </tr>
-                  <tr class="total-ht">
-                      <td><strong>Total HT</strong></td>
-                      <td style="text-align: center;"><strong>${this.formatCurrency(
-                        data.montant_ht || 0
-                      )}</strong></td>
-                  </tr>
-                  <tr class="total-tva">
-                      <td><strong>TVA </strong></td>
-                      <td style="text-align: center;"><strong>${this.formatCurrency(
-                        data.montant_tva || 0
-                      )}</strong></td>
-                  </tr>
-                  <tr class="total-ttc">
-                      <td><strong>Timbre Fiscal </strong></td>
-                      <td style="text-align: center;"><strong>${this.formatCurrency(
-                        data.amount_fiscal || 0
-                      )}</strong></td>
-                  </tr>
-              </table>
-          </div>
-            </div>
-            <div class="signature">
-    <div>
-            <p><strong>Cachet et Signature Client </strong></p>
-          
-     </div>
-         <div>
-            <p><strong>Cachet et Signature du RM METALASER</strong></p>
-           
-     </div>
-       
+      <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
     </div>
+  </div>
           
+<div style="display: flex; flex-direction: row; margin-top: 20px; gap: 20px;">
+  <!-- Devis Section -->
+  <div style="width: 50%;">
+    <div class="order-header" style="margin-bottom: 10px;">
+      <h2>Devis</h2>
+      </div>
+          <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 10px;">
+      <div class="order-header">
+        <p><strong>Devis N°:</strong> <br> ${data.numero_devis || "N/A"} </p>
+      </div>
+      <div class="order-header">
+        <p><strong>Date:</strong> ${ data.date_emission|| "N/A"}</p>
+      </div>
+      <div class="order-header">
+        <p><strong>Code Client:</strong> ${data.code_client || "N/A"}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client Info -->
+  <div class="order-header" style="width: 50%; text-align: left; padding-left:20px">
+    <p><strong>Nom Client:</strong> ${data.nom_client || "N/A"}</p>
+    <p>Adresse: ${data.client_address || "N/A"}</p>
+    <p>M.F: ${data.client_tax_id || "N/A"}</p>
+    <p>Tél.: ${data.client_phone || "N/A"}</p>
+  </div>
+</div>
+
+</header>
+         <div style="margin-top: 20px;" class="order-details">
+        <table>
+            <thead>
+  <tr>
+    <th style="width: 8%; text-align: center; vertical-align: middle; border: 1px solid #000;">Code</th>
+    <th style="width: 25%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
+    <th style="width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
+    <th style="width: 16%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
+    <th style=" width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
+    <th style="width: 18%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
+    <th style="width: 7%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
+    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">TOTAL P. TTC</th>
+  </tr>
+</thead>
+
+            <tbody>
+                    ${tableRows}
+            </tbody>
+        </table>
+    </div>
+
+  <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
+  
+  <!-- Table 1: TVA -->
+  <table style=" width:32% ; border-collapse: collapse; text-align: center; font-family: Arial, sans-serif;">
+    <thead>
+      <tr>
+        <th style="border: 1px solid black; padding: 8px;">Base</th>
+        <th style="border: 1px solid black; padding: 8px;">Taux</th>
+        <th style="border: 1px solid black; padding: 8px;">Montant TVA</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="height: 80px;">
+        <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(data.montant_ht)}</td>
+        <td style="border: 1px solid black; padding: 8px;">${data.tax_rate}</td>
+        <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(data.montant_tva)}</td>
+      </tr>
+      <tr style="height: 20px;">
+        <td colspan="2" style="border: 1px solid black; padding: 8px;">${this.formatCurrency(data.montant_ht)}</td>
+        <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(data.montant_tva)}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Signature Box -->
+  <div style=" width:32% ; height: 150px; border: 1px solid black; padding: 8px; margin-left: 10px; text-align:center">
+    <p><strong>Cachet et Signature</strong></p>
+  </div>
+
+  <!-- Totals Table -->
+  <table style=" width:32% ; border-collapse: collapse; font-family: Arial, sans-serif; margin-left: 10px; font-size: 12px;">
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Totale Brut</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((data.montant_ttc || 0) )}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalRemise)}</td>
+    </tr>
+
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(data.montant_ht || 0)}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(data.montant_tva || 0)}</td>
+    </tr>
+
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((data.montant_ttc || 0) - totalRemise )}</td>
+    </tr>
+  </table>
+</div>
+
+
+  <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
+  <div style="width:70% ; border: 1px solid black; padding: 5px ;">
+   <p>
+         <strong>
+         Arrêtée la présente facture à la somme de:
+         </strong> <br>
+         ${this.formatMontantEnLettres((data.montant_ttc || 0))}
+    
+         </p>
+   </div>
+   <div style="width:30% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
+    <p><strong>Cachet et Signature</strong></p>
+    </div>
+ </div>
+
+ </div>
 
       </body>
       </html>
     `;
   }
+  static formatMontantEnLettres(amount) {
+      const dinars = Math.floor(amount);
+      const millimes = Math.round((amount - dinars) * 1000);
+    
+      const dinarsEnLettres = n2words(dinars, { lang: 'fr' });
+      const millimesEnLettres = millimes > 0 ? `et ${n2words(millimes, { lang: 'fr' })} millimes` : '';
+    
+      return `${dinarsEnLettres} dinars ${millimesEnLettres}`;
+    }
 }
 
 export default DevisPdfService;
