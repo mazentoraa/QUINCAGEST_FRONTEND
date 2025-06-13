@@ -281,7 +281,7 @@ class DevisPdfService {
         Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
       </p>
     </div>
-        </div>
+        
         <div class="logo" style="text-align: right;">
       <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
     </div>
@@ -363,7 +363,7 @@ class DevisPdfService {
 
   <!-- Signature Box -->
   <div style=" width:32% ; height: 150px; border: 1px solid black; padding: 8px; margin-left: 10px; text-align:center">
-    <p><strong>Cachet et Signature</strong></p>
+    <p><strong>Signature</strong></p>
   </div>
 
   <!-- Totals Table -->
@@ -405,7 +405,7 @@ class DevisPdfService {
          </p>
    </div>
    <div style="width:30% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
-    <p><strong>Cachet et Signature</strong></p>
+    <p><strong>Signature</strong></p>
     </div>
  </div>
 

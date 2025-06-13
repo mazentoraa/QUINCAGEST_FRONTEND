@@ -108,21 +108,22 @@ class FacturePdfApiService {
     ${item.quantite || 0}
   </td>
   <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-    ${this.formatCurrency(item.prix_unitaire || 0)}
+    
+     ${item.prix_unitaire || 0}
   </td>
   <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     ${item.remise_pourcentage || 0}%
   </td>
   <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-    ${this.formatCurrency(item.prix_total || 0)}
+    ${item.prix_total || 0}
   </td>
   <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     ${orderData.tax_rate || 20}%
   </td>
   <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-    ${this.formatCurrency(
-      (item.prix_total || 0) * (1 + (orderData.tax_rate || 0) / 100)
-    )}
+    ${(item.prix_total || 0) * (1 + (orderData.tax_rate || 0) / 100)}
+   
+    
   </td>
 </tr>
     `
@@ -264,10 +265,10 @@ class FacturePdfApiService {
         <p><strong>Facture N°:</strong> <br> ${formatInvoiceNumber(orderData)}</p>
       </div>
       <div class="order-header">
-        <p><strong>Date: </strong> <br> ${orderData.date_commande || "N/A"}</p>
+        <p><strong>Date: </strong>  ${orderData.date_commande || "N/A"}</p>
       </div>
       <div class="order-header">
-        <p><strong>Code Client: </strong> <br> ${orderData.code_client || "N/A"}</p>
+        <p><strong>Code Client: </strong>  ${orderData.code_client || "N/A"}</p>
       </div>
     </div>
   </div>
@@ -315,48 +316,48 @@ class FacturePdfApiService {
     </thead>
     <tbody>
       <tr style="height: 80px;">
-       <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(orderData.montant_ht || 0)}</td>
-        <td style="border: 1px solid black; padding: 8px;">${orderData.tax_rate}</td>
-        <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(orderData.montant_tva || 0)}</td>
+       <td style="border: 1px solid black; padding: 8px;">${orderData.montant_ht || 0}</td>
+        <td style="border: 1px solid black; padding: 8px;">${orderData.tax_rate} %</td>
+        <td style="border: 1px solid black; padding: 8px;">${orderData.montant_tva || 0}</td>
       </tr>
       <tr style="height: 20px;">
-         <td colspan="2" style="border: 1px solid black; padding: 8px;">${this.formatCurrency(orderData.montant_ht || 0)}</td>
-        <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(orderData.montant_tva || 0)}</td>
+         <td colspan="2" style="border: 1px solid black; padding: 8px;">${orderData.montant_ht || 0}</td>
+        <td style="border: 1px solid black; padding: 8px;">${orderData.montant_tva || 0}</td>
       </tr>
     </tbody>
   </table>
 
   <!-- Signature Box -->
   <div style=" width:32% ; height: 150px; border: 1px solid black; padding: 8px; margin-left: 10px; text-align:center">
-    <p><strong>Cachet et Signature</strong></p>
+    <p><strong>Signature</strong></p>
   </div>
 
   <!-- Totals Table -->
   <table style=" width:32% ; border-collapse: collapse; font-family: Arial, sans-serif; margin-left: 10px; font-size: 12px;">
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Totale Brut</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((orderData.montant_ttc || 0) + 1)}</td>
+      <td style="border: 1px solid black; padding: 2px;">${(orderData.montant_ttc || 0) + 1}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalRemise)}</td>
+      <td style="border: 1px solid black; padding: 2px;">${ totalRemise}</td>
     </tr>
         
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(orderData.montant_ht || 0)}</td>
+      <td style="border: 1px solid black; padding: 2px;">${orderData.montant_ht || 0}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(orderData.montant_tva || 0)}</td>
+      <td style="border: 1px solid black; padding: 2px;">${ orderData.montant_tva || 0}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(orderData.timbre_fiscal || 0)}</td>
+      <td style="border: 1px solid black; padding: 2px;">${orderData.timbre_fiscal || 0}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((orderData.montant_ttc || 0) - totalRemise + (orderData.timbre_fiscal || 0))}</td>
+      <td style="border: 1px solid black; padding: 2px;">${(orderData.montant_ttc || 0) - totalRemise + (orderData.timbre_fiscal || 0)}</td>
     </tr>
   </table>
 </div>
@@ -373,7 +374,7 @@ class FacturePdfApiService {
          </p>
          </div>
    <div style="width:30% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
-    <p><strong>Cachet et Signature</strong></p>
+    <p><strong>Signature</strong></p>
     </div>
    </div>
    
@@ -395,8 +396,11 @@ static formatMontantEnLettres(amount) {
   }
   static formatCurrency(amount) {
     return new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "TND",
+      // style: "currency",
+      style: "decimal",
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3
+      // currency: "TND",
     }).format(amount || 0);
   }
 
