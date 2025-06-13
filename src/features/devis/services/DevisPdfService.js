@@ -187,9 +187,9 @@ class DevisPdfService {
    */
   static formatCurrency(amount) {
     return new Intl.NumberFormat("fr-TN", {
-      style: "currency",
-      currency: "TND",
+      style: "decimal",
       minimumFractionDigits: 3,
+      maximumFractionDigits: 3
     }).format(amount || 0);
   }
 
@@ -351,7 +351,7 @@ class DevisPdfService {
     <tbody>
       <tr style="height: 80px;">
         <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(data.montant_ht)}</td>
-        <td style="border: 1px solid black; padding: 8px;">${data.tax_rate}</td>
+        <td style="border: 1px solid black; padding: 8px;">${data.tax_rate} %</td>
         <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(data.montant_tva)}</td>
       </tr>
       <tr style="height: 20px;">
@@ -363,7 +363,7 @@ class DevisPdfService {
 
   <!-- Signature Box -->
   <div style=" width:32% ; height: 150px; border: 1px solid black; padding: 8px; margin-left: 10px; text-align:center">
-    <p><strong>Signature</strong></p>
+    <p><strong>Cachet et Signature</strong></p>
   </div>
 
   <!-- Totals Table -->

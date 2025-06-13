@@ -329,7 +329,7 @@ class FacturePdfApiService {
 
   <!-- Signature Box -->
   <div style=" width:32% ; height: 150px; border: 1px solid black; padding: 8px; margin-left: 10px; text-align:center">
-    <p><strong>Signature</strong></p>
+    <p><strong>Cachet et Signature</strong></p>
   </div>
 
   <!-- Totals Table -->
