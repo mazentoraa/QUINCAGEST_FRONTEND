@@ -247,7 +247,7 @@ class FacturePdfApiService {
       </p>
         </div>
         <div class="logo" style="text-align: right;">
-      <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
+      <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
     </div>
           </div>
 
@@ -264,10 +264,10 @@ class FacturePdfApiService {
         <p><strong>Facture N°:</strong> <br> ${formatInvoiceNumber(orderData)}</p>
       </div>
       <div class="order-header">
-        <p><strong>Date:</strong> ${orderData.date_commande || "N/A"}</p>
+        <p><strong>Date: </strong> <br> ${orderData.date_commande || "N/A"}</p>
       </div>
       <div class="order-header">
-        <p><strong>Code Client:</strong> ${orderData.code_client || "N/A"}</p>
+        <p><strong>Code Client: </strong> <br> ${orderData.code_client || "N/A"}</p>
       </div>
     </div>
   </div>
@@ -315,7 +315,7 @@ class FacturePdfApiService {
     </thead>
     <tbody>
       <tr style="height: 80px;">
-       <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(orderData.montant_ht || 0)}</td>s
+       <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(orderData.montant_ht || 0)}</td>
         <td style="border: 1px solid black; padding: 8px;">${orderData.tax_rate}</td>
         <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(orderData.montant_tva || 0)}</td>
       </tr>

@@ -28,6 +28,7 @@ export default class WorkModel {
     this.date_creation = data.date_creation || '';
     this.derniere_mise_a_jour = data.derniere_mise_a_jour || '';
     this.matiere_usages = data.matiere_usages || [];
+    this.remise = data.remise ?? 0;
     
     // Add fields for client and product names
     this.client_name = data.client_name || '';
@@ -50,7 +51,8 @@ export default class WorkModel {
       duree: this.duree,
       quantite: this.quantite,
       description: this.description,
-      matiere_usages: this.matiere_usages
+      matiere_usages: this.matiere_usages,
+      remise: this.remise,
     };
   }
 }

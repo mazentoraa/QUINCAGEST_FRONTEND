@@ -1830,7 +1830,8 @@ console.log("Current bon IDs:", currentBonInDrawer.map(b => b.bon_id));
                   style={{ width: "100%" }}
                   step={0.01}
                   onChange={(value) => {
-                    recalculateTotalsInDrawer(currentProductsInDrawer);
+                    const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
+                    recalculateTotalsInDrawer(currentProductsInDrawer,currentTaxRate,currentBonInDrawer);
                   }}
                 />
               </Form.Item>

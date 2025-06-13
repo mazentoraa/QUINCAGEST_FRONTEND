@@ -283,7 +283,7 @@ class DevisPdfService {
     </div>
         </div>
         <div class="logo" style="text-align: right;">
-      <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
+      <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
     </div>
   </div>
           
