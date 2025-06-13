@@ -388,7 +388,7 @@ class DevisPdfService {
 
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((data.montant_ttc || 0) - totalRemise )}</td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((data.montant_ht || 0)+(data.montant_tva)  )}</td>
     </tr>
   </table>
 </div>

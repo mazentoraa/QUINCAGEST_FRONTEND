@@ -336,7 +336,7 @@ class FacturePdfApiService {
   <table style=" width:32% ; border-collapse: collapse; font-family: Arial, sans-serif; margin-left: 10px; font-size: 12px;">
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Totale Brut</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${(orderData.montant_ttc || 0) + 1}</td>
+      <td style="border: 1px solid black; padding: 2px;">${(orderData.montant_ht || 0) }</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
@@ -357,7 +357,7 @@ class FacturePdfApiService {
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${(orderData.montant_ttc || 0) - totalRemise + (orderData.timbre_fiscal || 0)}</td>
+      <td style="border: 1px solid black; padding: 2px;">${(orderData.montant_ht || 0) + (orderData.montant_tva || 0) + (orderData.timbre_fiscal || 0)}</td>
     </tr>
   </table>
 </div>
