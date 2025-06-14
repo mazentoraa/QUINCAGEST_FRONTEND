@@ -104,7 +104,7 @@ const BonLivraisonDecoupe = () => {
 
       // Remove all filter parameters - fetch all data
       const response = await InvoiceService.getAllInvoices(params);
-
+      
       const processInvoices = (invoiceList) => {
         return invoiceList.map((invoice) => {
           const totals = calculateInvoiceTotal(invoice);

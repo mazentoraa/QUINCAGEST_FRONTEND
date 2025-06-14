@@ -180,13 +180,7 @@ class BonCommandePdfService {
   /**
    * Format currency
    */
-  static formatCurrency(amount) {
-    return new Intl.NumberFormat("fr-TN", {
-      style: "currency",
-      currency: "TND",
-      minimumFractionDigits: 3,
-    }).format(amount || 0);
-  }
+
 
   /**
    * Generate HTML for order
@@ -222,13 +216,13 @@ class BonCommandePdfService {
                 `Produit ID ${item.produit_id || item.produit || "N/A"}`
               }</td>
               <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${quantite}</td>
-              <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: right;">${this.formatCurrency(
+              <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: right;">${
                 prixUnitaire
-              )}</td>
+              }</td>
               <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${remisePourcentage}%</td>
-              <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: right; font-weight: bold;">${this.formatCurrency(
+              <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: right; font-weight: bold;">${
                 total
-              )}</td>
+              }</td>
             </tr>
           `;
         })
@@ -467,21 +461,21 @@ class BonCommandePdfService {
               <table class="totals-table">
                   <tr class="total-ht">
                       <td><strong>Total HT</strong></td>
-                      <td style="text-align: right;"><strong>${this.formatCurrency(
+                      <td style="text-align: right;"><strong>${
                         data.montant_ht || 0
-                      )}</strong></td>
+                      }</strong></td>
                   </tr>
                   <tr class="total-tva">
                       <td><strong>TVA (${data.tax_rate || 0}%)</strong></td>
-                      <td style="text-align: right;"><strong>${this.formatCurrency(
+                      <td style="text-align: right;"><strong>${
                         data.montant_tva || 0
-                      )}</strong></td>
+                      }</strong></td>
                   </tr>
                   <tr class="total-ttc">
                       <td><strong>TOTAL TTC</strong></td>
-                      <td style="text-align: right;"><strong>${this.formatCurrency(
+                      <td style="text-align: right;"><strong>${
                         data.montant_ttc || 0
-                      )}</strong></td>
+                      }</strong></td>
                   </tr>
               </table>
           </div>
@@ -530,7 +524,7 @@ class BonCommandePdfService {
               <p>
                   Commande émise le ${data.date_commande || ""} — 
                   Total produits: ${(data.produit_commande || []).length} — 
-                  Montant TTC: ${this.formatCurrency(data.montant_ttc || 0)}
+                  Montant TTC: ${data.montant_ttc || 0}
               </p>
               <p style="margin-top: 5px;">
                   <strong>Conditions générales :</strong> Cette commande est confirmée et engage les deux parties. 

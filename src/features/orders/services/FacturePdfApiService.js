@@ -109,19 +109,19 @@ class FacturePdfApiService {
   </td>
   <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     
-     ${item.prix_unitaire || 0}
+     ${(item.prix_unitaire || 0).toFixed(3)}
   </td>
   <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     ${item.remise_pourcentage || 0}%
   </td>
   <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-    ${item.prix_total || 0}
+    ${(item.prix_total || 0).toFixed(3)}
   </td>
   <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-    ${orderData.tax_rate || 20}%
+    ${(orderData.tax_rate || 0)}%
   </td>
   <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-    ${(item.prix_total || 0) * (1 + (orderData.tax_rate || 0) / 100)}
+    ${(item.prix_total || 0) * (1 + (orderData.tax_rate || 0) / 100).toFixed(3)}
    
     
   </td>
@@ -141,6 +141,7 @@ class FacturePdfApiService {
       const remise = prixUnitaire * quantite * (remisePourcentage / 100);
       return acc + remise;
     }, 0);
+  
 
     return `
 <!DOCTYPE html>
@@ -215,7 +216,7 @@ class FacturePdfApiService {
         }
             .order-header {
     border: 1px solid #000;
-    
+    padding : 4px
 }
 
         
@@ -265,10 +266,10 @@ class FacturePdfApiService {
         <p><strong>Facture N°:</strong> <br> ${formatInvoiceNumber(orderData)}</p>
       </div>
       <div class="order-header">
-        <p><strong>Date: </strong>  ${orderData.date_commande || "N/A"}</p>
+        <p><strong>Date: </strong> <br>  ${orderData.date_commande || "N/A"}</p>
       </div>
       <div class="order-header">
-        <p><strong>Code Client: </strong>  ${orderData.code_client || "N/A"}</p>
+        <p><strong>Code Client: </strong> <br> ${orderData.code_client || "N/A"}</p>
       </div>
     </div>
   </div>
@@ -316,13 +317,13 @@ class FacturePdfApiService {
     </thead>
     <tbody>
       <tr style="height: 80px;">
-       <td style="border: 1px solid black; padding: 8px;">${orderData.montant_ht || 0}</td>
+       <td style="border: 1px solid black; padding: 8px;">${(orderData.montant_ht || 0).toFixed(3)}</td>
         <td style="border: 1px solid black; padding: 8px;">${orderData.tax_rate} %</td>
-        <td style="border: 1px solid black; padding: 8px;">${orderData.montant_tva || 0}</td>
+        <td style="border: 1px solid black; padding: 8px;">${(orderData.montant_tva || 0).toFixed(3)}</td>
       </tr>
       <tr style="height: 20px;">
-         <td colspan="2" style="border: 1px solid black; padding: 8px;">${orderData.montant_ht || 0}</td>
-        <td style="border: 1px solid black; padding: 8px;">${orderData.montant_tva || 0}</td>
+         <td colspan="2" style="border: 1px solid black; padding: 8px;">${(orderData.montant_ht || 0).toFixed(3)}</td>
+        <td style="border: 1px solid black; padding: 8px;">${(orderData.montant_tva || 0).toFixed(3)}</td>
       </tr>
     </tbody>
   </table>
@@ -336,7 +337,7 @@ class FacturePdfApiService {
   <table style=" width:32% ; border-collapse: collapse; font-family: Arial, sans-serif; margin-left: 10px; font-size: 12px;">
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Totale Brut</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${(orderData.montant_ht || 0) }</td>
+      <td style="border: 1px solid black; padding: 2px;">${(totalBrut || 0).toFixed(3) }</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
@@ -363,9 +364,9 @@ class FacturePdfApiService {
 </div>
 
 
-  <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
-  <div style="width:70% ; border: 1px solid black; padding: 5px ;">
-   <p>
+  <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px ;">
+  <div style="width:50% ; border: 1px solid black; padding: 5px ;">
+   <p style="padding : 12px ">
          <strong>
          Arrêtée la présente facture à la somme de:
          </strong> <br>
@@ -373,7 +374,7 @@ class FacturePdfApiService {
     
          </p>
          </div>
-   <div style="width:30% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
+   <div style="width:50% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
     <p><strong>Signature</strong></p>
     </div>
    </div>

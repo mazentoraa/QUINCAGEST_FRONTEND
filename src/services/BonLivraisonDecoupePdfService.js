@@ -152,12 +152,9 @@ class BonLivraisonDecoupePdfService {
     console.log("Download link created and clicked");
   }
 
-   static formatCurrency(amount) {
-    return new Intl.NumberFormat("fr-TN", {
-      style: "currency",
-      currency: "TND",
-      minimumFractionDigits: 3,
-    }).format(amount || 0);
+   static formatCurrency(value) {
+    const number = parseFloat(value);
+    return isNaN(number) ? '0.00' : number.toFixed(2);
   }
 
   /**
@@ -247,7 +244,11 @@ class BonLivraisonDecoupePdfService {
       const remise = prixUnitaire * quantite * (remisePourcentage / 100);
       return acc + remise;
     }, 0);
-
+      const totalBrut = invoice.items.reduce((acc, item) => {
+        const prixUnitaire = item.billable.prix_unitaire || 0;
+        const quantite = item.billable.quantite || 0;
+        return acc + prixUnitaire * quantite;
+      } , 0 )
     return `
       <!DOCTYPE html>
       <html lang="fr">
@@ -379,7 +380,7 @@ class BonLivraisonDecoupePdfService {
   <table style=" width:32% ; border-collapse: collapse; font-family: Arial, sans-serif; margin-left: 10px; font-size: 12px;">
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Totale Brut</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((totals.totalTTC|| 0) )}</td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((totalBrut|| 0) )}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
@@ -388,7 +389,7 @@ class BonLivraisonDecoupePdfService {
 
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totals.totalHT || 0)}</td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalBrut - totalRemise || 0)}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
@@ -397,13 +398,13 @@ class BonLivraisonDecoupePdfService {
     
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((totals.totalTTC|| 0) - totalRemise )}</td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((totals.totalHT|| 0) + totals.totalTVA )}</td>
     </tr>
   </table>
 </div>
           <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
-  <div style="width:70% ; border: 1px solid black; padding: 5px ;">
-   <p>
+  <div style="width:50% ; border: 1px solid black; padding: 5px ;">
+   <p style="padding : 12px ">
          <strong>
          Arrêtée la présente facture à la somme de:
          </strong> <br>
@@ -411,7 +412,7 @@ class BonLivraisonDecoupePdfService {
     
          </p>
    </div>
-   <div style="width:30% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
+   <div style="width:50% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
     <p><strong>Cachet et Signature</strong></p>
     </div>
     </div>

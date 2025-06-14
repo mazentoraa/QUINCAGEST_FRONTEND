@@ -1,3 +1,4 @@
+import n2words from 'n2words';
 class BonCommandePdfApiService {
   // Use the same APDF.io API as ClientMaterialPdfService
   static API_TOKEN = "kMZrwMgVmmej90g7wimNOcvwFaGRQhXndOVKfTSPf540b6d3";
@@ -82,7 +83,11 @@ class BonCommandePdfApiService {
     document.body.removeChild(a);
     console.log("Download link created and clicked");
   }
-
+  static formatFloat(value) {
+    const number = parseFloat(value);
+    return isNaN(number) ? '0.00' : number.toFixed(2);
+  }
+  
   static generateOrderHTML(orderData) {
     const items = orderData.produit_commande || [];
 
@@ -91,7 +96,7 @@ class BonCommandePdfApiService {
         (item) => `
       <tr>
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
-          item.produit_id || ""
+          item.code_produit || ""
         }</td>
         <td style="border: 1px solid #000; padding: 8px; font-size: 11px;">${
           item.nom_produit || "N/A"
@@ -99,26 +104,39 @@ class BonCommandePdfApiService {
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
           item.quantite || 0
         }</td>
-        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-size: 11px;">${this.formatCurrency(
-          item.prix_unitaire || 0
-        )}</td>
+        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-size: 11px;">${
+          this.formatFloat(item.prix_unitaire || 0)
+        }</td>
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
           item.remise_pourcentage || 0
         }%</td>
-        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-size: 11px;">${this.formatCurrency(
-          item.prix_total || 0
-        )}</td>
+        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-size: 11px;">${
+          this.formatFloat( item.prix_total || 0)
+        }</td>
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
           orderData.tax_rate || 20
         }%</td>
-        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-size: 11px;">${this.formatCurrency(
-          (item.prix_total || 0) * (1 + (orderData.tax_rate || 20) / 100)
-        )}</td>
+        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-size: 11px;">${
+          this.formatFloat(item.prix_total || 0) * (1 + (orderData.tax_rate || 20) / 100)
+        }</td>
       </tr>
     `
       )
       .join("");
-
+      const totalRemise = orderData.produit_commande.reduce((acc, item) => {
+        const prixUnitaire = item.prix_unitaire || 0;
+        const quantite = item.quantite || 0;
+        const remisePourcentage = item.remise_pourcentage || 0;
+  
+        const remise = prixUnitaire * quantite * (remisePourcentage / 100);
+        return acc + remise;
+      }, 0);
+      const totalBrut = orderData.produit_commande.reduce((acc, item) => {
+        const prixUnitaire = item.prix_unitaire || 0;
+        const quantite = item.quantite || 0;
+         const t = prixUnitaire*quantite ; 
+         return acc + t;
+      },0) ;
     return `
 <!DOCTYPE html>
 <html lang="fr">
@@ -126,201 +144,167 @@ class BonCommandePdfApiService {
     <meta charset="UTF-8">
     <title>Bon de Commande RM METALASER</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            font-size: 14px;
-            color: #000;
+       body {
+                  font-family: Arial, sans-serif;
+                  font-size: 14px;
+                  color: #000;
         }
-
-        header,
-        footer {
+                header,footer {
             text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .company-info {
-            text-align: left;
-            margin-bottom: 20px;
-        }
-
-        .client-info {
-            margin-top: 40px;
-            border: 1px solid #000;
-            padding: 10px;
-             text-align: left; 
-            width:300px ; 
-            line-height : 1.2 ; 
-        }
-
-        .order-details {
-            margin-top: 20px;
-        }
-
-        .order-details table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .order-details th,
-        .order-details td {
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: left;
-        }
-
-        .totals {
-            margin-top: 20px;
-            width: 100%;
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .totals table {
-            width: 300px;
-            border-collapse: collapse;
-        }
-
-        .totals td {
-            padding: 4px 8px;
-            border: 1px solid #000;
-        }
-
-        .signature {
-            margin-top: 40px;
-            text-align: right;
-        }
-
-        .order-header {
-                        border: 1px solid #000; 
-    padding: 2px 10px;
-    margin-top: 18px;
-    display: flex;
-    flex-direction:column; 
-    justify-content: center;
-    width: fit-content;
-   line-height: 1.5 ;
-        }
-
-        .conditions {
-            margin-top: 20px;
-            font-size: 12px;
-        }
+            }
+              .order-header {
+    border: 1px solid #000;
+}
+   table {
+  border-collapse: collapse;
+}
     </style>
 </head>
 <body>
-    
-<header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;"> 
-        <div class="company-info" style="text-align: left;">
-            <h2 style="margin-buttom: 1px;">RM METALASER</h2>
-            <p style="margin: 0; line-height: 1.5;"> <span style="color:grey; font-weight: bold;  ">Découpes Métaux </span><br>
-            Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
-            MF: 191 1419B/A/M/000<br>
-            Tél. : +216 20 366 150<br>
-            Email: contact@rmmetalaser.tn<br>
-            Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
-  
-
-    <div class="client-info">
-        <strong>Nom Client :</strong> ${orderData.nom_client || "N/A"}<br>
-        <strong>Adresse :</strong> ${orderData.client_address || "N/A"}<br>
-        <strong>M.F :</strong> ${orderData.client_tax_id || "N/A"}<br>
-        <strong>Tél. :</strong> ${orderData.client_phone || "N/A"}
+        <header style="display: flex; flex-direction: column;">
+  <div style="display: flex; flex-direction: row; justify-content: space-between;">
+    <div style="text-align:left" class="company-info">
+      <h2 style="margin-bottom: 6px;">RM METALASER</h2>
+      <p style="margin: 0; line-height: 1.5;">
+        <span style="color: grey; font-weight: bold;">Découpes Métaux</span><br>
+        Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
+        MF: 191 1419B/A/M/000<br>
+        Tél. : +216 20 366 150<br>
+        Email: contact@rmmetalaser.tn<br>
+        Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
+      </p>
     </div>
-
-    <div class="order-header">
-        <p><strong>Bon de Commande N°:</strong> ${
-          orderData.numero_commande || "N/A"
-        }<br>
-            <strong>Date:</strong> ${orderData.date_commande || "N/A"}<br>
-            <strong>Date Livraison Prévue:</strong> ${
-              orderData.date_livraison_prevue || "N/A"
-            }<br>
-            <strong>Statut:</strong> ${this.translateStatus(
-              orderData.statut
-            )}<br>
-            <strong>Code Client:</strong> ${orderData.code_client || "N/A"}
-        </p>
+        
+        <div class="logo" style="text-align: right;">
+      <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
     </div>
-      </div> 
-       <div class="logo" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
-  <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
-
-  <div class="client-info">
-        <strong>Nom Client :</strong> ${orderData.nom_client || "N/A"}<br>
-        <strong>Adresse :</strong> ${orderData.client_address || "N/A"}<br>
-        <strong>M.F :</strong> ${orderData.client_tax_id || "N/A"}<br>
-        <strong>Tél. :</strong> ${orderData.client_phone || "N/A"}
+  </div>
+          
+<div style="display: flex; flex-direction: row; margin-top: 20px; gap: 20px;">
+  <!-- Bon de Commande Section -->
+  <div style="width: 50%;">
+    <div class="order-header" style="margin-bottom: 10px;">
+      <h2>Bon de Commande</h2>
+      </div>
+          <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 10px;">
+      <div class="order-header">
+        <p><strong>Bon N°:</strong> <br> ${orderData.numero_commande || "N/A"} </p>
+      </div>
+      <div class="order-header">
+        <p><strong>Date:</strong> ${ orderData.date_commande || "N/A"}</p>
+      </div>
+      <div class="order-header">
+        <p><strong>Code Client:</strong> ${orderData.code_client || "N/A"}</p>
+      </div>
     </div>
+  </div>
+
+  <!-- Client Info -->
+  <div class="order-header" style="width: 50%; text-align: left; padding-left:20px">
+    <p><strong>Nom Client:</strong> ${orderData.nom_client || "N/A"}</p>
+    <p>Adresse: ${orderData.client_address || "N/A"}</p>
+    <p>M.F: ${orderData.client_tax_id || "N/A"}</p>
+    <p>Tél.: ${orderData.client_phone || "N/A"}</p>
+  </div>
 </div>
 
-    </header>
-
-    <div class="order-details">
+</header>
+<div style="margin-top: 20px;" class="order-details">
         <table>
             <thead>
-                <tr>
-                    <th>CODE</th>
-                    <th>DESIGNATION</th>
-                    <th>QTE</th>
-                    <th>P.U. HT (TND)</th>
-                    <th>REMISE (%)</th>
-                    <th>Total P. HT (TND)</th>
-                    <th>TVA</th>
-                    <th>TOTAL P. TTC (TND)</th>
-                </tr>
-            </thead>
+  <tr>
+    <th style="width: 8%; text-align: center; vertical-align: middle; border: 1px solid #000;">Code</th>
+    <th style="width: 25%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
+    <th style="width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
+    <th style="width: 16%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
+    <th style=" width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
+    <th style="width: 18%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
+    <th style="width: 7%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
+    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">TOTAL P. TTC</th>
+  </tr>
+</thead>
+
             <tbody>
-                ${itemsHTML}
+                        ${itemsHTML}
             </tbody>
         </table>
     </div>
 
-    <div class="totals">
-        <table>
-            <tr>
-                <td><strong>Total HT</strong></td>
-                <td>${this.formatCurrency(orderData.montant_ht || 0)}</td>
-            </tr>
-            <tr>
-                <td><strong>Total TVA</strong></td>
-                <td>${this.formatCurrency(orderData.montant_tva || 0)}</td>
-            </tr>
-            <tr>
-                <td><strong>NET À PAYER</strong></td>
-                <td><strong>${this.formatCurrency(
-                  orderData.montant_ttc || 0
-                )}</strong></td>
-            </tr>
-        </table>
+  <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
+  
+  <!-- Table 1: TVA -->
+  <table style=" width:32% ; border-collapse: collapse; text-align: center; font-family: Arial, sans-serif;">
+    <thead>
+      <tr>
+        <th style="border: 1px solid black; padding: 8px;">Base</th>
+        <th style="border: 1px solid black; padding: 8px;">Taux</th>
+        <th style="border: 1px solid black; padding: 8px;">Montant TVA</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="height: 80px;">
+        <td style="border: 1px solid black; padding: 8px;">${this.formatFloat(orderData.montant_ht)}</td>
+        <td style="border: 1px solid black; padding: 8px;">${orderData.tax_rate} %</td>
+        <td style="border: 1px solid black; padding: 8px;">${this.formatFloat(orderData.montant_tva)}</td>
+      </tr>
+      <tr style="height: 20px;">
+        <td colspan="2" style="border: 1px solid black; padding: 8px;">${this.formatFloat(orderData.montant_ht)}</td>
+        <td style="border: 1px solid black; padding: 8px;">${this.formatFloat(orderData.montant_tva)}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Signature Box -->
+  <div style=" width:32% ; height: 150px; border: 1px solid black; padding: 8px; margin-left: 10px; text-align:center">
+    <p><strong>Cachet et Signature</strong></p>
+  </div>
+
+  <!-- Totals Table -->
+  <table style=" width:32% ; border-collapse: collapse; font-family: Arial, sans-serif; margin-left: 10px; font-size: 12px;">
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Totale Brut</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatFloat(totalBrut || 0) }</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatFloat(totalRemise)}</td>
+    </tr>
+
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatFloat(orderData.montant_ht || 0)}</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatFloat(orderData.montant_tva || 0)}</td>
+    </tr>
+
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatFloat((orderData.montant_ht || 0)+(orderData.montant_tva))  }</td>
+    </tr>
+  </table>
+</div>
+
+
+  <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
+  <div style="width:50% ; border: 1px solid black; padding: 5px ;">
+   <p style="padding : 12px ">
+         <strong>
+         Arrêtée la présente facture à la somme de:
+         </strong> <br>
+         ${this.formatMontantEnLettres((orderData.montant_ttc || 0))}
+    
+         </p>
+   </div>
+   <div style="width:50% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
+    <p><strong>Signature</strong></p>
     </div>
+ </div>
 
-    ${
-      orderData.conditions_paiement
-        ? `
-    <div class="conditions">
-        <p><strong>Conditions de paiement:</strong> ${orderData.conditions_paiement}</p>
-    </div>`
-        : ""
-    }
+ </div>
 
-    ${
-      orderData.notes
-        ? `
-    <div class="conditions">
-        <p><strong>Notes:</strong> ${orderData.notes}</p>
-    </div>`
-        : ""
-    }
 
-    <div class="signature">
-        <p><strong>Cachet et Signature</strong></p>
-        <p>Base: ${this.formatCurrency(
-          orderData.montant_ht || 0
-        )} — Taux TVA: ${
-      orderData.tax_rate || 20
-    }% — Montant TVA: ${this.formatCurrency(orderData.montant_tva || 0)}</p>
-    </div>
 </body>
 </html>
     `;
@@ -391,6 +375,15 @@ class BonCommandePdfApiService {
       return { success: false, message: `API test error: ${error.message}` };
     }
   }
+  static formatMontantEnLettres(amount) {
+        const dinars = Math.floor(amount);
+        const millimes = Math.round((amount - dinars) * 1000);
+      
+        const dinarsEnLettres = n2words(dinars, { lang: 'fr' });
+        const millimesEnLettres = millimes > 0 ? `et ${n2words(millimes, { lang: 'fr' })} millimes` : '';
+      
+        return `${dinarsEnLettres} dinars ${millimesEnLettres}`;
+      }
 }
 
 export default BonCommandePdfApiService;

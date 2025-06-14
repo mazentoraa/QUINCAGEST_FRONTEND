@@ -42,6 +42,7 @@ class InvoiceService {
   async getAllInvoices() {
     try {
       const response = await axios.get(`${API_URL}/factures/`);
+      console.log("in",response.data)
       return response.data;
     } catch (error) {
       console.error('Error fetching invoices:', error);

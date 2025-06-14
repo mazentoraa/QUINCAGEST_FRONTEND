@@ -242,7 +242,11 @@ class DevisPdfService {
         const remise = prixUnitaire * quantite * (remisePourcentage / 100);
         return acc + remise;
       }, 0);
-
+      const totalBrut = data.produit_devis.reduce((acc,item) => {
+        const prixUnitaire = item.prix_unitaire || 0;
+        const quantite = item.quantite || 0;
+        return acc + prixUnitaire * quantite;
+      },0)
     return `
       <!DOCTYPE html>
       <html lang="fr">
@@ -370,7 +374,7 @@ class DevisPdfService {
   <table style=" width:32% ; border-collapse: collapse; font-family: Arial, sans-serif; margin-left: 10px; font-size: 12px;">
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Totale Brut</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((data.montant_ttc || 0) )}</td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((totalBrut|| 0) )}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
@@ -395,8 +399,8 @@ class DevisPdfService {
 
 
   <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
-  <div style="width:70% ; border: 1px solid black; padding: 5px ;">
-   <p>
+  <div style="width:50% ; border: 1px solid black; padding: 5px ;">
+   <p style="padding : 12px ">
          <strong>
          Arrêtée la présente facture à la somme de:
          </strong> <br>
@@ -404,7 +408,7 @@ class DevisPdfService {
     
          </p>
    </div>
-   <div style="width:30% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
+   <div style="width:50% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
     <p><strong>Signature</strong></p>
     </div>
  </div>

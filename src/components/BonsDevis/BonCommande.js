@@ -327,7 +327,10 @@ export default function BonCommande() {
          const newSequence = String(maxSequence + 1).padStart(5, '0');
         // Generate a random order number
         const randomOrderNumber =  `CMD-${new Date().getFullYear()}-${newSequence}`;
-
+        const montant_ht = newOrderProducts.reduce((sum, p) => sum + p.prix_total, 0);
+        const montant_tva = montant_ht * (values.tax_rate / 100);
+        const montant_ttc = montant_ht + montant_tva;
+        
         const orderPayload = {
           client_id: selectedClientId,
           client: selectedClientId, // Add client field as required by backend
@@ -342,19 +345,28 @@ export default function BonCommande() {
           notes: values.notes || "",
           conditions_paiement: values.conditions_paiement || "",
           tax_rate: values.tax_rate || 0,
+          montant_ht:montant_ht,
+          montant_tva:montant_tva,
+          montant_ttc:montant_ttc,
           produits: newOrderProducts.map((p) => ({
             produit: p.produit_id,
             quantite: p.quantite,
             prix_unitaire: p.prix_unitaire,
             remise_pourcentage: p.remise_pourcentage || 0,
           })),
+          
         };
 
+        console.log("saving",orderPayload);
         const createdOrder = await orderService.createOrder(orderPayload);
         message.success(
           `Commande ${createdOrder.numero_commande} créée avec succès!`
         );
       } else {
+        const montant_ht = currentProductsInDrawer.reduce( (sum, p) => sum + (p.prix_total || 0),
+        0)
+        const montant_tva = montant_ht * (values.tax_rate / 100);
+        const montant_ttc = montant_ht + montant_tva;
         // Updating an existing order
         const orderPayload = {
           ...editingOrder,
@@ -372,6 +384,9 @@ export default function BonCommande() {
             remise_pourcentage: p.remise_pourcentage || 0,
           })),
           tax_rate: values.tax_rate,
+          montant_ht:montant_ht,
+          montant_tva:montant_tva,
+          montant_ttc:montant_ttc,
         };
         delete orderPayload.montant_ht_display;
         delete orderPayload.montant_tva_display;
@@ -556,7 +571,7 @@ export default function BonCommande() {
         hideLoading();
         return;
       }
-
+        console.log("detailed",detailedOrder)
       // Find the client in availableClients list
       let clientDetailsForPdf = null;
       const clientIdToFind =
@@ -589,7 +604,7 @@ export default function BonCommande() {
               `Produit ID ${
                 orderProduct.produit_id || orderProduct.produit || "N/A"
               }`;
-
+            const code_produit = orderProduct.code_produit || "N/A";
             const prixUnitaire =
               orderProduct.prix_unitaire ??
               productDetailsFromCatalog?.prix_unitaire ??
@@ -611,10 +626,12 @@ export default function BonCommande() {
               id: orderProduct.id,
               produit_id: orderProduct.produit_id || orderProduct.produit,
               nom_produit: nomProduit,
+              code_produit : code_produit , 
               quantite: quantite,
               prix_unitaire: prixUnitaire,
               remise_pourcentage: remisePourcentage,
               prix_total: prixTotal,
+         
             };
           }
         );
@@ -634,6 +651,7 @@ export default function BonCommande() {
               detailProduct.nom_produit ||
               productDetailsFromCatalog?.nom_produit ||
               `Produit ID ${detailProduct.id || "N/A"}`;
+            const code_produit = detailProduct.code_produit || "N/A";
             // Assuming 'prix' in produits_details is the unit price
             const prixUnitaire =
               detailProduct.prix ??
@@ -645,6 +663,7 @@ export default function BonCommande() {
             return {
               produit_id: detailProduct.id,
               nom_produit: nomProduit,
+              code_produit:code_produit , 
               quantite: quantite,
               prix_unitaire: prixUnitaire,
               remise_pourcentage: remisePourcentage,
@@ -687,6 +706,7 @@ export default function BonCommande() {
           detailedOrder.client?.nom ||
           detailedOrder.nom_client ||
           "",
+
         client_address:
           clientDetailsForPdf?.adresse ||
           detailedOrder.client?.adresse ||
