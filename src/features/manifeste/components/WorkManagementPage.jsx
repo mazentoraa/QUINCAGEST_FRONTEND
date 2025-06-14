@@ -45,7 +45,8 @@ import ProductService from "../services/ProductService";
 import RawMaterialService from "../services/RawMaterialService";
 import InvoiceService from "../services/InvoiceService"; // Import CSS
 import "./WorkManagementPage.css";
-import { getApiService } from "E:/metalgest/metalGest/src/services/apiServiceFactory.js";
+import { getApiService } from "../../../services/apiServiceFactory";
+
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
