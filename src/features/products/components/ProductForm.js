@@ -213,9 +213,7 @@ const ProductForm = ({
         <Form.Item
           name="code_produit"
           label="Code du produit"
-          rules={[
-            { required: true, message: "Le code du produit est obligatoire" },
-          ]}
+          rules={[]}
         >
           <Input  />
         </Form.Item>
