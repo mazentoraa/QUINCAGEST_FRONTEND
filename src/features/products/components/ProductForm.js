@@ -127,8 +127,6 @@ const ProductForm = ({
               reader.readAsDataURL(currentFile.originFileObj);
             });
           }
-        } else if (productToEdit.image) {
-          changedFields.image = null;
         }
 
         if (
@@ -169,7 +167,7 @@ const ProductForm = ({
           surface: values.surface,
           prix: values.price || 0,
           description: values.description || "",
-          image: imageData ?? null 
+          image: imageData ?? "" 
         };
         console.log("Payload to send:", productPayload);
 
