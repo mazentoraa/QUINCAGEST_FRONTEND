@@ -46,8 +46,9 @@ import RawMaterialService from "../services/RawMaterialService";
 import InvoiceService from "../services/InvoiceService"; // Import CSS
 import "./WorkManagementPage.css";
 import { getApiService } from "../../../services/apiServiceFactory";
+import BonLivraisonDecoupePdfService from "../../../services/BonLivraisonDecoupePdfService";
 
-
+const { Option } = Select;
 const { Content } = Layout;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -59,6 +60,7 @@ const WorkManagementPage = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingWork, setEditingWork] = useState(null);
   const [form] = Form.useForm();
+  const [created, setCreated] = useState(false);
 
   // For client and product selection
   const [clientOptions, setClientOptions] = useState([]);
@@ -84,6 +86,29 @@ const WorkManagementPage = () => {
   // Add state for selected rows
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedRowsData, setSelectedRowsData] = useState([]);
+
+  useEffect(() => {
+    if (created) {
+      console.log("✅ Modal.success triggered");
+      Modal.success({
+        title: "Facture créée avec succès",
+        content: "La facture a bien été générée et enregistrée.",
+        centered: true,
+        onOk: () => setCreated(false),
+        afterClose: () => setCreated(false),
+      });
+    }
+  }, [created]);
+
+  useEffect(() => {
+    if (created) {
+      const timer = setTimeout(() => {
+        setCreated(false);
+      }, 3000); // 3 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [created]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -282,7 +307,7 @@ const WorkManagementPage = () => {
         ...values,
         materialsUsed: selectedMaterials, // RESTORED
       };
-      console.log("workdata",workData);
+      console.log("workdata", workData);
       if (editingWork) {
         await WorkService.updateWork(editingWork.id, workData);
         message.success("Travail mis à jour avec succès");
@@ -314,7 +339,7 @@ const WorkManagementPage = () => {
         content: "Récupération des détails...",
         key: "materialsLoading",
       });
-      console.log("selected",selectedRowsData);
+      console.log("selected", selectedRowsData);
       // Process each work to add client and material details
       const enrichedWorksData = await Promise.all(
         selectedRowsData.map(async (work) => {
@@ -371,26 +396,24 @@ const WorkManagementPage = () => {
             productUnitPrice = work.produit.prix;
           } else if (work.produit_id) {
             try {
-              // Fetch product details if not fully available on the work object
               const productDetails = await ProductService.getProductById(
                 work.produit_id
               );
-              if (
-                productDetails &&
-                typeof productDetails.prix !== "undefined"
-              ) {
+              if (productDetails) {
                 productUnitPrice = productDetails.prix;
-                // Enrich the work item with full product details
                 enrichedWork.produit = productDetails;
+
+                enrichedWork.code_produit =
+                  productDetails.code_produit || "N/A";
               }
             } catch (error) {
               console.error(
                 `Error fetching product details for ID ${work.produit_id}:`,
                 error
               );
-              // Keep productUnitPrice as 0 or handle error as appropriate
             }
           }
+
           if (typeof productUnitPrice !== "number" || isNaN(productUnitPrice)) {
             productUnitPrice = 0; // Default to 0 if undefined, null, or NaN
           }
@@ -441,7 +464,7 @@ const WorkManagementPage = () => {
             prix_unitaire_produit: productUnitPrice, // Use fetched product unit price as default
             quantite_produit: enrichedWork.quantite || 1, // Quantity of the product
             taxe: taxRate,
-            remise: enrichedWork.remise || 0 ,
+            remise: enrichedWork.remise || 0,
             // total_ht will be calculated dynamically in the modal/PDF
           };
 
@@ -487,19 +510,27 @@ const WorkManagementPage = () => {
           message.error("Aucun travail sélectionné");
           return;
         }
-  
-        message.loading({ content: "Préparation de la facture...", key: "facturePrep" });
-  
+
+        message.loading({
+          content: "Préparation de la facture...",
+          key: "facturePrep",
+        });
+
         workingData = await Promise.all(
           selectedRowsData.map(async (work) => {
             const enrichedWork = { ...work };
-  
+
             if (!work.client_id && work.client?.id) {
               enrichedWork.client_id = work.client.id;
             }
-  
-            if (enrichedWork.client_id && (!work.clientDetails || !work.client)) {
-              const clientData = await ClientService.getClientById(enrichedWork.client_id);
+
+            if (
+              enrichedWork.client_id &&
+              (!work.clientDetails || !work.client)
+            ) {
+              const clientData = await ClientService.getClientById(
+                enrichedWork.client_id
+              );
               enrichedWork.clientDetails = {
                 id: clientData.id,
                 nom_cf: clientData.nom_client,
@@ -513,23 +544,39 @@ const WorkManagementPage = () => {
                 autre_numero: clientData.autre_numero,
               };
             }
-  
+
             let productUnitPrice = 0;
             if (work.produit && typeof work.produit.prix !== "undefined") {
               productUnitPrice = work.produit.prix;
-            } else if (work.produit_id) {
-              const productDetails = await ProductService.getProductById(work.produit_id);
-              if (productDetails?.prix) {
-                productUnitPrice = productDetails.prix;
-                enrichedWork.produit = productDetails;
+            } else if (
+              work.produit_id &&
+              (!work.produit || !work.produit.code_produit)
+            ) {
+              try {
+                const productDetails = await ProductService.getProductById(
+                  work.produit_id
+                );
+                if (productDetails) {
+                  enrichedWork.produit = productDetails;
+                  enrichedWork.code_produit =
+                    productDetails.code_produit || "N/A";
+                }
+              } catch (err) {
+                console.warn("Could not fetch full product:", err);
               }
             }
-  
+            console.log(
+              "✅ Processed work:",
+              enrichedWork.produit?.code_produit
+            );
+
             if (work.matiere_usages?.length > 0) {
               enrichedWork.matiere_usages = await Promise.all(
                 work.matiere_usages.map(async (usage) => {
                   if (usage.nom_matiere && usage.prix_unitaire) return usage;
-                  const mat = await RawMaterialService.getMaterialById(usage.matiere_id);
+                  const mat = await RawMaterialService.getMaterialById(
+                    usage.matiere_id
+                  );
                   return {
                     ...usage,
                     nom_matiere: mat.nom_matiere || mat.designation,
@@ -542,7 +589,7 @@ const WorkManagementPage = () => {
                 })
               );
             }
-  
+
             enrichedWork.billable = {
               date_facturation: moment().format("YYYY-MM-DD"),
               prix_unitaire_produit: productUnitPrice,
@@ -550,30 +597,35 @@ const WorkManagementPage = () => {
               taxe: taxRate,
               remise: enrichedWork.remise || 0,
             };
-  
+
             return enrichedWork;
           })
         );
-  
+
         setBillableData(workingData);
-        message.success({ content: "Données enrichies", key: "facturePrep", duration: 1 });
+        message.success({
+          content: "Données enrichies",
+          key: "facturePrep",
+          duration: 1,
+        });
       }
-  
+
       // From here: build orderPayload and send API request
-      const client = workingData[0].clientDetails || workingData[0].client || {};
+      const client =
+        workingData[0].clientDetails || workingData[0].client || {};
       const selectedClientId = client.id;
-  
+
       let finalMontantHt = 0;
-  
+
       const produits = workingData.flatMap((item) => {
         const produitId = item.produit_id || item.produit?.id;
         const quantite = item.billable?.quantite_produit || 0;
         const prixUnitaire = item.billable?.prix_unitaire_produit || 0;
         const remise = item.billable?.remise || 0;
-  
+
         const produitTotal = quantite * prixUnitaire - remise;
         finalMontantHt += produitTotal;
-  
+
         const productLine = [
           {
             produit: produitId,
@@ -582,25 +634,27 @@ const WorkManagementPage = () => {
             remise_pourcentage: 0,
           },
         ];
-  
-        const materialLines = item.matiere_usages?.map((mat) => {
-          const matTotal = (mat.prix_unitaire || 0) * (mat.quantite_utilisee || 0);
-          finalMontantHt += matTotal;
-  
-          return {
-            produit: mat.matiere_id,
-            quantite: mat.quantite_utilisee || 0,
-            prix_unitaire: mat.prix_unitaire || 0,
-            remise_pourcentage: 0,
-          };
-        }) || [];
-  
+
+        const materialLines =
+          item.matiere_usages?.map((mat) => {
+            const matTotal =
+              (mat.prix_unitaire || 0) * (mat.quantite_utilisee || 0);
+            finalMontantHt += matTotal;
+
+            return {
+              produit: mat.matiere_id,
+              quantite: mat.quantite_utilisee || 0,
+              prix_unitaire: mat.prix_unitaire || 0,
+              remise_pourcentage: 0,
+            };
+          }) || [];
+
         return [...productLine, ...materialLines];
       });
-  
+
       const finalMontantTva = finalMontantHt * (taxRate / 100);
       const finalMontantTtc = finalMontantHt + finalMontantTva;
-  
+
       const orderPayload = {
         client_id: selectedClientId,
         client: selectedClientId,
@@ -617,19 +671,21 @@ const WorkManagementPage = () => {
         montant_ttc: finalMontantTtc,
         produits,
       };
-  
+
       console.log(" Payload prêt à envoyer :", orderPayload);
-  
+
       const response = await cdsService.createOrder(orderPayload);
       message.success("Facture créée avec succès !");
       console.log("Facture créée :", response);
+      setCreated(true);
+      return true;
     } catch (error) {
       console.error("Erreur facture :", error);
       message.error(error?.response?.data?.detail || "Erreur inconnue.");
+      return false;
     }
   };
-  
-   
+
   // When fetching works, we should also get material details
   // Updated function to fetch complete material details for a work
   const fetchWorkWithMaterialDetails = async (workId) => {
@@ -686,6 +742,14 @@ const WorkManagementPage = () => {
 
       // Otherwise just use the rows as they are
       setSelectedRowsData(selectedRows);
+      console.log(
+        "🔎 Selected rows:",
+        selectedRows.map((item) => ({
+          id: item.id,
+          produit: item.produit,
+          code_produit: item.produit?.code_produit,
+        }))
+      );
     },
   };
 
@@ -727,7 +791,7 @@ const WorkManagementPage = () => {
       ),
     },
     {
-      title: "Durée (heures)",
+      title: "Durée",
       dataIndex: "duree",
       key: "duree",
     },
@@ -757,6 +821,14 @@ const WorkManagementPage = () => {
       title: "Date de création",
       dataIndex: "date_creation",
       key: "date_creation",
+      render: (date) =>
+        date
+          ? new Date(date).toLocaleDateString("fr-FR", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })
+          : "N/A",
     },
     {
       title: "Actions",
@@ -812,12 +884,15 @@ const WorkManagementPage = () => {
 
         // Add product as an item
         const remise = item.billable.remise || 0;
-        const productTotal = ((item.billable.prix_unitaire_produit || 0) * (item.billable.quantite_produit || 0)) - remise;
+        const productTotal =
+          (item.billable.prix_unitaire_produit || 0) *
+            (item.billable.quantite_produit || 0) -
+          remise;
         totalHT += productTotal;
 
         if (productTotal > 0) {
           productItems.push({
-            code: item.produit_id || "",
+            code: item.code_produit || "",
             description:
               (item.produit_name || "N/A") +
               (item.description ? ` (${item.description})` : ""),
@@ -871,27 +946,49 @@ const WorkManagementPage = () => {
 
       // Create invoice data object
       const invoiceData = {
-        invoiceNumber: invoiceNumber,
-        invoiceDate: billDate,
-        clientName: clientData.nom_cf || clientData.nom_client || "N/A",
-        clientAddress: clientData.adresse || "N/A",
-        clientTaxId:
-          clientData.matricule_fiscale || clientData.numero_fiscal || "N/A",
-        clientPhone: clientData.tel || clientData.telephone || "N/A",
-        clientCode: clientData.id || "N/A",
-        items: invoiceItems,
-        totalHT: totalHT,
-        discountRate: discountRate,
-        totalHTAfterDiscount: totalHTAfterDiscount,
-        taxRate: taxRate,
-        totalTVA: totalTVA,
-        totalTTC: totalTTC,
+        numero_facture: invoiceNumber,
+        date_emission: billDate,
+        tax_rate: taxRate,
+        client_details: {
+          nom_client: clientData.nom_cf || clientData.nom_client || "N/A",
+          adresse: clientData.adresse || "N/A",
+          numero_fiscal:
+            clientData.matricule_fiscale || clientData.numero_fiscal || "N/A",
+          telephone: clientData.tel || clientData.telephone || "N/A",
+        },
+        items: billableData.map((item) => {
+          const quantity = item.billable.quantite_produit || 0;
+          const unitPrice = item.billable.prix_unitaire_produit || 0;
+          const remise = item.billable.remise || 0;
+          const remisePercent = (remise / (quantity * unitPrice)) * 100 || 0;
+          console.log("📦 PDF item:", {
+            produit_id: item.produit_id,
+            produit_name: item.produit_name,
+            code_produit: item.code_produit,
+          });
+
+          return {
+            code_produit: item.code_produit || "N/A",
+            nom_produit:
+              item.produit_name || item.produit?.nom_produit || "N/A",
+            description: item.description || "",
+            billable: {
+              quantite: quantity,
+              prix_unitaire: unitPrice,
+              remise_percent: parseFloat(remisePercent.toFixed(2)),
+              total_ht: quantity * unitPrice - remise,
+            },
+          };
+        }),
+        total_ht: totalHT,
+        total_tax: totalTVA,
+        total_ttc: totalTTC,
       };
 
       console.log("Final invoice data being sent to PDF API:", invoiceData);
 
       // Use the PDF API service
-      await PdfApiService.generateInvoicePDF(
+      await BonLivraisonDecoupePdfService.generateDecoupeInvoicePDF(
         invoiceData,
         `facture-${billDate}-${invoiceNumber}.pdf`
       );
@@ -936,11 +1033,13 @@ const WorkManagementPage = () => {
         const produitName =
           item.produit_name || item.produit?.nom_produit || "Produit inconnu";
         const produitId = item.produit_id || item.produit?.id;
+        const code_produit = item.code_produit || item.produit?.code_produit;
 
         return {
           work_id: item.id, // Original Work ID
           produit_id: produitId,
           produit_name: produitName,
+          code_produit: code_produit,
           description_travail: item.description, // Description from the work item
           quantite_produit: item.billable.quantite_produit,
           prix_unitaire_produit: item.billable.prix_unitaire_produit,
@@ -1050,23 +1149,51 @@ const WorkManagementPage = () => {
           <Title level={2}>Gestion des Travaux</Title>
           <Space>
             {selectedRowKeys.length > 0 && (
-              <div >
-              <Button
-                type="primary"
-                icon={<CheckOutlined />}
-                onClick={handleProcessSelectedWorks}
-                style={{marginRight:10}}
-              >
-                Traiter {selectedRowKeys.length} travail(s) sélectionné(s)
-              </Button>
-              <Button
-               type="primary"
-               icon={<CheckOutlined />}
-                onClick={sendDataToFacture}
-             >
-               Créer une facture 
-
-              </Button>
+              <div>
+                <Button
+                  type="primary"
+                  icon={<CheckOutlined />}
+                  onClick={handleProcessSelectedWorks}
+                  style={{ marginRight: 10 }}
+                >
+                  Traiter {selectedRowKeys.length} travail(s) sélectionné(s)
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<CheckOutlined />}
+                  onClick={async () => {
+                    const success = await sendDataToFacture();
+                    if (success) {
+                      setCreated(true);
+              
+                    
+                      return true;
+                    }
+                  }}
+                >
+                  Créer une facture
+                </Button>
+                {created && (
+                  <div
+                    style={{
+                      position: "fixed",
+                      top: "20px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      backgroundColor: "#52c41a",
+                      color: "white",
+                      padding: "12px 24px",
+                      borderRadius: "8px",
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                      zIndex: 9999,
+                      fontSize: "16px",
+                      fontWeight: "500",
+                      transition: "opacity 0.3s ease-in-out",
+                    }}
+                  >
+                    ✅ Facture créée avec succès !
+                  </div>
+                )}
               </div>
             )}
             <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
@@ -1313,7 +1440,7 @@ const WorkManagementPage = () => {
 
             <Form.Item
               name="duree"
-              label="Durée (heures)"
+              label="Durée"
               rules={[{ required: true, message: "Veuillez saisir la durée" }]}
             >
               <InputNumber min={1} style={{ width: "100%" }} />
@@ -1329,14 +1456,14 @@ const WorkManagementPage = () => {
                 },
               ]}
             >
-              <InputNumber min={0.1} step={0.1} style={{ width: "100%" }} />
+              <InputNumber min={0} step={1} style={{ width: "100%" }} />
             </Form.Item>
-            <Form.Item name="remise" label="Remise (DT)">
+            <Form.Item name="remise" label="Remise(%)">
               <InputNumber
                 min={0}
-                step={0.01}
+                step={1}
                 style={{ width: "100%" }}
-                placeholder="Ex: 5.00"
+                placeholder="Ex: 5"
               />
             </Form.Item>
 
@@ -1381,11 +1508,11 @@ const WorkManagementPage = () => {
             <Button
               key="save"
               icon={<SaveOutlined />}
-              onClick={() => {
-                // Save the invoice data
-                const success = saveBillableData();
+              onClick={async () => {
+                const success = await saveBillableData(); // Await the promise
                 if (success) {
                   message.success("Facture sauvegardée avec succès");
+                  setIsBillModalVisible(false); // Close modal
                 }
               }}
             >
@@ -1399,19 +1526,19 @@ const WorkManagementPage = () => {
                 // Generate and print the PDF
                 const success = generateBillPDF();
                 if (success) {
-                  message.success("Facture générée avec succès");
+                  message.success("BON généré avec succès");
                 }
                 // Modal stays open as requested
               }}
             >
-              Imprimer la facture
+              Imprimer bon
             </Button>,
           ]}
         >
           <div className="bill-form-container">
             {/* Invoice Number */}
             <div style={{ textAlign: "right", marginBottom: "10px" }}>
-              <Text strong>Facture N°: </Text>
+              <Text strong>BON N°: </Text>
               <Text>{invoiceNumber}</Text>
             </div>
 
@@ -1442,11 +1569,10 @@ const WorkManagementPage = () => {
                     />
                   </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col span={4}>
                   <Form.Item label="Taux de TVA (%)">
-                    <InputNumber
+                    <Select
                       style={{ width: "100%" }}
-                      value={taxRate}
                       onChange={(value) => {
                         setTaxRate(value);
 
@@ -1460,7 +1586,11 @@ const WorkManagementPage = () => {
                         }));
                         setBillableData(updatedItems);
                       }}
-                    />
+                    >
+                      <Option value={0}>0%</Option>
+                      <Option value={7}>7%</Option>
+                      <Option value={19}>19%</Option>
+                    </Select>
                   </Form.Item>
                 </Col>
               </Row>
@@ -1536,8 +1666,7 @@ const WorkManagementPage = () => {
                           <Form.Item label="Qté Produit">
                             <InputNumber
                               style={{ width: "100%" }}
-                              min={0.1}
-                              precision={2}
+                              min={0}
                               value={item.billable.quantite_produit}
                               onChange={(value) => {
                                 const newData = [...billableData];
@@ -1549,11 +1678,11 @@ const WorkManagementPage = () => {
                           </Form.Item>
                         </Col>
                         <Col span={5}>
-                          <Form.Item label="Prix U. Produit (DT)">
+                          <Form.Item label="Prix U. Produit">
                             <InputNumber
                               style={{ width: "100%" }}
                               min={0}
-                              precision={3}
+                              step={0.1}
                               value={item.billable.prix_unitaire_produit}
                               onChange={(value) => {
                                 const newData = [...billableData];
@@ -1565,9 +1694,11 @@ const WorkManagementPage = () => {
                           </Form.Item>
                         </Col>
                         <Col span={5}>
-                          <Form.Item label="Total HT Produit (DT)">
+                          <Form.Item label="Total HT Produit">
                             <InputNumber
                               style={{ width: "100%" }}
+                              min={0}
+                              step={0.1}
                               value={(
                                 (item.billable.prix_unitaire_produit || 0) *
                                 (item.billable.quantite_produit || 0)
@@ -1627,7 +1758,7 @@ const WorkManagementPage = () => {
                                   key: "quantite_utilisee",
                                 },
                                 {
-                                  title: "Prix unitaire (DT)",
+                                  title: "Prix unitaire",
                                   dataIndex: "prix_unitaire",
                                   key: "prix_unitaire",
                                   render: (text, record, materialIndex) => (
@@ -1681,7 +1812,7 @@ const WorkManagementPage = () => {
                                   ),
                                 },
                                 {
-                                  title: "Total (DT)",
+                                  title: "Total",
                                   key: "total",
                                   render: (_, record) => (
                                     <span>
@@ -1689,7 +1820,6 @@ const WorkManagementPage = () => {
                                         record.prix_unitaire *
                                         record.quantite_utilisee
                                       ).toFixed(3)}{" "}
-                                      DT
                                     </span>
                                   ),
                                 },
@@ -1731,7 +1861,6 @@ const WorkManagementPage = () => {
                           return sum + productTotal + materialTotalForItem;
                         }, 0)
                         .toFixed(3)}{" "}
-                      DT
                     </p>
                     <p>
                       <strong>TVA ({taxRate}%):</strong>{" "}
@@ -1758,7 +1887,6 @@ const WorkManagementPage = () => {
                           taxRate) /
                         100
                       ).toFixed(3)}{" "}
-                      DT
                     </p>
                     <p className="total-ttc">
                       <strong>Total TTC:</strong>{" "}
@@ -1784,7 +1912,6 @@ const WorkManagementPage = () => {
                         }, 0) *
                         (1 + taxRate / 100)
                       ).toFixed(3)}{" "}
-                      DT
                     </p>
                   </div>
                 </Col>

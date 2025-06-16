@@ -5,6 +5,7 @@
  * @property {string} id - Unique identifier for the work
  * @property {string} client_id - ID of the client for whom the work is done
  * @property {string} produit_id - ID of the product used in the work
+ * @property {string} code_produit - ID of the product used in the work
  * @property {number} duree - Duration of the work in hours
  * @property {number} quantite - Quantity of the product used
  * @property {string} description - Additional description or observations
@@ -29,8 +30,7 @@ export default class WorkModel {
     this.derniere_mise_a_jour = data.derniere_mise_a_jour || '';
     this.matiere_usages = data.matiere_usages || [];
     this.remise = data.remise ?? 0;
-    
-    // Add fields for client and product names
+    this.code_produit = data.produit?.code_produit || "";
     this.client_name = data.client_name || '';
     this.produit_name = data.produit_name || '';
 

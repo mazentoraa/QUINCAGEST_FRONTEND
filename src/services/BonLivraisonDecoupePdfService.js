@@ -154,7 +154,7 @@ class BonLivraisonDecoupePdfService {
 
    static formatCurrency(value) {
     const number = parseFloat(value);
-    return isNaN(number) ? '0.00' : number.toFixed(2);
+    return isNaN(number) ? '0.00' : number.toFixed(3);
   }
 
   /**
@@ -188,7 +188,7 @@ class BonLivraisonDecoupePdfService {
     ${item.billable?.remise_percent || 0}%
   </td>
      <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-    ${productTotal}
+    ${this.formatCurrency(productTotal)}
   </td>
         <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     ${invoice.tax_rate || 20}%
@@ -337,7 +337,7 @@ class BonLivraisonDecoupePdfService {
     <th style=" width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
     <th style="width: 18%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
     <th style="width: 7%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
-    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">TOTAL P. TTC</th>
+    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
   </tr>
 </thead>
 
@@ -413,7 +413,7 @@ class BonLivraisonDecoupePdfService {
          </p>
    </div>
    <div style="width:50% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
-    <p><strong>Cachet et Signature</strong></p>
+    <p><strong>Signature</strong></p>
     </div>
     </div>
     </div>
