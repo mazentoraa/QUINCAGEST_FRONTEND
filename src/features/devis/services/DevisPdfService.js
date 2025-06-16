@@ -286,8 +286,8 @@ class DevisPdfService {
       </p>
     </div>
         
-        <div class="logo" style="text-align: right;">
-      <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
+        <div class="logo" style="text-align: right; margin-top: 20px;">
+      <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" style="width: 300px;">
     </div>
   </div>
           
@@ -297,15 +297,15 @@ class DevisPdfService {
     <div class="order-header" style="margin-bottom: 10px;">
       <h2>Devis</h2>
       </div>
-          <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 10px;">
-      <div class="order-header">
+ <div style="display: flex; flex-direction: row;gap: 10px; width:100%">
+      <div  style="flex: 1;" class="order-header">
         <p><strong>Devis N°:</strong> <br> ${data.numero_devis || "N/A"} </p>
       </div>
-      <div class="order-header">
-        <p><strong>Date:</strong> ${ data.date_emission|| "N/A"}</p>
+ <div  style="flex: 1;" class="order-header">
+        <p><strong>Date:</strong> <br>  ${ data.date_emission|| "N/A"}</p>
       </div>
-      <div class="order-header">
-        <p><strong>Code Client:</strong> ${data.code_client || "N/A"}</p>
+ <div  style="flex: 1;" class="order-header">
+        <p><strong>Code Client:</strong> <br>  ${data.code_client || "N/A"}</p>
       </div>
     </div>
   </div>
@@ -331,7 +331,7 @@ class DevisPdfService {
     <th style=" width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
     <th style="width: 18%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
     <th style="width: 7%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
-    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">TOTAL P. TTC</th>
+    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">total P. TTC</th>
   </tr>
 </thead>
 

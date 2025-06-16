@@ -121,7 +121,7 @@ class FacturePdfApiService {
     ${(orderData.tax_rate || 0)}%
   </td>
   <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-    ${(item.prix_total || 0) * (1 + (orderData.tax_rate || 0) / 100).toFixed(3)}
+    ${((item.prix_total || 0) * (1 + (orderData.tax_rate || 0) / 100)).toFixed(3)}
    
     
   </td>
@@ -248,8 +248,8 @@ class FacturePdfApiService {
         Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
       </p>
         </div>
-        <div class="logo" style="text-align: right;">
-      <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
+        <div class="logo" style="text-align: right ; margin-top: 20px;">
+      <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" style="width: 300px; ">
     </div>
           </div>
 
@@ -261,14 +261,15 @@ class FacturePdfApiService {
     <div class="order-header" style="margin-bottom: 10px;">
       <h2>Facture</h2>
     </div>
-    <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 10px;">
-      <div class="order-header">
+ <div style="display: flex; flex-direction: row;gap: 10px; width:100%">
+      <div  style="flex: 1;" class="order-header">
         <p><strong>Facture N°:</strong> <br> ${formatInvoiceNumber(orderData)}</p>
       </div>
-      <div class="order-header">
+      
+        <div  style="flex: 1;" class="order-header">
         <p><strong>Date: </strong> <br>  ${orderData.date_commande || "N/A"}</p>
       </div>
-      <div class="order-header">
+      <div  style="flex: 1;" class="order-header">
         <p><strong>Code Client: </strong> <br> ${orderData.code_client || "N/A"}</p>
       </div>
     </div>
@@ -295,7 +296,7 @@ class FacturePdfApiService {
     <th style=" width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
     <th style="width: 18%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
     <th style="width: 7%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
-    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">TOTAL P. TTC</th>
+    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
   </tr>
 </thead>
             <tbody>
@@ -341,24 +342,24 @@ class FacturePdfApiService {
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${ totalRemise}</td>
+      <td style="border: 1px solid black; padding: 2px;">${ totalRemise.toFixed(3)}</td>
     </tr>
         
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${orderData.montant_ht || 0}</td>
+      <td style="border: 1px solid black; padding: 2px;">${(orderData.montant_ht || 0).toFixed(3)}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${ orderData.montant_tva || 0}</td>
+      <td style="border: 1px solid black; padding: 2px;">${( orderData.montant_tva || 0).toFixed(3)}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${orderData.timbre_fiscal || 0}</td>
+      <td style="border: 1px solid black; padding: 2px;">${(orderData.timbre_fiscal || 0).toFixed(3)}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${(orderData.montant_ht || 0) + (orderData.montant_tva || 0) + (orderData.timbre_fiscal || 0)}</td>
+      <td style="border: 1px solid black; padding: 2px;">${((orderData.montant_ht || 0) + (orderData.montant_tva || 0) + (orderData.timbre_fiscal || 0)).toFixed(3)}</td>
     </tr>
   </table>
 </div>

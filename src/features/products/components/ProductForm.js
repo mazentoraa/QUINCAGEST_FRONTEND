@@ -25,7 +25,12 @@ const { Option } = Select;
 const { TextArea } = Input;
 const { Title } = Typography;
 
-const ProductForm = ({ onSuccess, onCancel, isModal = false, productToEdit = null }) => {
+const ProductForm = ({
+  onSuccess,
+  onCancel,
+  isModal = false,
+  productToEdit = null,
+}) => {
   const [form] = Form.useForm();
   const { addProduct, updateProduct } = useProducts();
   const [fileList, setFileList] = useState([]);
@@ -36,6 +41,7 @@ const ProductForm = ({ onSuccess, onCancel, isModal = false, productToEdit = nul
     if (productToEdit) {
       form.setFieldsValue({
         name: productToEdit.nom_produit,
+        code_produit: productToEdit.code_produit,
         material: productToEdit.type_matiere,
         thickness: productToEdit.epaisseur,
         length: productToEdit.longueur,
@@ -82,7 +88,7 @@ const ProductForm = ({ onSuccess, onCancel, isModal = false, productToEdit = nul
     }
   };
 
-  const normFile = (e) => Array.isArray(e) ? e : e?.fileList || [];
+  const normFile = (e) => (Array.isArray(e) ? e : e?.fileList || []);
 
   const handleSubmit = async (values) => {
     try {
@@ -90,17 +96,26 @@ const ProductForm = ({ onSuccess, onCancel, isModal = false, productToEdit = nul
 
       if (productToEdit && productToEdit.id) {
         const changedFields = {};
-        if (values.name !== productToEdit.nom_produit) changedFields.nom_produit = values.name;
-        if (values.material !== productToEdit.type_matiere) changedFields.type_matiere = values.material;
-        if (values.thickness !== productToEdit.epaisseur) changedFields.epaisseur = values.thickness;      if ((values.length || 0) !== productToEdit.longueur) changedFields.longueur = values.length || 0;
+        if (values.name !== productToEdit.nom_produit)
+          changedFields.nom_produit = values.name;
+        if (values.code_produit !== productToEdit.code_produit)
+          changedFields.code_produit = values.code_produit;
+        if (values.material !== productToEdit.type_matiere)
+          changedFields.type_matiere = values.material;
+        if (values.thickness !== productToEdit.epaisseur)
+          changedFields.epaisseur = values.thickness;
+        if ((values.length || 0) !== productToEdit.longueur)
+          changedFields.longueur = values.length || 0;
         if ((values.width || 0) !== productToEdit.largeur) {
-  changedFields.largeur = values.width || 0;
-}
+          changedFields.largeur = values.width || 0;
+        }
 
-
-        if (values.surface !== productToEdit.surface) changedFields.surface = values.surface;
-        if ((values.price || 0) !== productToEdit.prix) changedFields.prix = values.price || 0;
-        if ((values.description || "") !== productToEdit.description) changedFields.description = values.description || "";
+        if (values.surface !== productToEdit.surface)
+          changedFields.surface = values.surface;
+        if ((values.price || 0) !== productToEdit.prix)
+          changedFields.prix = values.price || 0;
+        if ((values.description || "") !== productToEdit.description)
+          changedFields.description = values.description || "";
 
         if (fileList.length > 0) {
           const currentFile = fileList[0];
@@ -144,19 +159,19 @@ const ProductForm = ({ onSuccess, onCancel, isModal = false, productToEdit = nul
           }
         }
 
-const productPayload = {
-  nom_produit: values.name,
-  type_matiere: values.material,
-  epaisseur: values.thickness,
-  longueur: values.length || 0,
-  largeur: values.width || 0,
-  surface: values.surface,
-  prix: values.price || 0,
-  description: values.description || "",
-  image: imageData,
-};
-
-
+        const productPayload = {
+          nom_produit: values.name,
+          code_produit: values.code_produit, 
+          type_matiere: values.material,
+          epaisseur: values.thickness,
+          longueur: values.length || 0,
+          largeur: values.width || 0,
+          surface: values.surface,
+          prix: values.price || 0,
+          description: values.description || "",
+          image: imageData,
+        };
+        
 
         await addProduct(productPayload);
         message.success("Produit ajouté avec succès");
@@ -185,8 +200,23 @@ const productPayload = {
       extra={isModal && <Button icon={<CloseOutlined />} onClick={onCancel} />}
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
-        <Form.Item name="name" label="Nom du produit"  rules={[{ required: true, message: "Le nom du produit est obligatoire" }]}>
+        <Form.Item
+          name="name"
+          label="Nom du produit"
+          rules={[
+            { required: true, message: "Le nom du produit est obligatoire" },
+          ]}
+        >
           <Input placeholder="Nom du produit" />
+        </Form.Item>
+        <Form.Item
+          name="code_produit"
+          label="Code du produit"
+          rules={[
+            { required: true, message: "Le code du produit est obligatoire" },
+          ]}
+        >
+          <Input placeholder="Code produit, ex: AC-0001" />
         </Form.Item>
 
         <Form.Item name="material" label="Type de matériau">

@@ -449,7 +449,7 @@ class BonCommandePdfService {
                       <th style="width: 12%;">QTÉ</th>
                       <th style="width: 16%;">PRIX UNIT. HT</th>
                       <th style="width: 12%;">REMISE (%)</th>
-                      <th style="width: 20%;">TOTAL HT</th>
+                      <th style="width: 20%;">Total HT</th>
                   </tr>
               </thead>
               <tbody>
