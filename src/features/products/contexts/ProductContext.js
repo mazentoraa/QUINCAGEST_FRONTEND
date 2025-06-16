@@ -157,6 +157,8 @@ export const ProductProvider = ({ children }) => {
       // Only include backend field names and necessary fields
       if (dataToSend.nom_produit !== undefined)
         cleanedData.nom_produit = dataToSend.nom_produit;
+      if (dataToSend.code_produit !== undefined)
+        cleanedData.code_produit = dataToSend.code_produit;      
       if (dataToSend.type_matiere !== undefined)
         cleanedData.type_matiere = dataToSend.type_matiere;
       if (dataToSend.epaisseur !== undefined)

@@ -169,9 +169,10 @@ const ProductForm = ({
           surface: values.surface,
           prix: values.price || 0,
           description: values.description || "",
-          image: imageData,
+          image: imageData ?? null 
         };
-        
+        console.log("Payload to send:", productPayload);
+
 
         await addProduct(productPayload);
         message.success("Produit ajouté avec succès");
@@ -216,13 +217,13 @@ const ProductForm = ({
             { required: true, message: "Le code du produit est obligatoire" },
           ]}
         >
-          <Input placeholder="Code produit, ex: AC-0001" />
+          <Input  />
         </Form.Item>
 
         <Form.Item name="material" label="Type de matériau">
           <Select placeholder="Sélectionner un matériau">
             <Option value="acier">Acier</Option>
-            <Option value="inox">Acier inoxydable</Option>
+            <Option value="acier_inoxydable">Acier inoxydable</Option> 
             <Option value="aluminium">Aluminium</Option>
             <Option value="laiton">Laiton</Option>
             <Option value="cuivre">Cuivre</Option>
@@ -235,31 +236,123 @@ const ProductForm = ({
 
         <Space style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
           <Form.Item name="thickness" label="Épaisseur (mm)">
-            <InputNumber min={0.1} step={0.1} style={{ width: 160 }} />
+            <InputNumber min={0} step={1} style={{ width: 160 }}
+            onKeyDown={(e) => {
+    const allowed = [
+      "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
+      ...Array.from({ length: 10 }, (_, i) => `${i}`),
+      "."
+    ];
+    if (
+      !allowed.includes(e.key) &&
+      !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
+    ) {
+      e.preventDefault();
+    }
+  }}
+  onPaste={(e) => {
+    const value = e.clipboardData.getData("text");
+    if (!/^\d*\.?\d*$/.test(value)) {
+      e.preventDefault();
+    }
+  }}
+            />
           </Form.Item>
 
           <Form.Item name="length" label="Longueur (mm)">
-            <InputNumber min={0} step={1} style={{ width: 160 }} />
+            <InputNumber min={0} step={1} style={{ width: 160 }} onKeyDown={(e) => {
+    const allowed = [
+      "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
+      ...Array.from({ length: 10 }, (_, i) => `${i}`),
+      "."
+    ];
+    if (
+      !allowed.includes(e.key) &&
+      !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
+    ) {
+      e.preventDefault();
+    }
+  }}
+  onPaste={(e) => {
+    const value = e.clipboardData.getData("text");
+    if (!/^\d*\.?\d*$/.test(value)) {
+      e.preventDefault();
+    }
+  }} />
           </Form.Item>
 
           <Form.Item name="width" label="Largeur (mm)">
-            <InputNumber min={0} step={1} style={{ width: 160 }} />
+            <InputNumber min={0} step={1} style={{ width: 160 }} onKeyDown={(e) => {
+    const allowed = [
+      "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
+      ...Array.from({ length: 10 }, (_, i) => `${i}`),
+      "."
+    ];
+    if (
+      !allowed.includes(e.key) &&
+      !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
+    ) {
+      e.preventDefault();
+    }
+  }}
+  onPaste={(e) => {
+    const value = e.clipboardData.getData("text");
+    if (!/^\d*\.?\d*$/.test(value)) {
+      e.preventDefault();
+    }
+  }} />
           </Form.Item>
 
           <Form.Item name="surface" label="Surface (m²)">
-            <InputNumber min={0.01} step={0.01} style={{ width: 160 }} />
+            <InputNumber min={0} step={1} style={{ width: 160 }} onKeyDown={(e) => {
+    const allowed = [
+      "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
+      ...Array.from({ length: 10 }, (_, i) => `${i}`),
+      "."
+    ];
+    if (
+      !allowed.includes(e.key) &&
+      !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
+    ) {
+      e.preventDefault();
+    }
+  }}
+  onPaste={(e) => {
+    const value = e.clipboardData.getData("text");
+    if (!/^\d*\.?\d*$/.test(value)) {
+      e.preventDefault();
+    }
+  }} />
           </Form.Item>
         </Space>
 
         <Divider />
 
-        <Form.Item name="price" label="Prix (DT)">
+        <Form.Item name="price" label="Prix">
           <InputNumber
             min={0}
-            step={0.01}
-            formatter={(value) => `${value} DT`}
-            parser={(value) => value.replace(" DT", "")}
+            step={1}
+        
             style={{ width: 200 }}
+            onKeyDown={(e) => {
+              const allowed = [
+                "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
+                ...Array.from({ length: 10 }, (_, i) => `${i}`),
+                "."
+              ];
+              if (
+                !allowed.includes(e.key) &&
+                !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
+              ) {
+                e.preventDefault();
+              }
+            }}
+            onPaste={(e) => {
+              const value = e.clipboardData.getData("text");
+              if (!/^\d*\.?\d*$/.test(value)) {
+                e.preventDefault();
+              }
+            }}
           />
         </Form.Item>
 

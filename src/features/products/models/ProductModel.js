@@ -16,7 +16,9 @@ class ProductModel {
     // Fix material type mapping - ensure both properties are set correctly
     this.material_type =
       data.type_matiere || data.material_type || data.material;
-    this.image = data.image;
+      
+      this.image = typeof data.image === "string" ? data.image : undefined;
+
 
     // Ensure numeric values are properly converted
     this.thickness = parseFloat(data.epaisseur || data.thickness) || 0;

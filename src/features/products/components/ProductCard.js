@@ -36,6 +36,7 @@ const ProductCard = ({ product }) => {
   useEffect(() => {
     form.setFieldsValue({
       name: product.nom_produit,
+      code_produit : product.code_produit,
       material: product.type_matiere,
       thickness: product.epaisseur,
       length: product.longueur,
@@ -96,6 +97,7 @@ const ProductCard = ({ product }) => {
 
       const updatedProduct = {
         nom_produit: values.name,
+        code_produit : values.code_produit ,
         type_matiere: values.material,
         epaisseur: values.thickness,
         longueur: values.length,
@@ -143,7 +145,9 @@ const ProductCard = ({ product }) => {
       <Form.Item name="name" label="Nom du produit">
         <Input />
       </Form.Item>
-
+      <Form.Item name="code_produit" label="Code produit">
+        <Input />
+      </Form.Item>
       <Form.Item name="material" label="Type de matériau">
         <Select placeholder="Sélectionner un matériau">
           <Option value="acier">Acier</Option>
@@ -243,9 +247,16 @@ const ProductCard = ({ product }) => {
       </div>
 
       <Space direction="vertical" size="small" style={{ width: "100%" }}>
+
+        
         <Typography.Title level={5} style={{ margin: 0 }}>
           {product.nom_produit}
         </Typography.Title>
+
+        <Typography.Title level={5} style={{ margin: 0 }} color="grey">
+          {product.code_produit}
+        </Typography.Title>
+        
 
         <Space>
           <Tag color={getMaterialColor(product.type_matiere)}>
