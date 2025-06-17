@@ -74,3 +74,4 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 "Mise … jour du frontend - $(date)" 
 "Mise … jour du frontend - $(date)" 
 ""  
+ECHO is on.
