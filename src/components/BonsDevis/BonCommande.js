@@ -48,10 +48,11 @@ const { Option } = Select;
 const { Title } = Typography;
 
 // Fix the formatCurrency function
-const formatCurrency = (amount, currency = "TND") => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: currency,
+const formatCurrency = (amount, currency = " ") => {
+  return new Intl.NumberFormat("fr-TN", {
+    style: "decimal",
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3
   }).format(amount || 0);
 };
 

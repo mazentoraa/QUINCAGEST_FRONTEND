@@ -1552,7 +1552,7 @@ const WorkManagementPage = () => {
             <div className="client-info-header">
               <Row gutter={16}>
                 <Col span={8}>
-                  <Form.Item label="Date de facturation">
+                  <Form.Item label="Date">
                     <DatePicker
                       style={{ width: "100%" }}
                       value={moment(billDate)}
@@ -1688,7 +1688,7 @@ const WorkManagementPage = () => {
                             <InputNumber
                               style={{ width: "100%" }}
                               min={0}
-                              step={0.1}
+                              step={0.001}
                               value={item.billable.prix_unitaire_produit}
                               onChange={(value) => {
                                 const newData = [...billableData];
@@ -1704,7 +1704,7 @@ const WorkManagementPage = () => {
                             <InputNumber
                               style={{ width: "100%" }}
                               min={0}
-                              step={0.1}
+                              step={0.001}
                               value={(
                                 (item.billable.prix_unitaire_produit || 0) *
                                 (item.billable.quantite_produit || 0)

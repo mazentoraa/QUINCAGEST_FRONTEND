@@ -402,7 +402,7 @@ static formatMontantEnLettres(amount) {
       style: "decimal",
       minimumFractionDigits: 3,
       maximumFractionDigits: 3
-      // currency: "TND",
+      // currency: " ",
     }).format(amount || 0);
   }
 
