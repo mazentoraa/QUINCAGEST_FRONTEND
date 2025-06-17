@@ -303,9 +303,15 @@ const WorkManagementPage = () => {
 
   const handleSubmit = async (values) => {
     try {
+      // Temporary workaround: halve the quantity of each selected material before sending
+      const adjustedMaterials = selectedMaterials.map((material) => ({
+        materialId: material.materialId,
+        quantite: material.quantite / 2,
+      }));
+
       const workData = {
         ...values,
-        materialsUsed: selectedMaterials, // RESTORED
+        materialsUsed: adjustedMaterials,
       };
       console.log("workdata", workData);
       if (editingWork) {
