@@ -303,9 +303,15 @@ const WorkManagementPage = () => {
 
   const handleSubmit = async (values) => {
     try {
+      // Temporary workaround: halve the quantity of each selected material before sending
+      const adjustedMaterials = selectedMaterials.map((material) => ({
+        materialId: material.materialId,
+        quantite: material.quantite / 2,
+      }));
+
       const workData = {
         ...values,
-        materialsUsed: selectedMaterials, // RESTORED
+        materialsUsed: adjustedMaterials,
       };
       console.log("workdata", workData);
       if (editingWork) {
@@ -1682,9 +1688,7 @@ const WorkManagementPage = () => {
                             <InputNumber
                               style={{ width: "100%" }}
                               min={0}
-
                               step={0.001}
-
                               value={item.billable.prix_unitaire_produit}
                               onChange={(value) => {
                                 const newData = [...billableData];
@@ -1701,7 +1705,6 @@ const WorkManagementPage = () => {
                               style={{ width: "100%" }}
                               min={0}
                               step={0.001}
-
                               value={(
                                 (item.billable.prix_unitaire_produit || 0) *
                                 (item.billable.quantite_produit || 0)

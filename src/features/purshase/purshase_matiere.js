@@ -113,7 +113,7 @@ export default function PurchaseMatiere() {
       title: "Prix unitaire",
       dataIndex: "prix_unitaire",
       key: "price",
-      render: value => `${value} €`
+      render: value => `${value}`
     },
     {
       title: "Quantité",
@@ -213,12 +213,12 @@ export default function PurchaseMatiere() {
 
           <Space size="large" style={{ width: "100%" }}>
             
-            <Form.Item
-              name="prix_unitaire"
-              label="Prix unitaire (€)"
-            >
-              <Input type="number" />
-            </Form.Item>
+          <Form.Item
+            name="prix_unitaire"
+            label="Prix unitaire"
+          >
+            <Input type="number" />
+          </Form.Item>
 
             <Form.Item
               name="quantite"
