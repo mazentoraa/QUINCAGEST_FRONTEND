@@ -1682,7 +1682,9 @@ const WorkManagementPage = () => {
                             <InputNumber
                               style={{ width: "100%" }}
                               min={0}
+
                               step={0.001}
+
                               value={item.billable.prix_unitaire_produit}
                               onChange={(value) => {
                                 const newData = [...billableData];
@@ -1699,6 +1701,7 @@ const WorkManagementPage = () => {
                               style={{ width: "100%" }}
                               min={0}
                               step={0.001}
+
                               value={(
                                 (item.billable.prix_unitaire_produit || 0) *
                                 (item.billable.quantite_produit || 0)
