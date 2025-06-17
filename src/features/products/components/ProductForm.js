@@ -125,33 +125,8 @@ const ProductCard = ({ product }) => {
     }
   };
 
-  return (
-    <Card
-      title={
-        <Title level={4}>
-          {productToEdit ? "Modifier le produit" : "Ajouter un nouveau produit"}
-        </Title>
-      }
-      extra={isModal && <Button icon={<CloseOutlined />} onClick={onCancel} />}
-    >
-      <Form form={form} layout="vertical" onFinish={handleSubmit}>
-        <Form.Item
-          name="name"
-          label="Nom du produit"
-          rules={[
-            { required: true, message: "Le nom du produit est obligatoire" },
-          ]}
-        >
-          <Input placeholder="Nom du produit" />
-        </Form.Item>
-        <Form.Item
-          name="code_produit"
-          label="Code du produit"
-          rules={[]}
-        >
-          <Input  />
-        </Form.Item>
-
+  const formatPrice = (price) =>
+    price ? `${parseFloat(price).toFixed(2)} DT` : "0.00 DT";
 
   const getMaterialColor = (material) => {
     const colors = {
