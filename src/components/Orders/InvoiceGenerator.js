@@ -89,8 +89,8 @@ export async function generatePDF(order, client) {
     startY: doc.lastAutoTable.finalY + 3,
     head: [[
       'CODE P.', 'DESIGNATION', 'QTE',
-      'P.U. HT\n(TND)', 'REMISE (%)',
-      'TOTAL P. HT\n(TND)', 'TVA', 'TOTAL P. TTC\n(TND)'
+      'P.U. HT\n( )', 'REMISE (%)',
+      'TOTAL P. HT\n( )', 'TVA', 'TOTAL P. TTC\n( )'
     ]],
     body: items,
     theme: 'grid',
@@ -275,11 +275,11 @@ function InvoiceGenerator({ order, editable = false, onEdit }) {
             <th style={{ border: '1px solid #ccc', padding: 6 }}>CODE P.</th>
             <th style={{ border: '1px solid #ccc', padding: 6 }}>DESIGNATION</th>
             <th style={{ border: '1px solid #ccc', padding: 6 }}>QTE</th>
-            <th style={{ border: '1px solid #ccc', padding: 6 }}>P.U. HT (TND)</th>
+            <th style={{ border: '1px solid #ccc', padding: 6 }}>P.U. HT ( )</th>
             <th style={{ border: '1px solid #ccc', padding: 6 }}>REMISE (%)</th>
-            <th style={{ border: '1px solid #ccc', padding: 6 }}>TOTAL P. HT (TND)</th>
+            <th style={{ border: '1px solid #ccc', padding: 6 }}>TOTAL P. HT ( )</th>
             <th style={{ border: '1px solid #ccc', padding: 6 }}>TVA</th>
-            <th style={{ border: '1px solid #ccc', padding: 6 }}>TOTAL P. TTC (TND)</th>
+            <th style={{ border: '1px solid #ccc', padding: 6 }}>TOTAL P. TTC ( )</th>
           </tr>
         </thead>
         <tbody>

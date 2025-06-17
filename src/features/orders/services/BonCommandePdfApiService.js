@@ -313,7 +313,7 @@ class BonCommandePdfApiService {
   static formatCurrency(amount) {
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",
-      currency: "TND",
+      currency: " ",
     }).format(amount || 0);
   }
 

@@ -400,11 +400,11 @@ class PdfApiService {
                       <th style="width: 8%;">CODE</th>
                       <th style="width: 28%;">DESIGNATION</th>
                       <th style="width: 8%;">QTE</th>
-                      <th style="width: 12%;">P.U. HT (TND)</th>
+                      <th style="width: 12%;">P.U. HT ( )</th>
                       <th style="width: 8%;">REMISE (%)</th>
-                      <th style="width: 12%;">Total P. HT (TND)</th>
+                      <th style="width: 12%;">Total P. HT ( )</th>
                       <th style="width: 8%;">TVA</th>
-                      <th style="width: 16%;">TOTAL P. TTC (TND)</th>
+                      <th style="width: 16%;">TOTAL P. TTC ( )</th>
                   </tr>
               </thead>
               <tbody>
@@ -446,7 +446,7 @@ class PdfApiService {
                       <td><strong>NET À PAYER</strong></td>
                       <td style="text-align: right;"><strong style="font-size: 12px;">${
                         data.totalTTC ? data.totalTTC.toFixed(3) : "0.000"
-                      } TND</strong></td>
+                      }  </strong></td>
                   </tr>
               </table>
           </div>

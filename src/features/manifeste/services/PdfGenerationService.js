@@ -566,11 +566,11 @@ class PdfGenerationService {
                     <th>CODE</th>
                     <th>DESIGNATION</th>
                     <th>QTE</th>
-                    <th>P.U. HT (TND)</th>
+                    <th>P.U. HT ( )</th>
                     <th>REMISE (%)</th>
-                    <th>Total P. HT (TND)</th>
+                    <th>Total P. HT ( )</th>
                     <th>TVA</th>
-                    <th>TOTAL P. TTC (TND)</th>
+                    <th>TOTAL P. TTC ( )</th>
                 </tr>
             </thead>
             <tbody>
@@ -599,7 +599,7 @@ class PdfGenerationService {
                     <td><strong>NET À PAYER</strong></td>
                     <td style="text-align: right;"><strong>${
                       data.totalTTC ? data.totalTTC.toFixed(3) : "0.000"
-                    } TND</strong></td>
+                    }  </strong></td>
                 </tr>
             </table>
         </div>

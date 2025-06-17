@@ -53,9 +53,10 @@ const { Content } = Layout;
 
 // Helper functions for formatting and display
 const formatCurrency = (amount) => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "TND",
+  return new Intl.NumberFormat("fr-TN", {
+    style: "decimal",
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3
   }).format(amount || 0);
 };
 
@@ -102,7 +103,7 @@ export default function Devis() {
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [isProductModalVisible, setIsProductModalVisible] = useState(false);
   const [currentProductsInDrawer, setCurrentProductsInDrawer] = useState([]);
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  // const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [filteredDevisList, setFilteredDevisList] = useState([]); // Initialize as empty array
 
@@ -702,7 +703,7 @@ export default function Devis() {
         date_emission: dayjs(detailedDevis.date_emission).format("DD/MM/YYYY"),
         date_validite: dayjs(detailedDevis.date_validite).format("DD/MM/YYYY"),
       };
-
+      console.log("details",pdfData)
       // Generate PDF using DevisPdfService
       await DevisPdfService.generateDevisPDF(
         pdfData,
@@ -732,15 +733,15 @@ export default function Devis() {
       dataIndex: "numero_devis",
       key: "numero_devis",
       sorter: (a, b) => a.numero_devis.localeCompare(b.numero_devis),
-      fixed: "left",
-      width: 150,
+      fixed: "center",
+      width: 120,
     },
     {
       title: "Client",
       dataIndex: "nom_client",
       key: "nom_client",
       sorter: (a, b) => a.nom_client.localeCompare(b.nom_client),
-      width: 180,
+      width: 140,
     },
     {
       title: "Date d'émission",
@@ -749,15 +750,15 @@ export default function Devis() {
       render: (text) => dayjs(text).format("DD/MM/YYYY"),
       sorter: (a, b) =>
         dayjs(a.date_emission).valueOf() - dayjs(b.date_emission).valueOf(),
-      width: 130,
+      width: 90,
     },
-    {
-      title: "Date de validité",
-      dataIndex: "date_validite",
-      key: "date_validite",
-      render: (text) => dayjs(text).format("DD/MM/YYYY"),
-      width: 130,
-    },
+    // {
+    //   title: "Date de validité",
+    //   dataIndex: "date_validite",
+    //   key: "date_validite",
+    //   render: (text) => dayjs(text).format("DD/MM/YYYY"),
+    //   width: 130,
+    // },
     {
       title: "Statut",
       dataIndex: "statut",
@@ -765,14 +766,14 @@ export default function Devis() {
       render: (status) => (
         <Tag color={getStatusTagColor(status)}>{translateStatus(status)}</Tag>
       ),
-      width: 100,
+      width: 70,
     },
     {
       title: "Montant HT",
       dataIndex: "montant_ht",
       key: "montant_ht",
       render: (text) => formatCurrency(text),
-      width: 120,
+      width: 90,
       align: "right",
       sorter: (a, b) => a.montant_ht - b.montant_ht,
     },
@@ -781,7 +782,7 @@ export default function Devis() {
       dataIndex: "montant_ttc",
       key: "montant_ttc",
       render: (text) => formatCurrency(text),
-      width: 120,
+      width: 90,
       align: "right",
       sorter: (a, b) => a.montant_ttc - b.montant_ttc,
     },
@@ -789,7 +790,7 @@ export default function Devis() {
       title: "Actions",
       key: "actions",
       fixed: "right",
-      width: 200,
+      width: 150,
       render: (_, record) => (
         <Space size="small">
           {record.statut === "draft" && (
@@ -870,13 +871,13 @@ export default function Devis() {
   ];
 
   // Table row selection configuration
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (keys, rows) => {
-      setSelectedRowKeys(keys);
-      setSelectedRows(rows);
-    },
-  };
+  // const rowSelection = {
+  //   selectedRowKeys,
+  //   onChange: (keys, rows) => {
+  //     setSelectedRowKeys(keys);
+  //     setSelectedRows(rows);
+  //   },
+  // };
 
   // Product columns for drawer
   const productColumnsInDrawer = [
@@ -926,45 +927,45 @@ export default function Devis() {
   ];
 
   // Process a batch action on selected rows
-  const handleBatchAction = (action) => {
-    if (selectedRowKeys.length === 0) {
-      notification.warning({
-        message: "Avertissement",
-        description: "Veuillez sélectionner au moins un devis",
-      });
-      return;
-    }
+  // const handleBatchAction = (action) => {
+  //   if (selectedRowKeys.length === 0) {
+  //     notification.warning({
+  //       message: "Avertissement",
+  //       description: "Veuillez sélectionner au moins un devis",
+  //     });
+  //     return;
+  //   }
 
-    const notificationKey = `batch-action-${Date.now()}`;
+  //   const notificationKey = `batch-action-${Date.now()}`;
 
-    notification.info({
-      key: notificationKey,
-      message: "Traitement en cours",
-      description: `Traitement de ${selectedRowKeys.length} devis...`,
-      duration: 0,
-    });
+  //   notification.info({
+  //     key: notificationKey,
+  //     message: "Traitement en cours",
+  //     description: `Traitement de ${selectedRowKeys.length} devis...`,
+  //     duration: 0,
+  //   });
 
-    // Example: Batch generate PDFs
-    if (action === "pdf") {
-      Promise.all(selectedRows.map((devis) => handlePrintDevisPDF(devis)))
-        .then(() => {
-          notification.destroy(notificationKey);
-          notification.success({
-            message: "Succès",
-            description: `${selectedRowKeys.length} PDFs générés avec succès`,
-          });
-        })
-        .catch((err) => {
-          notification.destroy(notificationKey);
-          notification.error({
-            message: "Erreur",
-            description:
-              "Une erreur est survenue lors de la génération des PDFs",
-          });
-          console.error(err);
-        });
-    }
-  };
+  //   // Example: Batch generate PDFs
+  //   if (action === "pdf") {
+  //     Promise.all(selectedRows.map((devis) => handlePrintDevisPDF(devis)))
+  //       .then(() => {
+  //         notification.destroy(notificationKey);
+  //         notification.success({
+  //           message: "Succès",
+  //           description: `${selectedRowKeys.length} PDFs générés avec succès`,
+  //         });
+  //       })
+  //       .catch((err) => {
+  //         notification.destroy(notificationKey);
+  //         notification.error({
+  //           message: "Erreur",
+  //           description:
+  //             "Une erreur est survenue lors de la génération des PDFs",
+  //         });
+  //         console.error(err);
+  //       });
+  //   }
+  // };
 
   // Render the main list view
   const renderDevisList = () => (
@@ -1143,13 +1144,13 @@ export default function Devis() {
               >
                 Nouveau Devis
               </Button>
-              <Button
+              {/* <Button
                 icon={<FilePdfOutlined />}
-                onClick={() => handleBatchAction("pdf")}
-                disabled={selectedRowKeys.length === 0}
+                // onClick={() => handleBatchAction("pdf")}
+                // disabled={selectedRowKeys.length === 0}
               >
                 Exporter PDFs
-              </Button>
+              </Button> */}
               <Button icon={<ReloadOutlined />} onClick={fetchDevisList}>
                 Actualiser
               </Button>
@@ -1163,7 +1164,7 @@ export default function Devis() {
           columns={columns}
           dataSource={Array.isArray(filteredDevisList) ? filteredDevisList : []}
           loading={loading}
-          rowSelection={rowSelection}
+          // rowSelection={rowSelection}
           bordered
           pagination={{
             pageSize: 10,
@@ -1174,7 +1175,7 @@ export default function Devis() {
               : 0,
             showTotal: (total) => `Total: ${total} devis`,
           }}
-          scroll={{ x: 1300 }}
+          // scroll={{ x: 1300 }}
           size="middle"
           locale={{
             emptyText:
@@ -1404,7 +1405,7 @@ export default function Devis() {
             </Col>
           </Row>
 
-          {devisDetail.notes && (
+          {/* {devisDetail.notes && (
             <Row gutter={16} style={{ marginTop: 16 }}>
               <Col span={24}>
                 <Card title="Notes internes">
@@ -1412,7 +1413,7 @@ export default function Devis() {
                 </Card>
               </Col>
             </Row>
-          )}
+          )} */}
         </Card>
       </Content>
     );

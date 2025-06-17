@@ -528,7 +528,7 @@ class BonCommandePdfService {
               </p>
               <p style="margin-top: 5px;">
                   <strong>Conditions générales :</strong> Cette commande est confirmée et engage les deux parties. 
-                  Les prix sont exprimés en TND et peuvent être sujets à modification selon accord préalable.
+                  Les prix sont exprimés en   et peuvent être sujets à modification selon accord préalable.
               </p>
           </div>
       </body>

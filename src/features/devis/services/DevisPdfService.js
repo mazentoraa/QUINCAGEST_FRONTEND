@@ -225,7 +225,7 @@ class DevisPdfService {
     ${total}
   </td>
  <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-    ${item.tax_rate || 20}%
+    ${data.tax_rate || 19}%
   </td>
            <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">${this.formatCurrency(
             total * (1 + (item.tax_rate || 0 )/100)
