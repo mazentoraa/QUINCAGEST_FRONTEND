@@ -398,7 +398,7 @@ class BonLivraisonDecoupePdfService {
     
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((totals.totalHT|| 0) + totals.totalTVA )}</td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((totalBrut - totalRemise || 0) + totals.totalTVA )}</td>
     </tr>
   </table>
 </div>
