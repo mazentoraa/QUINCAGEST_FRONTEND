@@ -263,18 +263,16 @@ const ClientRawMaterialsPage = () => {
     }
   }; // Enhanced columns with client information for "view all" mode
   const getColumns = () => {
-    // Client column to show when viewing all materials
-    const clientColumn = viewAllMaterials
-      ? [
-          {
-            title: "Client",
-            dataIndex: "client_name",
-            key: "client_name",
-            render: (text, record) =>
-              record.client_name || `Client ID: ${record.client_id}` || "-",
-          },
-        ]
-      : [];
+    // Client column to always show
+    const clientColumn = [
+      {
+        title: "Client",
+        dataIndex: "client_name",
+        key: "client_name",
+        render: (text, record) =>
+          record.client_name || `Client ID: ${record.client_id}` || "-",
+      },
+    ];
 
     return [
       ...clientColumn,
@@ -952,16 +950,7 @@ const ClientRawMaterialsPage = () => {
               </div>
             )}
             {/* Show status message when in "view all" mode */}
-            { !selectedClient && (
-              <div style={{ marginBottom: 16 }}>
-                <Card size="small">
-                  <Text strong>
-                    Affichage de toutes les matières premières de tous les
-                    clients
-                  </Text>
-                </Card>
-              </div>
-            )}
+            
             <div
               style={{
                 display: "flex",
@@ -1021,7 +1010,6 @@ const ClientRawMaterialsPage = () => {
               rowKey="id"
               loading={loading}
               pagination={{ pageSize: 10 }}
-              rowSelection={rowSelection}
             />
           </>
         )}{" "}
@@ -1103,25 +1091,6 @@ const ClientRawMaterialsPage = () => {
           <div style={{ marginBottom: 16 }}>
             <Title level={4}>Caractéristiques du matériau</Title>
             <div style={{ display: "flex", gap: 16 }}>
-              <Form.Item
-                name="type_matiere"
-                label="Type de matériau"
-                rules={[
-                  {
-                    required: true,
-                    message: "Veuillez sélectionner un type de matériau",
-                  },
-                ]}
-                style={{ flex: 1 }}
-              >
-                <Select placeholder="Sélectionnez un type">
-                  {material_types.map((type) => (
-                    <Option key={type.value} value={type.value}>
-                      {type.label}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
               <Form.Item
                 name="thickness"
                 label="Épaisseur (mm)"

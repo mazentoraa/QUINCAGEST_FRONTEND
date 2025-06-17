@@ -412,7 +412,7 @@ const BonLivraisonDecoupe = () => {
       width: "12%",
       render: (_, record) => (
         <span>
-          {record.calculatedTotals?.totalHT?.toFixed(3) || "0.000"} DT
+          {record.calculatedTotals?.totalHT?.toFixed(3) || "0.000"} 
         </span>
       ),
     },
@@ -422,43 +422,43 @@ const BonLivraisonDecoupe = () => {
       width: "12%",
       render: (_, record) => (
         <span>
-          {record.calculatedTotals?.totalTTC?.toFixed(3) || "0.000"} DT
+          {record.calculatedTotals?.totalTTC?.toFixed(3) || "0.000"} 
         </span>
       ),
     },
-    {
-      title: "Statut",
-      dataIndex: "statut",
-      key: "statut",
-      width: "10%",
-      render: (status) => {
-        const statusColors = {
-          draft: "orange",
-          sent: "blue",
-          paid: "green",
-          cancelled: "red",
-        };
-        return (
-          <Tag color={statusColors[status] || "default"}>
-            {status || "Draft"}
-          </Tag>
-        );
-      },
-    },
+    // {
+    //   title: "Statut",
+    //   dataIndex: "statut",
+    //   key: "statut",
+    //   width: "10%",
+    //   render: (status) => {
+    //     const statusColors = {
+    //       draft: "orange",
+    //       sent: "blue",
+    //       paid: "green",
+    //       cancelled: "red",
+    //     };
+    //     return (
+    //       <Tag color={statusColors[status] || "default"}>
+    //         {status || "Draft"}
+    //       </Tag>
+    //     );
+    //   },
+    // },
     {
       title: "Actions",
       key: "actions",
       width: "15%",
       render: (_, record) => (
         <Space size="small">
-          <Tooltip title="Détails">
+          {/* <Tooltip title="Détails">
             <Button
               type="primary"
               size="small"
               icon={<EyeOutlined />}
               onClick={() => viewInvoiceDetails(record)}
             />
-          </Tooltip>
+          </Tooltip> */}
           <Tooltip title="Imprimer">
             <Button
               type="default"
@@ -469,7 +469,7 @@ const BonLivraisonDecoupe = () => {
           </Tooltip>
            <Tooltip title="Supprimer"> 
            <Popconfirm
-              title="Êtes-vous sûr de vouloir supprimer cette commande ?"
+              title="Êtes-vous sûr de vouloir supprimer ce bon?"
               onConfirm={() => handleDeleteInvoice(record.id)}
               okText="Oui"
               cancelText="Non"
@@ -799,7 +799,7 @@ const BonLivraisonDecoupe = () => {
                             <Text strong>Prix unitaire: </Text>
                             <Text>
                               {(item.billable?.prix_unitaire || 0).toFixed(3)}{" "}
-                              DT
+                              
                             </Text>
                           </Col>
                         </Row>
@@ -833,14 +833,14 @@ const BonLivraisonDecoupe = () => {
                                     dataIndex: "prix_unitaire",
                                     key: "prix_unitaire",
                                     render: (val) =>
-                                      `${(val || 0).toFixed(3)} DT`,
+                                      `${(val || 0).toFixed(3)} `,
                                   },
                                   {
                                     title: "Total",
                                     dataIndex: "total",
                                     key: "total",
                                     render: (val) =>
-                                      `${(val || 0).toFixed(3)} DT`,
+                                      `${(val || 0).toFixed(3)} `,
                                   },
                                 ]}
                               />
@@ -860,7 +860,7 @@ const BonLivraisonDecoupe = () => {
                           {selectedInvoice.calculatedTotals?.totalHT?.toFixed(
                             3
                           ) || "0.000"}{" "}
-                          DT
+                          
                         </p>
                         <p>
                           <strong>
@@ -869,14 +869,14 @@ const BonLivraisonDecoupe = () => {
                           {selectedInvoice.calculatedTotals?.totalTVA?.toFixed(
                             3
                           ) || "0.000"}{" "}
-                          DT
+                          
                         </p>
                         <p style={{ fontSize: "16px", fontWeight: "bold" }}>
                           <strong>Total TTC:</strong>{" "}
                           {selectedInvoice.calculatedTotals?.totalTTC?.toFixed(
                             3
                           ) || "0.000"}{" "}
-                          DT
+                          
                         </p>
                       </div>
                     </Col>
