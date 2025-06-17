@@ -46,8 +46,7 @@ import ProductService from "../../components/BonsDevis/ProductService";
 import moment from "moment";
 import FacturePdfApiService from "../../features/orders/services/FacturePdfApiService";
 import InvoiceService from "../../features/manifeste/services/InvoiceService";
-
-
+import { debounce } from "lodash";
 
 const { cdsService } = getApiService();
 const { Option } = Select;
@@ -191,99 +190,27 @@ export default function BonCommande() {
     }
   }, []);
 
-  // Function to filter orders based on search criteria
-  const filterOrders = useCallback(() => {
-    if (!orders.length) return;
-
-    let result = [...orders];
-
-    // Filter by search text (client name, order number, or notes)
-    if (searchText) {
-      const searchLower = searchText.toLowerCase();
-      result = result.filter(
-        (order) =>
-          (order.nom_client &&
-            order.nom_client.toLowerCase().includes(searchLower)) ||
-          (order.numero_commande &&
-            order.numero_commande.toLowerCase().includes(searchLower)) ||
-          (order.notes && order.notes.toLowerCase().includes(searchLower))
+  // Fonction de recherche de client avec debounce
+  const handleClientSearch = async (value) => {
+    setClientSearchLoading(true);
+    try {
+      const clients = await ClientService.searchClients(value);
+      setClientOptions(
+        clients.map((client) => ({
+          label: client.nom_client || client.nom || client.nom_complet,
+          value: client.id,
+        }))
       );
+    } catch (err) {
+      message.error("Erreur lors de la recherche de clients");
+    } finally {
+      setClientSearchLoading(false);
     }
+  };
+  const debouncedClientSearch = debounce(handleClientSearch, 500);
 
-    // Filter by client name (separate from search text)
-    if (clientNameFilter) {
-      const clientNameLower = clientNameFilter.toLowerCase();
-      result = result.filter(
-        (order) =>
-          order.nom_client &&
-          order.nom_client.toLowerCase().includes(clientNameLower)
-      );
-    }
-    if (clientCodeFilter) {
-      const clientCodeLower = clientCodeFilter.toLowerCase();
-      result = result.filter(
-        (order) =>
-          order.code_client &&
-          order.code_client.toLowerCase().includes(clientCodeLower)
-      );
-    }
+  
 
-    // Filter by client
-    if (selectedClientFilter) {
-      result = result.filter((order) => {
-        // Accommodate client ID being in order.client_id or order.client (if it's a number)
-        const orderClientIdentifier =
-          order.client_id !== undefined && order.client_id !== null
-            ? order.client_id
-            : typeof order.client === "number"
-            ? order.client
-            : null;
-        return orderClientIdentifier === selectedClientFilter;
-      });
-    }
-
-    // Filter by status
-    if (selectedStatus) {
-      result = result.filter((order) => order.statut === selectedStatus);
-    }
-
-    // Filter by date range
-    if (dateRange && dateRange[0] && dateRange[1]) {
-      const startDate = dateRange[0].startOf("day").valueOf();
-      const endDate = dateRange[1].endOf("day").valueOf();
-
-      result = result.filter((order) => {
-        const orderDate = moment(order.date_commande).valueOf();
-        return orderDate >= startDate && orderDate <= endDate;
-      });
-    }
-
-    // Filter by price range
-    if (priceRange[0] !== null || priceRange[1] !== null) {
-      result = result.filter((order) => {
-        const montantTtc = Number(order.montant_ttc) || 0;
-        const minOk = priceRange[0] === null || montantTtc >= priceRange[0];
-        const maxOk = priceRange[1] === null || montantTtc <= priceRange[1];
-        return minOk && maxOk;
-      });
-    }
-
-    setFilteredOrders(result);
-  }, [
-    orders,
-    searchText,
-    clientNameFilter,
-    clientCodeFilter,
-    selectedClientFilter,
-    selectedStatus,
-    dateRange,
-    priceRange,
-  ]);
-
-  // Apply filters whenever filter criteria change
-  useEffect(() => {
-    filterOrders();
-  }, [filterOrders]);
 
    const fetchAvailableBons = useCallback(async () => {
     try {
@@ -1481,6 +1408,57 @@ console.log("Current bon IDs:", currentBonInDrawer.map(b => b.bon_id));
     0
   );
 
+  // Advanced filter state
+  const [filters, setFilters] = useState({
+    clientId: null,
+    codeClient: "",
+    status: null,
+    dateRange: null,
+    nomClient: "",
+  });
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
+  const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
+  const [filterForm] = Form.useForm();
+  const [clientSearchLoading, setClientSearchLoading] = useState(false);
+  const [clientOptions, setClientOptions] = useState([]);
+
+  // Ajoutez le filtrage dans filterOrders
+  const filterOrders = useCallback(() => {
+    let result = [...orders];
+
+    if (filters.clientId) {
+      result = result.filter((order) => order.client_id === filters.clientId);
+    }
+    if (filters.codeClient) {
+      result = result.filter((order) =>
+        (order.code_client || "").toLowerCase().includes(filters.codeClient.toLowerCase())
+      );
+    }
+    if (filters.status) {
+      result = result.filter((order) => order.statut === filters.status);
+    }
+    if (filters.dateRange && filters.dateRange[0] && filters.dateRange[1]) {
+      const [start, end] = filters.dateRange;
+      result = result.filter((order) => {
+        const orderDate = moment(order.date_commande);
+        return orderDate.isBetween(start, end, 'day', '[]');
+      });
+    }
+    if (filters.nomClient) {
+      result = result.filter((order) =>
+        (order.nom_client || "").toLowerCase().includes(filters.nomClient.toLowerCase())
+      );
+    }
+    setFilteredOrders(result);
+  }, [orders, filters]);
+
+  useEffect(() => {
+    filterOrders();
+  }, [filterOrders]);
+
   if (error) {
     return (
       <div style={{ padding: "24px" }}>
@@ -1510,122 +1488,17 @@ console.log("Current bon IDs:", currentBonInDrawer.map(b => b.bon_id));
               </Title>
             </Col>
           </Row>
-
-          {/* Statistics */}
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={6}>
-              <Statistic
-                title="Total Factures"
-                value={filteredOrders.length}
-                prefix={<FileDoneOutlined />}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="Montant Total TTC"
-                value={totalAmount}
-                formatter={(value) => formatCurrency(value)}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="En Attente"
-                value={
-                  filteredOrders.filter((o) => o.statut === "pending").length
-                }
-                valueStyle={{ color: "#fa8c16" }}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="Terminées"
-                value={
-                  filteredOrders.filter((o) => o.statut === "completed").length
-                }
-                valueStyle={{ color: "#52c41a" }}
-              />
-            </Col>
-          </Row>
-
           <Divider />
-
-          {/* Filters */}
-          <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-            <Col span={6}>
-              <Input
-                placeholder="Rechercher..."
-                prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                allowClear
-              />
-            </Col>
-            <Col span={4}>
-              <Select
-                placeholder="Client"
-                value={selectedClientFilter}
-                onChange={setSelectedClientFilter}
-                allowClear
-                style={{ width: "100%" }}
+          {/* Action buttons à droite */}
+          <Row justify="end" gutter={16} style={{ marginBottom: 16 }}>
+            <Col>
+              <Button
+                icon={<SearchOutlined />}
+                onClick={() => setFilterDrawerVisible(true)}
               >
-                {availableClients.map((client) => (
-                  <Option key={client.id} value={client.id}>
-                    {client.nom_complet || client.nom || client.nom_client}
-                  </Option>
-                ))}
-              </Select>
+                Filtres avancés
+              </Button>
             </Col>
-            <Col span={4}>
-              <Input
-                placeholder="Code Client"
-                value={clientCodeFilter}
-                onChange={(e) => setClientCodeFilter(e.target.value)}
-                allowClear
-                style={{ width: "100%" }}
-              />
-                
-            </Col>
-            <Col span={4}>
-              <Input
-                placeholder="Filtrer par nom client"
-                value={clientNameFilter}
-                onChange={(e) => setClientNameFilter(e.target.value)}
-                allowClear
-                style={{ width: "100%" }}
-              />
-            </Col>
-            <Col span={4}>
-              <Select
-                placeholder="Statut"
-                value={selectedStatus}
-                onChange={setSelectedStatus}
-                allowClear
-                style={{ width: "100%" }}
-              >
-                <Option value="pending">En attente</Option>
-                <Option value="processing">En cours</Option>
-                <Option value="completed">Terminée</Option>
-                <Option value="cancelled">Annulée</Option>
-                <Option value="invoiced">Facturée</Option>
-              </Select>
-            </Col>
-            <Col  xs={24} sm={12} md={8} lg={6}>
-              <DatePicker.RangePicker
-                style={{ width: "100%" }}
-                // value={dateRange}
-                // onChange={(dates) => setDateRange(dates)}
-                format="DD/MM/YYYY"
-                placeholder={["Date début", "Date fin"]}
-                
-              />
-            </Col>
-            <Col span={4}>
-              <Button onClick={clearFilters}>Effacer filtres</Button>
-            </Col>
-          </Row>
-
-          {/* Action buttons */}
-          <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col>
               <Button
                 type="primary"
@@ -1644,32 +1517,6 @@ console.log("Current bon IDs:", currentBonInDrawer.map(b => b.bon_id));
                 Actualiser
               </Button>
             </Col>
-            {selectedRowKeys.length > 0 && (
-              <>
-                <Col>
-                  <Badge count={selectedRowKeys.length}>
-                    <Button
-                      icon={<PrinterOutlined />}
-                      onClick={handlePrintSelectedOrdersSummary}
-                    >
-                      Imprimer Sélection
-                    </Button>
-                  </Badge>
-                </Col>
-                <Col>
-                  <Popconfirm
-                    title="Supprimer les Facture sélectionnées ?"
-                    onConfirm={handleDeleteSelected}
-                    okText="Oui"
-                    cancelText="Non"
-                  >
-                    <Button danger icon={<DeleteOutlined />}>
-                      Supprimer Sélection
-                    </Button>
-                  </Popconfirm>
-                </Col>
-              </>
-            )}
           </Row>
         </div>
 
@@ -1678,19 +1525,74 @@ console.log("Current bon IDs:", currentBonInDrawer.map(b => b.bon_id));
             columns={columns}
             dataSource={filteredOrders}
             rowKey="id"
-            // rowSelection={rowSelection}
             pagination={{
+              ...pagination,
               total: filteredOrders.length,
-              pageSize: 10,
               showSizeChanger: true,
               showQuickJumper: true,
               showTotal: (total, range) =>
                 `${range[0]}-${range[1]} sur ${total} commandes`,
+              onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
             }}
-            scroll={{ x: 1300 }} // Adjusted scroll width
+            scroll={{ x: 1300 }}
           />
         </Spin>
       </Card>
+
+      {/* Advanced filter drawer */}
+      <Drawer
+        title="Filtres avancés"
+        width={400}
+        onClose={() => setFilterDrawerVisible(false)}
+        open={filterDrawerVisible}
+        bodyStyle={{ paddingBottom: 80 }}
+        extra={
+          <Space>
+            <Button onClick={() => setFilterDrawerVisible(false)}>
+              Annuler
+            </Button>
+            <Button onClick={() => filterForm.submit()} type="primary">
+              Appliquer
+            </Button>
+          </Space>
+        }
+      >
+        <Form
+          
+        >
+          <Form.Item name="clientId" label="Client">
+            <Select
+              allowClear
+              showSearch
+              placeholder="Sélectionner un client"
+              optionFilterProp="label"
+              loading={clientSearchLoading}
+              onSearch={debouncedClientSearch}
+              options={clientOptions}
+            />
+          </Form.Item>
+          <Form.Item name="codeClient" label="Code client">
+            <Input placeholder="Rechercher par code client" />
+          </Form.Item>
+          <Form.Item name="nomClient" label="Nom client">
+            <Input placeholder="Rechercher par nom client" />
+          </Form.Item>
+          <Form.Item name="status" label="Statut">
+            <Select allowClear placeholder="Sélectionner un statut">
+              <Option value="pending">En attente</Option>
+              <Option value="processing">En cours</Option>
+              <Option value="completed">Terminée</Option>
+              <Option value="cancelled">Annulée</Option>
+              <Option value="invoiced">Facturée</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item name="dateRange" label="Date de commande">
+            <DatePicker.RangePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+          </Form.Item>
+          <Divider />
+          
+        </Form>
+      </Drawer>
 
       {/* Order Drawer */}
       <Drawer
