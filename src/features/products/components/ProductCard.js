@@ -94,7 +94,6 @@ const ProductCard = ({ product }) => {
       } else if (imageUrl) {
         imageData = imageUrl;
       }
-      imageData = imageData ?? "";
 
       const updatedProduct = {
         nom_produit: values.name,
