@@ -107,9 +107,12 @@ const ProductCard = ({ product }) => {
         description: values.description,
       };
 
-      if (imageData !== null) {
-        updatedProduct.image = imageData;
-      }
+    if (fileList.length === 0) {
+  // L'utilisateur a supprimé l'image
+  updatedProduct.image = null;
+} else if (imageData !== null) {
+  updatedProduct.image = imageData;
+}
 
       await updateProduct(product.id, updatedProduct);
       setIsEditing(false);
