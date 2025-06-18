@@ -90,6 +90,9 @@ const ProductCard = ({ product }) => {
     console.log("✅ ProductCard submit triggered");
     console.log("width:", values.width, "epaisseur:", values.thickness);
   
+    console.log("✅ ProductCard submit triggered");
+    console.log("width:", values.width, "epaisseur:", values.thickness);
+  
     try {
       let imageData = null;
       if (fileList.length > 0 && fileList[0].originFileObj) {
@@ -108,15 +111,9 @@ const ProductCard = ({ product }) => {
         surface: values.surface,
         prix: values.price,
         description: values.description,
+        image: imageData,
       };
       console.log("🚀 Payload sent to updateProduct:", updatedProduct);
-
-    if (fileList.length === 0) {
-  // L'utilisateur a supprimé l'image
-  updatedProduct.image = null;
-} else if (imageData !== null) {
-  updatedProduct.image = imageData;
-}
 
       await updateProduct(product.id, updatedProduct);
       setIsEditing(false);
