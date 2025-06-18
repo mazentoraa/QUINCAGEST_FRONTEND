@@ -105,8 +105,11 @@ const ProductCard = ({ product }) => {
         surface: values.surface,
         prix: values.price,
         description: values.description,
-        image: imageData,
       };
+
+      if (imageData !== null) {
+        updatedProduct.image = imageData;
+      }
 
       await updateProduct(product.id, updatedProduct);
       setIsEditing(false);
@@ -163,22 +166,137 @@ const ProductCard = ({ product }) => {
       <Form.Item label="Dimensions">
         <Space style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
           <Form.Item name="thickness" label="Épaisseur (mm)">
-            <InputNumber min={0} />
+            <InputNumber min={0} 
+              onKeyDown={(e) => {
+                const allowed = [
+                  "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
+                  ...Array.from({ length: 10 }, (_, i) => `${i}`),
+                  "."
+                ];
+                if (e.key === "+" || e.key === "-") {
+                  e.preventDefault();
+                }
+                if (
+                  !allowed.includes(e.key) &&
+                  !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
+                ) {
+                  e.preventDefault();
+                }
+              }}
+              onPaste={(e) => {
+                const value = e.clipboardData.getData("text");
+                if (!/^\d*\.?\d*$/.test(value)) {
+                  e.preventDefault();
+                }
+              }}
+            />
           </Form.Item>
           <Form.Item name="length" label="Longueur (mm)">
-            <InputNumber min={0} />
+            <InputNumber min={0} 
+              onKeyDown={(e) => {
+                const allowed = [
+                  "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
+                  ...Array.from({ length: 10 }, (_, i) => `${i}`),
+                  "."
+                ];
+                if (e.key === "+" || e.key === "-") {
+                  e.preventDefault();
+                }
+                if (
+                  !allowed.includes(e.key) &&
+                  !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
+                ) {
+                  e.preventDefault();
+                }
+              }}
+              onPaste={(e) => {
+                const value = e.clipboardData.getData("text");
+                if (!/^\d*\.?\d*$/.test(value)) {
+                  e.preventDefault();
+                }
+              }}
+            />
           </Form.Item>
           <Form.Item name="width" label="Largeur (mm)">
-            <InputNumber min={0} />
+            <InputNumber min={0} 
+              onKeyDown={(e) => {
+                const allowed = [
+                  "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
+                  ...Array.from({ length: 10 }, (_, i) => `${i}`),
+                  "."
+                ];
+                if (e.key === "+" || e.key === "-") {
+                  e.preventDefault();
+                }
+                if (
+                  !allowed.includes(e.key) &&
+                  !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
+                ) {
+                  e.preventDefault();
+                }
+              }}
+              onPaste={(e) => {
+                const value = e.clipboardData.getData("text");
+                if (!/^\d*\.?\d*$/.test(value)) {
+                  e.preventDefault();
+                }
+              }}
+            />
           </Form.Item>
           <Form.Item name="surface" label="Surface (m²)">
-            <InputNumber min={0} />
+            <InputNumber min={0} 
+              onKeyDown={(e) => {
+                const allowed = [
+                  "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
+                  ...Array.from({ length: 10 }, (_, i) => `${i}`),
+                  "."
+                ];
+                if (e.key === "+" || e.key === "-") {
+                  e.preventDefault();
+                }
+                if (
+                  !allowed.includes(e.key) &&
+                  !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
+                ) {
+                  e.preventDefault();
+                }
+              }}
+              onPaste={(e) => {
+                const value = e.clipboardData.getData("text");
+                if (!/^\d*\.?\d*$/.test(value)) {
+                  e.preventDefault();
+                }
+              }}
+            />
           </Form.Item>
         </Space>
       </Form.Item>
 
       <Form.Item name="price" label="Prix (DT)">
-        <InputNumber min={0} step={0.01} />
+        <InputNumber min={0} step={0.01} 
+          onKeyDown={(e) => {
+            const allowed = [
+              "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
+              ...Array.from({ length: 10 }, (_, i) => `${i}`),
+              "."
+            ];
+            if (e.key === "+" || e.key === "-") {
+              e.preventDefault();
+            }
+            if (
+              !allowed.includes(e.key) &&
+              !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
+            ) {
+              e.preventDefault();
+            }
+          }}
+          onPaste={(e) => {
+            const value = e.clipboardData.getData("text");
+            if (!/^\d*\.?\d*$/.test(value)) {
+              e.preventDefault();
+            }
+          }}
+        />
       </Form.Item>
 
       <Form.Item name="description" label="Description">
