@@ -71,7 +71,8 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-"Mise … jour du frontend - $(date)" 
-"Mise … jour du frontend - $(date)" 
+"Mise ï¿½ jour du frontend - $(date)" 
+"Mise ï¿½ jour du frontend - $(date)" 
 ""  
 ECHO is on.
+"Mise ï¿½ jour du frontend - $(date)" 
