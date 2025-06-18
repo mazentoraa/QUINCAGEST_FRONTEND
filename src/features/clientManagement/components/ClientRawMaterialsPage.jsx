@@ -431,14 +431,15 @@ const ClientRawMaterialsPage = () => {
       let new_material;
       // Convert client_id to integer explicitly
       const client_id_int = parseInt(client_id, 10);
-      
+      const updated_quantity = values.quantite;
       if (editing_material) {
         // Update existing material
         new_material = await RawMaterialService.update_material(editing_material.id, {
-          ...values,
-          reception_date: values.reception_date.format('YYYY-MM-DD'),
-          client_id: client_id_int  // Explicitly set client_id as integer
-        });
+  ...values,
+  reception_date: values.reception_date.format('YYYY-MM-DD'),
+  client_id: client_id_int,
+  remaining_quantity: updated_quantity  // mise à jour automatique
+});
         // Add display_type for the updated material
         new_material.display_type = getMaterialTypeLabel(new_material.type_matiere);
         set_materials(materials.map(material => 
@@ -451,10 +452,12 @@ const ClientRawMaterialsPage = () => {
       } else {
         // Add new material
         new_material = await RawMaterialService.add_material_to_client(client_id_int, {
-          ...values,
-          reception_date: values.reception_date.format('YYYY-MM-DD'),
-          client_id: client_id_int  // Explicitly set client_id as integer
-        });
+  ...values,
+  reception_date: values.reception_date.format('YYYY-MM-DD'),
+  client_id: client_id_int,
+  remaining_quantity: values.quantite
+});
+
         // Add display_type for the new material
         new_material.display_type = getMaterialTypeLabel(new_material.type_matiere);
         set_materials([...materials, new_material]);
