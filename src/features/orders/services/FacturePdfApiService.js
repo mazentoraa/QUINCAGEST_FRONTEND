@@ -334,7 +334,7 @@ thead {
 </thead>
             <tbody>
                 ${itemsHTML}
-                ${itemsHTML}
+              
             </tbody>
         </table>
     </div>
