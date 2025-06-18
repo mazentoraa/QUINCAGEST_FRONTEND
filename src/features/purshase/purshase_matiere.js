@@ -140,7 +140,7 @@ export default function PurchaseMatiere() {
             }}
           />
           <Popconfirm
-            title="Êtes-vous sûr de vouloir supprimer cette matière ?"
+            title="Êtes-vous sûr de vouloir supprimer cet Achat ?"
             onConfirm={() => handleDelete(record.id)}
           >
             <Button danger icon={<DeleteOutlined />} />
