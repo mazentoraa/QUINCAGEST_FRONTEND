@@ -726,85 +726,94 @@ const ClientRawMaterialsPage = () => {
     }
   };
 
-  // Form submission handler
-  const handleSubmit = async (values) => {
-    try {
-      let newMaterial;
-      // Make sure we have a client selected
-      if (!selectedClient) {
-        notification.error({
-          message: "Erreur",
-          description: "Aucun client sélectionné.",
-        });
-        return;
-      }
+// Form submission handler
+const handleSubmit = async (values) => {
+  try {
+    if (!selectedClient) {
+      notification.error({
+        message: "Erreur",
+        description: "Aucun client sélectionné.",
+      });
+      return;
+    }
 
-      const clientId = selectedClient.id;
+    const clientId = selectedClient.id;
 
-      // Ensure reception_date is properly formatted before sending to API
-      const formattedValues = {
-        ...values,
-        // Handle the date properly - make sure it's a string in YYYY-MM-DD format
-        reception_date:
-          values.reception_date &&
-          typeof values.reception_date === "object" &&
-          values.reception_date.format
-            ? values.reception_date.format("YYYY-MM-DD")
-            : typeof values.reception_date === "string"
-            ? values.reception_date
-            : moment(values.reception_date).format("YYYY-MM-DD"),
-        client_id: clientId,
-      };
+    const formattedValues = {
+      ...values,
+      reception_date: moment(values.reception_date).format("YYYY-MM-DD"),
+      client_id: clientId,
+    };
 
-      console.log("Submitting values:", formattedValues);
+    console.log("Submitting values:", formattedValues);
 
-      if (editingMaterial) {
-        // Update existing material
-        newMaterial = await RawMaterialService.update_material(
+    if (editingMaterial) {
+      // Update material
+      try {
+        const response = await RawMaterialService.update_material(
           editingMaterial.id,
           formattedValues
         );
-        // Add display_type for the updated material
-        newMaterial.display_type = getMaterialTypeLabel(
-          newMaterial.type_matiere
-        );
-        setMaterials(
-          materials.map((material) =>
-            material.id === editingMaterial.id ? newMaterial : material
-          )
-        );
+        console.log("Update response:", response);
+
         notification.success({
           message: "Succès",
           description: "Matière première modifiée avec succès.",
         });
-      } else {
-        // Add new material
-        newMaterial = await RawMaterialService.add_material_to_client(
-          clientId,
-          formattedValues
-        );
-        // Add display_type for the new material
-        newMaterial.display_type = getMaterialTypeLabel(
-          newMaterial.type_matiere
-        );
-        setMaterials([...materials, newMaterial]);
-        notification.success({
-          message: "Succès",
-          description: "Matière première ajoutée avec succès.",
+
+        // Refresh materials list after update
+        await fetchClientMaterials(clientId);
+
+        // Close modal and reset form after refresh
+        form.resetFields();
+        setEditingMaterial(null);
+        setIsModalVisible(false);
+      } catch (updateError) {
+        console.error("Error updating material:", updateError);
+        notification.error({
+          message: "Erreur",
+          description:
+            updateError?.message || "Impossible de modifier la matière première.",
         });
       }
+    } else {
+      // Add new material
+      const response = await RawMaterialService.add_material_to_client(
+        clientId,
+        formattedValues
+      );
 
-      setIsModalVisible(false);
+      const newMaterial = {
+        ...response,
+        display_type: getMaterialTypeLabel(response.type_matiere),
+        client_name:
+          selectedClient.nom_client ||
+          selectedClient.name ||
+          selectedClient.client_name ||
+          `Client ID: ${selectedClient.id}`,
+      };
+
+      setMaterials((prevMaterials) => [...prevMaterials, newMaterial]);
+
+      notification.success({
+        message: "Succès",
+        description: "Matière première ajoutée avec succès.",
+      });
+
+      // Close modal and reset form after successful add
       form.resetFields();
       setEditingMaterial(null);
-    } catch (err) {
-      console.error("Error saving material:", err);
-      notification.error({
-        message: "Erreur",
-        description: "Impossible de sauvegarder la matière première.",
-      });
+      setIsModalVisible(false);
     }
-  };
+  } catch (err) {
+    console.error("Error saving material:", err);
+    notification.error({
+      message: "Erreur",
+      description:
+        err?.message || "Impossible de sauvegarder la matière première.",
+    });
+  }
+};
 
   // Cancel form handler
   const handleCancel = () => {

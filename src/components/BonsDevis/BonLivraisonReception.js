@@ -502,24 +502,24 @@ const BonLivraisonReception = () => {
   };
 
   // Get color for material type tag
-  const getMaterialTypeColor = (type) => {
-    switch (type) {
-      case "acier":
-        return "blue";
-      case "acier_inoxydable":
-        return "cyan";
-      case "aluminium":
-        return "silver";
-      case "laiton":
-        return "gold";
-      case "cuivre":
-        return "orange";
-      case "acier_galvanise":
-        return "purple";
-      default:
-        return "default";
-    }
-  };
+const getMaterialTypeColor = (type) => {
+  switch (type) {
+    case "acier":
+      return "lightblue"; // changed from blue
+    case "acier_inoxydable":
+      return "lightcyan"; // changed from cyan
+    case "aluminium":
+      return "lightgray"; // changed from blue
+    case "laiton":
+      return "lightgoldenrodyellow"; // changed from gold
+    case "cuivre":
+      return "lightsalmon"; // changed from orange
+    case "acier_galvanise":
+      return "plum"; // changed from purple
+    default:
+      return "default";
+  }
+};
 
   return (
     <div className="bon-livraison-reception">

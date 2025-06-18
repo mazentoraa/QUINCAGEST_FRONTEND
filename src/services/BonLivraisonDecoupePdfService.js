@@ -281,7 +281,7 @@ class BonLivraisonDecoupePdfService {
     <div style="text-align:left" class="company-info">
       <h2 style="margin-bottom: 6px;">RM METALASER</h2>
       <p style="margin: 0; line-height: 1.5;">
-        <span style="color: grey; font-weight: bold;">Découpes Métaux</span><br>
+        <span style="color: blue; font-weight: bold;">Découpes Métaux</span><br>
         Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
         MF: 191 1419B/A/M/000<br>
         Tél. : +216 20 366 150<br>
