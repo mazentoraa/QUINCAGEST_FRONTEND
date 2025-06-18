@@ -87,6 +87,9 @@ const ProductCard = ({ product }) => {
     });
 
   const handleSubmit = async (values) => {
+    console.log("✅ ProductCard submit triggered");
+    console.log("width:", values.width, "epaisseur:", values.thickness);
+  
     try {
       let imageData = null;
       if (fileList.length > 0 && fileList[0].originFileObj) {
@@ -106,6 +109,14 @@ const ProductCard = ({ product }) => {
         prix: values.price,
         description: values.description,
       };
+      console.log("🚀 Payload sent to updateProduct:", updatedProduct);
+
+    if (fileList.length === 0) {
+  // L'utilisateur a supprimé l'image
+  updatedProduct.image = null;
+} else if (imageData !== null) {
+  updatedProduct.image = imageData;
+}
 
     if (fileList.length === 0) {
   // L'utilisateur a supprimé l'image

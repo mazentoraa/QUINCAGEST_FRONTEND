@@ -56,7 +56,7 @@ const formatCurrency = (amount, currency = " ") => {
   return new Intl.NumberFormat("fr-TN", {
     style: "decimal",
     minimumFractionDigits: 3,
-    maximumFractionDigits: 3
+    maximumFractionDigits: 3,
   }).format(amount || 0);
 };
 
@@ -88,8 +88,10 @@ const translatePaymentMethod = (method) => {
   return methodMap[method] || method || "N/A";
 };
 
-
 export default function BonCommande() {
+  const [selectedBonDetails, setSelectedBonDetails] = useState(null);
+
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -563,13 +565,16 @@ export default function BonCommande() {
             })),
             // Bon products
             ...newOrderBon
-            .filter((item) => item.billable?.quantite > 0 && item.billable?.prix_unitaire > 0)
-            .map((item) => ({
-              produit: item.produit_id || item.produit || item.id,
-              quantite: item.billable.quantite,
-              prix_unitaire: item.billable.prix_unitaire,
-            }))
-          
+              .filter(
+                (item) =>
+                  item.billable?.quantite > 0 &&
+                  item.billable?.prix_unitaire > 0
+              )
+              .map((item) => ({
+                produit: item.produit_id || item.produit || item.id,
+                quantite: item.billable.quantite,
+                prix_unitaire: item.billable.prix_unitaire,
+              })),
           ],
         };
         console.log("orderPayload:", orderPayload);
@@ -793,7 +798,6 @@ export default function BonCommande() {
           );
           setIsProductModalVisible(false);
           message.success("Quantité du produit mise à jour");
-
         } else {
           const tempId = `temp-${Date.now()}-${Math.floor(
             Math.random() * 1000
@@ -811,7 +815,6 @@ export default function BonCommande() {
           currentTaxRate,
           currentBonInDrawer
         );
-        
       } else {
         // For existing order
         const existingProductInDrawerIndex = currentProductsInDrawer.findIndex(
@@ -878,10 +881,8 @@ export default function BonCommande() {
           );
           setIsProductModalVisible(false);
           message.success("Produit ajouté à la commande");
-   
         }
       }
-     
     } catch (errorInfo) {
       console.log("Product modal save failed:", errorInfo);
       message.error(
@@ -2149,7 +2150,17 @@ export default function BonCommande() {
                 showIcon
               />
             ) : (
-              <Radio.Group style={{ width: "100%" }}>
+              <Radio.Group
+                style={{ width: "100%" }}
+                onChange={(e) => {
+                  BonForm.setFieldsValue({ numero_facture: e.target.value });
+                  const bon = availableBon.find((b) => b.numero_facture === e.target.value);
+                  console.log("Selected Bon:", bon); // Inspect its structure here
+                  setSelectedBonDetails(bon);
+                }}
+                
+                value={BonForm.getFieldValue("numero_facture")}
+              >
                 <Space direction="vertical" style={{ width: "100%" }}>
                   {availableBon.map((bon) => (
                     <Radio
@@ -2168,7 +2179,7 @@ export default function BonCommande() {
                         </strong>
                         <p style={{ margin: 0, color: "grey" }}>
                           Date: {bon.date_emission} - {bon.items.length}{" "}
-                          articles - {bon.total_ttc}  
+                          articles - {bon.total_ttc}
                         </p>
                         <p style={{ margin: 0, color: "green" }}>
                           {bon.statut}
@@ -2178,6 +2189,43 @@ export default function BonCommande() {
                   ))}
                 </Space>
               </Radio.Group>
+            )}
+            {selectedBonDetails && (
+              <div
+                style={{
+                  border: "1px solid #e5e5e5",
+                  borderRadius: "8px",
+                  padding: "12px",
+                  marginTop: "16px",
+                  backgroundColor: "#f9f9f9",
+                }}
+              >
+                <p>
+                  <Tag color="blue">
+                    {selectedBonDetails.numero_facture} -{" "}
+                    {moment(selectedBonDetails.date_emission).format(
+                      "DD/MM/YYYY"
+                    )}
+                  </Tag>
+                </p>
+                <p>
+                  <strong>Articles inclus:</strong>
+                </p>
+                <ul style={{ paddingLeft: 20 }}>
+                {selectedBonDetails?.items?.length > 0 && (
+  <ul style={{ paddingLeft: 20 }}>
+    {selectedBonDetails.items.map((item, index) => (
+      <li key={index}>
+        {item.nom_produit || "Produit"} – Qté:{" "}
+        {item.billable?.quantite ?? "?"} –{" "}
+        {formatCurrency(item.billable?.prix_unitaire || 0)}
+      </li>
+    ))}
+  </ul>
+)}
+
+                </ul>
+              </div>
             )}
           </Form.Item>
         </Form>

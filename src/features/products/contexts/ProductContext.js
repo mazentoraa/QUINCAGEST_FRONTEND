@@ -165,6 +165,9 @@ export const ProductProvider = ({ children }) => {
         cleanedData.epaisseur = parseFloat(dataToSend.epaisseur) || 0;
       if (dataToSend.longueur !== undefined)
         cleanedData.longueur = parseFloat(dataToSend.longueur) || 0;
+      if (dataToSend.largeur !== undefined)
+        cleanedData.largeur = parseFloat(dataToSend.largeur) || 0;
+      
       if (dataToSend.surface !== undefined)
         cleanedData.surface = parseFloat(dataToSend.surface) || 0;
       if (dataToSend.prix !== undefined)
