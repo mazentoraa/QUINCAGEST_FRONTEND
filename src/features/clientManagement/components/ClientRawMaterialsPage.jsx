@@ -414,17 +414,53 @@ const ClientRawMaterialsPage = () => {
   };
 
   // Sauvegarde dans la base de données (à adapter selon votre API)
-  const handleSaveBill = async () => {
-    try {
-      // À adapter selon votre API de facturation
-      // Exemple :
-      // await InvoiceService.createInvoice({ invoiceNumber, billDate, items: billableData });
-      notification.success({ message: 'Facture sauvegardée avec succès' });
-      setIsBillModalVisible(false);
-    } catch (e) {
-      notification.error({ message: 'Erreur lors de la sauvegarde' });
+const handleSaveBill = async () => {
+  try {
+    if (!billableData || billableData.length === 0) {
+      notification.error({ message: "Aucune matière à facturer" });
+      return;
     }
-  };
+
+    if (!client_id) {
+      notification.error({ message: "Client non défini" });
+      return;
+    }
+
+    const materialIds = billableData.map(material => material.id);
+
+    const invoiceData = {
+      client: parseInt(client_id),
+      matieres: materialIds,
+      numero_bon: invoiceNumber,
+      date_reception: billDate,
+      tax_rate: 0,  // tu peux changer le taux si tu le gères
+      notes: "Bon de livraison généré automatiquement",
+    };
+
+    const response = await ClientMaterialService.createMaterialInvoice(invoiceData);
+
+    if (response && response.numero_bon) {
+      setInvoiceNumber(response.numero_bon);
+    }
+
+    notification.success({
+      message: "Bon de livraison sauvegardé",
+      description: `Le bon ${invoiceNumber} a été enregistré.`,
+    });
+
+    setIsBillModalVisible(false);
+    setSelectedRowKeys([]);
+    setSelectedRowsData([]);
+
+  } catch (error) {
+    console.error("Erreur lors de la sauvegarde du bon de livraison:", error);
+    notification.error({
+      message: "Erreur",
+      description: error.message || "Échec lors de la sauvegarde du bon de livraison",
+    });
+  }
+};
+
 
   // Handle form submission
   const handle_submit = async (values) => {
@@ -744,7 +780,7 @@ const ClientRawMaterialsPage = () => {
         </div>
         <div>
           <Form layout="vertical">
-            <Form.Item label="Date de facturation">
+            <Form.Item label="Date">
               <DatePicker 
                 style={{ width: '100%' }}
                 value={moment(billDate)}
