@@ -106,10 +106,9 @@ const ProductForm = ({
           changedFields.epaisseur = values.thickness;
         if ((values.length || 0) !== productToEdit.longueur)
           changedFields.longueur = values.length || 0;
-        if ((values.width || 0) !== productToEdit.largeur) {
-          changedFields.largeur = values.width || 0;
+        if (Number(values.width || 0) !== Number(productToEdit.largeur)) {
+          changedFields.largeur = Number(values.width || 0);
         }
-
         if (values.surface !== productToEdit.surface)
           changedFields.surface = values.surface;
         if ((values.price || 0) !== productToEdit.prix)
@@ -127,9 +126,13 @@ const ProductForm = ({
               reader.readAsDataURL(currentFile.originFileObj);
             });
           }
+          console.log("width values: ", values.width, productToEdit.largeur);
+          console.log("Final update payload:", changedFields);
         } else if (productToEdit.image) {
-          changedFields.image = null;
+          changedFields.image = "";
+          console.log("Final update payload:", changedFields);
         }
+        
 
         if (
           changedFields.hasOwnProperty("image") &&
@@ -145,6 +148,8 @@ const ProductForm = ({
         } else {
           message.info("Aucune modification détectée");
         }
+       
+
       } else {
         let imageData = null;
         if (fileList.length > 0) {
@@ -157,8 +162,10 @@ const ProductForm = ({
               reader.readAsDataURL(currentFile.originFileObj);
             });
           }
-        }
+          
 
+        }
+        
         const productPayload = {
           nom_produit: values.name,
           code_produit: values.code_produit, 

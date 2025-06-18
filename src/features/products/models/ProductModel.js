@@ -24,6 +24,7 @@ class ProductModel {
     this.thickness = parseFloat(data.epaisseur || data.thickness) || 0;
     this.length = parseFloat(data.longueur || data.length) || 0;
     this.surface = parseFloat(data.surface) || 0;
+    this.width = parseFloat(data.largeur) || 0;
 
     this.created_at = data.date_creation ? new Date(data.date_creation) : null;
     this.updated_at = data.derniere_mise_a_jour
@@ -37,7 +38,7 @@ class ProductModel {
       data.type_matiere || data.material_type || data.material;
     this.epaisseur = this.thickness; // Use the converted numeric value
     this.longueur = this.length; // Use the converted numeric value
-    this.largeur = data.largeur ?? null;
+    this.largeur = this.width; // Ensure both are always available
     this.date_creation = data.date_creation;
     this.derniere_mise_a_jour = data.derniere_mise_a_jour;
     this.code = data.code_produit || data.code;

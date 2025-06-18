@@ -87,6 +87,9 @@ const ProductCard = ({ product }) => {
     });
 
   const handleSubmit = async (values) => {
+    console.log("✅ ProductCard submit triggered");
+    console.log("width:", values.width, "epaisseur:", values.thickness);
+  
     try {
       let imageData = null;
       if (fileList.length > 0 && fileList[0].originFileObj) {
@@ -107,6 +110,7 @@ const ProductCard = ({ product }) => {
         description: values.description,
         image: imageData,
       };
+      console.log("🚀 Payload sent to updateProduct:", updatedProduct);
 
       await updateProduct(product.id, updatedProduct);
       setIsEditing(false);
