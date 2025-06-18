@@ -97,7 +97,7 @@ class FacturePdfApiService {
       .map(
         (item) => `
       <tr>
-      <tr>
+
        <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
     ${item.code_produit || "N/A"}
   </td>
@@ -232,11 +232,30 @@ class FacturePdfApiService {
       background-color: #fff;
       
     }
+@page {
+  margin-top: 0px;
+  margin-bottom : 50px ;
+}
+thead {
+  display: table-header-group;
+
+}
+
+
+
+
+
     </style>
 </head>
 <body>
-    <header style="display: flex; flex-direction: column;">
-  <div style="display: flex; flex-direction: row; justify-content: space-between;">
+<table style="width: 100%; border-collapse: collapse;" cellspacing="0" cellpadding="0">
+  <thead>
+    <tr>
+      <td colspan="2">
+        <!-- Place your header here (logo, client info, etc.) -->
+        <div>
+
+         <div style="display: flex; flex-direction: row; justify-content: space-between;">
     <div style="text-align:left" class="company-info">
       <h2 style="margin-bottom: 6px;">RM METALASER</h2>
       <p style="margin: 0; line-height: 1.5;">
@@ -247,19 +266,30 @@ class FacturePdfApiService {
         Email: contact@rmmetalaser.tn<br>
         Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
       </p>
-        </div>
-        <div class="logo" style="text-align: right ; margin-top: 20px;">
-      <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" style="width: 300px; ">
     </div>
-          </div>
+        
+        <div class="logo" style="text-align: right; margin-top: 20px;">
+      <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" style="width: 300px;">
+    </div>
+  </div>
 
-  <!-- Facture and Client info, each 50% -->
-  <!-- Facture and Client info, each 50% -->
-<div style="display: flex; flex-direction: row; margin-top: 20px; gap: 20px;">
+   </div>
+       
+      </td>
+    </tr>
+  </thead>
+<tbody>
+   <tr>
+      <td colspan="2">
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+  <thead style="display: table-header-group;">
+    <tr>
+      <td colspan="2">
+       <div style="display: flex; flex-direction: row; margin-bottom: 15px; gap: 20px;">
   <!-- Facture Section -->
   <div style="width: 50%;">
     <div class="order-header" style="margin-bottom: 10px;">
-      <h2>Facture</h2>
+      <h2 style="text-align:center">Facture</h2>
     </div>
  <div style="display: flex; flex-direction: row;gap: 10px; width:100%">
       <div  style="flex: 1;" class="order-header">
@@ -282,10 +312,13 @@ class FacturePdfApiService {
     <p>Tél.: ${orderData.client_phone || "N/A"}</p>
   </div>
 </div>
-   </header>
-
-    <div style="margin-top: 20px;" class="order-details">
-        <table>
+  </thead>
+    </tr>
+  <tbody>
+   <tr>
+      <td colspan="2">
+  <div style="margin-top: 20px; display: flex;" class="order-details">
+        <table >
             <thead>
               
             <tr>
@@ -301,11 +334,27 @@ class FacturePdfApiService {
 </thead>
             <tbody>
                 ${itemsHTML}
+                ${itemsHTML}
             </tbody>
         </table>
     </div>
 
-    <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
+  
+
+
+<!-- FOOTER SECTION -->
+
+<div style="
+  page-break-inside: avoid;
+  break-inside: avoid;
+  margin-top: 30px;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+">
+  <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
   
   <!-- Table 1: TVA -->
   <table style=" width:32% ; border-collapse: collapse; text-align: center; font-family: Arial, sans-serif;">
@@ -364,25 +413,48 @@ class FacturePdfApiService {
   </table>
 </div>
 
-
-  <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px ;">
-  <div style="width:50% ; border: 1px solid black; padding: 5px ;">
-   <p style="padding : 12px ">
-         <strong>
-         Arrêtée la présente facture à la somme de:
-         </strong> <br>
-         ${this.formatMontantEnLettres((orderData.montant_ttc || 0)+1)}
-    
-         </p>
-         </div>
-   <div style="width:50% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
-    <p><strong>Signature</strong></p>
+  <div style="display: flex; justify-content: space-between; gap: 10px;">
+    <div style="flex: 1; border: 1px solid black; padding: 12px;">
+      <p style="margin: 0;">
+        <strong>Arrêtée la présente facture à la somme de:</strong><br>
+        ${this.formatMontantEnLettres((orderData.montant_ttc || 0) + 1)}
+      </p>
     </div>
-   </div>
+    <div style="
+      flex: 1;
+      border: 1px solid black;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    ">
+      <strong>Signature</strong>
+    </div>
+  </div>
+</div>
+
+
+
    
     
 
     </div>
+
+      </td>
+    </tr>
+  </tbody>
+
+</table>
+     </td>
+    </tr>
+  </tbody>
+  </table>
+
+ 
+
+
+
+  
 </body>
 </html>
     `;
