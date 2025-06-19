@@ -78,5 +78,3 @@ ECHO is on.
 "Mise � jour du frontend - $(date)" 
 ECHO is on.
 "Mise � jour du frontend - $(date)"
-ECHO is on.
-"Mise � jour du frontend - $(date)"
