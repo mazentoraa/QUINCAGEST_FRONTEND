@@ -201,12 +201,10 @@ class ClientMaterialPdfService {
           <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
             material.reception_date || ""
           }</td>
-          <td style="border: 1px solid #000; padding: 8px; font-size: 11px;text-align: center;">
-            <span style="background-color: ${this.getMaterialTypeColor(
-              material.type_matiere
-            )}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">
+          <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">
+            
               ${this.getMaterialTypeLabel(material.type_matiere)}
-            </span>
+        
           </td>
           <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${
             material.thickness || "-"

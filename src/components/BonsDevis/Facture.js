@@ -2218,7 +2218,7 @@ export default function BonCommande() {
       <li key={index}>
         {item.nom_produit || "Produit"} – Qté:{" "}
         {item.billable?.quantite ?? "?"} –{" "}
-        {formatCurrency(item.billable?.prix_unitaire || 0)}
+        {selectedBonDetails.total_ttc}
       </li>
     ))}
   </ul>

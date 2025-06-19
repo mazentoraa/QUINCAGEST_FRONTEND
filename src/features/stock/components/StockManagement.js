@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext ,useEffect } from "react";
 import { StockContext } from "../contexts/StockContext";
 import ProductList from "../../products/components/ProductList";
 import ProductForm from "../../products/components/ProductForm";
@@ -12,6 +12,7 @@ const { Content } = Layout;
 function StockManagement() {
   const { filteredProducts } = useContext(StockContext);
   const [isModalVisible, setIsModalVisible] = React.useState(false);
+  const [successMessage, setSuccessMessage] = React.useState("");
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -22,7 +23,15 @@ function StockManagement() {
   };
   const handleProductAdded = () => {
     setIsModalVisible(false);
+    setSuccessMessage(" ✅ Produit créé avec succès");
   };
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(""), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+  
 
   return (
     <Content className="stock-management">
@@ -32,8 +41,22 @@ function StockManagement() {
           Ajouter un produit
         </Button>
       </div>
+      {successMessage && (
+  <div style={{ background: "#f6ffed", border: "1px solid #b7eb8f", padding: "12px", marginBottom: "16px", borderRadius: "4px", color: "#389e0d" }}>
+    {successMessage}
+  </div>
+)}
 
-      <ProductList products={filteredProducts} />
+
+
+  <ProductList
+  onDuplicateSuccess={() => {
+    console.log("Received onDuplicateSuccess in StockManagement!");
+    setSuccessMessage(" ✅ Produit créé avec succès");
+  }}
+/>
+
+
 
       <Modal
         title="Ajouter un nouveau produit"

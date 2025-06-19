@@ -182,6 +182,7 @@ const ProductForm = ({
 
 
         await addProduct(productPayload);
+        if (onSuccess) onSuccess();
         message.success("Produit ajouté avec succès");
         form.resetFields();
         setFileList([]);

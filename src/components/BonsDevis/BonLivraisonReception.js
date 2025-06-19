@@ -532,6 +532,7 @@ const getMaterialTypeColor = (type) => {
             marginBottom: 20,
           }}
         >
+        
           <Title level={2}>Bons de Livraison (Réception)</Title>
           <Space size="middle">
             <Tooltip title="Rafraîchir">

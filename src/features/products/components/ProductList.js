@@ -24,7 +24,7 @@ const { Option } = Select;
 const { Title } = Typography;
 const { Search } = Input;
 
-const ProductList = () => {
+const ProductList = ({onDuplicateSuccess }) => {
   const {
     products,
     loading,
@@ -171,7 +171,11 @@ const ProductList = () => {
           <Row gutter={[16, 16]}>
             {displayedProducts.map((product) => (
               <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
-                <ProductCard product={product} />
+               <ProductCard
+  product={product}
+  onDuplicateSuccess={onDuplicateSuccess}
+/>
+
               </Col>
             ))}
           </Row>

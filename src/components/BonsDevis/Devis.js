@@ -107,6 +107,9 @@ export default function Devis() {
   const [selectedRows, setSelectedRows] = useState([]);
   const [filteredDevisList, setFilteredDevisList] = useState([]); // Initialize as empty array
 
+  const [formError, setFormError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
+
   // Filter and search state
   const [searchText, setSearchText] = useState("");
   const [selectedClientFilter, setSelectedClientFilter] = useState(null);
@@ -518,6 +521,8 @@ export default function Devis() {
   // Submit handlers for create/edit
   const handleDrawerSave = async () => {
     try {
+      setFormError(null);
+      setSuccessMessage(null);
       const values = await form.validateFields();
       setLoading(true);
 
@@ -544,6 +549,8 @@ export default function Devis() {
           message: "Succès",
           description: "Devis créé avec succès",
         });
+        setSuccessMessage("Devis crée avec succès !");
+        setTimeout(() => setSuccessMessage(null), 3000);
       } else if (currentView === "edit") {
         const devisId = devisDetail.id;
         await axios.put(`${API_BASE_URL}/devis/${devisId}/`, formattedValues);
@@ -551,6 +558,8 @@ export default function Devis() {
           message: "Succès",
           description: "Devis modifié avec succès",
         });
+        setSuccessMessage("Devis modifié avec succès!");
+        setTimeout(() => setSuccessMessage(null), 3000);
         fetchDevisDetail(devisId);
         setCurrentView("detail");
       }
@@ -565,6 +574,10 @@ export default function Devis() {
         message: "Erreur",
         description: "Impossible d'enregistrer le devis",
       });
+      setFormError(
+        "Erreur lors de la création du Devis. Veuillez vérifier les champs."
+      );
+      setTimeout(() => setFormError(null), 4000);
       console.error(err);
     } finally {
       setLoading(false);
@@ -971,6 +984,28 @@ export default function Devis() {
   const renderDevisList = () => (
     <Content style={{ padding: "20px" }}>
       <Card title="Gestion des Devis">
+      {successMessage && (
+            <div style={{   marginBottom: 16,
+              padding: "12px",
+              border: "1px solid #52c41a",
+              backgroundColor: "#f6ffed",
+              color: "#237804",
+              borderRadius: "6px",
+              fontWeight: 500,}}>
+              ✅ {successMessage}
+            </div>
+          )}
+           {formError && (
+              <div style={{    marginBottom: 16,
+                padding: "12px",
+                border: "1px solid #ff4d4f",
+                backgroundColor: "#fff1f0",
+                color: "#a8071a",
+                borderRadius: "6px",
+                fontWeight: 500, }}>
+                {formError}
+              </div>
+            )}
         {/* Statistics Row */}
         <Row gutter={16} style={{ marginBottom: 16 }}>
           <Col xs={24} sm={12} md={6} lg={6}>
@@ -1621,9 +1656,9 @@ export default function Devis() {
           <TextArea rows={4} />
         </Form.Item>
 
-        <Form.Item label="Notes internes" name="notes">
+        {/* <Form.Item label="Notes internes" name="notes">
           <TextArea rows={3} />
-        </Form.Item>
+        </Form.Item> */}
       </Form>
     </Modal>
   );

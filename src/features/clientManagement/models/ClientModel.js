@@ -22,6 +22,7 @@ export default class ClientModel {
     this.id = data.id || '';
     // Handle both camelCase and snake_case formats
     this.nom_client = data.nom_client || '';
+    this.code_client = data.code_client || '';
     this.numero_fiscal = data.numero_fiscal || '';
     this.adresse = data.adresse || '';
     this.telephone = data.telephone || '';
