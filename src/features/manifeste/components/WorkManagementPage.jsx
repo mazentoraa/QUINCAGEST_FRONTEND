@@ -89,7 +89,7 @@ const WorkManagementPage = () => {
   const [formError, setFormError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [TraiteMessage, setTraiteMessage] = useState(null);
-  const [FactureMessage, setFactureMessage] = useState(null);
+  
   useEffect(() => {
     if (created) {
       console.log("✅ Modal.success triggered");
