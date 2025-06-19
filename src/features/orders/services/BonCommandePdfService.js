@@ -217,11 +217,11 @@ class BonCommandePdfService {
               }</td>
               <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${quantite}</td>
               <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: right;">${
-                prixUnitaire
+                prixUnitaire.toFixed(3)
               }</td>
               <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center;">${remisePourcentage}%</td>
               <td style="border: 1px solid #000; padding: 8px; font-size: 11px; text-align: right; font-weight: bold;">${
-                total
+                total.toFixed(3)
               }</td>
             </tr>
           `;
@@ -462,19 +462,19 @@ class BonCommandePdfService {
                   <tr class="total-ht">
                       <td><strong>Total HT</strong></td>
                       <td style="text-align: right;"><strong>${
-                        data.montant_ht || 0
+                       ( data.montant_ht || 0).toFixed(3)
                       }</strong></td>
                   </tr>
                   <tr class="total-tva">
                       <td><strong>TVA (${data.tax_rate || 0}%)</strong></td>
                       <td style="text-align: right;"><strong>${
-                        data.montant_tva || 0
+                       ( data.montant_tva || 0).toFixed(3)
                       }</strong></td>
                   </tr>
                   <tr class="total-ttc">
                       <td><strong>TOTAL TTC</strong></td>
                       <td style="text-align: right;"><strong>${
-                        data.montant_ttc || 0
+                        d(ata.montant_ttc || 0).toFixed(3)
                       }</strong></td>
                   </tr>
               </table>

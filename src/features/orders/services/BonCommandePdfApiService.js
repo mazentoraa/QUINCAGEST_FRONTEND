@@ -85,7 +85,7 @@ class BonCommandePdfApiService {
   }
   static formatFloat(value) {
     const number = parseFloat(value);
-    return isNaN(number) ? '0.00' : number.toFixed(2);
+    return isNaN(number) ? '0.000' : number.toFixed(3);
   }
   
   static generateOrderHTML(orderData) {
@@ -104,20 +104,20 @@ class BonCommandePdfApiService {
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
           item.quantite || 0
         }</td>
-        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-size: 11px;">${
+        <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
           this.formatFloat(item.prix_unitaire || 0)
         }</td>
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
           item.remise_pourcentage || 0
         }%</td>
-        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-size: 11px;">${
+        <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
           this.formatFloat( item.prix_total || 0)
         }</td>
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
           orderData.tax_rate || 20
         }%</td>
-        <td style="border: 1px solid #000; padding: 8px; text-align: right; font-size: 11px;">${
-          this.formatFloat(item.prix_total || 0) * (1 + (orderData.tax_rate || 20) / 100)
+        <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
+          this.formatFloat((item.prix_total || 0) * (1 + (orderData.tax_rate || 20) / 100))
         }</td>
       </tr>
     `
@@ -220,7 +220,7 @@ class BonCommandePdfApiService {
     <th style=" width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
     <th style="width: 18%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
     <th style="width: 7%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
-    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">TOTAL P. TTC</th>
+    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
   </tr>
 </thead>
 

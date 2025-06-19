@@ -484,7 +484,9 @@ const BonLivraisonReception = () => {
           </Tooltip>
           <Tooltip title="Supprimer">
            <Popconfirm
+
               title="Êtes-vous sûr de vouloir supprimer ce bon?"
+
               onConfirm={() => handleDeleteInvoice(record.id)}
               okText="Oui"
               cancelText="Non"
