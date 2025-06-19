@@ -76,10 +76,13 @@ const WorkService = {
     try {
       // Format material usage data
       if (workData.materialsUsed && workData.materialsUsed.length > 0) {
-        workData.matiere_usages = workData.materialsUsed.map(material => ({
-          matiere_id: material.materialId,
-          quantite_utilisee: material.quantite,
-        }));
+        workData.matiere_usages = workData.materialsUsed
+  .filter(m => m.quantite && m.quantite > 0)
+  .map(material => ({
+    matiere_id: material.materialId,
+    quantite_utilisee: material.quantite,
+  }));
+
         delete workData.materialsUsed;
       }
   
@@ -93,9 +96,14 @@ const WorkService = {
       const response = await axios.post(API_URL + '/', workData);
       return new WorkModel(response.data);
     } catch (error) {
-      console.error('Error creating work:', error?.response?.data || error);
+      if (error.response) {
+        console.error("🔥 Backend responded with error data:", error.response.data);
+      } else {
+        console.error("❌ Error creating work:", error.message);
+      }
       throw error;
     }
+    
   },
   
 

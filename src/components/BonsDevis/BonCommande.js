@@ -97,6 +97,9 @@ export default function BonCommande() {
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [newOrderProducts, setNewOrderProducts] = useState([]);
 
+   const [formError, setFormError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
+
   const recalculateTotalsInDrawer = (products, taxRate) => {
     const montantHt = products.reduce((sum, p) => sum + p.prix_total, 0);
     const montantTva = montantHt * (taxRate / 100);
@@ -293,6 +296,8 @@ export default function BonCommande() {
 
   const handleDrawerSave = async () => {
     try {
+      setFormError(null);
+      setSuccessMessage(null);
       const values = await drawerForm.validateFields();
       setLoading(true);
 
@@ -363,6 +368,8 @@ export default function BonCommande() {
         message.success(
           `Commande ${createdOrder.numero_commande} créée avec succès!`
         );
+        setSuccessMessage("Commande ajoutée avec succès !");
+        setTimeout(() => setSuccessMessage(null), 3000);
       } else {
         const montant_ht = currentProductsInDrawer.reduce( (sum, p) => sum + (p.prix_total || 0),
         0)
@@ -404,6 +411,8 @@ export default function BonCommande() {
           updatedOrder.tax_rate || values.tax_rate
         );
         message.success("Commande mise à jour avec succès!");
+        setSuccessMessage("Commande mise à jour avec succès !");
+        setTimeout(() => setSuccessMessage(null), 3000);
       }
 
       handleDrawerClose();
@@ -413,7 +422,12 @@ export default function BonCommande() {
       message.error(
         "Échec de la sauvegarde. " +
           (errorInfo.message || "Check console for details.")
+
       );
+      setFormError(
+        "Erreur lors de la création du Commande. Veuillez vérifier les champs."
+      );
+      setTimeout(() => setFormError(null), 4000);
     } finally {
       setLoading(false);
     }
@@ -1087,7 +1101,29 @@ export default function BonCommande() {
               </Title>
             </Col>
           </Row>
-
+          {successMessage && (
+            <div style={{   marginBottom: 16,
+              padding: "12px",
+              border: "1px solid #52c41a",
+              backgroundColor: "#f6ffed",
+              color: "#237804",
+              borderRadius: "6px",
+              fontWeight: 500,}}>
+              ✅ {successMessage}
+            </div>
+          )}
+           {formError && (
+              <div style={{    marginBottom: 16,
+                padding: "12px",
+                border: "1px solid #ff4d4f",
+                backgroundColor: "#fff1f0",
+                color: "#a8071a",
+                borderRadius: "6px",
+                fontWeight: 500, }}>
+                {formError}
+              </div>
+            )}
+          
           {/* Statistics */}
           <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col span={6}>

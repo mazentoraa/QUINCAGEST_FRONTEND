@@ -86,7 +86,10 @@ const WorkManagementPage = () => {
   // Add state for selected rows
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedRowsData, setSelectedRowsData] = useState([]);
-
+  const [formError, setFormError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [TraiteMessage, setTraiteMessage] = useState(null);
+  const [FactureMessage, setFactureMessage] = useState(null);
   useEffect(() => {
     if (created) {
       console.log("✅ Modal.success triggered");
@@ -303,33 +306,57 @@ const WorkManagementPage = () => {
 
   const handleSubmit = async (values) => {
     try {
-      // Temporary workaround: halve the quantity of each selected material before sending
-      const adjustedMaterials = selectedMaterials.map((material) => ({
-        materialId: material.materialId,
-        quantite: material.quantite / 2,
-      }));
+      setFormError(null);
+      setSuccessMessage(null);
+
+      const adjustedMaterials = selectedMaterials
+        .filter((m) => m.quantite && m.quantite > 0)
+        .map((m) => ({
+          matiere_id: m.materialId,
+          quantite_utilisee: m.quantite,
+        }));
+
+      if (adjustedMaterials.length === 0) {
+        setFormError(
+          "Veuillez sélectionner au moins une matière première avec une quantité valide."
+        );
+        return;
+      }
 
       const workData = {
         ...values,
-        materialsUsed: adjustedMaterials,
+        matiere_usages: adjustedMaterials,
       };
-      console.log("workdata", workData);
+
       if (editingWork) {
         await WorkService.updateWork(editingWork.id, workData);
-        message.success("Travail mis à jour avec succès");
+        setIsModalVisible(false);
+        setSuccessMessage("Travail mis à jour avec succès !");
+        setTimeout(() => setSuccessMessage(null), 3000);
       } else {
-        console.log("Payload to createWork:", workData);
         await WorkService.createWork(workData);
-        message.success("Travail ajouté avec succès");
+        setIsModalVisible(false);
+        setSuccessMessage("Travail ajouté avec succès !");
+        setTimeout(() => setSuccessMessage(null), 3000);
       }
-      setIsModalVisible(false);
-      fetchWorks();
 
+      fetchWorks();
+      form.resetFields();
       setSelectedMaterials([]);
       setClientMaterials([]);
-      form.resetFields();
     } catch (error) {
-      message.error("Erreur lors de l'enregistrement");
+      const detail = error?.response?.data;
+      if (detail?.matiere_usages) {
+        setFormError(
+          "Une ou plusieurs matières premières sont invalides ou incomplètes."
+        );
+        setTimeout(() => setFormError(null), 4000);
+      } else {
+        setFormError(
+          "Erreur lors de la création du travail. Veuillez vérifier les champs."
+        );
+        setTimeout(() => setFormError(null), 4000);
+      }
     }
   };
 
@@ -1097,7 +1124,8 @@ const WorkManagementPage = () => {
         invoiceToPost,
         clientId
       );
-
+        setTraiteMessage ("Travail traité avec succée ! ") ;
+        setTimeout(() => setTraiteMessage(null), 4000);
       message.success({
         content: "Facture enregistrée avec succès!",
         key: "savingInvoice",
@@ -1154,6 +1182,29 @@ const WorkManagementPage = () => {
           }}
         >
           <Title level={2}>Gestion des Travaux</Title>
+          {successMessage && (
+            <div style={{   marginBottom: 16,
+              padding: "12px",
+              border: "1px solid #52c41a",
+              backgroundColor: "#f6ffed",
+              color: "#237804",
+              borderRadius: "6px",
+              fontWeight: 500,}}>
+              ✅ {successMessage}
+            </div>
+          )}
+           {formError && (
+              <div style={{    marginBottom: 16,
+                padding: "12px",
+                border: "1px solid #ff4d4f",
+                backgroundColor: "#fff1f0",
+                color: "#a8071a",
+                borderRadius: "6px",
+                fontWeight: 500, }}>
+                {formError}
+              </div>
+            )}
+          
           <Space>
             {selectedRowKeys.length > 0 && (
               <div>
@@ -1172,8 +1223,7 @@ const WorkManagementPage = () => {
                     const success = await sendDataToFacture();
                     if (success) {
                       setCreated(true);
-              
-                    
+
                       return true;
                     }
                   }}
@@ -1208,7 +1258,17 @@ const WorkManagementPage = () => {
             </Button>
           </Space>
         </div>
-
+        {TraiteMessage && (
+            <div style={{   marginBottom: 16,
+              padding: "12px",
+              border: "1px solid #52c41a",
+              backgroundColor: "#f6ffed",
+              color: "#237804",
+              borderRadius: "6px",
+              fontWeight: 500,}}>
+              ✅ {TraiteMessage}
+            </div>
+          )}
         <div
           style={{ marginBottom: 16, display: "flex", alignItems: "center" }}
         >
@@ -1285,6 +1345,8 @@ const WorkManagementPage = () => {
           width={800}
         >
           <Form form={form} layout="vertical" onFinish={handleSubmit}>
+           
+
             <Form.Item
               name="client_id"
               label="Client"
@@ -1576,7 +1638,7 @@ const WorkManagementPage = () => {
                     />
                   </Form.Item>
                 </Col>
-                <Col span={4}>
+                <Col span={8}>
                   <Form.Item label="Taux de TVA (%)">
                     <Select
                       style={{ width: "100%" }}
