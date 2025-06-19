@@ -165,7 +165,7 @@ const BonRetour = () => {
     setEditingBonRetour(null);
     setSelectedMaterials([]);
     setAvailableMaterials([]);
-
+   setCustomMaterials([{ name: "", quantite: 0 }]); 
     // Set default values
     form.setFieldsValue({
       numero_bon: BonRetourService.generateBonRetourNumber(bonsRetour),
@@ -263,17 +263,23 @@ const BonRetour = () => {
 
   const handleSubmit = async (values) => {
     try {
-      // Validate materials selection
-      if (selectedMaterials.length === 0) {
-        message.error("Veuillez sélectionner au moins une matière à retourner");
+      if (
+        !customMaterials.length ||
+        customMaterials.every((mat) => !mat.name || !mat.quantite)
+      ) {
+        message.error("Veuillez ajouter au moins une matière avec une quantité.");
         return;
       }
+      
 
       // Prepare materials data for submission
-      const materialsToSubmit = selectedMaterials.map((mat) => ({
-        matiere_id: mat.materialId,
-        quantite_retournee: mat.quantite_retournee,
+      const materialsToSubmit = customMaterials
+      .filter((mat) => mat.name && mat.quantite)
+      .map((mat) => ({
+        nom_matiere: mat.name,
+        quantite_retournee: mat.quantite,
       }));
+    
 
       const bonRetourData = {
         ...values,
@@ -558,7 +564,10 @@ const BonRetour = () => {
       ),
     },
   ];
-
+  const [customMaterials, setCustomMaterials] = useState([
+    { name: "", quantite: 0 },
+  ]);
+  
   return (
     <Content style={{ padding: "24px", minHeight: "calc(100vh - 64px)" }}>
       <div style={{ background: "#fff", padding: "24px", borderRadius: "2px" }}>
@@ -781,131 +790,65 @@ const BonRetour = () => {
             </Row>
 
             {/* Available Materials */}
-            {availableMaterials.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <Divider orientation="left">
-                  Matières Disponibles pour Retour
-                </Divider>
-                <List
-                  loading={loadingMaterials}
-                  dataSource={availableMaterials}
-                  renderItem={(material) => {
-                    const currentSelection = selectedMaterials.find(
-                      (sm) => sm.materialId === material.id
-                    );
-                    return (
-                      <List.Item>
-                        <Card style={{ width: "100%" }} size="small">
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                            }}
-                          >
-                            <div style={{ flex: 1 }}>
-                              <Space>
-                                <Tag color="blue">{material.type_matiere}</Tag>
-                                <span>
-                                  {material.description ||
-                                    material.designation ||
-                                    "N/A"}
-                                </span>
-                              </Space>
-                              <div>
-                                <Text type="secondary">
-                                  Dimensions: {material.thickness || "-"}x
-                                  {material.length || "-"}x
-                                  {material.width || "-"}mm
-                                </Text>
-                              </div>
-                              <div>
-                                <Text type="secondary">
-                                  Quantité disponible:{" "}
-                                  <strong>{material.remaining_quantity}</strong>
-                                </Text>
-                              </div>
-                            </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 8,
-                              }}
-                            >
-                              <InputNumber
-                                min={0}
-                                max={material.remaining_quantity}
-                                value={
-                                  currentSelection
-                                    ? currentSelection.quantite_retournee
-                                    : material.remaining_quantity
-                                }
-                                onChange={(value) =>
-                                  handleMaterialSelect(material.id, value)
-                                }
-                                addonAfter="pièces"
-                                placeholder="Qté à retourner"
-                                style={{ width: 160 }}
-                              />
-                              {currentSelection && (
-                                <Button
-                                  type="link"
-                                  danger
-                                  size="small"
-                                  onClick={() =>
-                                    handleMaterialSelect(material.id, 0)
-                                  }
-                                >
-                                  Retirer
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </Card>
-                      </List.Item>
-                    );
-                  }}
-                />
+            <Divider orientation="left">Matières à retourner</Divider>
+<List
+  bordered
+  dataSource={customMaterials}
+  renderItem={(item, index) => (
+    <List.Item
+      actions={[
+        customMaterials.length > 1 ? (
+          <Button
+            danger
+            type="text"
+            icon={<DeleteOutlined />}
+            onClick={() => {
+              const newList = [...customMaterials];
+              newList.splice(index, 1);
+              setCustomMaterials(newList);
+            }}
+          />
+        ) : null,
+      ]}
+    >
+      <Space style={{ width: "100%" }} direction="vertical">
+        <Input
+          placeholder="Nom de la matière"
+          value={item.name}
+          onChange={(e) => {
+            const newList = [...customMaterials];
+            newList[index].name = e.target.value;
+            setCustomMaterials(newList);
+          }}
+        />
+        <InputNumber
+          placeholder="Quantité"
+          min={1}
+          value={item.quantite}
+          onChange={(value) => {
+            const newList = [...customMaterials];
+            newList[index].quantite = value;
+            setCustomMaterials(newList);
+          }}
+          style={{ width: "100%" }}
+        />
+      </Space>
+    </List.Item>
+  )}
+  footer={
+    <Button
+      type="dashed"
+      icon={<PlusOutlined />}
+      onClick={() =>
+        setCustomMaterials([...customMaterials, { name: "", quantite: 1 }])
+      }
+      block
+    >
+      Ajouter une matière
+    </Button>
+  }
+/>
 
-                {selectedMaterials.length > 0 && (
-                  <div style={{ marginTop: 16 }}>
-                    <Title level={5}>
-                      Matières sélectionnées pour retour (
-                      {selectedMaterials.length})
-                    </Title>
-                    <List
-                      size="small"
-                      bordered
-                      dataSource={selectedMaterials}
-                      renderItem={(item) => {
-                        const material = availableMaterials.find(
-                          (m) => m.id === item.materialId
-                        );
-                        return (
-                          <List.Item>
-                            <Space>
-                              <Tag color="green">{material?.type_matiere}</Tag>
-                              <Text>
-                                {material?.description ||
-                                  material?.designation ||
-                                  "Matériau inconnu"}
-                                ({material?.thickness || "-"}x
-                                {material?.length || "-"}x
-                                {material?.width || "-"}mm)
-                              </Text>
-                              <Text strong>
-                                - {item.quantite_retournee} pièce(s)
-                              </Text>
-                            </Space>
-                          </List.Item>
-                        );
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
 
             <Form.Item name="notes" label="Notes">
               <TextArea rows={4} placeholder="Notes supplémentaires..." />
