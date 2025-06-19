@@ -837,7 +837,7 @@ const ClientRawMaterialsPage = () => {
               })
             }
           >
-            Imprimer la facture
+            Imprimer le bon de livraison
           </Button>,
         ]}
       >
