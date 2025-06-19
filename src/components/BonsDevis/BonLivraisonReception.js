@@ -162,7 +162,7 @@ const BonLivraisonReception = () => {
       const response = await ClientMaterialService.getAllMaterialInvoices(
         params
       );
-
+       console.log("res",response)
       const processNotes = (notes) => {
         return notes.map((note) => {
           const currentMatieresDetails = Array.isArray(note.matieres_details)
@@ -182,6 +182,7 @@ const BonLivraisonReception = () => {
         typeof response.count === "number" &&
         Array.isArray(response.results)
       ) {
+        
         setDeliveryNotes(processNotes(response.results));
         setTotalRecords(response.count);
       } else if (Array.isArray(response)) {
@@ -359,7 +360,8 @@ const BonLivraisonReception = () => {
       const clientPhone = record.client_details?.telephone || "N/A";
       const clientEmail = record.client_details?.email || "N/A";
       const clientTaxId = record.client_details?.numero_fiscal || "N/A";
-      const clientCode = record.client_details?.id || record.client || "N/A";
+      const clientCode = record.client_details?.code_client || record.client || "N/A";
+      console.log("details",record)
 
       const totalQuantity = calculateTotalQuantity(record.matieres_details);
 
@@ -371,7 +373,7 @@ const BonLivraisonReception = () => {
         clientAddress: clientAddress,
         clientTaxId: clientTaxId,
         clientPhone: clientPhone,
-        clientCode: clientCode,
+        code_client: clientCode,
         materials: record.matieres_details.map((item) => ({
           numero_bon: record.numero_bon, // Use the delivery note number for all items
           reception_date: record.date_reception,

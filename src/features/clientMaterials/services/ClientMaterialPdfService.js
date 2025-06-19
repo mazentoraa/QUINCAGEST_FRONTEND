@@ -358,7 +358,7 @@ class ClientMaterialPdfService {
           </div>
         </div>
        <div class="logo" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
-  <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
+      <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER" style="width: 300px;">
 
   <div class="client-info">
     <strong>Nom Client :</strong> ${data.clientName || ""}<br>
