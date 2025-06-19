@@ -6,12 +6,9 @@ import {
   AccountBookOutlined,
   UserOutlined,
   ToolOutlined,
-  CarOutlined,
-  DatabaseOutlined,
   FileOutlined,
   BankOutlined,
-  BarChartOutlined,
-  ShoppingCartOutlined
+  BarChartOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -25,7 +22,6 @@ function SideMenu() {
     navigate(path);
   };
 
-  // Get the current open submenu keys based on path
   const getOpenKeys = () => {
     const path = location.pathname;
     if (path.includes('/stock')) return ['stock'];
@@ -49,6 +45,9 @@ function SideMenu() {
         <Menu.Item key="/clients" icon={<UserOutlined />} onClick={() => handleMenuClick('/clients')}>
           Clients
         </Menu.Item>
+
+        
+
         <SubMenu key="stock" icon={<ShoppingOutlined />} title="Gestion de Stock">
           <Menu.Item key="/stock/produits" onClick={() => handleMenuClick('/stock/produits')}>
             Produits Finis
@@ -82,11 +81,6 @@ function SideMenu() {
               Bon de Retour
             </Menu.Item>
           </SubMenu>
-          
-
-          {/* <Menu.Item key="/manifeste/inventaire" icon={<DatabaseOutlined />} onClick={() => handleMenuClick('/manifeste/inventaire')}>
-            Inventaire
-          </Menu.Item> */}
         </SubMenu>
         
         <SubMenu key="reglements" icon={<AccountBookOutlined />} title="Règlements">
@@ -96,14 +90,10 @@ function SideMenu() {
           <Menu.Item key="/reglements/traites" icon={<BankOutlined />} onClick={() => handleMenuClick('/reglements/traites')}>
             Traites
           </Menu.Item>
-          <Menu.Item key="/reglements/rapport" icon={<BarChartOutlined />} onClick={() => handleMenuClick('/reglements/rapport')}>
-            Rapport
-          </Menu.Item>
         </SubMenu>
-
-        {/* <Menu.Item key="/purshase" icon={<ShoppingCartOutlined />} onClick={() => handleMenuClick('/purshase')}>
-          Achats
-          </Menu.Item> */}
+        <Menu.Item key="/reglements/rapport" icon={<BarChartOutlined />} onClick={() => handleMenuClick('/reglements/rapport')}>
+          Rapport
+        </Menu.Item>
       </Menu>
     </div>
   );
