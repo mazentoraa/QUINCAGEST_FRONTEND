@@ -318,6 +318,7 @@ const WorkManagementPage = () => {
         await WorkService.updateWork(editingWork.id, workData);
         message.success("Travail mis à jour avec succès");
       } else {
+        console.log("Payload to createWork:", workData);
         await WorkService.createWork(workData);
         message.success("Travail ajouté avec succès");
       }

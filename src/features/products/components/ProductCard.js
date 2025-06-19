@@ -25,8 +25,8 @@ const { Text, Paragraph } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const ProductCard = ({ product }) => {
-  const { updateProduct, deleteProduct } = useProducts();
+const ProductCard = ({ product , onDuplicateSuccess }) => {
+  const {addProduct, updateProduct, deleteProduct } = useProducts();
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [form] = Form.useForm();
@@ -86,41 +86,42 @@ const ProductCard = ({ product }) => {
       reader.readAsDataURL(file);
     });
 
-  const handleSubmit = async (values) => {
-    console.log("✅ ProductCard submit triggered");
-    console.log("width:", values.width, "epaisseur:", values.thickness);
-  
-    console.log("✅ ProductCard submit triggered");
-    console.log("width:", values.width, "epaisseur:", values.thickness);
-  
-    try {
-      let imageData = null;
-      if (fileList.length > 0 && fileList[0].originFileObj) {
-        imageData = await getBase64(fileList[0].originFileObj);
-      } else if (imageUrl) {
-        imageData = imageUrl;
+    const handleSubmit = async (values) => {
+      try {
+        let imageData = null;
+        if (fileList.length > 0 && fileList[0].originFileObj) {
+          imageData = await getBase64(fileList[0].originFileObj);
+        } else if (imageUrl) {
+          imageData = imageUrl;
+        }
+    
+        const newProduct = {
+          nom_produit: values.name,
+          code_produit : values.code_produit,
+          type_matiere: values.material,
+          epaisseur: values.thickness,
+          longueur: values.length,
+          largeur: values.width,
+          surface: values.surface,
+          prix: values.price,
+          description: values.description,
+          image: imageData,
+        };
+    
+        
+        await addProduct(newProduct);
+    
+        setIsEditing(false);
+        if (onDuplicateSuccess) {
+          console.log("✅ Calling onDuplicateSuccess...");
+          onDuplicateSuccess();
+        }
+        
+      } catch (error) {
+        console.error("Erreur lors de l'ajout du produit cloné:", error);
       }
-
-      const updatedProduct = {
-        nom_produit: values.name,
-        code_produit : values.code_produit ,
-        type_matiere: values.material,
-        epaisseur: values.thickness,
-        longueur: values.length,
-        largeur: values.width,
-        surface: values.surface,
-        prix: values.price,
-        description: values.description,
-        image: imageData,
-      };
-      console.log("🚀 Payload sent to updateProduct:", updatedProduct);
-
-      await updateProduct(product.id, updatedProduct);
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour du produit:", error);
-    }
-  };
+    };
+    
 
   const handleDelete = async () => {
     try {
