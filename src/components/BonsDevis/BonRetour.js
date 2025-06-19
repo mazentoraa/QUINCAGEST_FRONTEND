@@ -282,15 +282,37 @@ const BonRetour = () => {
         matiere_retours: materialsToSubmit, // Use materialsToSubmit instead of materialsToValidate
       };
 
+      console.log("Submitting bonRetourData:", bonRetourData);
+
       if (editingBonRetour) {
-        await BonRetourService.updateBonRetour(
-          editingBonRetour.id,
-          bonRetourData
-        );
-        message.success("Bon de retour mis à jour avec succès");
+        try {
+          await BonRetourService.updateBonRetour(
+            editingBonRetour.id,
+            bonRetourData
+          );
+          message.success("Bon de retour mis à jour avec succès");
+        } catch (updateError) {
+          console.error("Error updating bon de retour:", updateError);
+          message.error(
+            `Erreur lors de la mise à jour: ${
+              updateError.response?.data || updateError.message
+            }`
+          );
+          return;
+        }
       } else {
-        await BonRetourService.createBonRetour(bonRetourData);
-        message.success("Bon de retour créé avec succès");
+        try {
+          await BonRetourService.createBonRetour(bonRetourData);
+          message.success("Bon de retour créé avec succès");
+        } catch (createError) {
+          console.error("Error creating bon de retour:", createError);
+          message.error(
+            `Erreur lors de la création: ${
+              createError.response?.data || createError.message
+            }`
+          );
+          return;
+        }
       }
 
       setIsModalVisible(false);
@@ -299,6 +321,7 @@ const BonRetour = () => {
       setAvailableMaterials([]);
       form.resetFields();
     } catch (error) {
+      console.error("Unexpected error in handleSubmit:", error);
       message.error("Erreur lors de l'enregistrement");
     }
   };

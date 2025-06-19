@@ -86,7 +86,7 @@ const WorkManagementPage = () => {
   // Add state for selected rows
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedRowsData, setSelectedRowsData] = useState([]);
-  const [formError, setFormError] = useState(null);
+  // const [formError, setFormError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [TraiteMessage, setTraiteMessage] = useState(null);
   
@@ -306,7 +306,7 @@ const WorkManagementPage = () => {
 
   const handleSubmit = async (values) => {
     try {
-      setFormError(null);
+      // setFormError(null);
       setSuccessMessage(null);
 
       const adjustedMaterials = selectedMaterials
@@ -316,12 +316,12 @@ const WorkManagementPage = () => {
           quantite_utilisee: m.quantite,
         }));
 
-      if (adjustedMaterials.length === 0) {
-        setFormError(
-          "Veuillez sélectionner au moins une matière première avec une quantité valide."
-        );
-        return;
-      }
+      // if (adjustedMaterials.length === 0) {
+      //   setFormError(
+      //     "Veuillez sélectionner au moins une matière première avec une quantité valide."
+      //   );
+      //   return;
+      // }
 
       const workData = {
         ...values,
@@ -346,17 +346,17 @@ const WorkManagementPage = () => {
       setClientMaterials([]);
     } catch (error) {
       const detail = error?.response?.data;
-      if (detail?.matiere_usages) {
-        setFormError(
-          "Une ou plusieurs matières premières sont invalides ou incomplètes."
-        );
-        setTimeout(() => setFormError(null), 4000);
-      } else {
-        setFormError(
-          "Erreur lors de la création du travail. Veuillez vérifier les champs."
-        );
-        setTimeout(() => setFormError(null), 4000);
-      }
+      // if (detail?.matiere_usages) {
+      //   setFormError(
+      //     "Une ou plusieurs matières premières sont invalides ou incomplètes."
+      //   );
+      //   setTimeout(() => setFormError(null), 4000);
+      // } else {
+        // setFormError(
+        //   "Erreur lors de la création du travail. Veuillez vérifier les champs."
+        // );
+        // setTimeout(() => setFormError(null), 4000);
+      // }
     }
   };
 
@@ -1193,7 +1193,7 @@ const WorkManagementPage = () => {
               ✅ {successMessage}
             </div>
           )}
-           {formError && (
+           {/* {formError && (
               <div style={{    marginBottom: 16,
                 padding: "12px",
                 border: "1px solid #ff4d4f",
@@ -1203,7 +1203,7 @@ const WorkManagementPage = () => {
                 fontWeight: 500, }}>
                 {formError}
               </div>
-            )}
+            )} */}
           
           <Space>
             {selectedRowKeys.length > 0 && (
