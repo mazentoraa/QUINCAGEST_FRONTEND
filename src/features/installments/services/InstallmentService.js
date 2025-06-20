@@ -5,6 +5,7 @@ const { cdsService } = getApiService();
 
 export const getPlansTraite = async () => {
   const data = await cdsService.getPlansTraite();
+  console.log("!!traiite",data);
   return data;
 };
 

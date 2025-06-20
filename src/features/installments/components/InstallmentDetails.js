@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import './InstallmentDetails.css';
+import React, { useState, useMemo } from "react";
+import "./InstallmentDetails.css";
 
 const InstallmentDetails = ({ installment, onBack, onUpdateInstallment }) => {
   const mappedInstallmentDetails = useMemo(() => {
@@ -7,13 +7,13 @@ const InstallmentDetails = ({ installment, onBack, onUpdateInstallment }) => {
       id: traite.id,
       amount: traite.montant,
       dueDate: traite.date_echeance,
-      status: traite.status || 'non_paye',
+      status: traite.status || "non_paye",
     }));
   }, [installment.traites]);
 
   const [installmentStatuses, setInstallmentStatuses] = useState(() => {
     return mappedInstallmentDetails.reduce((acc, detail, i) => {
-      acc[i] = detail.status || 'non_paye';
+      acc[i] = detail.status || "non_paye";
       return acc;
     }, {});
   });
@@ -21,28 +21,34 @@ const InstallmentDetails = ({ installment, onBack, onUpdateInstallment }) => {
   const handleInstallmentStatusChange = (index, newStatus) => {
     const updatedStatuses = {
       ...installmentStatuses,
-      [index]: newStatus || 'non_paye'
+      [index]: newStatus,
     };
     setInstallmentStatuses(updatedStatuses);
 
-    const updatedInstallmentDetails = mappedInstallmentDetails.map((detail, i) => ({
-      ...detail,
-      status: updatedStatuses[i] || 'non_paye'
-    }));
+    const updatedInstallmentDetails = mappedInstallmentDetails.map(
+      (detail, i) => ({
+        ...detail,
+        status: updatedStatuses[i],
+      })
+    );
 
-    const allPaid = updatedInstallmentDetails.every(detail => detail.status === 'paye');
-    const somePaid = updatedInstallmentDetails.some(detail => detail.status === 'paye');
+    const allPaid = updatedInstallmentDetails.every(
+      (detail) => detail.status === "PAYEE"
+    );
+    const somePaid = updatedInstallmentDetails.some(
+      (detail) => detail.status === "PAYEE"
+    );
 
     const globalStatus = allPaid
-      ? 'paye'
+      ? "PAYEE"
       : somePaid
-      ? 'partiellement_paye'
-      : 'non_paye';
+      ? "PARTIELLEMENT_PAYEE"
+      : "NON_PAYEE";
 
     const updatedInstallment = {
       ...installment,
       traites: updatedInstallmentDetails,
-      status: globalStatus
+      status: globalStatus,
     };
 
     onUpdateInstallment(updatedInstallment);
@@ -56,25 +62,34 @@ const InstallmentDetails = ({ installment, onBack, onUpdateInstallment }) => {
 
     setInstallmentStatuses(updatedStatuses);
 
-    const updatedInstallmentDetails = mappedInstallmentDetails.map((detail) => ({
-      ...detail,
-      status: newStatus
-    }));
+    const updatedInstallmentDetails = mappedInstallmentDetails.map(
+      (detail) => ({
+        ...detail,
+        status: newStatus,
+      })
+    );
 
-    const globalStatus = newStatus === 'paye' ? 'paye' : 'non_paye';
+    const globalStatus = newStatus === "PAYEE" ? "PAYEE" : "NON_PAYEE";
 
     const updatedInstallment = {
       ...installment,
       traites: updatedInstallmentDetails,
-      status: globalStatus
+      status: globalStatus,
     };
 
     onUpdateInstallment(updatedInstallment);
   };
 
   const totalInstallments = mappedInstallmentDetails.length;
-  const paidInstallments = Object.values(installmentStatuses).filter(status => status === 'paye').length;
-  const unpaidInstallments = totalInstallments - paidInstallments;
+
+  const paidInstallments = Object.values(installmentStatuses).filter(
+    (status) => status === "PAYEE"
+  ).length;
+  
+  const unpaidInstallments = Object.values(installmentStatuses).filter(
+    (status) => status === "NON_PAYEE"
+  ).length;
+  
 
   return (
     <div className="installment-details-page">
@@ -88,10 +103,36 @@ const InstallmentDetails = ({ installment, onBack, onUpdateInstallment }) => {
       <div className="client-info-card">
         <h2>Informations Client</h2>
         <div className="info-grid">
-          <div className="info-item"><label>Nom du Client:</label><span>{installment.client_nom}</span></div>
-          <div className="info-item"><label>Adresse:</label><span>{installment.client_adresse || 'Non spécifiée'}</span></div>
-          <div className="info-item"><label>Numéro de Facture:</label><span>{installment.numero_facture}</span></div>
-          <div className="info-item"><label>Montant Total:</label><span className="amount">{installment.montant_total} DT</span></div>
+          <div className="info-item">
+            <label>Nom du Client:</label>
+            <span>{installment.client_nom}</span>
+          </div>
+          <div className="info-item">
+            <label>Adresse:</label>
+            <span>{installment.client_adresse || "Non spécifiée"}</span>
+          </div>
+          <div className="info-item">
+            <label>Numéro de Facture:</label>
+            <span>{installment.numero_facture}</span>
+          </div>
+          <div className="info-item">
+            <label>Montant Total:</label>
+            <span className="amount">{installment.montant_total} DT</span>
+          </div>
+        </div>
+      </div>
+      <div className="installment-summary-cards">
+        <div className="summary-card total">
+          <h3>{totalInstallments}</h3>
+          <p>TOTAL TRAITES</p>
+        </div>
+        <div className="summary-card paid">
+          <h3>{paidInstallments}</h3>
+          <p>PAYÉES</p>
+        </div>
+        <div className="summary-card unpaid">
+          <h3>{unpaidInstallments}</h3>
+          <p>NON PAYÉES</p>
         </div>
       </div>
 
@@ -105,31 +146,67 @@ const InstallmentDetails = ({ installment, onBack, onUpdateInstallment }) => {
                 <th>Montant</th>
                 <th>Date d'Échéance</th>
                 <th>Statut</th>
+                <th>Changer le Statut</th> {/* ✅ New column */}
               </tr>
             </thead>
             <tbody>
-              {mappedInstallmentDetails.map((detail, i) => (
-                <tr key={i} className={installmentStatuses[i] === 'paye' ? 'paid-row' : 'unpaid-row'}>
-                  <td className="installment-number">#{i + 1}</td>
-                  <td className="amount">{detail.amount} DT</td>
-                  <td className="due-date">{new Date(detail.dueDate).toLocaleDateString('fr-FR')}</td>
-                  <td className="status-cell">
-                    <input
-                      type="text"
-                      value={installmentStatuses[i]}
-                      placeholder="non_paye"
-                      onChange={(e) => handleInstallmentStatusChange(i, e.target.value)}
-                      className={`status-input ${installmentStatuses[i]}`}
-                    />
-                  </td>
-                </tr>
-              ))}
+              {mappedInstallmentDetails.map((detail, i) => {
+                const isPaid = installmentStatuses[i] === "PAYEE";
+
+                return (
+                  <tr key={i} className={isPaid ? "paid-row" : "unpaid-row"}>
+                    <td className="installment-number">#{i + 1}</td>
+                    <td className="amount">{detail.amount} DT</td>
+                    <td className="due-date">
+                      {new Date(detail.dueDate).toLocaleDateString("fr-FR")}
+                    </td>
+
+                    {/* ✅ Display status as label */}
+                    <td className="status-cell">
+                      <span
+                        className={`status-label ${isPaid ? "paid" : "unpaid"}`}
+                      >
+                        {isPaid ? "Payée" : "Non payée"}
+                      </span>
+                    </td>
+
+                    {/* ✅ Toggle status button */}
+                    <td>
+                      <button
+                        className={`toggle-status-btn ${
+                          isPaid ? "mark-unpaid" : "mark-paid"
+                        }`}
+                        onClick={() =>
+                          handleInstallmentStatusChange(
+                            i,
+                            isPaid ? "NON_PAYEE" : "PAYEE"
+                          )
+                        }
+                      >
+                        {isPaid ? "Marquer Non Payée" : "Marquer Payée"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
+        <div className="bulk-action-buttons">
+          <button
+            className="bulk-button mark-all-paid"
+            onClick={() => handleBulkStatusChange("PAYEE")}
+          >
+            Marquer tout comme Payée
+          </button>
+          <button
+            className="bulk-button mark-all-unpaid"
+            onClick={() => handleBulkStatusChange("NON_PAYEE")}
+          >
+            Marquer tout comme Non Payée
+          </button>
+        </div>
       </div>
-
-
     </div>
   );
 };
