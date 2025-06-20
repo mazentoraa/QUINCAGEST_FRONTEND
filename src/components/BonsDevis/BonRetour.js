@@ -90,6 +90,7 @@ const BonRetour = () => {
       if (dateFilter) queryParams.date_retour = dateFilter;
 
       const data = await BonRetourService.getAllBonsRetour(queryParams);
+      console.log("recordsss" , data)
       // Adjust to handle paginated response
       if (data && Array.isArray(data.results)) {
         setBonsRetour(data.results);
@@ -116,6 +117,8 @@ const BonRetour = () => {
   const fetchInitialClients = async () => {
     try {
       const clientsData = await ClientService.getAllClients();
+      console.log("clientss",clientsData)
+
       if (Array.isArray(clientsData)) {
         setClientOptions(
           clientsData.map((client) => ({
@@ -343,6 +346,7 @@ const BonRetour = () => {
   };
 
   const generateBonRetourPDF = async (recordFromList) => {
+    console.log(recordFromList);
     const hideLoading = message.loading("Génération du PDF en cours...", 0);
     let fullRecord = null;
     try {
@@ -371,6 +375,7 @@ const BonRetour = () => {
           console.warn("Could not fetch client data for PDF:", error);
           // Use whatever client info is available in recordFromList as a fallback
           fullRecord.client = recordFromList.client || {
+            code_client : "N/A",
             nom_client: "N/A",
             adresse: "N/A",
             numero_fiscal: "N/A",
@@ -382,6 +387,7 @@ const BonRetour = () => {
       // Ensure client is an object, even if some fields are N/A
       if (typeof fullRecord.client !== "object" || fullRecord.client === null) {
         fullRecord.client = {
+          code_client : "N/A",
           nom_client: "N/A",
           adresse: "N/A",
           numero_fiscal: "N/A",
@@ -437,6 +443,7 @@ const BonRetour = () => {
 
     for (const bonId of selectedRowKeys) {
       const recordToPrint = bonsRetour.find((br) => br.id === bonId);
+      console.log("to print")
       if (recordToPrint) {
         try {
           await generateBonRetourPDF(recordToPrint); // This function handles its own success/error messages

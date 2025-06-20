@@ -14,7 +14,7 @@ class BonRetourPdfService {
 
   static async generateBonRetourPDF(bonData, filename = "bon-retour.pdf") {
     try {
-      console.log("Generating Bon de Retour PDF using APDF.io API...");
+      console.log("Generating Bon de Retour PDF using APDF.io API...",bonData);
       const htmlContent = this.generateBonRetourHTML(bonData);
       // console.log("Generated HTML for Bon de Retour API (length):", htmlContent.length); // For debugging
 
@@ -139,9 +139,7 @@ class BonRetourPdfService {
 
         materialRows += `
           <tr>
-           <td style="border: 1px solid #000; padding: 6px 4px; font-size: 10px;text-align:center;">${type}</td>
-            <td style="border: 1px solid #000; padding: 6px 4px; font-size: 10px;text-align:center;">${description}</td>
-            <td style="border: 1px solid #000; padding: 6px 4px; font-size: 10px;text-align:center;">${dimensions}</td>
+           <td style="border: 1px solid #000; padding: 6px 4px; font-size: 10px;text-align:center;">${retour.nom_matiere}</td>
             <td style="border: 1px solid #000; padding: 6px 4px; font-size: 10px; text-align: center;">${quantity}</td>
           </tr>
         `;
@@ -159,7 +157,7 @@ class BonRetourPdfService {
       tel: "+216 20 366 150",
       email: "contact@rmmetalaser.tn",
       website: "www.rmmetalaser.tn",
-      logoUrl: "https://s6.imgcdn.dev/Y6OYhg.jpg", // Same logo as BonLivraisonDecoupe
+      logoUrl: "https://s6.imgcdn.dev/Y6OYhg.jpg", // Same logo as BonRetourDecoupe
     };
 
     return `
@@ -170,151 +168,86 @@ class BonRetourPdfService {
           <title>Bon de Retour - ${bonData.numero_bon}</title>
           <style>
               body {
-                  font-family: Arial, sans-serif;
-                  font-size: 12px; /* Base font size like invoice */
-                  color: black;
-                  margin: 0;
-                  padding: 15px;
-                  line-height: 1.4;
-              }
-              .header {
-                  text-align: center;
-                  margin-bottom: 25px;
-              }
-              .header img {
-                  width: 190px; /* Consistent logo size */
-                  margin-bottom: 5px;
-                  display: block;
-                  margin-left: auto;
-                  margin-right: auto;
-              }
-              .header h1 {
-                  margin: 8px 0;
-                  color: #333;
-                  font-size: 24px; /* Consistent title size */
-                  text-transform: uppercase;
-              }
-              .header p {
-                  margin: 3px 0;
-                  line-height: 1.3;
-                  font-size: 11px; /* Consistent company info font size */
-              }
-              .header a {
-                  color: #1890ff;
-                  text-decoration: none;
-              }
-              .info-section { /* Replaces .invoice-info */
-                  display: flex;
-                  justify-content: space-between;
-                  margin: 20px 0;
-                  font-size: 11px;
-              }
-              .company-details-inline { /* For company details next to bon details */
-                  width: 55%; /* Adjusted width */
-              }
-              .bon-details-inline { /* For bon details */
-                 .bon-details-inline { 
-               border: 1px solid #000;
-                padding: 2px 10px;
-                margin-top: 15px ;
-                display: flex;
-                flex-direction:column; 
-                justify-content: center;
-                width: fit-content;
-                line-height : 1.5 ; 
-              }
-              .client-info-box { /* Replaces .client-info */
-                  margin-top: 40px;
-                  border: 1px solid #000;
-                  padding: 10px;
-                  text-align: left; 
-                  width:300px ; 
-                  line-height : 1.5 ;
-              }
-              .items-table { /* Replaces .items-table from invoice */
-                  width: 100%;
-                  border-collapse: collapse;
-                  margin: 15px 0;
-              }
-              .items-table th {
-                  border: 1px solid #000; /* Consistent th border */
-                  padding: 8px 4px;
-                  text-align: center;
-                  background-color: #f0f0f0; /* Consistent th background */
-                  font-weight: bold;
-                  font-size: 10px; /* Consistent th font size */
-              }
-              .items-table td {
-                  border: 1px solid #000; /* Consistent td border */
-                  padding: 6px 4px;
-                  font-size: 10px; /* Consistent td font size */
-              }
-              .notes-section { /* Replaces .notes */
-                  margin-top: 20px;
-                  padding: 10px;
-                  border: 1px solid #eee;
-                  background-color: #f9f9f9;
-                  font-size: 10px;
-              }
-               .signature {
-               margin-top: 40px;
-              display : flex ;
-              justify-content : space-between ; 
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #000;
+            
         }
-             .rectangle {
-              width: 300px;
-              height: 100px;
-              border: 2px dashed grey;
-              background-color: #fff;
-      
-    }
+                header,
+        footer {
+            text-align: center;
+        }
+          .order-header {
+    border: 1px solid #000;
+    padding : 2px 8px
+}
+   table {
+  border-collapse: collapse;
+  margin-top : 20px ;
+}
           </style>
       </head>
       <body>
-            <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-        <div class="company-info" style="text-align: left;">
-            <h2 style="margin-buttom: 1px;">RM METALASER</h2>
-            <p style="margin: 0; line-height: 1.5;"> <span style="color:grey; font-weight: bold;  ">Découpes Métaux </span><br>
-            Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
-            MF: 191 1419B/A/M/000<br>
-            Tél. : +216 20 366 150<br>
-            Email: contact@rmmetalaser.tn<br>
-            Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
-             <div class="bon-details-inline">
-                  <p><strong>Bon N°:</strong> ${bonData.numero_bon || "N/A"}<br>
-                  <strong>Date d'émission:</strong> ${
-                    bonData.date_emission
-                      ? moment(bonData.date_emission).format("DD/MM/YYYY")
-                      : moment(bonData.date_retour).format("DD/MM/YYYY") // Fallback to date_retour if emission not present
-                  }</p>
-                }<br>
-                 <strong>Date de retour effective:</strong> ${moment(
-                    bonData.date_retour
-                   ).format("DD/MM/YYYY")}<br>
-                  <strong>Date de réception effective:</strong> ${moment(
-                    bonData.date_reception
-                  ).format("DD/MM/YYYY")}<br>
-                  <strong>Statut:</strong> ${statusLabel}</p>
-              </div>
-         </div>
-          <div class="logo" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
-  <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
-<div class="client-info-box">
-              <strong>Nom:</strong> ${client.nom_client || "N/A"}<br>
-              <strong>Adresse:</strong> ${client.adresse || "N/A"}<br>
-              <strong>Matricule Fiscale:</strong> ${
-                client.numero_fiscal || "N/A"
-              }<br>
-              <strong>Tél.:</strong> ${client.telephone || "N/A"}
-          </div>
+       <header style="display: flex; flex-direction: column;">
+  <div style="display: flex; flex-direction: row; justify-content: space-between;">
+    <div style="text-align:left" class="company-info">
+      <h2 style="margin-bottom: 6px;">RM METALASER</h2>
+      <p style="margin: 0; line-height: 1.5;">
+        <span style="color: blue; font-weight: bold;">Découpes Métaux</span><br>
+        Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
+        MF: 191 1419B/A/M/000<br>
+        Tél. : +216 20 366 150<br>
+        Email: contact@rmmetalaser.tn<br>
+        Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
+      </p>
+    </div>
+    <div class="logo" style="text-align: right;">
+ <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">    </div>
+  </div>
+
+  <!-- Bon de Retour and Client info, each 50% -->
+  <!-- Bon de Retour and Client info, each 50% -->
+<div style="display: flex; flex-direction: row; margin-top: 20px; gap: 20px;">
+  <!-- Bon de Retour Section -->
+  <div style="width: 50%;">
+    <div class="order-header" style="margin-bottom: 10px; ">
+      <h2>Bon de Retour</h2>
+    </div>
+    <div style="display: flex; flex-direction: row;gap: 10px; width:100%">
+      <div  style="flex: 1;" class="order-header">
+        <p><strong>Bon N°:</strong> <br> ${bonData.numero_bon || "N/A"}</p>
+      </div>
+      <div  style="flex: 1;" class="order-header">
+        <p><strong>Date:</strong> <br>${
+          bonData.date_emission
+            ? moment(bonData.date_emission).format("DD/MM/YYYY")
+            : moment(bonData.date_retour).format("DD/MM/YYYY") // Fallback to date_retour if emission not present
+        }</p>
+      </div>
+      <div  style="flex: 1;" class="order-header">
+        <p><strong>Code Client:</strong> <br> ${client.code_client || "N/A"}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client Info -->
+  <div class="order-header" style="width: 50%; text-align: left; padding-left:20px">
+    <p><strong>Nom Client:</strong>  ${client.nom_client || "N/A"}</p>
+    <p>Adresse:${client.adresse || "N/A"}</p>
+    <p>M.F: ${
+      client.numero_fiscal || "N/A"
+    }</p>
+    <p>Tél.: ${client.telephone || "N/A"}</p>
+  </div>
 </div>
-</header>
+
+    </header>
+       
+        
           <table class="items-table">
               <thead>
                   <tr>
-                      <th style="width: 25%;">Type Matière</th>
-                      <th style="width: 35%;">Description</th>
-                      <th style="width: 25%;">Dimensions</th>
+                      <th style="width: 25%;">Matière</th>
                       <th style="width: 15%;">Quantité Retournée</th>
                   </tr>
               </thead>
@@ -335,15 +268,14 @@ class BonRetourPdfService {
           }
 
           
-               <div class="signature">
-    <div>
-            <p><strong>Cachet et Signature Client </strong></p>
-              <div class="rectangle"></div>
-     </div>
-         <div>
-            <p><strong>Cachet et Signature du RM METALASER</strong></p>
-              <div class="rectangle"></div>
-     </div>
+ 
+    <div style="display:flex ; flex-direction:row ; margin-top :20px ; height :150px">
+           <div style="width:50% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
+    <p><strong>Cachet et Signature Client</strong></p>
+    </div>
+        <div style="width:50% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
+    <p><strong>Cachet et Signature du RM METALASER</strong></p>
+    </div>
        
     </div>
       </body>
