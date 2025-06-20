@@ -413,7 +413,7 @@ thead {
   </table>
 </div>
 
-  <div style="display: flex; justify-content: space-between; gap: 10px;">
+  <div style="display: flex; justify-content: space-between; gap: 10px; height: 150px;">
     <div style="flex: 1; border: 1px solid black; padding: 12px;">
       <p style="margin: 0;">
         <strong>Arrêtée la présente facture à la somme de:</strong><br>
@@ -425,8 +425,9 @@ thead {
       border: 1px solid black;
       text-align: center;
       display: flex;
-      align-items: center;
+      align-items: start;
       justify-content: center;
+      padding-top : 8px
     ">
       <strong>Signature</strong>
     </div>

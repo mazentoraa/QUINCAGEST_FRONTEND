@@ -90,6 +90,7 @@ const translatePaymentMethod = (method) => {
 
 export default function BonCommande() {
   const [selectedBonDetails, setSelectedBonDetails] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
 
 
   const [orders, setOrders] = useState([]);
@@ -436,12 +437,8 @@ export default function BonCommande() {
           ...fullOrderDetails,
 
           client_id: clientId,
-          date_commande: fullOrderDetails.date_commande
-            ? moment(fullOrderDetails.date_commande)
-            : null,
-          date_livraison_prevue: fullOrderDetails.date_livraison_prevue
-            ? moment(fullOrderDetails.date_livraison_prevue)
-            : null,
+          date_commande: moment(fullOrderDetails.date_commande).format("YYYY-MM-DD"),
+          date_livraison_prevue: moment(fullOrderDetails.date_livraison_prevue).format("YYYY-MM-DD"),
           mode_paiement: fullOrderDetails.mode_paiement || "cash",
           statut: fullOrderDetails.statut || "pending",
           tax_rate: fullOrderDetails.tax_rate || 0,
@@ -474,8 +471,8 @@ export default function BonCommande() {
     // Initialize with default values
     drawerForm.resetFields();
     drawerForm.setFieldsValue({
-      date_commande: moment(),
-      date_livraison_prevue: moment().add(7, "days"),
+      date_commande: moment().format("YYYY-MM-DD"),
+      date_livraison_prevue: moment().format("YYYY-MM-DD"),
       tax_rate: 0,
       timbre_fiscal: 0, // Default timbre fiscal
       statut: "pending",
@@ -500,7 +497,14 @@ export default function BonCommande() {
 
   const handleDrawerSave = async () => {
     try {
-      const values = await drawerForm.validateFields(); // Contains form fields like tax_rate, client_id etc.
+      const values = await drawerForm.validateFields(); 
+      function toISO(d) {
+        if (!d) return null;
+        // string? assume it's already "YYYY-MM-DD"
+        if (typeof d === "string") return d;
+        // otherwise a Moment
+        return d.format("YYYY-MM-DD");
+      }
       setLoading(true);
 
       const taxRate = parseFloat(values.tax_rate) || 0;
@@ -535,17 +539,14 @@ export default function BonCommande() {
         const finalMontantHt = ProdMontantHt + BonMontant;
         const finalMontantTva = finalMontantHt * (taxRate / 100);
         const finalMontantTtc = finalMontantHt + finalMontantTva + timbreFiscal;
-
+      
         const orderPayload = {
           client_id: selectedClientId,
           client: selectedClientId,
           // numero_commande: randomOrderNumber, // Remove this line - backend will generate
-          date_commande: values.date_commande
-            ? values.date_commande.format("YYYY-MM-DD")
-            : moment().format("YYYY-MM-DD"),
-          date_livraison_prevue: values.date_livraison_prevue
-            ? values.date_livraison_prevue.format("YYYY-MM-DD")
-            : null,
+          date_commande: toISO(values.date_commande),
+          date_livraison_prevue: toISO(values.date_livraison_prevue),
+          
           statut: values.statut || "pending",
           notes: values.notes || "",
           conditions_paiement: values.conditions_paiement || "",
@@ -602,13 +603,8 @@ export default function BonCommande() {
         const orderPayload = {
           ...restOfEditingOrder, // Base with existing data (excluding old product lists)
           ...values, // Override with form values (like notes, dates, status, client_id if changed)
-          date_commande: values.date_commande
-            ? values.date_commande.format("YYYY-MM-DD")
-            : null,
-          date_livraison_prevue: values.date_livraison_prevue
-            ? values.date_livraison_prevue.format("YYYY-MM-DD")
-            : null,
-
+          date_commande: toISO(values.date_commande),
+          date_livraison_prevue: toISO(values.date_livraison_prevue),
           tax_rate: taxRate,
           timbre_fiscal: timbreFiscal, // Add timbre fiscal
           montant_ht: finalMontantHt,
@@ -758,6 +754,37 @@ export default function BonCommande() {
         message.error("Selected product not found.");
         return;
       }
+      if (editingProduct) {
+        // We're editing
+        const updatedProducts = currentProductsInDrawer.map((p) =>
+          p.id === editingProduct.id
+            ? {
+                ...p,
+                quantite: values.quantite,
+                prix_unitaire: values.prix_unitaire,
+                remise_pourcentage: values.remise_pourcentage || 0,
+                prix_total:
+                  values.quantite *
+                  values.prix_unitaire *
+                  (1 - (values.remise_pourcentage || 0) / 100),
+              }
+            : p
+        );
+        setCurrentProductsInDrawer(updatedProducts);
+        if (isCreating) {
+          setNewOrderProducts(updatedProducts);
+        }
+        setEditingProduct(null);
+        setIsProductModalVisible(false);
+        recalculateTotalsInDrawer(
+          updatedProducts,
+          drawerForm.getFieldValue("tax_rate"),
+          currentBonInDrawer
+        );
+        message.success("Produit modifié avec succès");
+      } else {
+      
+      
 
       const newProductData = {
         produit: values.produit_id, // This is the actual product ID
@@ -776,6 +803,7 @@ export default function BonCommande() {
         (1 - newProductData.remise_pourcentage / 100);
 
       const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
+      
 
       if (isCreating) {
         const existingProductIndex = newOrderProducts.findIndex(
@@ -883,7 +911,7 @@ export default function BonCommande() {
           message.success("Produit ajouté à la commande");
         }
       }
-    } catch (errorInfo) {
+    } }catch (errorInfo) {
       console.log("Product modal save failed:", errorInfo);
       message.error(
         "Failed to add product: " + (errorInfo.message || "Unknown error")
@@ -1815,23 +1843,20 @@ export default function BonCommande() {
                   { required: true, message: "Veuillez entrer une date" },
                 ]}
               >
-                <div>
-                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
-                </div>
+                  <Input type="date" style={{ width: "100%" }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item
-                name="date_livraison_prevue"
-                label="Date Livraison Prévue"
-                rules={[
-                  { required: true, message: "Veuillez entrer une date" },
-                ]}
-              >
-                <div>
-                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
-                </div>
-              </Form.Item>
+            <Form.Item
+   name="date_livraison_prevue"
+   label="Date Livraison Prévue"
+   rules={[{ required: true, message: "Veuillez entrer une date" }]}
+ >
+   <Input
+     type="date"
+     style={{ width: "100%" }}
+   />
+ </Form.Item>
             </Col>
           </Row>
 
@@ -1948,6 +1973,8 @@ export default function BonCommande() {
                 title: "Actions",
                 key: "actions",
                 render: (_, record) => (
+                  
+            
                   <Button
                     danger
                     size="small"
@@ -1956,6 +1983,7 @@ export default function BonCommande() {
                       handleRemoveBonFromDrawer(record.bon_numero || record.id)
                     }
                   />
+               
                 ),
               },
             ]}
@@ -2009,6 +2037,21 @@ export default function BonCommande() {
                 title: "Actions",
                 key: "actions",
                 render: (_, record) => (
+                  <Space>
+                  <Button
+                    icon={<EditOutlined />}
+                    size="small"
+                    onClick={() => {
+                      productForm.setFieldsValue({
+                        produit_id: record.produit_id,
+                        quantite: record.quantite,
+                        prix_unitaire: record.prix_unitaire,
+                        remise_pourcentage: record.remise_pourcentage,
+                      });
+                      setEditingProduct(record); // set the product being edited
+                      setIsProductModalVisible(true);
+                    }}
+                  />
                   <Button
                     danger
                     size="small"
@@ -2019,6 +2062,7 @@ export default function BonCommande() {
                       )
                     }
                   />
+                         </Space>
                 ),
               },
             ]}
@@ -2072,7 +2116,11 @@ export default function BonCommande() {
         title="Ajouter un Produit"
         open={isProductModalVisible}
         onOk={handleProductModalSave}
-        onCancel={() => setIsProductModalVisible(false)}
+        onCancel={() => {
+          setEditingProduct(null);
+          setIsProductModalVisible(false);
+        }}
+        
         okText="Ajouter"
         cancelText="Annuler"
       >
@@ -2090,6 +2138,7 @@ export default function BonCommande() {
               filterOption={(input, option) =>
                 option.children.toLowerCase().includes(input.toLowerCase())
               }
+              disabled={!!editingProduct}
             >
               {availableProducts.map((product) => (
                 <Option key={product.id} value={product.id}>
@@ -2117,7 +2166,7 @@ export default function BonCommande() {
               formatter={(value) =>
                 `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
               }
-              parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+              parser={(value) => value.replace(/\\s?|(,*)/g, "")}
             />
           </Form.Item>
 
