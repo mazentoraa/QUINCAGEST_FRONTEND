@@ -16,7 +16,7 @@ const InstallmentManagement = () => {
   const [bankFilter, setBankFilter] = useState("all");
 
   const filteredInstallments = installments.filter((installment) => {
-    console.log(installment);
+    // console.log("filtred",installment);
     const clientName = installment.client_nom || installment.clientName || "";
     const invoiceNumber =
       installment.numero_commande || installment.invoiceNumber || "";
@@ -50,7 +50,7 @@ const InstallmentManagement = () => {
     window.addEventListener("switchInstallmentTab", handler);
     return () => window.removeEventListener("switchInstallmentTab", handler);
   }, []);
-
+  console.log("selct",selectedInstallment)
   if (showDetails && selectedInstallment) {
     return (
       <InstallmentDetails

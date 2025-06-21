@@ -2,6 +2,8 @@ import React, { useState, useMemo } from "react";
 import "./InstallmentDetails.css";
 
 const InstallmentDetails = ({ installment, onBack, onUpdateInstallment }) => {
+  console.log("insta",installment)
+  
   const mappedInstallmentDetails = useMemo(() => {
     return installment.traites.map((traite) => ({
       id: traite.id,
@@ -109,7 +111,7 @@ const InstallmentDetails = ({ installment, onBack, onUpdateInstallment }) => {
           </div>
           <div className="info-item">
             <label>Adresse:</label>
-            <span>{installment.client_adresse || "Non spécifiée"}</span>
+            <span>{installment.clientAddress|| "Non spécifiée"}</span>
           </div>
           <div className="info-item">
             <label>Numéro de Facture:</label>

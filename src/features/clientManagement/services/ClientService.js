@@ -7,6 +7,7 @@ const ClientService = {
   get_all_clients: async () => {
     try {
       const response = await axios.get(API_URL + '/');
+      console.log("resp client",response.data)
       // Handle both array and paginated response formats
       let client_data;
       if (response.data && response.data.results !== undefined) {

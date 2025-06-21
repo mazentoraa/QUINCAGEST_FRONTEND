@@ -5,6 +5,7 @@ import "./InstallmentsPrinter.css";
 // import TraitePrinter from "./TraitePrinter";
 
 const InstallmentsPrinter = ({ selectedInstallment }) => {
+ 
   const { installments } = useContext(InstallmentContext);
   const [loading, setLoading] = useState(false);
   const [selectedInstallmentId, setSelectedInstallmentId] = useState(
@@ -23,41 +24,70 @@ const InstallmentsPrinter = ({ selectedInstallment }) => {
 
   const numberToWords = (num) => {
     const ones = [
-      "", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf",
+      "",
+      "un",
+      "deux",
+      "trois",
+      "quatre",
+      "cinq",
+      "six",
+      "sept",
+      "huit",
+      "neuf",
     ];
     const teens = [
-      "dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf",
+      "dix",
+      "onze",
+      "douze",
+      "treize",
+      "quatorze",
+      "quinze",
+      "seize",
+      "dix-sept",
+      "dix-huit",
+      "dix-neuf",
     ];
     const tens = [
-      "", "", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante-dix", "quatre-vingt", "quatre-vingt-dix",
+      "",
+      "",
+      "vingt",
+      "trente",
+      "quarante",
+      "cinquante",
+      "soixante",
+      "soixante-dix",
+      "quatre-vingt",
+      "quatre-vingt-dix",
     ];
-  
+
     if (num === 0) return "zéro";
     if (num < 10) return ones[num];
     if (num < 20) return teens[num - 10];
     if (num < 100) {
       const ten = Math.floor(num / 10);
       const one = num % 10;
-      if (ten === 7) return "soixante-" + teens[one];       // 70–79
-      if (ten === 9) return "quatre-vingt-" + teens[one];   // 90–99
+      if (ten === 7) return "soixante-" + teens[one]; // 70–79
+      if (ten === 9) return "quatre-vingt-" + teens[one]; // 90–99
       return tens[ten] + (one ? "-" + ones[one] : "");
     }
     if (num < 1000) {
       const hundred = Math.floor(num / 100);
       const rest = num % 100;
-      return (hundred === 1 ? "cent" : ones[hundred] + " cent") +
-        (rest ? " " + numberToWords(rest) : "");
+      return (
+        (hundred === 1 ? "cent" : ones[hundred] + " cent") +
+        (rest ? " " + numberToWords(rest) : "")
+      );
     }
     if (num < 1000000) {
       const thousand = Math.floor(num / 1000);
       const rest = num % 1000;
-      let result = thousand === 1 ? "mille" : numberToWords(thousand) + " mille";
+      let result =
+        thousand === 1 ? "mille" : numberToWords(thousand) + " mille";
       if (rest) result += " " + numberToWords(rest);
       return result;
     }
     return "nombre trop grand";
   };
-  
 
   const formatAmountInWords = (amount) => {
     const numAmount = Math.floor(parseFloat(amount));
@@ -69,7 +99,7 @@ const InstallmentsPrinter = ({ selectedInstallment }) => {
         : " dinars";
     return result.charAt(0).toUpperCase() + result.slice(1);
   };
-
+  console.log("instal",installments)
   const currentInstallment = installments.find(
     (i) => String(i.id) === String(selectedInstallmentId)
   );
@@ -93,6 +123,11 @@ const InstallmentsPrinter = ({ selectedInstallment }) => {
       selectedTraites.length === allIndexes.length ? [] : allIndexes
     );
   };
+  const formatDateFR = (isoDateStr) => {
+    if (!isoDateStr || !isoDateStr.includes("-")) return "undefined";
+    const [year, month, day] = isoDateStr.split("-");
+    return `${day}/${month}/${year}`; // "11/06/2025"
+  };
 
   const handleInstallmentChange = (installmentId) => {
     setSelectedInstallmentId(installmentId);
@@ -100,12 +135,12 @@ const InstallmentsPrinter = ({ selectedInstallment }) => {
   };
   const handlePrint = () => {
     if (!printRef.current) return;
-  
+
     setTimeout(() => {
-      const printWindow = window.open('', '_blank');
+      const printWindow = window.open("", "_blank");
       const printContent = printRef.current.innerHTML;
-  
- printWindow.document.write(`
+
+      printWindow.document.write(`
   <html>
     <head>
       <style>
@@ -520,7 +555,6 @@ const InstallmentsPrinter = ({ selectedInstallment }) => {
       printWindow.close();
     }, 300); // Allow DOM to update
   };
-  
 
   return (
     <div className="printer-container">
@@ -600,191 +634,164 @@ const InstallmentsPrinter = ({ selectedInstallment }) => {
         </>
       )}
 
-      <div className="traite-preview" >
-        <div 
-           ref={printRef}>
+      <div className="traite-preview">
+        <div ref={printRef}>
           {selectedTraites.map((index) => {
             const inst = currentInstallment.traites[index];
             const currentTraite = {
               amount: inst.montant,
               dueDate: inst.date_echeance,
             };
-          
+            console.log("currentTraite.dueDate", currentTraite.dueDate);
+
             return (
               <div
-         
-              className="traite-container"
-              style={{
-        
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: '100% 100%',
-                backgroundPosition: 'center',
-                width: '17.5cm',
-                height: '11.5cm',
-                position: 'relative',
-                border: '2px solid #ddd',
-                pageBreakAfter: 'always',
-              }}
-              key={index}
-            >
-             <div className="field-overlay amount-main">
-              {parseFloat(currentTraite.amount).toLocaleString('fr-FR', { 
-                minimumFractionDigits: 3, 
-                maximumFractionDigits: 3 
-              })}
-            </div>
-            {/* <div className="field-overlay amount-main-2">
-              {parseFloat(currentTraite.amount).toLocaleString('fr-FR', { 
-                minimumFractionDigits: 3, 
-                maximumFractionDigits: 3 
-              })}
-            </div> */}
+                className="traite-container"
+                style={{
+                  backgroundRepeat: "no-repeat",
+                  backgroundSize: "100% 100%",
+                  backgroundPosition: "center",
+                  width: "17.5cm",
+                  height: "11.5cm",
+                  position: "relative",
+                  border: "2px solid #ddd",
+                  pageBreakAfter: "always",
+                }}
+                key={index}
+              >
+                <div className="field-overlay amount-main">
+                  {parseFloat(currentTraite.amount).toLocaleString("fr-FR", {
+                    minimumFractionDigits: 3,
+                    maximumFractionDigits: 3,
+                  })}
+                </div>
 
-            {/* Informations client - Zone 1 (séparées) */}
-            <div className="field-overlay client-name">
-              {currentInstallment.clientName}
-            </div>
-            <div className="field-overlay client-address">
-              {currentInstallment.clientAddress}
-            </div>
-            <div className="field-overlay client-tax-id">
-              {currentInstallment.clientTaxId}
-            </div>
+                {/* Informations client - Zone 1 (séparées) */}
+                <div className="field-overlay client-name">
+                  {currentInstallment.clientName}
+                </div>
+                <div className="field-overlay client-address">
+                  {currentInstallment.clientAddress}
+                </div>
+                <div className="field-overlay client-tax-id">
+                  {currentInstallment.matricule_fiscal}
+                </div>
 
-            {/* Informations client - Zone 2 (séparées et dupliquées) */}
-            {/* <div className="field-overlay client-name-2">
-              {currentInstallment.clientName}
-            </div>
-            <div className="field-overlay client-address-2">
-              {currentInstallment.clientAddress}  
-            </div> */}
-            {/* <div className="field-overlay client-tax-id-2">
-              {currentInstallment.clientTaxId}
-            </div> */}
-
-            {/* Montant en lettres - Version principale et dupliquée */}
-            <div className="field-overlay amount-words">
-              {formatAmountInWords(currentTraite.amount)}
-            </div>
-            {/* <div className="field-overlay amount-words-2">
+                {/* Montant en lettres - Version principale et dupliquée */}
+                <div className="field-overlay amount-words">
+                  {formatAmountInWords(currentTraite.amount)}
+                </div>
+                {/* <div className="field-overlay amount-words-2">
               {formatAmountInWords(currentTraite.amount)}
             </div> */}
 
-            {/* Montant répété - Version principale et dupliquée */}
-            <div className="field-overlay amount-repeated">
-              {parseFloat(currentTraite.amount).toLocaleString('fr-FR', { 
-                minimumFractionDigits: 3, 
-                maximumFractionDigits: 3 
-              })}
-            </div>
-            {/* <div className="field-overlay amount-repeated-2">
-              {parseFloat(currentTraite.amount).toLocaleString('fr-FR', { 
-                minimumFractionDigits: 3, 
-                maximumFractionDigits: 3 
-              })}
-            </div> */}
+                {/* Montant répété - Version principale et dupliquée */}
+                <div className="field-overlay amount-repeated">
+                  {parseFloat(currentTraite.amount).toLocaleString("fr-FR", {
+                    minimumFractionDigits: 3,
+                    maximumFractionDigits: 3,
+                  })}
+                </div>
 
-            {/* Lieu de création - Version principale et dupliquée */}
-            <div className="field-overlay creation-place">
-              {currentInstallment.drawerAddress}
-            </div>
-            <div className="field-overlay creation-place-2">
-              {currentInstallment.drawerAddress}
-            </div>
+                {/* Lieu de création - Version principale et dupliquée */}
+                <div className="field-overlay creation-place">
+                  {currentInstallment.drawerAddress ?? "Sfax"}
+                </div>
+                <div className="field-overlay creation-place-2">
+                  {currentInstallment.drawerAddress ?? "Sfax"}
+                </div>
 
-            {/* Date de création - Version principale et dupliquée */}
-            <div className="field-overlay creation-date">
-              {new Date(currentInstallment.creationDate).toLocaleDateString('fr-FR')}
-            </div>
-            <div className="field-overlay creation-date-2">
-              {new Date(currentInstallment.creationDate).toLocaleDateString('fr-FR')}
-            </div>
+                {/* Date de création - Version principale et dupliquée */}
+                <div className="field-overlay creation-date">
+                  {new Date(currentInstallment.date_emission).toLocaleDateString(
+                    "fr-FR"
+                  ) ?? "undefined"}
+                </div>
+                <div className="field-overlay creation-date-2">
+                {new Date(currentInstallment.date_emission).toLocaleDateString(
+                    "fr-FR"
+                  ) ?? "undefined"}
+                </div>
 
-            {/* Échéance répétée - Version principale et dupliquée */}
-            <div className="field-overlay due-date-repeated">
-              {new Date(currentTraite.dueDate).toLocaleDateString('fr-FR')}
-            </div>
-            <div className="field-overlay due-date-repeated-2">
-              {new Date(currentTraite.dueDate).toLocaleDateString('fr-FR')}
-            </div>
+                {/* Échéance répétée - Version principale et dupliquée */}
+                <div className="field-overlay due-date-repeated">
+                  {formatDateFR(currentTraite.dueDate)}
+                </div>
+                <div className="field-overlay due-date-repeated-2">
+                  {formatDateFR(currentTraite.dueDate)}
+                </div>
 
-            {/* Nom du tireur - Version principale et dupliquée */}
-            <div className="field-overlay drawer-name">
-              {currentInstallment.drawerName}
-            </div>
-            {/* <div className="field-overlay drawer-name-2">
+                {/* Nom du tireur - Version principale et dupliquée */}
+                <div className="field-overlay drawer-name">
+                  {currentInstallment.drawerName ?? "RM METALAZER"}
+                </div>
+                {/* <div className="field-overlay drawer-name-2">
               {currentInstallment.drawerName}
             </div> */}
 
-            {/* RIB du Tiré - Version principale et dupliquée  */}
-            <div className="field-overlay client-rib">
-              {formatRIB(currentInstallment.rip || '')}
-            </div>
-            <div className="field-overlay client-rib-2">
-              {formatRIB(currentInstallment.rip || '')}
-            </div>
+                {/* RIB du Tiré - Version principale et dupliquée  */}
+                <div className="field-overlay client-rib">
+                  {formatRIB(currentInstallment.rip || "") ?? "undefined"}
+                </div>
+                <div className="field-overlay client-rib-2">
+                  {formatRIB(currentInstallment.rip || "") ?? "undefined"}
+                </div>
 
-            {/* Informations client en bas - Version principale et dupliquée */}
-            <div className="field-overlay client-info-bottom">
-              <div>{currentInstallment.clientName}</div>
-              <div>{currentInstallment.clientAddress}</div>
-            </div>
-            {/* <div className="field-overlay client-info-bottom-2">
+                {/* Informations client en bas - Version principale et dupliquée */}
+                <div className="field-overlay client-info-bottom">
+                  <div>{currentInstallment.clientName ?? "undefined"}</div>
+                  <div>{currentInstallment.clientAddress ?? "undefined"}</div>
+                </div>
+                {/* <div className="field-overlay client-info-bottom-2">
               <div>{currentInstallment.clientName}</div>
               <div>{currentInstallment.clientAddress}</div>
             </div> */}
 
-            {/* Acceptation - si disponible */}
-            {currentInstallment.acceptance && (
-              <>
-                <div className="field-overlay acceptance">
+                {/* Acceptation - si disponible */}
+                {currentInstallment.acceptance && (
+                  <>
+                    <div className="field-overlay acceptance">
+                      {currentInstallment.acceptance ?? "undefined"}
+                    </div>
+                    {/* <div className="field-overlay acceptance-2">
                   {currentInstallment.acceptance}
-                </div>
-                {/* <div className="field-overlay acceptance-2">
-                  {currentInstallment.acceptance}
                 </div> */}
-              </>
-            )}
+                  </>
+                )}
 
-            {/* Aval - si disponible */}
-            {currentInstallment.notice && (
-              <>
-                <div className="field-overlay aval">
-                  {currentInstallment.notice}
-                </div>
-                {/* <div className="field-overlay aval-2">
+                {/* Aval - si disponible */}
+                {currentInstallment.notice && (
+                  <>
+                    <div className="field-overlay aval">
+                      {currentInstallment.notice ?? "undefined"}
+                    </div>
+                    {/* <div className="field-overlay aval-2">
                   {currentInstallment.notice}
                 </div> */}
-              </>
-            )}
+                  </>
+                )}
 
-            {/* Banque - Version principale et dupliquée */}
-            {currentInstallment.bankName && (
-              <>
-                <div className="field-overlay bank-name">
-                  {currentInstallment.bankName}
-                </div>
-                {/* <div className="field-overlay bank-name-2">
+                {/* Banque - Version principale et dupliquée */}
+                {currentInstallment.bankName && (
+                  <>
+                    <div className="field-overlay bank-name">
+                      {currentInstallment.bankName ?? "undefined"}
+                    </div>
+                    {/* <div className="field-overlay bank-name-2">
                   {currentInstallment.bankName}
                 </div> */}
-              </>
-            )}
+                  </>
+                )}
 
-            {/* Adresse de la banque - Version principale et dupliquée (nouveau champ ajouté) */}
-            {currentInstallment.bankAddress && (
-              <>
-                <div className="field-overlay bank-address">
-                  {currentInstallment.bankAddress}
-                </div>
-        
-              </>
-            )}
-
-     
-          </div>
-        
-        
-            
+                {/* Adresse de la banque - Version principale et dupliquée (nouveau champ ajouté) */}
+                {currentInstallment.bankAddress && (
+                  <>
+                    <div className="field-overlay bank-address">
+                      {currentInstallment.bankAddress ?? "undefined"}
+                    </div>
+                  </>
+                )}
+              </div>
             );
           })}
         </div>

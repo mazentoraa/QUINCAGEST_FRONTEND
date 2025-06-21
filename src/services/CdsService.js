@@ -32,31 +32,50 @@ class CdsService {
     }
   }
 
-async createPlanTraite(planData) {
-  const payload = {
-    numero_commande: planData.numero_commande,
-    nombre_traite: planData.nombre_traite,
-    date_premier_echeance: planData.date_premier_echeance,
-    periode: planData.periode || 30,
-    montant_total: planData.montant_total || 0,
-    nom_raison_sociale: planData.nom_raison_sociale || '',
-    matricule_fiscal: planData.matricule_fiscal || '',
-    mode_paiement: planData.mode_paiement || 'traite',
-  };
-
-  console.log("✅ Payload envoyé à /plans-traite/ :", payload);
-
-  try {
-    const response = await axios.post(`${API_BASE_URL}/plans-traite/`, payload);
-    return response.data;
-  } catch (error) {
-    console.error("❌ Erreur création plan-traite :", error);
-    if (error.response) {
-      console.error("Response data:", error.response.data);
+  async createPlanTraite(planData) {
+    const payload = {
+      numero_commande: planData.numero_commande,
+      nombre_traite: planData.nombre_traite,
+      date_premier_echeance: planData.date_premier_echeance,
+      periode: planData.periode || 30,
+      montant_total: planData.montant_total || 0,
+      periode_str: planData.periode_str,
+      
+      nom_raison_sociale: planData.nom_raison_sociale || '',
+      matricule_fiscal: planData.matricule_fiscal || '',
+  
+      tireur_nom: planData.tireur_nom || '',
+      tireur_matricule: planData.tireur_matricule || '',
+      tireur_adresse: planData.tireur_adresse || '',
+  
+      tire_nom: planData.tire_nom || '',
+      tire_matricule: planData.tire_matricule || '',
+      tire_adresse: planData.tire_adresse || '',
+  
+      acceptation: planData.acceptation || '',
+      aval: planData.aval || '',
+      banque: planData.banque || '',
+      adresse_banque: planData.adresse_banque || '',
+      rip: planData.rip || '',
+      
+      date_creation: planData.date_creation || new Date().toISOString(),
+      mode_paiement: planData.mode_paiement || 'traite',
+    };
+  
+    console.log("✅ Payload envoyé à /plans-traite/ :", payload);
+  
+    try {
+      const response = await axios.post(`${API_BASE_URL}/plans-traite/`, payload);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Erreur création plan-traite :", error);
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+      }
+      throw error;
     }
-    throw error;
   }
-}
+  
 
 
 

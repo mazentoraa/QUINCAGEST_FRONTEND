@@ -4,6 +4,7 @@ import traiteVideImage from '../../../assets/images/traite-vide.jpeg'; // Assure
 
 
 const TraitePrinter = ({ installmentData, onClose , hideControls = false , fromParent = false }) => {
+  console.log("ins",installmentData)
   const printRef = useRef();
   const [currentTraiteIndex, setCurrentTraiteIndex] = useState(0);
 
@@ -831,7 +832,7 @@ const TraitePrinter = ({ installmentData, onClose , hideControls = false , fromP
         <div className="traite-info no-print">
           <div className="info-grid">
             <div><strong>Client:</strong> {installmentData.clientName}</div>
-            <div><strong>Facture:</strong> {installmentData.invoiceNumber}</div>
+            <div><strong>Facture:</strong> {installmentData.numero_commande}</div>
             <div><strong>Montant:</strong> {currentTraite.amount} DT</div>
             <div><strong>Échéance:</strong> {new Date(currentTraite.dueDate).toLocaleDateString('fr-FR')}</div>
             <div><strong>Banque:</strong> {installmentData.bankName || 'Non spécifiée'}</div>
