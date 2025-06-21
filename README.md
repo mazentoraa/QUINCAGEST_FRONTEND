@@ -75,5 +75,3 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 "Mise � jour du frontend - $(date)" 
 ""  
 ECHO is on.
-"Mise � jour du frontend - $(date)" 
-ECHO is on.
