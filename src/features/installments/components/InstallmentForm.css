@@ -1,4 +1,13 @@
 /* InstallmentForm.css */
+.success-message {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
 
 .installment-form {
   max-width: 1200px;

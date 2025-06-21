@@ -12,6 +12,8 @@ const API_BASE_URL =
 const InstallmentForm = () => {
   const { addInstallment, refreshInstallments } = useContext(InstallmentContext);
   const { invoices } = useContext(InvoiceContext);
+  const [successMessage, setSuccessMessage] = useState("");
+
 
   // État pour les données du formulaire
   const [formData, setFormData] = useState({
@@ -368,7 +370,9 @@ const InstallmentForm = () => {
       resetForm();
 
       // Notifier le succès
-      alert("Traite créée avec succès!");
+      setSuccessMessage("✅ Traite créée avec succès !");
+      setTimeout(() => setSuccessMessage(""), 4000); // 4 seconds
+
 
       // Changer d'onglet vers "Voir traites" après un délai
       setTimeout(() => {
@@ -406,6 +410,12 @@ const InstallmentForm = () => {
   return (
     <div className="installment-form">
       <h1 className="form-title">Créer des Traites</h1>
+      {successMessage && (
+  <div className="success-message">
+    {successMessage}
+  </div>
+)}
+
 
       <form onSubmit={handleSubmit}>
         <div className="form-sections">

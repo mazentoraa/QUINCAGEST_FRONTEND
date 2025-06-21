@@ -249,7 +249,7 @@
   }
 }
 
-.traite-preview {
+/* .traite-preview {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -361,127 +361,8 @@
   bottom: 5.2cm;
   left: 6.5cm;
   /* font-family: 'Arial', sans-serif; */
-  font-size: 12px;
+  /* font-size: 12px; */
   /* font-weight: normal; */
-  color: #000;
-}
-
-.due-date-repeated-2{
-  bottom: 9.5cm;
-  left: 5.5cm;
-  font-family: 'Arial', sans-serif;
-  font-size: 12px;
-  font-weight: normal;
-  color: #000; 
-}
-
-.drawer-name {
-  bottom: 5.2cm;
-  left: 10cm;
-  font-family: 'Arial', sans-serif;
-  font-size: 12px;
-  font-weight: normal;
-  color: #000;
-}
-.client-rib {
-  bottom: 4.1cm;
-  left: 0.5cm;
-  font-family: 'Arial', sans-serif;
-  font-size: 12px;
-  font-weight: normal;
-  color: #000;
-  letter-spacing: 5px;
-  word-spacing: 1px;
-  line-height: 1.2;
-}
-
-.client-rib-2 {
-  bottom: 8.5cm;
-  left: 5.3cm;
-  font-family: 'Arial', sans-serif;
-  font-size: 12px;
-  font-weight: normal;
-  color: #000;
-  letter-spacing: 5px;
-  word-spacing: 1px;
-  line-height: 1.2;
-}
-
-.client-info-bottom {
-  bottom: 3cm;
-  right: 7cm;
-  max-width: 6cm;
-  text-align: left;
-  font-family: 'Arial', sans-serif;
-  font-size: 12px;
-  font-weight: normal;
-  color: #000;
-}
-.acceptance {
-  top: 8.2cm;
-  left: 0.4cm;
-  font-family: 'Arial', sans-serif;
-  font-size: 12px;
-  font-weight: normal;
-  color: #000;
-  max-width: 3.5cm;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-
-}
-
-
-.aval {
-  top: 8.2cm;
-  left: 4.5cm;
-  font-family: 'Arial', sans-serif;
-  font-size: 12px;
-  font-weight: normal;
-  color: #000;
-  max-width: 3.5cm;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-
-}
-
-
-
-/* Champs de banque ajoutés */
-.bank-name {
-  top: 7cm;
-  left: 12cm;
-  font-family: 'Arial', sans-serif;
-  font-size: 12px;
-  font-weight: normal;
-  color: #000;
-}
-
-
-.bank-address {
-  top: 7.3cm;
-  left: 12cm;
-  font-family: 'Arial', sans-serif;
-  font-size: 12px;
-  font-weight: normal;
-  color: #000;
-  max-width: 8cm;
-}
-
-
-.traite-info {
-  margin-top: 20px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 4px;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  font-size: 14px;
-}
-
-.info-grid div {
-  padding: 5px 0;
-}
+  /* color: #000;
+} */
+/*  */
