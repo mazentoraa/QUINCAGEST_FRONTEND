@@ -1,6 +1,10 @@
-import React, { useState, useEffect, useCallback, useContext } from "react";
+import React, { useState, useEffect, useCallback, useContext, useMemo } from "react";
+import moment from "moment";
+import ClientService from "../../services/ClientService";
+import ProductService from "../../services/ProductService";
+import InvoiceService from "../../services/InvoiceService";
+import CdsService from "../../services/CdsService";
 import { InvoiceContext } from "../../contexts/InvoiceContext";
-// import {DatePicker} from "@heroui/react";
 import {
   Table,
   Button,
@@ -22,7 +26,6 @@ import {
   Alert,
   Popconfirm,
   Typography,
-  Statistic,
   Spin,
   Card,
   Badge,
@@ -38,18 +41,11 @@ import {
   FileDoneOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
+import FacturePdfApiService from '../../features/orders/services/FacturePdfApiService';
 
-import { getApiService } from "../../services/apiServiceFactory";
-import ClientService from "../../features/clientManagement/services/ClientService";
-import ProductService from "../../components/BonsDevis/ProductService";
-
-import moment from "moment";
-import FacturePdfApiService from "../../features/orders/services/FacturePdfApiService";
-import InvoiceService from "../../features/manifeste/services/InvoiceService";
-
-const { cdsService } = getApiService();
 const { Option } = Select;
 const { Title } = Typography;
+const { RangePicker } = DatePicker;
 
 // Fix the formatCurrency function
 const formatCurrency = (amount, currency = " ") => {
@@ -106,7 +102,7 @@ export default function BonCommande() {
   // Removed selectedClientFilter state
   const [selectedClientFilter, setSelectedClientFilter] = useState(null); // Client ID for filtering
   const [selectedStatus, setSelectedStatus] = useState(null);
-  const [dateRange, setDateRange] = useState(new Date());
+  const [dateRange, setDateRange] = useState(null);
   const [priceRange, setPriceRange] = useState([null, null]); // [min, max]
   const [filteredOrders, setFilteredOrders] = useState([]);
 
@@ -172,21 +168,22 @@ export default function BonCommande() {
 
   // Update ClientService method to match the implementation
   const fetchAvailableClients = useCallback(async () => {
-    try {
-      // Update to use the correct method name from ClientService
-      const clients = await ClientService.get_all_clients();
-      setAvailableClients(clients);
-    } catch (err) {
-      message.error("Failed to fetch clients: " + err.message);
-    }
-  }, []);
+  try {
+    const clients = await ClientService.get_all_clients();
+    console.log("Clients chargés:", clients); // Debug
+    setAvailableClients(clients);
+  } catch (err) {
+    console.error("Erreur lors du chargement des clients:", err);
+    message.error("Échec du chargement des clients: " + err.message);
+  }
+}, []);
 
   // Fix the fetchOrders function to handle errors properly
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await cdsService.getOrders();
+      const data = await CdsService.getOrders();
       setOrders(data);
       setFilteredOrders(data); // Initialize filteredOrders with all orders
     } catch (err) {
@@ -255,15 +252,17 @@ export default function BonCommande() {
     }
 
     // Filter by date range
-    if (dateRange && dateRange[0] && dateRange[1]) {
-      const startDate = dateRange[0].startOf("day").valueOf();
-      const endDate = dateRange[1].endOf("day").valueOf();
+    if (dateRange && Array.isArray(dateRange) && dateRange[0] && dateRange[1]) {
+  if (moment.isMoment(dateRange[0]) && moment.isMoment(dateRange[1])) {
+    const startDate = dateRange[0].startOf("day").valueOf();
+    const endDate = dateRange[1].endOf("day").valueOf();
 
-      result = result.filter((order) => {
-        const orderDate = moment(order.date_commande).valueOf();
-        return orderDate >= startDate && orderDate <= endDate;
-      });
-    }
+    result = result.filter((order) => {
+      const orderDate = moment(order.date_commande).valueOf();
+      return orderDate >= startDate && orderDate <= endDate;
+    });
+  }
+}
 
     // Filter by price range
     if (priceRange[0] !== null || priceRange[1] !== null) {
@@ -356,7 +355,7 @@ export default function BonCommande() {
   const handleEditOrder = async (order) => {
     setLoading(true);
     try {
-      const fullOrderDetails = await cdsService.getOrderById(order.id);
+      const fullOrderDetails = await CdsService.getOrderById(order.id);
       if (fullOrderDetails) {
         setEditingOrder(fullOrderDetails);
 
@@ -580,7 +579,7 @@ export default function BonCommande() {
         };
         console.log("orderPayload:", orderPayload);
 
-        const createdOrder = await cdsService.createOrder(orderPayload);
+        const createdOrder = await CdsService.createOrder(orderPayload);
         message.success(
           `Commande ${
             createdOrder.numero_commande || formatInvoiceNumber(createdOrder)
@@ -644,7 +643,7 @@ export default function BonCommande() {
           orderPayload.client = orderPayload.client_id;
         }
 
-        const updatedOrder = await cdsService.updateOrder(
+        const updatedOrder = await CdsService.updateOrder(
           editingOrder.id,
           orderPayload
         );
@@ -883,7 +882,7 @@ export default function BonCommande() {
         } else {
           // Call API to add product if it doesn't exist already
           // The backend should return the full product line item, including its own ID
-          const addedProductFromApi = await cdsService.addProductToOrder(
+          const addedProductFromApi = await CdsService.addProductToOrder(
             editingOrder.id,
             newProductData // Send newProductData, backend assigns ID to the line item
           );
@@ -990,7 +989,7 @@ export default function BonCommande() {
         const actualProductId =
           productToRemove.produit_id || productToRemove.produit;
 
-        await cdsService.removeProductFromOrder(
+        await CdsService.removeProductFromOrder(
           editingOrder.id,
           actualProductId // Send the actual product ID, not the PdC ID
         );
@@ -1016,7 +1015,7 @@ export default function BonCommande() {
 
     try {
       // Fetch complete order details
-      const detailedOrder = await cdsService.getOrderById(orderRecord.id);
+      const detailedOrder = await CdsService.getOrderById(orderRecord.id);
       if (!detailedOrder) {
         message.error(
           "Données de commande non trouvées pour la génération du PDF."
@@ -1335,14 +1334,13 @@ export default function BonCommande() {
           </div>
           <table>
             <thead>
-      <tr>
-        <th>N° Facture</th>
-        <th>Client</th>
-        <th>Date</th>
-        <!-- Removed Statut column as per user request -->
-        <th>Mode Paiement</th> {/* Added Mode Paiement header */}
-        <th>Montant TTC</th>
-      </tr>
+              <tr>
+                <th>N° Facture</th>
+                <th>Client</th>
+                <th>Date</th>
+                <th>Mode Paiement</th>
+                <th>Montant TTC</th>
+              </tr>
             </thead>
             <tbody>
               ${summaryData.orders
@@ -1356,23 +1354,24 @@ export default function BonCommande() {
                       ? moment(order.date_commande).format("DD/MM/YYYY")
                       : ""
                   }</td>
-              <!-- Removed Statut cell as per user request -->
-              <td>${translatePaymentMethod(
-                order.mode_paiement
-              )}</td> {/* Added Mode Paiement data */}
-              <td>${formatCurrency(order.montant_ttc)}</td>
-            </tr>
-          `
+                  <td>${translatePaymentMethod(
+                    order.mode_paiement
+                  )}</td>
+                  <td>${formatCurrency(order.montant_ttc)}</td>
+                </tr>
+              `
                 )
                 .join("")}
             </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" style="text-align: right; font-weight: bold;">Timbre Fiscal:</td>
+                <td style="text-align: right; font-weight: bold;">${formatCurrency(
+                  summaryData.timbreFiscal || 0
+                )}</td>
+              </tr>
+            </tfoot>
           </table>
-          <tr>
-            <td colspan="4" style="text-align: right; font-weight: bold;">Timbre Fiscal:</td>
-            <td style="text-align: right; font-weight: bold;">${formatCurrency(
-              summaryData.timbreFiscal || 0
-            )}</td>
-          </tr>
         </body>
       </html>
     `;
@@ -1563,6 +1562,71 @@ export default function BonCommande() {
     0
   );
 
+  const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
+  const [filterForm] = Form.useForm();
+
+  // Liste des clients présents dans le tableau (uniques)
+const clientsInTable = useMemo(() => {
+  const map = new Map();
+  filteredOrders.forEach(order => {
+    const clientId = order.client_id || (typeof order.client === 'number' ? order.client : null);
+    const clientName = order.nom_client || (order.client_details?.nom_client) || `Client #${clientId}`;
+    if (clientId && clientName) {
+      map.set(clientId, clientName);
+    }
+  });
+  return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+}, [filteredOrders]);
+
+// Liste des codes client présents dans le tableau (uniques)
+const codesClientInTable = useMemo(() => {
+  const set = new Set();
+  filteredOrders.forEach(order => {
+    if (order.code_client) {
+      set.add(order.code_client);
+    }
+  });
+  return Array.from(set);
+}, [filteredOrders]);
+
+  // Synchronise les valeurs du formulaire du drawer avec les filtres principaux
+useEffect(() => {
+  if (filterDrawerVisible) {
+    filterForm.setFieldsValue({
+      clientId: selectedClientFilter,
+      dateRange,
+      numeroSearch: searchText,
+      status: selectedStatus,
+      clientName: clientNameFilter,
+      clientCode: clientCodeFilter,
+      priceRange: priceRange,
+    });
+  }
+}, [filterDrawerVisible, selectedClientFilter, dateRange, searchText, selectedStatus, clientNameFilter, clientCodeFilter, priceRange, filterForm]);
+
+  const applyFilters = (values) => {
+    setSearchText(values.numeroSearch || "");
+    setSelectedClientFilter(values.clientId || null);
+    setSelectedStatus(values.status || null);
+    setDateRange(values.dateRange || null);
+    setClientNameFilter(values.clientName || "");
+    setClientCodeFilter(values.clientCode || "");
+    setPriceRange(values.priceRange || [null, null]);
+    setFilterDrawerVisible(false);
+  };
+
+  const resetFilters = () => {
+    filterForm.resetFields();
+    setSearchText("");
+    setSelectedClientFilter(null);
+    setSelectedStatus(null);
+    setDateRange(null);
+    setClientNameFilter("");
+    setClientCodeFilter("");
+    setPriceRange([null, null]);
+    setFilterDrawerVisible(false);
+  };
+
   if (error) {
     return (
       <div style={{ padding: "24px" }}>
@@ -1593,119 +1657,27 @@ export default function BonCommande() {
             </Col>
           </Row>
 
-          {/* Statistics */}
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={6}>
-              <Statistic
-                title="Total Factures"
-                value={filteredOrders.length}
-                prefix={<FileDoneOutlined />}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="Montant Total TTC"
-                value={totalAmount}
-                formatter={(value) => formatCurrency(value)}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="En Attente"
-                value={
-                  filteredOrders.filter((o) => o.statut === "pending").length
-                }
-                valueStyle={{ color: "#fa8c16" }}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="Terminées"
-                value={
-                  filteredOrders.filter((o) => o.statut === "completed").length
-                }
-                valueStyle={{ color: "#52c41a" }}
-              />
-            </Col>
-          </Row>
-
-          <Divider />
-
           {/* Filters */}
-          <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-            <Col span={6}>
-              <Input
-                placeholder="Rechercher..."
-                prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                allowClear
-              />
-            </Col>
-            <Col span={4}>
-              <Select
-                placeholder="Client"
-                value={selectedClientFilter}
-                onChange={setSelectedClientFilter}
-                allowClear
-                style={{ width: "100%" }}
-              >
-                {availableClients.map((client) => (
-                  <Option key={client.id} value={client.id}>
-                    {client.nom_complet || client.nom || client.nom_client}
-                  </Option>
-                ))}
-              </Select>
-            </Col>
-            <Col span={4}>
-              <Input
-                placeholder="Code Client"
-                value={clientCodeFilter}
-                onChange={(e) => setClientCodeFilter(e.target.value)}
-                allowClear
-                style={{ width: "100%" }}
-              />
-            </Col>
-            <Col span={4}>
-              <Input
-                placeholder="Filtrer par nom client"
-                value={clientNameFilter}
-                onChange={(e) => setClientNameFilter(e.target.value)}
-                allowClear
-                style={{ width: "100%" }}
-              />
-            </Col>
-            <Col span={4}>
-              <Select
-                placeholder="Statut"
-                value={selectedStatus}
-                onChange={setSelectedStatus}
-                allowClear
-                style={{ width: "100%" }}
-              >
-                <Option value="pending">En attente</Option>
-                <Option value="processing">En cours</Option>
-                <Option value="completed">Terminée</Option>
-                <Option value="cancelled">Annulée</Option>
-                <Option value="invoiced">Facturée</Option>
-              </Select>
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <DatePicker.RangePicker
-                style={{ width: "100%" }}
-                // value={dateRange}
-                // onChange={(dates) => setDateRange(dates)}
-                format="DD/MM/YYYY"
-                placeholder={["Date début", "Date fin"]}
-              />
-            </Col>
-            <Col span={4}>
-              <Button onClick={clearFilters}>Effacer filtres</Button>
-            </Col>
-          </Row>
+          <Row gutter={[8, 8]} style={{ marginBottom: 16, justifyContent: 'flex-end', display: 'flex' }} align="middle">
+  <Col flex="1 1 auto">
+    <Input
+      placeholder="Rechercher..."
+      prefix={<SearchOutlined />}
+      value={searchText}
+      onChange={(e) => setSearchText(e.target.value)}
+      allowClear
+    />
+  </Col>
+  <Col>
+    <Button onClick={clearFilters}>Effacer filtres</Button>
+  </Col>
+  <Col>
+    <Button type="primary" onClick={() => setFilterDrawerVisible(true)} icon={<SearchOutlined />}>Filtres avancés</Button>
+  </Col>
+</Row>
 
-          {/* Action buttons */}
-          <Row gutter={16} style={{ marginBottom: 16 }}>
+          {/* Action buttons alignés à droite */}
+          <Row gutter={16} style={{ marginBottom: 16, justifyContent: 'flex-end', display: 'flex' }} align="middle">
             <Col>
               <Button
                 type="primary"
@@ -2248,6 +2220,7 @@ export default function BonCommande() {
                   marginTop: "16px",
                   backgroundColor: "#f9f9f9",
                 }}
+
               >
                 <p>
                   <Tag color="blue">
@@ -2266,6 +2239,7 @@ export default function BonCommande() {
     {selectedBonDetails.items.map((item, index) => (
       <li key={index}>
         {item.nom_produit || "Produit"} – Qté:{" "}
+        {item.nom_produit || "Produit"} – Qté:{" "}
         {item.billable?.quantite ?? "?"} –{" "}
         {selectedBonDetails.total_ttc}
       </li>
@@ -2273,12 +2247,121 @@ export default function BonCommande() {
   </ul>
 )}
 
-                </ul>
+                               </ul>
               </div>
             )}
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* Correction : le Drawer doit être bien présent dans le JSX et utiliser filterDrawerVisible */}
+      <Drawer
+        title="Filtres avancés"
+        width={400}
+        onClose={() => setFilterDrawerVisible(false)}
+        open={filterDrawerVisible}
+        bodyStyle={{ paddingBottom: 80 }}
+        extra={
+          <Space>
+            <Button onClick={() => setFilterDrawerVisible(false)}>Annuler</Button>
+            <Button onClick={() => filterForm.submit()} type="primary">Appliquer</Button>
+          </Space>
+        }
+      >
+        <Form
+          form={filterForm}
+          layout="vertical"
+          onFinish={applyFilters}
+          initialValues={{
+            clientId: selectedClientFilter,
+            dateRange,
+            numeroSearch: searchText,
+            status: selectedStatus,
+            clientName: clientNameFilter,
+            clientCode: clientCodeFilter,
+            priceRange: priceRange,
+          }}
+        >
+          <Form.Item name="numeroSearch" label="N° Facture">
+  <Select
+    showSearch
+    allowClear
+    placeholder="Sélectionner un numéro de facture"
+    filterOption={(input, option) =>
+      option.children.toLowerCase().includes(input.toLowerCase())
+    }
+  >
+    {filteredOrders.map((order) => (
+      <Option key={order.numero_commande} value={order.numero_commande}>
+        {order.numero_commande}
+      </Option>
+    ))}
+  </Select>
+</Form.Item>
+          <Form.Item name="clientId" label="Client">
+            <Select
+              allowClear
+              showSearch
+              placeholder="Sélectionner un client"
+              filterOption={(input, option) =>
+                option.children.toLowerCase().includes(input.toLowerCase())
+              }
+            >
+              {clientsInTable.map((client) => (
+                <Option key={client.id} value={client.id}>
+                  {client.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+          
+          <Form.Item name="clientCode" label="Code client">
+            <Select
+              allowClear
+              placeholder="Sélectionner un code client"
+              showSearch
+              filterOption={(input, option) =>
+                option.children.toLowerCase().includes(input.toLowerCase())
+              }
+            >
+              {codesClientInTable.map((code) => (
+                <Select.Option key={code} value={code}>
+                  {code}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item name="dateRange" label="Date de facture">
+            <RangePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item name="status" label="Statut">
+            <Select allowClear placeholder="Filtrer par statut">
+              <Option value="pending">En attente</Option>
+              <Option value="processing">En cours</Option>
+              <Option value="completed">Terminée</Option>
+              <Option value="cancelled">Annulée</Option>
+              <Option value="invoiced">Facturée</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item name="priceRange" label="Montant TTC (min - max)">
+            <Input.Group compact>
+              <Form.Item name={['priceRange', 0]} noStyle>
+                <InputNumber style={{ width: '45%' }} min={0} placeholder="Min" />
+              </Form.Item>
+              <Form.Item name={['priceRange', 1]} noStyle>
+                <InputNumber style={{ width: '45%', marginLeft: 8 }} min={0} placeholder="Max" />
+              </Form.Item>
+            </Input.Group>
+          </Form.Item>
+          <Divider />
+          <div style={{ textAlign: "right" }}>
+            <Space>
+              <Button onClick={resetFilters}>Réinitialiser</Button>
+              <Button type="primary" htmlType="submit">Appliquer</Button>
+            </Space>
+          </div>
+        </Form>
+      </Drawer>
     </Layout.Content>
   );
 }
