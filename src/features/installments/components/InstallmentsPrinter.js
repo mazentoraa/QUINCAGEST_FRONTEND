@@ -772,25 +772,15 @@ const InstallmentsPrinter = ({ selectedInstallment }) => {
                 )}
 
                 {/* Banque - Version principale et dupliquée */}
-                {currentInstallment.bankName && (
-                  <>
-                    <div className="field-overlay bank-name">
-                      {currentInstallment.bankName ?? "undefined"}
-                    </div>
-                    {/* <div className="field-overlay bank-name-2">
-                  {currentInstallment.bankName}
-                </div> */}
-                  </>
-                )}
+ <div className="field-overlay bank-name">
+  {currentInstallment.bankName || "Banque non spécifiée"}
+</div>
 
-                {/* Adresse de la banque - Version principale et dupliquée (nouveau champ ajouté) */}
-                {currentInstallment.bankAddress && (
-                  <>
-                    <div className="field-overlay bank-address">
-                      {currentInstallment.bankAddress ?? "undefined"}
-                    </div>
-                  </>
-                )}
+<div className="field-overlay bank-address">
+  {currentInstallment.bankAddress || "Adresse non spécifiée"}
+</div>
+
+
               </div>
             );
           })}

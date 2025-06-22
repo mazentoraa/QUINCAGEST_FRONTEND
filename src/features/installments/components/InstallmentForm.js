@@ -67,7 +67,7 @@ const InstallmentForm = () => {
     const user = JSON.parse(localStorage.getItem("user"));
     const token = user ? user.token : null;
 
-    fetch(`${API_BASE_URL}/clients/`, {
+    fetch("http://localhost:8000/api/clients/", {
       headers: {
         Authorization: `Token ${token}`,
       },
@@ -333,8 +333,9 @@ const InstallmentForm = () => {
         periode_str: formData.period,
         aval: formData.notice,
         acceptation: formData.acceptance,
-        banque: formData.bankName,
-        adresse_banque: formData.bankAddress,
+        bank_name: formData.bankName,
+        bank_address: formData.bankAddress,
+
         rip: formData.rip.replace(/\s/g, ''), // Enlever les espaces du RIP
         date_creation: formData.creationDate,
       };

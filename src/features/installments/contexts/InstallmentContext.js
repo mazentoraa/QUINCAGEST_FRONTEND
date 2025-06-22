@@ -32,15 +32,18 @@ export const InstallmentProvider = ({ children }) => {
           return {
             ...item,
             clientName: item.nom_raison_sociale || item.client?.nom_client || 'N/A',
-            clientAddress: clientInfo.adresse || 'Non spécifiée', 
+            clientAddress: clientInfo.adresse || 'Non spécifiée',
             invoiceNumber: item.numero_facture || 'N/A',
             totalAmount: item.montant_total || 0,
             numberOfInstallments: item.nombre_traite || uniqueTraites.length,
             status: item.status || 'non_paye',
             traites: uniqueTraites,
-            bankName: item.banque || '',
+        bankName: item.bank_name || item.banque || item.bankName || 'Banque non spécifiée',
+        bankAddress: item.bank_address || item.adresse_banque || item.bankAddress || 'Adresse non spécifiée',
+
+
+
           };
-          
         });
 
         setInstallments(mappedInstallments);
@@ -59,14 +62,12 @@ export const InstallmentProvider = ({ children }) => {
   const getClients = async () => {
     try {
       const data = await ClientService.get_all_clients();
-      console.log('CLIENTS RAW:', data); 
       return data || [];
     } catch (err) {
       console.error('Erreur lors de la récupération des clients:', err);
       return [];
     }
   };
-  
 
   const addClient = async (newClient) => {
     try {
@@ -107,7 +108,7 @@ export const InstallmentProvider = ({ children }) => {
         montant_total: newInstallment.montant_total || 0,
         periode_str: newInstallment.periode_str,
         nom_raison_sociale: newInstallment.nom_raison_sociale,
-        matricule_fiscal: newInstallment.tire_matricule,
+        matricule_fiscal: newInstallment.matricule_fiscal,
         tireur_nom: newInstallment.tireur_nom,
         tireur_matricule: newInstallment.tireur_matricule,
         tireur_adresse: newInstallment.tireur_adresse,
@@ -116,15 +117,15 @@ export const InstallmentProvider = ({ children }) => {
         tire_adresse: newInstallment.tire_adresse,
         acceptation: newInstallment.acceptation,
         aval: newInstallment.aval,
-        banque: newInstallment.banque,
-        adresse_banque: newInstallment.adresse_banque,
+        bank_name: newInstallment.bank_name,
+        bank_address: newInstallment.bank_address,
         rip: newInstallment.rip,
         date_creation: newInstallment.date_creation,
         mode_paiement: 'traite'
       };
-        // console.log("created",payload)
+
       const created = await InstallmentService.createPlanTraite(payload);
-  
+
       const seen = new Set();
       const cleanTraites = (created.traites || []).filter(tr => {
         const key = `${tr.montant}-${tr.date_echeance}`;
@@ -132,21 +133,23 @@ export const InstallmentProvider = ({ children }) => {
         seen.add(key);
         return true;
       });
-  
+
       const enriched = {
         ...created,
         clientName: payload.nom_raison_sociale,
+        clientAddress: payload.tire_adresse,
         invoiceNumber: created.numero_facture,
         totalAmount: payload.montant_total,
         numberOfInstallments: payload.nombre_traite,
         status: created.status || 'non_paye',
         traites: cleanTraites,
-        bankName: payload.banque,
+        bankName: payload.bank_name,
+        bankAddress: payload.bank_address
       };
-  
+
       setInstallments(prev => [...prev, enriched]);
       updateClientsFromInstallment(enriched);
-  
+
       return created;
     } catch (err) {
       console.error('Erreur lors de la création de la traite :', err);
@@ -156,7 +159,6 @@ export const InstallmentProvider = ({ children }) => {
       setLoading(false);
     }
   };
-  
 
   const updateInstallment = async (updatedInstallment) => {
     setLoading(true);

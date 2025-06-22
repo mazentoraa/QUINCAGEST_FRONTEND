@@ -54,8 +54,8 @@ class CdsService {
   
       acceptation: planData.acceptation || '',
       aval: planData.aval || '',
-      banque: planData.banque || '',
-      adresse_banque: planData.adresse_banque || '',
+      bank_name: planData.bank_name || '',
+      bank_address: planData.bank_address || '',
       rip: planData.rip || '',
       
       date_creation: planData.date_creation || new Date().toISOString(),
