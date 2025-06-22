@@ -67,7 +67,7 @@ const InstallmentForm = () => {
     const user = JSON.parse(localStorage.getItem("user"));
     const token = user ? user.token : null;
 
-    fetch("http://localhost:8000/api/clients/", {
+    fetch(`${API_BASE_URL}/clients/`, {
       headers: {
         Authorization: `Token ${token}`,
       },
