@@ -391,26 +391,40 @@ class DevisPdfService {
     </tr>
 
     <tr>
-      <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((data.montant_ht || 0)+(data.montant_tva)  )}</td>
-    </tr>
+  <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
+  <td style="border: 1px solid black; padding: 2px;">
+    ${this.formatCurrency((data.montant_ht || 0) + (data.montant_tva || 0))}
+  </td>
+</tr>
+<tr>
+  <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
+  <td style="border: 1px solid black; padding: 2px;">
+    ${this.formatCurrency(data.timbre_fiscal || 0)}
+  </td>
+</tr>
+
+
   </table>
 </div>
 
 
   <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
-  <div style="width:50% ; border: 1px solid black; padding: 5px ;">
+  <div style="width:50% ;">
    <p style="padding : 12px ">
          <strong>
-         Arrêtée la présente facture à la somme de:
+         Arrêtée la présente devis à la somme de:
          </strong> <br>
-         ${this.formatMontantEnLettres((data.montant_ttc || 0))}
+         ${(() => {
+  const montantTTC = parseFloat(data.montant_ttc || 0);
+  const timbre = parseFloat(data.timbre_fiscal || 0);
+  const montantFinal = montantTTC + timbre;
+  return this.formatMontantEnLettres(montantFinal);
+})()}
+
     
          </p>
    </div>
-   <div style="width:50% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
-    <p><strong>Signature</strong></p>
-    </div>
+  
  </div>
 
  </div>

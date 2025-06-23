@@ -75,93 +75,69 @@ const TraitePrinter = ({ installmentData, onClose , hideControls = false , fromP
     return result.charAt(0).toUpperCase() + result.slice(1);
   };
 
-  const handlePrint = ( ) => {
-    if (fromParent)  return; 
-     const printContent = printRef.current;
-     const originalBody = document.body.innerHTML;
-     const printClone = printContent.cloneNode(true);
-     const printContainer = document.createElement('div');
-      printContainer.innerHTML = `
-    <style>
-      @page {
-        size: auto;  /* auto est la taille de la page */
-        margin: 0mm; /* Supprime les marges */
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background: white;
-      }
-      .traite-container {
-        border: none !important;
-        box-shadow: none !important;
-        background: transparent !important;
-      }
-      /* Cache les éléments indésirables */
-      .no-print, .print-hide {
-        display: none !important;
-      }
-    </style>
-  `;
-     printContainer.appendChild(printClone);
-      document.body.innerHTML = printContainer.innerHTML;
-      setTimeout(() => {
-      window.print();
-      document.body.innerHTML = originalBody;
-  }, 100);
-    // const printWindow = window.open('', '_blank');
-    // const printContent = printRef.current.innerHTML;
-    
-    // printWindow.document.write(`
-    //   <html>
-    //     <head>
-    //       <title>Traite ${installmentData.invoiceNumber}-${currentTraite.index}</title>
-    //       <style>
-    //         body { 
-    //           margin: 0; 
-    //           padding: 0; 
-    //           font-family: Arial, sans-serif;
-    //           background: white;
-    //         }
-    //         .traite-container { 
-    //           width: 17.5cm; 
-    //           height: 11.5cm; 
-    //           margin: 0 auto;
-    //           position: relative;
-    //           background-color: #f9f9f9;
-    //           border: 1px solid #ccc;
-    //         }
-    //         .field-overlay {
-    //           position: absolute;
-    //           font-family: Arial, sans-serif;
-    //           color: #000;
-    //           font-size: 12px;
-    //           line-height: 1.2;
-    //           z-index: 10;
-    //         }
-    //         .no-print { display: none !important; }
-    //         @media print {
-    //           body { margin: 0; padding: 0; }
-    //           .traite-container { 
-    //             margin: 0; 
-    //             border: none; 
-    //             background-color: transparent;
-    //           }
-    //           @page { margin: 0.5cm; size: A4 landscape; }
-    //         }
-    //       </style>
-    //     </head>
-    //     <body>
-    //       ${printContent}
-    //     </body>
-    //   </html>
-    // `);
-    
-    // printWindow.document.close();
-    // printWindow.focus();
-    // printWindow.print();
-    // printWindow.close();
+const handlePrint = () => {
+  if (fromParent || !printRef.current) return;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow.document;
+
+  doc.open();
+  doc.write(`
+    <html>
+      <head>
+        <title>Impression</title>
+        <style>
+          @page {
+            size: auto;
+            margin: 0mm;
+          }
+          body {
+            margin: 0;
+            padding: 0;
+            background: white;
+          }
+          .traite-container {
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+          }
+          .no-print, .print-hide {
+            display: none !important;
+          }
+          ${Array.from(document.styleSheets)
+            .filter(sheet => !sheet.href || sheet.href.startsWith(window.location.origin))
+            .map(sheet => {
+              try {
+                return Array.from(sheet.cssRules).map(rule => rule.cssText).join('\n');
+              } catch (e) {
+                return '';
+              }
+            }).join('\n')}
+        </style>
+      </head>
+      <body>
+        ${printRef.current.outerHTML}
+      </body>
+    </html>
+  `);
+  doc.close();
+
+  iframe.onload = () => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 1000);
   };
+};
 
   const nextTraite = () => {
     if (currentTraiteIndex < installmentData.installmentDetails.length - 1) {
@@ -179,36 +155,78 @@ const TraitePrinter = ({ installmentData, onClose , hideControls = false , fromP
     <div className="traite-printer-overlay">
       <div className="traite-printer-container">
         {/* Barre d'outils */}
-        {!hideControls && (
-        <div className="toolbar no-print">
-          <div className="toolbar-left">
-            <h3>Aperçu Traite {currentTraiteIndex + 1} / {installmentData.installmentDetails.length}</h3>
-            <div className="navigation-buttons">
-              <button
-                onClick={prevTraite}
-                disabled={currentTraiteIndex === 0}
-                className="nav-btn prev-btn"
-              >
-                ← Précédent
-              </button>
-              <button
-                onClick={nextTraite}
-                disabled={currentTraiteIndex === installmentData.installmentDetails.length - 1}
-                className="nav-btn next-btn"
-              >
-                Suivant →
-              </button>
-            </div>
-          </div>
-          <div className="toolbar-right">
-            <button onClick={handlePrint} className="print-btn">
-              🖨️ Imprimer
-            </button>
-            <button onClick={onClose} className="close-btn">
-              Fermer
-            </button>
-          </div>
-        </div>)}
+     {!hideControls && (
+  <div style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "20px",
+    padding: "10px 0",
+    borderBottom: "1px solid #ddd"
+  }} className="no-print">
+    <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+      <h3 style={{ margin: 0 }}>Aperçu Traite {currentTraiteIndex + 1} / {installmentData.installmentDetails.length}</h3>
+      <div style={{ display: "flex", gap: "10px" }}>
+        <button
+          onClick={prevTraite}
+          disabled={currentTraiteIndex === 0}
+          style={{
+            padding: "8px 16px",
+            border: "1px solid #ddd",
+            background: "white",
+            borderRadius: "4px",
+            cursor: currentTraiteIndex === 0 ? "not-allowed" : "pointer",
+            opacity: currentTraiteIndex === 0 ? 0.5 : 1
+          }}
+        >
+          ← Précédent
+        </button>
+        <button
+          onClick={nextTraite}
+          disabled={currentTraiteIndex === installmentData.installmentDetails.length - 1}
+          style={{
+            padding: "8px 16px",
+            border: "1px solid #ddd",
+            background: "white",
+            borderRadius: "4px",
+            cursor: currentTraiteIndex === installmentData.installmentDetails.length - 1 ? "not-allowed" : "pointer",
+            opacity: currentTraiteIndex === installmentData.installmentDetails.length - 1 ? 0.5 : 1
+          }}
+        >
+          Suivant →
+        </button>
+      </div>
+    </div>
+    <div style={{ display: "flex", gap: "10px" }}>
+      <button
+        onClick={handlePrint}
+        style={{
+          padding: "10px 20px",
+          border: "none",
+          borderRadius: "4px",
+          background: "#007bff",
+          color: "white",
+          cursor: "pointer"
+        }}
+      >
+        🖨️ Imprimer
+      </button>
+      <button
+        onClick={onClose}
+        style={{
+          padding: "10px 20px",
+          border: "none",
+          borderRadius: "4px",
+          background: "#6c757d",
+          color: "white",
+          cursor: "pointer"
+        }}
+      >
+        Fermer
+      </button>
+    </div>
+  </div>
+)}
 
         {/* Aperçu de la traite */}
         <div className="traite-preview">

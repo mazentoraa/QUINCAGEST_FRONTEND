@@ -147,6 +147,7 @@ export default function Devis() {
     date_validite: dayjs().add(15, "days"),
     statut: "draft",
     tax_rate: 0,
+    timbre_fiscal: 0.00,
     notes: "",
     remarques:
       "Remarques :\n_ Validité du devis : 15 jours.\n_ Ce devis doit être accepté et signé pour valider la commande",
@@ -1571,6 +1572,24 @@ export default function Devis() {
               /> */}
             </Form.Item>
           </Col>
+          <Col span={12}>
+  <Form.Item
+    label="Timbre fiscal"
+    name="timbre_fiscal"
+    rules={[{ required: true, message: "Veuillez indiquer le timbre fiscal" }]}
+  >
+    <InputNumber
+      min={0}
+      precision={2}
+      style={{ width: "100%" }}
+      formatter={(value) =>
+        `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+      }
+      parser={(value) => value.replace(/\s+/g, "")}
+    />
+  </Form.Item>
+</Col>
+
           <Col span={12}>
             <Form.Item
               label="Conditions de paiement"
