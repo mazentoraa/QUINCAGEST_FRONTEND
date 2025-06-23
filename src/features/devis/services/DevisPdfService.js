@@ -391,17 +391,20 @@ class DevisPdfService {
     </tr>
 
     <tr>
-  <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
-  <td style="border: 1px solid black; padding: 2px;">
-    ${this.formatCurrency((data.montant_ht || 0) + (data.montant_tva || 0))}
-  </td>
-</tr>
-<tr>
   <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
   <td style="border: 1px solid black; padding: 2px;">
     ${this.formatCurrency(data.timbre_fiscal || 0)}
   </td>
 </tr>
+
+<tr>
+  <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
+  <td style="border: 1px solid black; padding: 2px;">
+    ${this.formatCurrency((data.montant_ht || 0) + (data.montant_tva || 0) + (data.timbre_fiscal || 0))}
+  </td>
+</tr>
+
+
 
 
   </table>
