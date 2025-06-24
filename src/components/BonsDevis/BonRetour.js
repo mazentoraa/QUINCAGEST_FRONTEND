@@ -23,6 +23,8 @@ import {
   InputNumber,
   Tooltip,
   Drawer,
+  Alert,
+  AutoComplete,
 } from "antd";
 import {
   PlusOutlined,
@@ -62,6 +64,7 @@ const BonRetour = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [clientFilter, setClientFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
+  const [numeroBonFilter, setNumeroBonFilter] = useState("");
   const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
   const [filterForm] = Form.useForm();
 
@@ -75,37 +78,59 @@ const BonRetour = () => {
     { label: "Annulé", value: "cancelled", color: "error" },
   ];
 
+  // Stocker tous les numéros de bon pour le filtre avancé
+  const [allNumeroBons, setAllNumeroBons] = useState([]);
+
+  // useEffect pour déclencher le fetch sur tous les filtres
   useEffect(() => {
     fetchBonsRetour();
     fetchInitialClients();
-  }, [searchText, statusFilter, clientFilter, dateFilter]);
+  }, [searchText, statusFilter, clientFilter, dateFilter, numeroBonFilter]);
+
+  // Charger tous les numéros de bon au montage
+  useEffect(() => {
+    const fetchAllNumeroBons = async () => {
+      try {
+        const data = await BonRetourService.getAllBonsRetour({});
+        let bons = [];
+        if (data && Array.isArray(data.results)) {
+          bons = data.results;
+        } else if (Array.isArray(data)) {
+          bons = data;
+        }
+        setAllNumeroBons(bons.map((br) => br.numero_bon));
+      } catch (e) {
+        setAllNumeroBons([]);
+      }
+    };
+    fetchAllNumeroBons();
+  }, []);
 
   const fetchBonsRetour = async () => {
     setLoading(true);
     try {
       const queryParams = {};
       if (searchText) queryParams.search = searchText;
+      if (numeroBonFilter) queryParams.numero_bon = numeroBonFilter;
       if (statusFilter) queryParams.status = statusFilter;
       if (clientFilter) queryParams.client = clientFilter;
       if (dateFilter) queryParams.date_retour = dateFilter;
 
       const data = await BonRetourService.getAllBonsRetour(queryParams);
-      console.log("recordsss", data);
-      // Adjust to handle paginated response
+      let bons = [];
       if (data && Array.isArray(data.results)) {
-        setBonsRetour(data.results);
+        bons = data.results;
       } else if (Array.isArray(data)) {
-        // Fallback for non-paginated array
-        setBonsRetour(data);
-      } else {
-        setBonsRetour([]);
-        if (data != null) {
-          console.warn(
-            "API response for bons retour was not in the expected format:",
-            data
-          );
-        }
+        bons = data;
       }
+      // Correction : filtrage strict sur le numéro si le filtre est actif
+      let filtered = bons;
+      if (numeroBonFilter) {
+        filtered = bons.filter(
+          (br) => String(br.numero_bon) === String(numeroBonFilter)
+        );
+      }
+      setBonsRetour(filtered);
     } catch (error) {
       message.error("Erreur lors du chargement des bons de retour");
       setBonsRetour([]); // Ensure it's an array on error
@@ -573,19 +598,33 @@ const BonRetour = () => {
     { name: "", quantite: 0 },
   ]);
 
-  const applyFilters = (values) => {
-    setClientFilter(values.clientId || "");
+  // --- Correction du filtre avancé N° Bon de retour ---
+  const applyFilters = async (values) => {
+    // Correction : toujours utiliser la valeur du champ numeroBon pour filtrer
+    setNumeroBonFilter(values.numeroBon || "");
+
+    // Client
+    const rawClient = values.clientId || "";
+    let resolvedClientId = "";
+    const matchedClient = clientOptions.find((c) => c.label === rawClient);
+    if (matchedClient) {
+      resolvedClientId = matchedClient.value;
+    } else if (rawClient.trim()) {
+      resolvedClientId = rawClient;
+    }
+    setClientFilter(resolvedClientId);
+    setStatusFilter(values.status || "");
     setDateFilter(
       values.dateRange && values.dateRange[1]
         ? values.dateRange[1].format("YYYY-MM-DD")
         : ""
     );
-    setStatusFilter(values.status || "");
     setFilterDrawerVisible(false);
   };
 
   const resetFilters = () => {
     filterForm.resetFields();
+    setNumeroBonFilter("");
     setClientFilter("");
     setDateFilter("");
     setStatusFilter("");
@@ -596,115 +635,131 @@ const BonRetour = () => {
     <Content style={{ padding: "24px", minHeight: "calc(100vh - 64px)" }}>
       <div style={{ background: "#fff", padding: "24px", borderRadius: "2px" }}>
         <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "20px",
-          }}
-        >
-          <Title level={2}>Gestion des Bons de Retour</Title>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            Nouveau Bon de Retour
-          </Button>
-        </div>
+  style={{
+    display: "flex",
+    justifyContent: "space-between", // Gardez cette ligne pour l'espace entre le titre et les boutons
+    marginBottom: "20px",
+  }}
+>
+  <Title level={2}>Gestion des Bons de Retour</Title>
+  <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+    <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+      Nouveau Bon de Retour
+    </Button>
+  </div>
+</div>
 
         {/* Filters */}
         <Card style={{ marginBottom: 16 }}>
-          <Row gutter={16}>
-            <Col span={24}>
-              <Button
-                icon={<SearchOutlined />}
-                onClick={() => setFilterDrawerVisible(true)}
-                style={{ marginRight: 8 }}
-              >
-                Filtres avancés
-              </Button>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={fetchBonsRetour}
-                style={{ marginRight: 8 }}
-              >
-                Actualiser
-              </Button>
-              <Button
-                type="primary"
-                icon={<PrinterOutlined />}
-                onClick={handlePrintSelected}
-                disabled={selectedRowKeys.length === 0}
-                style={{ marginRight: 8 }}
-              >
-                Imprimer la sélection ({selectedRowKeys.length})
-              </Button>
-              <Button onClick={resetFilters}>Réinitialiser les filtres</Button>
-            </Col>
-          </Row>
-        </Card>
+  <Row gutter={16}>
+    <Col span={24}>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+        <Button
+          icon={<SearchOutlined />}
+          onClick={() => setFilterDrawerVisible(true)}
+        >
+          Filtres avancés
+        </Button>
+        <Button icon={<ReloadOutlined />} onClick={fetchBonsRetour}>
+          Actualiser
+        </Button>
+        <Button
+          type="primary"
+          icon={<PrinterOutlined />}
+          onClick={handlePrintSelected}
+          disabled={selectedRowKeys.length === 0}
+        >
+          Imprimer la sélection ({selectedRowKeys.length})
+        </Button>
+        <Button onClick={resetFilters}>Effacer les filtres</Button>
+      </div>
+    </Col>
+  </Row>
+</Card>
 
         {/* Drawer pour filtres avancés */}
         <Drawer
-          title="Filtres avancés"
-          width={400}
-          onClose={() => setFilterDrawerVisible(false)}
-          open={filterDrawerVisible}
-          bodyStyle={{ paddingBottom: 80 }}
-          extra={
-            <Space>
-              <Button onClick={resetFilters}>Réinitialiser</Button>
-              <Button onClick={() => filterForm.submit()} type="primary">
-                Appliquer
-              </Button>
-            </Space>
+  title="Filtres avancés"
+  open={filterDrawerVisible}
+  onClose={() => setFilterDrawerVisible(false)}
+  width={400}
+>
+  <Form
+    form={filterForm}
+    layout="vertical"
+    onFinish={applyFilters}
+    initialValues={{
+  numeroBon: numeroBonFilter || undefined,
+  clientId: clientFilter || undefined,
+  status: statusFilter || undefined,
+  dateRange: dateFilter
+    ? [null, moment(dateFilter, "YYYY-MM-DD")]
+    : null,
+}}
+
+  >
+    <Form.Item name="numeroBon" label="N° Bon de retour">
+  <AutoComplete
+    placeholder="Saisir ou choisir un numéro"
+    allowClear
+    options={allNumeroBons.map((num) => ({ value: num }))}
+    onChange={(val) => filterForm.setFieldsValue({ numeroBon: val })}
+    onSearch={(val) => filterForm.setFieldsValue({ numeroBon: val })}
+  />
+</Form.Item>
+
+
+    <Form.Item name="clientId" label="Client">
+      <AutoComplete
+        placeholder="Saisir ou choisir un client"
+        allowClear
+        onSearch={debouncedSearch}
+        onChange={(val) => filterForm.setFieldsValue({ clientId: val })}
+        options={clientOptions.map((client) => ({
+          value: client.label,
+        }))}
+        onBlur={(e) => {
+          const value = e.target.value;
+          if (value && !clientOptions.some(opt => opt.label === value)) {
+            filterForm.setFieldsValue({ clientId: value });
           }
+        }}
+      />
+    </Form.Item>
+
+    <Form.Item name="status" label="Statut">
+      <Select allowClear placeholder="Filtrer par statut">
+        {statusOptions.map((option) => (
+          <Select.Option key={option.value} value={option.value}>
+            <Tag color={option.color}>{option.label}</Tag>
+          </Select.Option>
+        ))}
+      </Select>
+    </Form.Item>
+
+    <Form.Item name="dateRange" label="Date de retour">
+      <DatePicker.RangePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+    </Form.Item>
+
+    <Form.Item>
+      <Space>
+        <Button
+          onClick={() => {
+            filterForm.resetFields();
+            resetFilters();
+          }}
         >
-          <Form
-            form={filterForm}
-            layout="vertical"
-            onFinish={applyFilters}
-            initialValues={{
-              clientId: clientFilter || undefined,
-              dateRange: dateFilter
-                ? [null, dateFilter ? moment(dateFilter, "YYYY-MM-DD") : null]
-                : null,
-              status: statusFilter || undefined,
-            }}
-          >
-            <Form.Item name="clientId" label="Client">
-              <Select
-                allowClear
-                showSearch
-                placeholder="Sélectionner un client"
-                optionFilterProp="label"
-                loading={clientSearchLoading}
-                onSearch={debouncedSearch}
-                options={clientOptions}
-              />
-            </Form.Item>
-            <Form.Item name="dateRange" label="Période de retour">
-              <DatePicker.RangePicker
-                style={{ width: "100%" }}
-                format="DD/MM/YYYY"
-              />
-            </Form.Item>
-            <Form.Item name="status" label="Statut">
-              <Select allowClear placeholder="Sélectionner un statut">
-                {statusOptions.map((option) => (
-                  <Select.Option key={option.value} value={option.value}>
-                    <Tag color={option.color}>{option.label}</Tag>
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Divider />
-            <div style={{ textAlign: "right" }}>
-              <Space>
-                <Button onClick={resetFilters}>Effacer</Button>
-                <Button type="primary" htmlType="submit">
-                  Appliquer
-                </Button>
-              </Space>
-            </div>
-          </Form>
-        </Drawer>
+          Réinitialiser
+        </Button>
+        <Button type="primary" htmlType="submit">
+          Appliquer
+        </Button>
+      </Space>
+    </Form.Item>
+  </Form>
+</Drawer>
+
+
 
         <Table
           loading={loading}
@@ -720,7 +775,21 @@ const BonRetour = () => {
               `${range[0]}-${range[1]} sur ${total} éléments`,
           }}
         />
+       
 
+
+
+{/* Message quand aucun résultat avec filtres actifs */}
+{bonsRetour.length === 0 && 
+ (searchText || numeroBonFilter || clientFilter || dateFilter || statusFilter) && (
+  <Alert
+    message="Filtrage actif"
+    description="Aucun bon de retour ne correspond aux critères de recherche. Essayez de modifier vos filtres."
+    type="info"
+    showIcon
+    style={{ marginTop: 16 }}
+  />
+)}
         {/* Modal for Add/Edit */}
         <Modal
           title={

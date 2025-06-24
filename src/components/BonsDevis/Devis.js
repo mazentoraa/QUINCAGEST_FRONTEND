@@ -28,6 +28,7 @@ import {
   Badge,
   message,
   Drawer,
+  AutoComplete,
 } from "antd";
 import {
   PlusOutlined,
@@ -181,17 +182,22 @@ export default function Devis() {
 
     // Filter by search text (client name, devis number, or notes)
     if (searchText) {
-      const searchLower = searchText.toLowerCase();
-      result = result.filter(
-        (devis) =>
-          (devis.nom_client &&
-            devis.nom_client.toLowerCase().includes(searchLower)) ||
-          (devis.numero_devis &&
-            devis.numero_devis.toLowerCase().includes(searchLower)) ||
-          (devis.remarques &&
-            devis.remarques.toLowerCase().includes(searchLower))
-      );
-    }
+  const input = searchText.trim().toLowerCase();
+  const numOnly = input.replace(/^0+/, "");
+
+  result = result.filter((devis) => {
+    const fullNum = devis.numero_devis?.toLowerCase() || "";
+    const finalPart = fullNum.split("-").pop().replace(/^0+/, "");
+
+    return (
+      (devis.nom_client && devis.nom_client.toLowerCase().includes(input)) ||
+      (fullNum.includes(input)) ||
+      (finalPart.includes(numOnly)) ||
+      (devis.remarques && devis.remarques.toLowerCase().includes(input))
+    );
+  });
+}
+
 
     // Filter by client
     if (selectedClientFilter) {
@@ -236,8 +242,9 @@ export default function Devis() {
 
   // Apply filters whenever filter criteria change
   useEffect(() => {
-    filterDevisList();
-  }, [filterDevisList]);
+  filterDevisList();
+}, [filterDevisList]);
+
 
   // Fetch quotes list
   const fetchDevisList = async () => {
@@ -406,6 +413,17 @@ export default function Devis() {
       setLoading(false);
     }
   };
+  const isAnyFilterApplied = () => {
+  return (
+    !!searchText ||
+    !!selectedClientFilter ||
+    !!selectedStatus ||
+    (dateRange && dateRange[0] && dateRange[1]) ||
+    priceRange[0] !== null ||
+    priceRange[1] !== null
+  );
+};
+
   const handleDeleteDevis = async (Id) => {
     try {
       setLoading(true);
@@ -999,34 +1017,76 @@ export default function Devis() {
 
   // Partie 2 : Fonction pour appliquer les filtres
   const applyFilters = (values) => {
-    // Filtres locaux sur devisList
-    let filtered = [...devisList];
-    if (values.numeroDevis) {
-      filtered = filtered.filter((devis) =>
-        devis.numero_devis && devis.numero_devis.toLowerCase().includes(values.numeroDevis.toLowerCase())
-      );
-    }
-    if (values.clientId) {
-      filtered = filtered.filter((devis) => devis.client === values.clientId);
-    }
-    if (values.dateRange && values.dateRange[0] && values.dateRange[1]) {
-      const start = values.dateRange[0].startOf('day');
-      const end = values.dateRange[1].endOf('day');
-      filtered = filtered.filter((devis) => {
-        const dateEmission = dayjs(devis.date_emission);
-        return dateEmission.isSameOrAfter(start) && dateEmission.isSameOrBefore(end);
-      });
-    }
-    if (values.status) {
-      filtered = filtered.filter((devis) => devis.statut === values.status);
-    }
-    setFilteredDevisList(filtered);
+  let filtered = [...devisList];
+
+  if (values.numeroDevis) {
+  const rawInput = values.numeroDevis.trim().toLowerCase();
+  const inputNumberOnly = rawInput.split("-").pop().replace(/^0+/, ""); // ex: 00005 → 5
+
+  filtered = filtered.filter((devis) => {
+    const numeroComplet = devis.numero_devis?.toLowerCase() || "";
+    const partieNum = numeroComplet.split("-").pop().replace(/^0+/, "");
+
+    // Conditions acceptées :
+    return (
+      numeroComplet.includes(rawInput) ||     // l'utilisateur tape DEV-2025-00005 ou DEV ou 2025
+      partieNum.includes(inputNumberOnly)     // l'utilisateur tape 00005 ou 5
+    );
+  });
+}
+
+
+
+
+if (values.clientId) {
+  // Vérifier si la valeur correspond à un client existant
+  const clientExiste = clients.some((c) => String(c.id) === String(values.clientId));
+  if (clientExiste) {
+    filtered = filtered.filter((devis) => String(devis.client) === String(values.clientId));
+  } else {
+    // Afficher une alerte si le client n'existe pas
+    notification.warning({
+      message: "Client introuvable",
+      description: "Le client saisi n'existe pas dans la liste.",
+    });
+    setFilteredDevisList([]);
     setFilterDrawerVisible(false);
-  };
+    return;
+  }
+}
+
+
+  if (values.dateRange && values.dateRange[0] && values.dateRange[1]) {
+    const start = dayjs(values.dateRange[0]).startOf("day");
+    const end = dayjs(values.dateRange[1]).endOf("day");
+    filtered = filtered.filter((devis) => {
+      const dateEmission = dayjs(devis.date_emission);
+      return dateEmission.isSameOrAfter(start) && dateEmission.isSameOrBefore(end);
+    });
+  }
+
+  if (values.status) {
+    filtered = filtered.filter((devis) => devis.statut === values.status);
+  }
+
+  setSearchText(values.numeroDevis || "");
+  setSelectedClientFilter(values.clientId || null);
+  setSelectedStatus(values.status || null);
+  setDateRange(values.dateRange || null);
+
+  setFilteredDevisList(filtered);
+  setFilterDrawerVisible(false);
+};
+
 
   // Partie 3 : Fonction pour réinitialiser les filtres
   const resetFilters = () => {
     filterForm.resetFields();
+    setSearchText("");
+    setSelectedClientFilter(null);
+    setSelectedStatus(null);
+    setDateRange(null);
+    setPriceRange([null, null]);
     setClientFilter("");
     setDateFilter("");
     setStatusFilter("");
@@ -1097,13 +1157,15 @@ export default function Devis() {
         <Row style={{ marginBottom: 16 }} gutter={[16, 16]} align="middle">
           <Col xs={24} sm={12} md={8} lg={6}>
             <Input
-              placeholder="Rechercher par client, N° devis..."
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              allowClear
-            />
+  placeholder="Rechercher par client, N° devis..."
+  prefix={<SearchOutlined />}
+  value={searchText}
+  onChange={(e) => setSearchText(e.target.value)} // ✅ bien mis à jour
+  allowClear
+/>
+
           </Col>
+          
           <Col flex="auto" style={{ textAlign: "right" }}>
             <Space>
               <Button
@@ -1178,17 +1240,28 @@ export default function Devis() {
 
         {/* No results message */}
         {Array.isArray(filteredDevisList) &&
-          filteredDevisList.length === 0 &&
-          Array.isArray(devisList) &&
-          devisList.length > 0 && (
-            <Alert
-              message="Filtrage actif"
-              description="Aucun devis ne correspond aux critères de recherche. Essayez de modifier vos filtres."
-              type="info"
-              showIcon
-              style={{ marginTop: 16 }}
-            />
-          )}
+  filteredDevisList.length === 0 &&
+  Array.isArray(devisList) &&
+  devisList.length > 0 &&
+  (
+    searchText ||
+    selectedClientFilter ||
+    selectedStatus ||
+    (dateRange && dateRange[0] && dateRange[1]) ||
+    priceRange[0] !== null ||
+    priceRange[1] !== null
+  ) && (
+    <Alert
+      message="Filtrage actif"
+      description="Aucun devis ne correspond aux critères de recherche. Essayez de modifier vos filtres."
+      type="info"
+      showIcon
+      style={{ marginTop: 16 }}
+    />
+)}
+
+
+
       </Card>
 
       {error && (
@@ -1216,6 +1289,17 @@ export default function Devis() {
             </Button>
           </Space>
         }
+        afterOpenChange={(open) => {
+          if (open) {
+            // Synchroniser le champ du drawer avec la recherche courante
+            filterForm.setFieldsValue({
+              numeroDevis: searchText || '',
+              clientId: selectedClientFilter || undefined,
+              dateRange: dateRange || null,
+              status: selectedStatus || undefined,
+            });
+          }
+        }}
       >
         <Form
           form={filterForm}
@@ -1231,32 +1315,42 @@ export default function Devis() {
           }}
         >
           <Form.Item name="numeroDevis" label="№ Devis">
-            <Input placeholder="Entrer le numéro de devis" allowClear />
-          </Form.Item>
+  <AutoComplete
+    allowClear
+    placeholder="Entrer un numéro de devis (ex : 005)"
+    options={Array.from(new Set(devisList.map((d) => d.numero_devis)))
+      .filter(Boolean)
+      .map((num) => ({ value: num }))}
+    filterOption={(inputValue, option) =>
+      option.value.toLowerCase().includes(inputValue.toLowerCase())
+    }
+    onChange={(value) => {
+      filterForm.setFieldsValue({ numeroDevis: value }); // force la mise à jour du champ
+    }}
+  />
+</Form.Item>
+
+
+
+
+
           <Form.Item name="clientId" label="Client">
-            <Select
-              allowClear
-              showSearch
-              placeholder="Sélectionner un client"
-              optionFilterProp="children"
-              loading={clientSearchLoading}
-              filterOption={(input, option) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }
-            >
-              {clients.map((client) => (
-                <Option key={client.id} value={client.id}>
-                  {client.nom_client}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item name="dateRange" label="Date d'émission">
-            <DatePicker.RangePicker
-              style={{ width: "100%" }}
-              format="DD/MM/YYYY"
-            />
-          </Form.Item>
+  <AutoComplete
+    allowClear
+    placeholder="Entrer un nom de client"
+    options={clients.map((client) => ({
+      value: client.id, // Utiliser l'ID comme value
+      label: client.nom_client,
+    }))}
+    filterOption={(inputValue, option) =>
+      option.label.toLowerCase().includes(inputValue.toLowerCase())
+    }
+    onChange={(value) => {
+      filterForm.setFieldsValue({ clientId: value });
+    }}
+  />
+</Form.Item>
+
           <Form.Item name="status" label="Statut">
             <Select allowClear placeholder="Sélectionner un statut">
               {statusOptions.map((option) => (
@@ -1319,6 +1413,7 @@ export default function Devis() {
         align: "right",
       },
     ];
+
 
     return (
       <Content style={{ padding: "20px" }}>
@@ -1530,7 +1625,7 @@ export default function Devis() {
                 },
               ]}
             >
-              <Select
+              <Select 
                 placeholder="Sélectionner un client"
                 showSearch
                 optionFilterProp="children"
