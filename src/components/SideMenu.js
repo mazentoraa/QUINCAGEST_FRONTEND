@@ -1,7 +1,7 @@
 import React from 'react';
 import { Menu } from 'antd';
-import { 
-  ShoppingOutlined, 
+import {
+  ShoppingOutlined,
   FileTextOutlined,
   AccountBookOutlined,
   UserOutlined,
@@ -17,7 +17,7 @@ const { SubMenu } = Menu;
 function SideMenu() {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const handleMenuClick = (path) => {
     navigate(path);
   };
@@ -25,6 +25,7 @@ function SideMenu() {
   const getOpenKeys = () => {
     const path = location.pathname;
     if (path.includes('/stock')) return ['stock'];
+    if (path.includes('/achats')) return ['achats'];
     if (path.includes('/manifeste')) return ['manifeste'];
     if (path.includes('/reglements')) return ['reglements'];
     if (path.includes('/bons')) return ['bons_devis'];
@@ -46,20 +47,24 @@ function SideMenu() {
           Clients
         </Menu.Item>
 
-        
-
         <SubMenu key="stock" icon={<ShoppingOutlined />} title="Gestion de Stock">
           <Menu.Item key="/stock/produits" onClick={() => handleMenuClick('/stock/produits')}>
             Produits Finis
           </Menu.Item>
           <Menu.Item key="/stock/matieres" onClick={() => handleMenuClick('/stock/matieres')}>
-            Matières Premières
-          </Menu.Item>
-          <Menu.Item key="/purshase" onClick={() => handleMenuClick('/purshase')}>
-            Achats
+            Matières Premières Client
           </Menu.Item>
         </SubMenu>
-        
+
+        <SubMenu key="achats" icon={<ShoppingOutlined />} title="Gestion des Achats">
+          <Menu.Item key="/achats" onClick={() => handleMenuClick('/achats')}>
+            Achats
+          </Menu.Item>
+          <Menu.Item key="/achats/matieres" onClick={() => handleMenuClick('/achats/matieres')}>
+            Matières Premières
+          </Menu.Item>
+        </SubMenu>
+
         <SubMenu key="manifeste" icon={<FileTextOutlined />} title="Manifeste">
           <Menu.Item key="/manifeste/travaux" icon={<ToolOutlined />} onClick={() => handleMenuClick('/manifeste/travaux')}>
             Travaux
@@ -82,7 +87,7 @@ function SideMenu() {
             </Menu.Item>
           </SubMenu>
         </SubMenu>
-        
+
         <SubMenu key="reglements" icon={<AccountBookOutlined />} title="Règlements">
           <Menu.Item key="/reglements/factures" icon={<FileOutlined />} onClick={() => handleMenuClick('/reglements/factures')}>
             Facture
@@ -91,6 +96,7 @@ function SideMenu() {
             Traites
           </Menu.Item>
         </SubMenu>
+
         <Menu.Item key="/reglements/rapport" icon={<BarChartOutlined />} onClick={() => handleMenuClick('/reglements/rapport')}>
           Rapport
         </Menu.Item>

@@ -1,0 +1,221 @@
+import {
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
+import {
+  Button,
+  Card,
+  Col,
+  Empty,
+  Input,
+  message,
+  Modal,
+  Popconfirm,
+  Row,
+  Space,
+  Table,
+  Tag,
+  Typography,
+} from "antd";
+import React, { useEffect, useState } from "react";
+import AddMaterialAchatForm from "./AddMaterialAchatForm";
+import MaterialAchatService from "./Services/MaterialAchatService";
+import MaterialModel from "./models/MaterialModel";
+
+const { Title, Text } = Typography;
+
+export default function MaterialAchatManagement() {
+  const [loading, setLoading] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentMaterial, setCurrentMaterial] = useState(null);
+  const [materialList, setMaterialList] = useState([]);
+  const [searchText, setSearchText] = useState("");
+
+  const columns = [
+    {
+      title: "Référence",
+      dataIndex: "ref",
+      key: "ref",
+    },
+    {
+      title: "Nom Matière",
+      dataIndex: "nom_matiere",
+      key: "nom_matiere",
+    },
+    {
+      title: "Catégorie",
+      dataIndex: "categorie",
+      key: "categorie",
+      render: (cat) => <Tag>{cat}</Tag>,
+    },
+    {
+      title: "Quantité",
+      dataIndex: "remaining_quantity",
+      key: "remaining_quantity",
+    },
+    {
+      title: "Prix Unitaire",
+      dataIndex: "prix_unitaire",
+      key: "prix_unitaire",
+      render: (prix) => `${prix} TND`,
+    },
+    {
+      title: "Emplacement",
+      dataIndex: "emplacement",
+      key: "emplacement",
+    },
+    {
+      title: "Date Réception",
+      dataIndex: "date_reception",
+      key: "date_reception",
+    },
+    {
+      title: "Réf. Fournisseur",
+      dataIndex: "ref_fournisseur",
+      key: "ref_fournisseur",
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, record) => (
+        <Space>
+          <Button icon={<EditOutlined />} onClick={() => handleEditMaterial(record)} />
+          <Popconfirm
+            title="Supprimer cette matière ?"
+            onConfirm={() => handleDeleteMaterial(record.id)}
+            okText="Oui"
+            cancelText="Non"
+          >
+            <Button icon={<DeleteOutlined />} danger />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  const fetchMaterial = async () => {
+    setLoading(true);
+    try {
+      const params = {};
+      if (searchText) params.ref = searchText;
+      const result = await MaterialAchatService.getAllMaterial(params);
+      setMaterialList(result);
+    } catch (err) {
+      console.error(err);
+      message.error("Erreur lors du chargement des matières achetées");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMaterial();
+  }, [searchText]);
+
+  const handleAddMaterial = () => {
+    setCurrentMaterial(MaterialModel.createEmpty());
+    setIsEditing(false);
+    setIsModalVisible(true);
+  };
+
+  const handleEditMaterial = (mat) => {
+    setCurrentMaterial(new MaterialModel(mat));
+    setIsEditing(true);
+    setIsModalVisible(true);
+  };
+
+  const handleDeleteMaterial = async (id) => {
+    setLoading(true);
+    try {
+      await MaterialAchatService.deleteMaterial(id);
+      message.success("Matière supprimée !");
+      fetchMaterial();
+    } catch (err) {
+      console.error(err);
+      message.error("Erreur lors de la suppression");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFormSubmit = async (formValues) => {
+    setLoading(true);
+    try {
+      const material = new MaterialModel(formValues);
+      const payload = material.to_api_format();
+
+      if (isEditing) {
+        await MaterialAchatService.updateMaterial(currentMaterial.id, payload);
+        message.success("Matière mise à jour !");
+      } else {
+        await MaterialAchatService.createMaterial(payload);
+        message.success("Matière ajoutée !");
+      }
+
+      setIsModalVisible(false);
+      fetchMaterial();
+    } catch (err) {
+      console.error(err);
+      message.error("Erreur lors de la sauvegarde");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <Card style={{ marginBottom: 16 }}>
+        <Title level={2}>Matières Premières Achetées</Title>
+        <Text type="secondary">Suivi des matières</Text>
+        <Row justify="space-between" align="middle" style={{ marginTop: 20 }}>
+          <Col span={10}>
+            <Input
+              placeholder="Rechercher par référence"
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+            />
+          </Col>
+          <Col>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleAddMaterial}
+            >
+              Nouvelle matière achetée
+            </Button>
+          </Col>
+        </Row>
+      </Card>
+
+      <Table
+        columns={columns}
+        dataSource={materialList}
+        rowKey={(record) => record.id || record.ref}
+        loading={loading}
+        pagination={{ pageSize: 10 }}
+        locale={{ emptyText: <Empty description="Aucune matière trouvée" /> }}
+      />
+
+      <Modal
+        open={isModalVisible}
+        footer={null}
+        onCancel={() => setIsModalVisible(false)}
+        title={isEditing ? "Modifier la matière achetée" : "Nouvelle matière achetée"}
+        width={1000}
+      >
+        <AddMaterialAchatForm
+          initial_values={currentMaterial}
+          on_finish={handleFormSubmit}
+          setIsModalVisible={setIsModalVisible}
+          loading={loading}
+          isEditing={isEditing}
+        />
+      </Modal>
+    </div>
+  );
+}

@@ -153,7 +153,7 @@ export default function PurchaseMatiere() {
   return (
     <Card>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-        <Title level={4}>Gestion des Achats</Title>
+        <Title level={4}>Achats</Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}

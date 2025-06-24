@@ -41,6 +41,9 @@ import Devis from "./components/BonsDevis/Devis";
 import PurshaseMatiere from "./features/purshase/purshase_matiere";
 
 import { Spin } from "antd"; // Import Spin
+import MaterialAchatManagement from './features/purshase/MaterialManagement';
+
+
 
 const { Header, Content, Sider } = Layout;
 
@@ -186,10 +189,10 @@ function App() {
                                     path="/bons/devis"
                                     element={<Devis />}
                                   />
-                                  <Route
-                                  path="/purshase"
-                                  element={<PurshaseMatiere />}
-                                />
+                                  <Route path="/achats" element={<PurshaseMatiere />} />
+                                 <Route path="/achats/matieres" element={<MaterialAchatManagement />} />
+
+
                                 </Routes>
                               </Content>
                             </Layout>
