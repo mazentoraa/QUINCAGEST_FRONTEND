@@ -22,9 +22,6 @@ import {
   Col,
   InputNumber,
   Tooltip,
-  Drawer,
-  Alert,
-  AutoComplete,
 } from "antd";
 import {
   PlusOutlined,
@@ -33,6 +30,9 @@ import {
   PrinterOutlined,
   SearchOutlined,
   ReloadOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  SendOutlined,
 } from "@ant-design/icons";
 import debounce from "lodash/debounce";
 import moment from "moment";
@@ -64,9 +64,6 @@ const BonRetour = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [clientFilter, setClientFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
-  const [numeroBonFilter, setNumeroBonFilter] = useState("");
-  const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
-  const [filterForm] = Form.useForm();
 
   // State for table row selection
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -78,59 +75,37 @@ const BonRetour = () => {
     { label: "Annulé", value: "cancelled", color: "error" },
   ];
 
-  // Stocker tous les numéros de bon pour le filtre avancé
-  const [allNumeroBons, setAllNumeroBons] = useState([]);
-
-  // useEffect pour déclencher le fetch sur tous les filtres
   useEffect(() => {
     fetchBonsRetour();
     fetchInitialClients();
-  }, [searchText, statusFilter, clientFilter, dateFilter, numeroBonFilter]);
-
-  // Charger tous les numéros de bon au montage
-  useEffect(() => {
-    const fetchAllNumeroBons = async () => {
-      try {
-        const data = await BonRetourService.getAllBonsRetour({});
-        let bons = [];
-        if (data && Array.isArray(data.results)) {
-          bons = data.results;
-        } else if (Array.isArray(data)) {
-          bons = data;
-        }
-        setAllNumeroBons(bons.map((br) => br.numero_bon));
-      } catch (e) {
-        setAllNumeroBons([]);
-      }
-    };
-    fetchAllNumeroBons();
-  }, []);
+  }, [searchText, statusFilter, clientFilter, dateFilter]);
 
   const fetchBonsRetour = async () => {
     setLoading(true);
     try {
       const queryParams = {};
       if (searchText) queryParams.search = searchText;
-      if (numeroBonFilter) queryParams.numero_bon = numeroBonFilter;
       if (statusFilter) queryParams.status = statusFilter;
       if (clientFilter) queryParams.client = clientFilter;
       if (dateFilter) queryParams.date_retour = dateFilter;
 
       const data = await BonRetourService.getAllBonsRetour(queryParams);
-      let bons = [];
+      console.log("recordsss" , data)
+      // Adjust to handle paginated response
       if (data && Array.isArray(data.results)) {
-        bons = data.results;
+        setBonsRetour(data.results);
       } else if (Array.isArray(data)) {
-        bons = data;
+        // Fallback for non-paginated array
+        setBonsRetour(data);
+      } else {
+        setBonsRetour([]);
+        if (data != null) {
+          console.warn(
+            "API response for bons retour was not in the expected format:",
+            data
+          );
+        }
       }
-      // Correction : filtrage strict sur le numéro si le filtre est actif
-      let filtered = bons;
-      if (numeroBonFilter) {
-        filtered = bons.filter(
-          (br) => String(br.numero_bon) === String(numeroBonFilter)
-        );
-      }
-      setBonsRetour(filtered);
     } catch (error) {
       message.error("Erreur lors du chargement des bons de retour");
       setBonsRetour([]); // Ensure it's an array on error
@@ -142,7 +117,7 @@ const BonRetour = () => {
   const fetchInitialClients = async () => {
     try {
       const clientsData = await ClientService.getAllClients();
-      console.log("clientss", clientsData);
+      console.log("clientss",clientsData)
 
       if (Array.isArray(clientsData)) {
         setClientOptions(
@@ -193,7 +168,7 @@ const BonRetour = () => {
     setEditingBonRetour(null);
     setSelectedMaterials([]);
     setAvailableMaterials([]);
-    setCustomMaterials([{ name: "", quantite: 0 }]);
+   setCustomMaterials([{ name: "", quantite: 0 }]); 
     // Set default values
     form.setFieldsValue({
       numero_bon: BonRetourService.generateBonRetourNumber(bonsRetour),
@@ -298,14 +273,16 @@ const BonRetour = () => {
         message.error("Veuillez ajouter au moins une matière avec une quantité.");
         return;
       }
+      
 
       // Prepare materials data for submission
       const materialsToSubmit = customMaterials
-        .filter((mat) => mat.name && mat.quantite)
-        .map((mat) => ({
-          nom_matiere: mat.name,
-          quantite_retournee: mat.quantite,
-        }));
+      .filter((mat) => mat.name && mat.quantite)
+      .map((mat) => ({
+        nom_matiere: mat.name,
+        quantite_retournee: mat.quantite,
+      }));
+    
 
       const bonRetourData = {
         ...values,
@@ -398,7 +375,7 @@ const BonRetour = () => {
           console.warn("Could not fetch client data for PDF:", error);
           // Use whatever client info is available in recordFromList as a fallback
           fullRecord.client = recordFromList.client || {
-            code_client: "N/A",
+            code_client : "N/A",
             nom_client: "N/A",
             adresse: "N/A",
             numero_fiscal: "N/A",
@@ -410,7 +387,7 @@ const BonRetour = () => {
       // Ensure client is an object, even if some fields are N/A
       if (typeof fullRecord.client !== "object" || fullRecord.client === null) {
         fullRecord.client = {
-          code_client: "N/A",
+          code_client : "N/A",
           nom_client: "N/A",
           adresse: "N/A",
           numero_fiscal: "N/A",
@@ -466,7 +443,7 @@ const BonRetour = () => {
 
     for (const bonId of selectedRowKeys) {
       const recordToPrint = bonsRetour.find((br) => br.id === bonId);
-      console.log("to print");
+      console.log("to print")
       if (recordToPrint) {
         try {
           await generateBonRetourPDF(recordToPrint); // This function handles its own success/error messages
@@ -597,169 +574,101 @@ const BonRetour = () => {
   const [customMaterials, setCustomMaterials] = useState([
     { name: "", quantite: 0 },
   ]);
-
-  // --- Correction du filtre avancé N° Bon de retour ---
-  const applyFilters = async (values) => {
-    // Correction : toujours utiliser la valeur du champ numeroBon pour filtrer
-    setNumeroBonFilter(values.numeroBon || "");
-
-    // Client
-    const rawClient = values.clientId || "";
-    let resolvedClientId = "";
-    const matchedClient = clientOptions.find((c) => c.label === rawClient);
-    if (matchedClient) {
-      resolvedClientId = matchedClient.value;
-    } else if (rawClient.trim()) {
-      resolvedClientId = rawClient;
-    }
-    setClientFilter(resolvedClientId);
-    setStatusFilter(values.status || "");
-    setDateFilter(
-      values.dateRange && values.dateRange[1]
-        ? values.dateRange[1].format("YYYY-MM-DD")
-        : ""
-    );
-    setFilterDrawerVisible(false);
-  };
-
-  const resetFilters = () => {
-    filterForm.resetFields();
-    setNumeroBonFilter("");
-    setClientFilter("");
-    setDateFilter("");
-    setStatusFilter("");
-    setFilterDrawerVisible(false);
-  };
-
+  
   return (
     <Content style={{ padding: "24px", minHeight: "calc(100vh - 64px)" }}>
       <div style={{ background: "#fff", padding: "24px", borderRadius: "2px" }}>
         <div
-  style={{
-    display: "flex",
-    justifyContent: "space-between", // Gardez cette ligne pour l'espace entre le titre et les boutons
-    marginBottom: "20px",
-  }}
->
-  <Title level={2}>Gestion des Bons de Retour</Title>
-  <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-    <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-      Nouveau Bon de Retour
-    </Button>
-  </div>
-</div>
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "20px",
+          }}
+        >
+          <Title level={2}>Gestion des Bons de Retour</Title>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            Nouveau Bon de Retour
+          </Button>
+        </div>
 
         {/* Filters */}
         <Card style={{ marginBottom: 16 }}>
-  <Row gutter={16}>
-    <Col span={24}>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-        <Button
-          icon={<SearchOutlined />}
-          onClick={() => setFilterDrawerVisible(true)}
-        >
-          Filtres avancés
-        </Button>
-        <Button icon={<ReloadOutlined />} onClick={fetchBonsRetour}>
-          Actualiser
-        </Button>
-        <Button
-          type="primary"
-          icon={<PrinterOutlined />}
-          onClick={handlePrintSelected}
-          disabled={selectedRowKeys.length === 0}
-        >
-          Imprimer la sélection ({selectedRowKeys.length})
-        </Button>
-        <Button onClick={resetFilters}>Effacer les filtres</Button>
-      </div>
-    </Col>
-  </Row>
-</Card>
-
-        {/* Drawer pour filtres avancés */}
-        <Drawer
-  title="Filtres avancés"
-  open={filterDrawerVisible}
-  onClose={() => setFilterDrawerVisible(false)}
-  width={400}
->
-  <Form
-    form={filterForm}
-    layout="vertical"
-    onFinish={applyFilters}
-    initialValues={{
-  numeroBon: numeroBonFilter || undefined,
-  clientId: clientFilter || undefined,
-  status: statusFilter || undefined,
-  dateRange: dateFilter
-    ? [null, moment(dateFilter, "YYYY-MM-DD")]
-    : null,
-}}
-
-  >
-    <Form.Item name="numeroBon" label="N° Bon de retour">
-  <AutoComplete
-    placeholder="Saisir ou choisir un numéro"
-    allowClear
-    options={allNumeroBons.map((num) => ({ value: num }))}
-    onChange={(val) => filterForm.setFieldsValue({ numeroBon: val })}
-    onSearch={(val) => filterForm.setFieldsValue({ numeroBon: val })}
-  />
-</Form.Item>
-
-
-    <Form.Item name="clientId" label="Client">
-      <AutoComplete
-        placeholder="Saisir ou choisir un client"
-        allowClear
-        onSearch={debouncedSearch}
-        onChange={(val) => filterForm.setFieldsValue({ clientId: val })}
-        options={clientOptions.map((client) => ({
-          value: client.label,
-        }))}
-        onBlur={(e) => {
-          const value = e.target.value;
-          if (value && !clientOptions.some(opt => opt.label === value)) {
-            filterForm.setFieldsValue({ clientId: value });
-          }
-        }}
-      />
-    </Form.Item>
-
-    <Form.Item name="status" label="Statut">
-      <Select allowClear placeholder="Filtrer par statut">
-        {statusOptions.map((option) => (
-          <Select.Option key={option.value} value={option.value}>
-            <Tag color={option.color}>{option.label}</Tag>
-          </Select.Option>
-        ))}
-      </Select>
-    </Form.Item>
-
-    <Form.Item name="dateRange" label="Date de retour">
-      <DatePicker.RangePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
-    </Form.Item>
-
-    <Form.Item>
-      <Space>
-        <Button
-          onClick={() => {
-            filterForm.resetFields();
-            resetFilters();
-          }}
-        >
-          Réinitialiser
-        </Button>
-        <Button type="primary" htmlType="submit">
-          Appliquer
-        </Button>
-      </Space>
-    </Form.Item>
-  </Form>
-</Drawer>
-
-
+          <Row gutter={16}>
+            <Col span={6}>
+              <Input
+                placeholder="Rechercher..."
+                prefix={<SearchOutlined />}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                allowClear
+              />
+            </Col>
+            <Col span={6}>
+              <Select
+                placeholder="Filtrer par statut"
+                style={{ width: "100%" }}
+                value={statusFilter}
+                onChange={setStatusFilter}
+                allowClear
+              >
+                {statusOptions.map((option) => (
+                  <Select.Option key={option.value} value={option.value}>
+                    <Tag color={option.color}>{option.label}</Tag>
+                  </Select.Option>
+                ))}
+              </Select>
+            </Col>
+            <Col span={6}>
+              <Select
+                placeholder="Filtrer par client"
+                style={{ width: "100%" }}
+                value={clientFilter}
+                onChange={setClientFilter}
+                allowClear
+                showSearch
+                options={clientOptions}
+              />
+            </Col>
+            <Col span={6}>
+              <DatePicker
+                placeholder="Filtrer par date"
+                style={{ width: "100%" }}
+                value={dateFilter ? moment(dateFilter) : null}
+                onChange={(date) =>
+                  setDateFilter(date ? date.format("YYYY-MM-DD") : "")
+                }
+              />
+            </Col>
+          </Row>
+          <div style={{ marginTop: 12 }}>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={fetchBonsRetour}
+              style={{ marginRight: 8 }}
+            >
+              Actualiser
+            </Button>
+            <Button
+              type="primary"
+              icon={<PrinterOutlined />}
+              onClick={handlePrintSelected}
+              disabled={selectedRowKeys.length === 0}
+              style={{ marginRight: 8 }}
+            >
+              Imprimer la sélection ({selectedRowKeys.length})
+            </Button>
+            <Button
+              onClick={() => {
+                setSearchText("");
+                setStatusFilter("");
+                setClientFilter("");
+                setDateFilter("");
+              }}
+            >
+              Réinitialiser les filtres
+            </Button>
+          </div>
+        </Card>
 
         <Table
           loading={loading}
@@ -775,21 +684,7 @@ const BonRetour = () => {
               `${range[0]}-${range[1]} sur ${total} éléments`,
           }}
         />
-       
 
-
-
-{/* Message quand aucun résultat avec filtres actifs */}
-{bonsRetour.length === 0 && 
- (searchText || numeroBonFilter || clientFilter || dateFilter || statusFilter) && (
-  <Alert
-    message="Filtrage actif"
-    description="Aucun bon de retour ne correspond aux critères de recherche. Essayez de modifier vos filtres."
-    type="info"
-    showIcon
-    style={{ marginTop: 16 }}
-  />
-)}
         {/* Modal for Add/Edit */}
         <Modal
           title={
@@ -879,7 +774,7 @@ const BonRetour = () => {
                   ]}
                 >
                   <div>
-                    <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
                   </div>
                 </Form.Item>
               </Col>
@@ -895,7 +790,7 @@ const BonRetour = () => {
                   ]}
                 >
                   <div>
-                    <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY"/>
                   </div>
                 </Form.Item>
               </Col>
@@ -903,63 +798,64 @@ const BonRetour = () => {
 
             {/* Available Materials */}
             <Divider orientation="left">Matières à retourner</Divider>
-            <List
-              bordered
-              dataSource={customMaterials}
-              renderItem={(item, index) => (
-                <List.Item
-                  actions={[
-                    customMaterials.length > 1 ? (
-                      <Button
-                        danger
-                        type="text"
-                        icon={<DeleteOutlined />}
-                        onClick={() => {
-                          const newList = [...customMaterials];
-                          newList.splice(index, 1);
-                          setCustomMaterials(newList);
-                        }}
-                      />
-                    ) : null,
-                  ]}
-                >
-                  <Space style={{ width: "100%" }} direction="vertical">
-                    <Input
-                      placeholder="Nom de la matière"
-                      value={item.name}
-                      onChange={(e) => {
-                        const newList = [...customMaterials];
-                        newList[index].name = e.target.value;
-                        setCustomMaterials(newList);
-                      }}
-                    />
-                    <InputNumber
-                      placeholder="Quantité"
-                      min={1}
-                      value={item.quantite}
-                      onChange={(value) => {
-                        const newList = [...customMaterials];
-                        newList[index].quantite = value;
-                        setCustomMaterials(newList);
-                      }}
-                      style={{ width: "100%" }}
-                    />
-                  </Space>
-                </List.Item>
-              )}
-              footer={
-                <Button
-                  type="dashed"
-                  icon={<PlusOutlined />}
-                  onClick={() =>
-                    setCustomMaterials([...customMaterials, { name: "", quantite: 1 }])
-                  }
-                  block
-                >
-                  Ajouter une matière
-                </Button>
-              }
-            />
+<List
+  bordered
+  dataSource={customMaterials}
+  renderItem={(item, index) => (
+    <List.Item
+      actions={[
+        customMaterials.length > 1 ? (
+          <Button
+            danger
+            type="text"
+            icon={<DeleteOutlined />}
+            onClick={() => {
+              const newList = [...customMaterials];
+              newList.splice(index, 1);
+              setCustomMaterials(newList);
+            }}
+          />
+        ) : null,
+      ]}
+    >
+      <Space style={{ width: "100%" }} direction="vertical">
+        <Input
+          placeholder="Nom de la matière"
+          value={item.name}
+          onChange={(e) => {
+            const newList = [...customMaterials];
+            newList[index].name = e.target.value;
+            setCustomMaterials(newList);
+          }}
+        />
+        <InputNumber
+          placeholder="Quantité"
+          min={1}
+          value={item.quantite}
+          onChange={(value) => {
+            const newList = [...customMaterials];
+            newList[index].quantite = value;
+            setCustomMaterials(newList);
+          }}
+          style={{ width: "100%" }}
+        />
+      </Space>
+    </List.Item>
+  )}
+  footer={
+    <Button
+      type="dashed"
+      icon={<PlusOutlined />}
+      onClick={() =>
+        setCustomMaterials([...customMaterials, { name: "", quantite: 1 }])
+      }
+      block
+    >
+      Ajouter une matière
+    </Button>
+  }
+/>
+
 
             <Form.Item name="notes" label="Notes">
               <TextArea rows={4} placeholder="Notes supplémentaires..." />

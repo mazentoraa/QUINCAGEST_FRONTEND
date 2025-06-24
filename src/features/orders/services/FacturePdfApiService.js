@@ -141,7 +141,12 @@ class FacturePdfApiService {
       const remise = prixUnitaire * quantite * (remisePourcentage / 100);
       return acc + remise;
     }, 0);
-  
+const totalHTVA = orderData.montant_ht || 0;
+const fodec = totalHTVA * 0.01;
+const totalTVA = (totalHTVA + fodec) * ((orderData.tax_rate || 0) / 100);
+const timbreFiscal = orderData.timbre_fiscal || 0;
+const netAPayer = totalHTVA + fodec + totalTVA + timbreFiscal;
+
 
     return `
 <!DOCTYPE html>
@@ -393,23 +398,27 @@ thead {
       <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
       <td style="border: 1px solid black; padding: 2px;">${ totalRemise.toFixed(3)}</td>
     </tr>
-        
-    <tr>
-      <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${(orderData.montant_ht || 0).toFixed(3)}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${( orderData.montant_tva || 0).toFixed(3)}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${(orderData.timbre_fiscal || 0).toFixed(3)}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${((orderData.montant_ht || 0) + (orderData.montant_tva || 0) + (orderData.timbre_fiscal || 0)).toFixed(3)}</td>
-    </tr>
+     <tr>
+  <td style="border: 1px solid black; padding: 2px;"><strong>Fodec (1%)</strong></td>
+  <td style="border: 1px solid black; padding: 2px;">${fodec.toFixed(3)}</td>
+</tr>
+<tr>
+  <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
+  <td style="border: 1px solid black; padding: 2px;">${totalHTVA.toFixed(3)}</td>
+</tr>
+<tr>
+  <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
+  <td style="border: 1px solid black; padding: 2px;">${totalTVA.toFixed(3)}</td>
+</tr>
+<tr>
+  <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
+  <td style="border: 1px solid black; padding: 2px;">${timbreFiscal.toFixed(3)}</td>
+</tr>
+<tr>
+  <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
+  <td style="border: 1px solid black; padding: 2px;">${netAPayer.toFixed(3)}</td>
+</tr>
+
   </table>
 </div>
 

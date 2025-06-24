@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import debounce from "lodash.debounce";
 
 import {
   Button,
@@ -26,9 +25,7 @@ import {
   Tooltip,
   Popconfirm,
   Badge,
-  message,
-  Drawer,
-  AutoComplete,
+  message
 } from "antd";
 import {
   PlusOutlined,
@@ -44,7 +41,6 @@ import {
   SearchOutlined,
   PrinterOutlined,
   FilePdfOutlined,
-  FilterOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
@@ -60,7 +56,7 @@ const formatCurrency = (amount) => {
   return new Intl.NumberFormat("fr-TN", {
     style: "decimal",
     minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
+    maximumFractionDigits: 3
   }).format(amount || 0);
 };
 
@@ -112,7 +108,7 @@ export default function Devis() {
   const [filteredDevisList, setFilteredDevisList] = useState([]); // Initialize as empty array
 
   const [formError, setFormError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
 
   // Filter and search state
   const [searchText, setSearchText] = useState("");
@@ -120,13 +116,6 @@ export default function Devis() {
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [dateRange, setDateRange] = useState(null);
   const [priceRange, setPriceRange] = useState([null, null]); // [min, max]
-  const [statusFilter, setStatusFilter] = useState("");
-  const [clientFilter, setClientFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
-  const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
-  const [filterForm] = Form.useForm();
-  const [clientOptions, setClientOptions] = useState([]);
-  const [clientSearchLoading, setClientSearchLoading] = useState(false);
   const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
   // randomId of 2 letter and 3 digits placed randomly in the string
   const randomId = `ID-${Math.random()
@@ -134,25 +123,25 @@ export default function Devis() {
     .substring(2, 4)
     .toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
   const currentYear = new Date().getFullYear();
-  const currentYearsDevis = filteredDevisList.filter((devis) =>
-    devis.numero_devis?.includes(`DEV-${currentYear}-`)
-  );
-  let maxSequence = 0;
-  currentYearsDevis.forEach((dev) => {
-    const parts = dev.numero_devis.split("-");
-    const sequencePart = parts[parts.length - 1];
-    const sequenceNumber = parseInt(sequencePart, 10) || 0;
+        const currentYearsDevis = filteredDevisList.filter(devis =>
+          devis.numero_devis?.includes(`DEV-${currentYear}-`)
+        );
+        let maxSequence = 0;
+         currentYearsDevis.forEach(dev => {
+           const parts = dev.numero_devis.split('-');
+           const sequencePart = parts[parts.length - 1];
+           const sequenceNumber = parseInt(sequencePart, 10) || 0;
 
-    if (sequenceNumber > maxSequence) {
-      maxSequence = sequenceNumber;
-    }
-  });
-  const newSequence = String(maxSequence + 1).padStart(5, "0");
+           if (sequenceNumber > maxSequence) {
+             maxSequence = sequenceNumber;
+           }
+         });
+         const newSequence = String(maxSequence + 1).padStart(5, '0');
 
-  // Generate a random order number
-  const randomOrderNumber = `DEV-${new Date().getFullYear()}-${newSequence}`;
+        // Generate a random order number
+        const randomOrderNumber = `DEV-${new Date().getFullYear()}-${newSequence}`;
   const initialFormValues = {
-    numero_devis: randomOrderNumber,
+    numero_devis:randomOrderNumber,
     client: undefined,
     date_emission: dayjs(),
     date_validite: dayjs().add(15, "days"),
@@ -166,15 +155,6 @@ export default function Devis() {
     produits: [],
   };
 
-  const statusOptions = [
-    { value: "draft", label: "Brouillon", color: "default" },
-    { value: "sent", label: "Envoyé", color: "processing" },
-    { value: "accepted", label: "Accepté", color: "success" },
-    { value: "rejected", label: "Rejeté", color: "error" },
-    { value: "expired", label: "Expiré", color: "warning" },
-    { value: "converted", label: "Converti", color: "blue" },
-  ];
-
   // Function to filter devis based on search criteria
   const filterDevisList = useCallback(() => {
     if (!Array.isArray(devisList) || !devisList.length) return;
@@ -183,22 +163,17 @@ export default function Devis() {
 
     // Filter by search text (client name, devis number, or notes)
     if (searchText) {
-  const input = searchText.trim().toLowerCase();
-  const numOnly = input.replace(/^0+/, "");
-
-  result = result.filter((devis) => {
-    const fullNum = devis.numero_devis?.toLowerCase() || "";
-    const finalPart = fullNum.split("-").pop().replace(/^0+/, "");
-
-    return (
-      (devis.nom_client && devis.nom_client.toLowerCase().includes(input)) ||
-      (fullNum.includes(input)) ||
-      (finalPart.includes(numOnly)) ||
-      (devis.remarques && devis.remarques.toLowerCase().includes(input))
-    );
-  });
-}
-
+      const searchLower = searchText.toLowerCase();
+      result = result.filter(
+        (devis) =>
+          (devis.nom_client &&
+            devis.nom_client.toLowerCase().includes(searchLower)) ||
+          (devis.numero_devis &&
+            devis.numero_devis.toLowerCase().includes(searchLower)) ||
+          (devis.remarques &&
+            devis.remarques.toLowerCase().includes(searchLower))
+      );
+    }
 
     // Filter by client
     if (selectedClientFilter) {
@@ -243,9 +218,8 @@ export default function Devis() {
 
   // Apply filters whenever filter criteria change
   useEffect(() => {
-  filterDevisList();
-}, [filterDevisList]);
-
+    filterDevisList();
+  }, [filterDevisList]);
 
   // Fetch quotes list
   const fetchDevisList = async () => {
@@ -375,6 +349,7 @@ export default function Devis() {
   }, [id]);
 
   // Handle editing a devis
+  
   const handleEditDevis = async (devis) => {
     setLoading(true);
     try {
@@ -414,32 +389,22 @@ export default function Devis() {
       setLoading(false);
     }
   };
-  const isAnyFilterApplied = () => {
-  return (
-    !!searchText ||
-    !!selectedClientFilter ||
-    !!selectedStatus ||
-    (dateRange && dateRange[0] && dateRange[1]) ||
-    priceRange[0] !== null ||
-    priceRange[1] !== null
-  );
-};
-
-  const handleDeleteDevis = async (Id) => {
-    try {
-      setLoading(true);
-      await axios.delete(`${API_BASE_URL}/devis/${Id}/`);
-
-      message.success("Bon supprimé avec succès");
-      fetchDevisList();
-      // setDevisList(prevDevis => prevDevis.filter(note => note.id !== Id));
-      // setTotalRecords(prevTotal => prevTotal - 1);
-    } catch (error) {
-      message.error("Erreur lors de la suppression: " + error.message);
-    } finally {
-      setLoading(false);
+   const handleDeleteDevis = async (Id) => {
+      try {
+          setLoading(true);
+          await axios.delete(`${API_BASE_URL}/devis/${Id}/`);
+          
+          message.success("Bon supprimé avec succès"); 
+          fetchDevisList();
+          // setDevisList(prevDevis => prevDevis.filter(note => note.id !== Id));
+          // setTotalRecords(prevTotal => prevTotal - 1);
+      } catch(error){
+          message.error("Erreur lors de la suppression: " + error.message);
+      } finally {
+          setLoading(false)
+      }
+  
     }
-  };
   // Create new devis
   const handleCreateDevis = () => {
     form.resetFields();
@@ -752,7 +717,7 @@ export default function Devis() {
         date_emission: dayjs(detailedDevis.date_emission).format("DD/MM/YYYY"),
         date_validite: dayjs(detailedDevis.date_validite).format("DD/MM/YYYY"),
       };
-      console.log("details", pdfData);
+      console.log("details",pdfData)
       // Generate PDF using DevisPdfService
       await DevisPdfService.generateDevisPDF(
         pdfData,
@@ -859,9 +824,9 @@ export default function Devis() {
             />
           </Tooltip>
           <Tooltip title="Supprimer">
-            <Popconfirm
+           <Popconfirm
               title="Êtes-vous sûr de vouloir supprimer cette devis ?"
-              onConfirm={() => handleDeleteDevis(record.id)}
+              onConfirm={() =>  handleDeleteDevis(record.id)}
               okText="Oui"
               cancelText="Non"
             >
@@ -896,6 +861,7 @@ export default function Devis() {
                   danger
                 />
               </Tooltip>
+              
             </>
           )}
           {record.statut === "accepted" && (
@@ -911,6 +877,7 @@ export default function Devis() {
                 style={{ backgroundColor: "#1890ff", borderColor: "#1890ff" }}
               />
             </Tooltip>
+            
           )}
         </Space>
       ),
@@ -1014,167 +981,180 @@ export default function Devis() {
   //   }
   // };
 
-  // Partie 1 : Définition des états et formulaire
-
-  // Partie 2 : Fonction pour appliquer les filtres
-  const applyFilters = (values) => {
-  let filtered = [...devisList];
-
-  if (values.numeroDevis) {
-  const rawInput = values.numeroDevis.trim().toLowerCase();
-  const inputNumberOnly = rawInput.split("-").pop().replace(/^0+/, ""); // ex: 00005 → 5
-
-  filtered = filtered.filter((devis) => {
-    const numeroComplet = devis.numero_devis?.toLowerCase() || "";
-    const partieNum = numeroComplet.split("-").pop().replace(/^0+/, "");
-
-    // Conditions acceptées :
-    return (
-      numeroComplet.includes(rawInput) ||     // l'utilisateur tape DEV-2025-00005 ou DEV ou 2025
-      partieNum.includes(inputNumberOnly)     // l'utilisateur tape 00005 ou 5
-    );
-  });
-}
-
-
-
-
-if (values.clientId) {
-  // Vérifier si la valeur correspond à un client existant
-  const clientExiste = clients.some((c) => String(c.id) === String(values.clientId));
-  if (clientExiste) {
-    filtered = filtered.filter((devis) => String(devis.client) === String(values.clientId));
-  } else {
-    // Afficher une alerte si le client n'existe pas
-    notification.warning({
-      message: "Client introuvable",
-      description: "Le client saisi n'existe pas dans la liste.",
-    });
-    setFilteredDevisList([]);
-    setFilterDrawerVisible(false);
-    return;
-  }
-}
-
-
-  if (values.dateRange && values.dateRange[0] && values.dateRange[1]) {
-    const start = dayjs(values.dateRange[0]).startOf("day");
-    const end = dayjs(values.dateRange[1]).endOf("day");
-    filtered = filtered.filter((devis) => {
-      const dateEmission = dayjs(devis.date_emission);
-      return dateEmission.isSameOrAfter(start) && dateEmission.isSameOrBefore(end);
-    });
-  }
-
-  if (values.status) {
-    filtered = filtered.filter((devis) => devis.statut === values.status);
-  }
-
-  setSearchText(values.numeroDevis || "");
-  setSelectedClientFilter(values.clientId || null);
-  setSelectedStatus(values.status || null);
-  setDateRange(values.dateRange || null);
-
-  setFilteredDevisList(filtered);
-  setFilterDrawerVisible(false);
-};
-
-
-  // Partie 3 : Fonction pour réinitialiser les filtres
-  const resetFilters = () => {
-    filterForm.resetFields();
-    setSearchText("");
-    setSelectedClientFilter(null);
-    setSelectedStatus(null);
-    setDateRange(null);
-    setPriceRange([null, null]);
-    setClientFilter("");
-    setDateFilter("");
-    setStatusFilter("");
-    setFilterDrawerVisible(false);
-  };
-
-  // Partie 4 : Recherche avec Débounce
-  const handleSearch = async (value) => {
-    if (value.length < 2) return;
-    setClientSearchLoading(true);
-    try {
-      // Remplacez ceci par votre service réel si besoin
-      const clients = await fetchClients();
-      setClientOptions(
-        clients
-          .filter((client) =>
-            client.nom_client.toLowerCase().includes(value.toLowerCase())
-          )
-          .map((client) => ({
-            label: client.nom_client,
-            value: client.id,
-          }))
-      );
-    } catch (error) {
-      console.error("Error searching clients:", error);
-    } finally {
-      setClientSearchLoading(false);
-    }
-  };
-  const debouncedSearch = debounce(handleSearch, 500);
-
   // Render the main list view
   const renderDevisList = () => (
     <Content style={{ padding: "20px" }}>
       <Card title="Gestion des Devis">
-        {successMessage && (
-          <div
-            style={{
-              marginBottom: 16,
+      {successMessage && (
+            <div style={{   marginBottom: 16,
               padding: "12px",
               border: "1px solid #52c41a",
               backgroundColor: "#f6ffed",
               color: "#237804",
               borderRadius: "6px",
-              fontWeight: 500,
-            }}
-          >
-            ✅ {successMessage}
-          </div>
-        )}
-        {formError && (
-          <div
-            style={{
-              marginBottom: 16,
-              padding: "12px",
-              border: "1px solid #ff4d4f",
-              backgroundColor: "#fff1f0",
-              color: "#a8071a",
-              borderRadius: "6px",
-              fontWeight: 500,
-            }}
-          >
-            {formError}
-          </div>
-        )}
+              fontWeight: 500,}}>
+              ✅ {successMessage}
+            </div>
+          )}
+           {formError && (
+              <div style={{    marginBottom: 16,
+                padding: "12px",
+                border: "1px solid #ff4d4f",
+                backgroundColor: "#fff1f0",
+                color: "#a8071a",
+                borderRadius: "6px",
+                fontWeight: 500, }}>
+                {formError}
+              </div>
+            )}
+        {/* Statistics Row */}
+        <Row gutter={16} style={{ marginBottom: 16 }}>
+          <Col xs={24} sm={12} md={6} lg={6}>
+            <Card size="small">
+              <Statistic
+                title="Total devis"
+                value={
+                  Array.isArray(filteredDevisList)
+                    ? filteredDevisList.length
+                    : 0
+                }
+                suffix={`/ ${Array.isArray(devisList) ? devisList.length : 0}`}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6} lg={6}>
+            <Card size="small">
+              <Statistic
+                title="Montant total TTC"
+                value={(Array.isArray(filteredDevisList)
+                  ? filteredDevisList
+                  : []
+                ).reduce(
+                  (sum, devis) => sum + (Number(devis.montant_ttc) || 0),
+                  0
+                )}
+                formatter={(value) => formatCurrency(value)}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6} lg={6}>
+            <Card size="small">
+              <Statistic
+                title="En attente"
+                value={
+                  Array.isArray(filteredDevisList)
+                    ? filteredDevisList.filter(
+                        (devis) => devis.statut === "sent"
+                      ).length
+                    : 0
+                }
+                valueStyle={{ color: "#1890ff" }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6} lg={6}>
+            <Card size="small">
+              <Statistic
+                title="Acceptés"
+                value={
+                  Array.isArray(filteredDevisList)
+                    ? filteredDevisList.filter(
+                        (devis) => devis.statut === "accepted"
+                      ).length
+                    : 0
+                }
+                valueStyle={{ color: "#52c41a" }}
+              />
+            </Card>
+          </Col>
+        </Row>
 
         {/* Filters and Search */}
         <Row style={{ marginBottom: 16 }} gutter={[16, 16]} align="middle">
           <Col xs={24} sm={12} md={8} lg={6}>
             <Input
-  placeholder="Rechercher par client, N° devis..."
-  prefix={<SearchOutlined />}
-  value={searchText}
-  onChange={(e) => setSearchText(e.target.value)} // ✅ bien mis à jour
-  allowClear
-/>
-
+              placeholder="Rechercher par client, N° devis..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+            />
           </Col>
-          
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <Select
+              placeholder="Filtrer par client"
+              style={{ width: "100%" }}
+              onChange={(value) => setSelectedClientFilter(value)}
+              allowClear
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                (option?.children || "")
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
+              }
+            >
+              {Array.isArray(clients) &&
+                clients.map((client) => (
+                  <Option key={client.id} value={client.id}>
+                    {client.nom_client}
+                  </Option>
+                ))}
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <Select
+              placeholder="Filtrer par statut"
+              style={{ width: "100%" }}
+              onChange={(value) => setSelectedStatus(value)}
+              allowClear
+            >
+              <Option value="draft">Brouillon</Option>
+              <Option value="sent">Envoyé</Option>
+              <Option value="accepted">Accepté</Option>
+              <Option value="rejected">Rejeté</Option>
+              <Option value="expired">Expiré</Option>
+              <Option value="converted">Converti</Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <DatePicker.RangePicker
+              style={{ width: "100%" }}
+              onChange={(dates) => setDateRange(dates)}
+              placeholder={["Date début", "Date fin"]}
+              format="DD/MM/YYYY"
+            />
+          </Col>
+          <Col xs={24} sm={12} md={10} lg={6}>
+            <Form.Item label="Montant TTC" style={{ marginBottom: 0 }}>
+              <Input.Group compact style={{ display: "flex" }}>
+                <InputNumber
+                  style={{ width: "50%" }}
+                  placeholder="Min"
+                  min={0}
+                  step={100}
+                  formatter={(value) =>
+                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+                  }
+                  parser={(value) => value.replace(/\s+/g, "")}
+                  onChange={(value) => setPriceRange([value, priceRange[1]])}
+                />
+                <InputNumber
+                  style={{ width: "50%" }}
+                  placeholder="Max"
+                  min={0}
+                  step={100}
+                  formatter={(value) =>
+                    `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+                  }
+                  parser={(value) => value.replace(/\s+/g, "")}
+                  onChange={(value) => setPriceRange([priceRange[0], value])}
+                />
+              </Input.Group>
+            </Form.Item>
+          </Col>
           <Col flex="auto" style={{ textAlign: "right" }}>
             <Space>
-              <Button
-                icon={<FilterOutlined />}
-                onClick={() => setFilterDrawerVisible(true)}
-              >
-                Filtres avancés
-              </Button>
               {(searchText ||
                 selectedClientFilter ||
                 selectedStatus ||
@@ -1200,6 +1180,13 @@ if (values.clientId) {
               >
                 Nouveau Devis
               </Button>
+              {/* <Button
+                icon={<FilePdfOutlined />}
+                // onClick={() => handleBatchAction("pdf")}
+                // disabled={selectedRowKeys.length === 0}
+              >
+                Exporter PDFs
+              </Button> */}
               <Button icon={<ReloadOutlined />} onClick={fetchDevisList}>
                 Actualiser
               </Button>
@@ -1241,28 +1228,17 @@ if (values.clientId) {
 
         {/* No results message */}
         {Array.isArray(filteredDevisList) &&
-  filteredDevisList.length === 0 &&
-  Array.isArray(devisList) &&
-  devisList.length > 0 &&
-  (
-    searchText ||
-    selectedClientFilter ||
-    selectedStatus ||
-    (dateRange && dateRange[0] && dateRange[1]) ||
-    priceRange[0] !== null ||
-    priceRange[1] !== null
-  ) && (
-    <Alert
-      message="Filtrage actif"
-      description="Aucun devis ne correspond aux critères de recherche. Essayez de modifier vos filtres."
-      type="info"
-      showIcon
-      style={{ marginTop: 16 }}
-    />
-)}
-
-
-
+          filteredDevisList.length === 0 &&
+          Array.isArray(devisList) &&
+          devisList.length > 0 && (
+            <Alert
+              message="Filtrage actif"
+              description="Aucun devis ne correspond aux critères de recherche. Essayez de modifier vos filtres."
+              type="info"
+              showIcon
+              style={{ marginTop: 16 }}
+            />
+          )}
       </Card>
 
       {error && (
@@ -1274,104 +1250,6 @@ if (values.clientId) {
           style={{ marginTop: 16 }}
         />
       )}
-
-      {/* Drawer pour filtres avancés */}
-      <Drawer
-        title="Filtres avancés"
-        width={400}
-        onClose={() => setFilterDrawerVisible(false)}
-        open={filterDrawerVisible}
-        bodyStyle={{ paddingBottom: 80 }}
-        extra={
-          <Space>
-            <Button onClick={resetFilters}>Réinitialiser</Button>
-            <Button onClick={() => filterForm.submit()} type="primary">
-              Appliquer
-            </Button>
-          </Space>
-        }
-        afterOpenChange={(open) => {
-          if (open) {
-            // Synchroniser le champ du drawer avec la recherche courante
-            filterForm.setFieldsValue({
-              numeroDevis: searchText || '',
-              clientId: selectedClientFilter || undefined,
-              dateRange: dateRange || null,
-              status: selectedStatus || undefined,
-            });
-          }
-        }}
-      >
-        <Form
-          form={filterForm}
-          layout="vertical"
-          onFinish={applyFilters}
-          initialValues={{
-            numeroDevis: '',
-            clientId: clientFilter || undefined,
-            dateRange: dateFilter
-              ? [null, dateFilter ? dayjs(dateFilter, "YYYY-MM-DD") : null]
-              : null,
-            status: statusFilter || undefined,
-          }}
-        >
-          <Form.Item name="numeroDevis" label="№ Devis">
-  <AutoComplete
-    allowClear
-    placeholder="Entrer un numéro de devis (ex : 005)"
-    options={Array.from(new Set(devisList.map((d) => d.numero_devis)))
-      .filter(Boolean)
-      .map((num) => ({ value: num }))}
-    filterOption={(inputValue, option) =>
-      option.value.toLowerCase().includes(inputValue.toLowerCase())
-    }
-    onChange={(value) => {
-      filterForm.setFieldsValue({ numeroDevis: value }); // force la mise à jour du champ
-    }}
-  />
-</Form.Item>
-
-
-
-
-
-          <Form.Item name="clientId" label="Client">
-  <AutoComplete
-    allowClear
-    placeholder="Entrer un nom de client"
-    options={clients.map((client) => ({
-      value: client.id, // Utiliser l'ID comme value
-      label: client.nom_client,
-    }))}
-    filterOption={(inputValue, option) =>
-      option.label.toLowerCase().includes(inputValue.toLowerCase())
-    }
-    onChange={(value) => {
-      filterForm.setFieldsValue({ clientId: value });
-    }}
-  />
-</Form.Item>
-
-          <Form.Item name="status" label="Statut">
-            <Select allowClear placeholder="Sélectionner un statut">
-              {statusOptions.map((option) => (
-                <Select.Option key={option.value} value={option.value}>
-                  <Tag color={option.color}>{option.label}</Tag>
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Divider />
-          <div style={{ textAlign: "right" }}>
-            <Space>
-              <Button onClick={resetFilters}>Effacer</Button>
-              <Button type="primary" htmlType="submit">
-                Appliquer
-              </Button>
-            </Space>
-          </div>
-        </Form>
-      </Drawer>
     </Content>
   );
 
@@ -1414,7 +1292,6 @@ if (values.clientId) {
         align: "right",
       },
     ];
-
 
     return (
       <Content style={{ padding: "20px" }}>
@@ -1626,7 +1503,7 @@ if (values.clientId) {
                 },
               ]}
             >
-              <Select 
+              <Select
                 placeholder="Sélectionner un client"
                 showSearch
                 optionFilterProp="children"
