@@ -18,3 +18,11 @@ export const updateTraiteStatus = async (traiteId, statusData) => {
   const response = await axios.patch(`http://localhost:8000/api/traites/${traiteId}/update-status/`, statusData);
   return response.data;
 };
+
+export const updatePlanStatus = async (planId, statusData) => {
+  const response = await axios.put(
+    `http://localhost:8000/api/plans-traite/${planId}/update-status/`,
+    statusData
+  );
+  return response.data;
+};

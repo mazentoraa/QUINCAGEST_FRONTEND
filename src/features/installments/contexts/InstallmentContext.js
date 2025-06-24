@@ -160,31 +160,43 @@ export const InstallmentProvider = ({ children }) => {
     }
   };
 
-  const updateInstallment = async (updatedInstallment) => {
-    setLoading(true);
-    try {
-      const updateRequests = updatedInstallment.traites.map(traite =>
-        InstallmentService.updateTraiteStatus(traite.id, { status: traite.status })
-      );
-      await Promise.all(updateRequests);
+  const updatePlanStatus = async (planId, status) => {
+  try {
+    await InstallmentService.updatePlanStatus(planId, { status });
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour du statut global du plan :", err);
+    throw err;
+  }
+};
 
-      setInstallments(prev =>
-        prev.map(item =>
-          item.id === updatedInstallment.id
-            ? { ...item, ...updatedInstallment }
-            : item
-        )
-      );
 
-      return updatedInstallment;
-    } catch (err) {
-      console.error(err);
-      setError("Erreur lors de la mise à jour de la traite");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+const updateInstallment = async (updatedInstallment) => {
+  setLoading(true);
+  try {
+    const updateRequests = updatedInstallment.traites.map((traite) =>
+      InstallmentService.updateTraiteStatus(traite.id, { status: traite.status })
+    );
+
+    await Promise.all(updateRequests);
+
+    // Met à jour le statut global du plan
+    await updatePlanStatus(updatedInstallment.id, updatedInstallment.status);
+
+    setInstallments((prev) =>
+      prev.map((item) =>
+        item.id === updatedInstallment.id ? { ...item, ...updatedInstallment } : item
+      )
+    );
+
+    return updatedInstallment;
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour de la traite :", err);
+    setError("Erreur lors de la mise à jour de la traite");
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
 
   const deleteInstallment = (installmentId) => {
     setInstallments(prev => prev.filter(item => item.id !== installmentId));
