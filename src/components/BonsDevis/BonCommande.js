@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Table,
   Button,
@@ -6,7 +6,6 @@ import {
   Form,
   Input,
   Select,
-  DatePicker,
   InputNumber,
   Space,
   Modal,
@@ -24,6 +23,8 @@ import {
   Spin,
   Card,
   Badge,
+  DatePicker,
+  AutoComplete,
 } from "antd";
 import {
   PrinterOutlined,
@@ -42,8 +43,9 @@ import ProductService from "../../components/BonsDevis/ProductService";
 import BonCommandePdfApiService from "../../features/orders/services/BonCommandePdfApiService";
 
 import moment from "moment";
-
+const { RangePicker } = DatePicker;
 const { orderService } = getApiService();
+
 const { Option } = Select;
 const { Title } = Typography;
 
@@ -81,6 +83,10 @@ export default function BonCommande() {
   const [dateRange, setDateRange] = useState(null);
   const [priceRange, setPriceRange] = useState([null, null]); // [min, max]
   const [filteredOrders, setFilteredOrders] = useState([]);
+  // Add state for client name search in advanced filter
+  const [clientNameSearch, setClientNameSearch] = useState("");
+  const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
+const [filterForm] = Form.useForm();
 
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
@@ -91,6 +97,7 @@ export default function BonCommande() {
   const [productForm] = Form.useForm();
   const [currentProductsInDrawer, setCurrentProductsInDrawer] = useState([]);
 
+  const [filters, setFilters] = useState({});
   // New state variables for creating orders
   const [isCreating, setIsCreating] = useState(false);
   const [availableClients, setAvailableClients] = useState([]);
@@ -99,6 +106,7 @@ export default function BonCommande() {
 
    const [formError, setFormError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
+const [invalidClientAlert, setInvalidClientAlert] = useState(false);
 
   const recalculateTotalsInDrawer = (products, taxRate) => {
     const montantHt = products.reduce((sum, p) => sum + p.prix_total, 0);
@@ -147,72 +155,121 @@ export default function BonCommande() {
     }
   }, []);
 
-  // Function to filter orders based on search criteria
-  const filterOrders = useCallback(() => {
-    if (!orders.length) return;
+  const applyFilters = (values) => {
+    const { dateRange } = values;
+    setFilters(values);
+    setSearchText(values.numeroSearch || "");
+    setSelectedClientFilter(values.clientId || null);
+    setSelectedStatus(values.status || null);
+    setDateRange(dateRange); 
+    setClientNameSearch(values.clientNameSearch || "");
+    setFilterDrawerVisible(false);
+};
 
+
+const resetFilters = () => {
+  setFilters({});
+  filterForm.resetFields();
+  setSearchText("");
+  setSelectedClientFilter(null);
+  setSelectedStatus(null);
+  setDateRange(null);
+  setFilterDrawerVisible(false);
+};
+
+const availableOrderNumbers = useMemo(() => {
+  return [...new Set(orders.map(order => order.numero_commande))];
+}, [orders]);
+
+const clientsWithOrders = useMemo(() => {
+  const map = new Map();
+
+  orders.forEach(order => {
+    const clientId = order.client_id;
+    let clientName = order.nom_client;
+
+    // Si le nom_client est absent, chercher dans availableClients
+    if (!clientName && clientId) {
+      const clientFromList = availableClients.find(c => c.id === clientId);
+      clientName = clientFromList?.nom_client || clientFromList?.nom || `Client #${clientId}`;
+    }
+
+    if (clientId && clientName) {
+      map.set(clientId, clientName);
+    }
+  });
+
+  return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+}, [orders, availableClients]);
+
+
+  // Fusionner tous les filtres dans un seul useEffect
+  useEffect(() => {
     let result = [...orders];
 
-    // Filter by search text (client name, order number, or notes)
-    if (searchText) {
-      const searchLower = searchText.toLowerCase();
+    // Filtres avancés (depuis le drawer)
+    if (filters.numeroSearch) {
+      result = result.filter((order) =>
+        order.numero_commande?.toLowerCase().includes(filters.numeroSearch.toLowerCase())
+      );
+    }
+    if (filters.clientId) {
       result = result.filter(
         (order) =>
-          (order.nom_client &&
-            order.nom_client.toLowerCase().includes(searchLower)) ||
-          (order.numero_commande &&
-            order.numero_commande.toLowerCase().includes(searchLower)) ||
-          (order.notes && order.notes.toLowerCase().includes(searchLower))
+          (order.nom_client || '') === filters.clientId ||
+          availableClients.find(
+            (c) => (c.nom_client || c.nom) === filters.clientId && (order.client_id === c.id || order.client === c.id)
+          )
+      );
+    }
+    if (filters.status) {
+      result = result.filter((order) => order.statut === filters.status);
+    }
+    if (dateRange && dateRange.length === 2) {
+    const [start, end] = dateRange;
+    result = result.filter(order => {
+      if (!order.date_commande) return false;
+      
+      const orderDate = moment(order.date_commande, "YYYY-MM-DD"); // Parse la date
+      const startDate = moment(start).startOf('day');
+      const endDate = moment(end).endOf('day');
+      
+      return orderDate.isBetween(startDate, endDate, null, '[]'); // Inclusif
+    });
+  }
+    // Ajout du filtre par nom de client (champ recherche)
+    if (clientNameSearch) {
+      result = result.filter(order =>
+        (order.nom_client || "").toLowerCase().includes(clientNameSearch.toLowerCase())
       );
     }
 
-    // Filter by client
-    if (selectedClientFilter) {
-      result = result.filter(
-        (order) => order.client_id === selectedClientFilter
-      );
-    }
-
-    // Filter by status
-    if (selectedStatus) {
-      result = result.filter((order) => order.statut === selectedStatus);
-    }
-
-    // Filter by date range
-    if (dateRange && dateRange[0] && dateRange[1]) {
-      const startDate = dateRange[0].startOf("day").valueOf();
-      const endDate = dateRange[1].endOf("day").valueOf();
-
-      result = result.filter((order) => {
-        const orderDate = moment(order.date_commande).valueOf();
-        return orderDate >= startDate && orderDate <= endDate;
-      });
-    }
-
-    // Filter by price range
-    if (priceRange[0] !== null || priceRange[1] !== null) {
-      result = result.filter((order) => {
-        const montantTtc = Number(order.montant_ttc) || 0;
-        const minOk = priceRange[0] === null || montantTtc >= priceRange[0];
-        const maxOk = priceRange[1] === null || montantTtc <= priceRange[1];
-        return minOk && maxOk;
-      });
+    // Filtres rapides UNIQUEMENT si pas de filtre avancé client
+    if (!filters.clientId) {
+      if (searchText) {
+        result = result.filter(order =>
+          order.numero_commande?.toLowerCase().includes(searchText.toLowerCase())
+        );
+      }
+      if (selectedClientFilter) {
+        result = result.filter(order => String(order.client_id) === String(selectedClientFilter));
+      }
+      if (selectedStatus) {
+        result = result.filter(order => order.statut === selectedStatus);
+      }
+      if (dateRange && dateRange.length === 2) {
+        const [start, end] = dateRange;
+        result = result.filter(order => {
+          if (!order.date_commande) return false;
+          const orderDate = moment(order.date_commande);
+          return orderDate.isSameOrAfter(start, 'day') && orderDate.isSameOrBefore(end, 'day');
+        });
+      }
     }
 
     setFilteredOrders(result);
-  }, [
-    orders,
-    searchText,
-    selectedClientFilter,
-    selectedStatus,
-    dateRange,
-    priceRange,
-  ]);
+  }, [orders, filters, searchText, selectedClientFilter, selectedStatus, dateRange, clientNameSearch]);
 
-  // Apply filters whenever filter criteria change
-  useEffect(() => {
-    filterOrders();
-  }, [filterOrders]);
 
   const fetchAvailableProducts = useCallback(async () => {
     try {
@@ -233,12 +290,7 @@ export default function BonCommande() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchOrders();
-    fetchAvailableProducts();
-    fetchAvailableClients();
-  }, [fetchOrders, fetchAvailableProducts, fetchAvailableClients]);
-
+  
   const handleEditOrder = async (order) => {
     setLoading(true);
     try {
@@ -267,6 +319,9 @@ export default function BonCommande() {
 
   // Function to create a new order
   const handleCreateOrder = () => {
+    // Charger dynamiquement les clients et produits existants
+    fetchAvailableClients();
+    fetchAvailableProducts();
     setIsCreating(true);
     setEditingOrder(null);
     setCurrentProductsInDrawer([]);
@@ -300,6 +355,11 @@ export default function BonCommande() {
       setSuccessMessage(null);
       const values = await drawerForm.validateFields();
       setLoading(true);
+
+      if (!selectedClientId || !availableClients.some(c => c.id === selectedClientId)) {
+      message.error("Veuillez sélectionner un client valide dans la liste");
+      return;
+    }
 
       if (isCreating) {
         // Creating a new order
@@ -981,19 +1041,35 @@ export default function BonCommande() {
         (a.numero_commande || "").localeCompare(b.numero_commande || ""),
     },
     {
-      title: "Client",
-      dataIndex: "nom_client",
-      key: "nom_client",
-      sorter: (a, b) => (a.nom_client || "").localeCompare(b.nom_client || ""),
-    },
+  title: "Client",
+  dataIndex: "nom_client",
+  key: "nom_client",
+  render: (text, record) => {
+    // Si le nom_client est présent dans les données, l'utiliser
+    if (text) return text;
+    
+    // Sinon, chercher dans availableClients
+    const clientId = record.client_id || record.client;
+    if (clientId) {
+      const client = availableClients.find(c => c.id === clientId);
+      return client?.nom_client || client?.nom || `Client #${clientId}`;
+    }
+    
+    return "Non spécifié";
+  },
+  sorter: (a, b) => {
+    const nameA = a.nom_client || availableClients.find(c => c.id === (a.client_id || a.client))?.nom_client || "";
+    const nameB = b.nom_client || availableClients.find(c => c.id === (b.client_id || b.client))?.nom_client || "";
+    return nameA.localeCompare(nameB);
+  },
+},
     {
-      title: "Date Commande",
-      dataIndex: "date_commande",
-      key: "date_commande",
-      render: (date) => (date ? moment(date).format("DD/MM/YYYY") : ""),
-      sorter: (a, b) =>
-        moment(a.date_commande).valueOf() - moment(b.date_commande).valueOf(),
-    },
+  title: "Date Commande",
+  dataIndex: "date_commande",
+  key: "date_commande",
+  render: (date) => (date ? moment(date).format("DD/MM/YYYY") : ""),
+  sorter: (a, b) => moment(a.date_commande).valueOf() - moment(b.date_commande).valueOf(),
+},
     {
       title: "Date Livraison",
       dataIndex: "date_livraison_prevue",
@@ -1072,6 +1148,12 @@ export default function BonCommande() {
     0
   );
 
+  // Trouver le client sélectionné dans le filtre avancé
+const selectedClientObject = useMemo(() => {
+  if (!filters.clientId) return null;
+  return availableClients.find(c => String(c.id) === String(filters.clientId));
+}, [filters.clientId, availableClients]);
+
   if (error) {
     return (
       <div style={{ padding: "24px" }}>
@@ -1123,47 +1205,9 @@ export default function BonCommande() {
                 {formError}
               </div>
             )}
-          
-          {/* Statistics */}
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={6}>
-              <Statistic
-                title="Total Commandes"
-                value={filteredOrders.length}
-                prefix={<FileDoneOutlined />}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="Montant Total TTC"
-                value={totalAmount}
-                formatter={(value) => formatCurrency(value)}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="En Attente"
-                value={
-                  filteredOrders.filter((o) => o.statut === "pending").length
-                }
-                valueStyle={{ color: "#fa8c16" }}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="Terminées"
-                value={
-                  filteredOrders.filter((o) => o.statut === "completed").length
-                }
-                valueStyle={{ color: "#52c41a" }}
-              />
-            </Col>
-          </Row>
-
-          <Divider />
 
           {/* Filters */}
-          <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+          <Row gutter={[16, 16]} style={{ marginBottom: 16 }} align="middle">
             <Col span={6}>
               <Input
                 placeholder="Rechercher..."
@@ -1173,52 +1217,23 @@ export default function BonCommande() {
                 allowClear
               />
             </Col>
-            <Col span={4}>
-              <Select
-                placeholder="Client"
-                value={selectedClientFilter}
-                onChange={setSelectedClientFilter}
-                allowClear
-                style={{ width: "100%" }}
-              >
-                {availableClients.map((client) => (
-                  <Option key={client.id} value={client.id}>
-                    {client.nom_complet || client.nom}
-                  </Option>
-                ))}
-              </Select>
-            </Col>
-            <Col span={4}>
-              <Select
-                placeholder="Statut"
-                value={selectedStatus}
-                onChange={setSelectedStatus}
-                allowClear
-                style={{ width: "100%" }}
-              >
-                <Option value="pending">En attente</Option>
-                <Option value="processing">En cours</Option>
-                <Option value="completed">Terminée</Option>
-                <Option value="cancelled">Annulée</Option>
-                <Option value="invoiced">Facturée</Option>
-              </Select>
-            </Col>
-            <Col span={6}>
-              <DatePicker.RangePicker
-                value={dateRange}
-                onChange={setDateRange}
-                format="DD/MM/YYYY"
-                placeholder={["Date début", "Date fin"]}
-                style={{ width: "100%" }}
-              />
-            </Col>
-            <Col span={4}>
-              <Button onClick={clearFilters}>Effacer filtres</Button>
+            <Col flex="auto" style={{ textAlign: "right" }}>
+              <Space>
+                <Button
+                  onClick={() => {
+                    fetchAvailableClients();
+                    setFilterDrawerVisible(true);
+                  }}
+                  icon={<SearchOutlined />}
+                >
+                  Filtres avancés
+                </Button>
+              </Space>
             </Col>
           </Row>
 
           {/* Action buttons */}
-          <Row gutter={16} style={{ marginBottom: 16 }}>
+          <Row gutter={16} style={{ marginBottom: 16 }} justify="end">
             <Col>
               <Button
                 type="primary"
@@ -1266,22 +1281,33 @@ export default function BonCommande() {
           </Row>
         </div>
 
+        
+
         <Spin spinning={loading}>
           <Table
-            columns={columns}
-            dataSource={filteredOrders}
-            rowKey="id"
-            // rowSelection={rowSelection}
-            pagination={{
-              total: filteredOrders.length,
-              pageSize: 10,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} sur ${total} commandes`,
-            }}
-            scroll={{ x: 1200 }}
-          />
+  columns={columns}
+  dataSource={filteredOrders}
+  rowKey="id"
+  pagination={{ pageSize: 10 }}
+/>
+{!loading && filteredOrders.length === 0 && orders.length > 0 && (
+  <Alert
+    message={
+      filters.clientId || filters.numeroSearch || filters.status || (filters.dateRange && filters.dateRange.length === 2)
+        ? "Filtrage actif"
+        : "Aucune commande trouvée"
+    }
+    description={
+      filters.clientId || filters.numeroSearch || filters.status || (filters.dateRange && filters.dateRange.length === 2)
+        ? "Aucun bon de retour ne correspond aux critères de recherche. Essayez de modifier vos filtres."
+        : "Aucune commande ne correspond aux critères de recherche. Essayez de modifier vos filtres."
+    }
+    type="info"
+    showIcon
+    style={{ marginTop: 16 }}
+  />
+)}
+
         </Spin>
       </Card>
 
@@ -1308,31 +1334,55 @@ export default function BonCommande() {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                name="client_id"
-                label="Client"
-                rules={[
-                  {
-                    required: true,
-                    message: "Veuillez sélectionner un client",
-                  },
-                ]}
-              >
-                <Select
-                  placeholder="Sélectionner un client"
-                  value={selectedClientId}
-                  onChange={setSelectedClientId}
-                  showSearch
-                  filterOption={(input, option) =>
-                    option.children.toLowerCase().includes(input.toLowerCase())
-                  }
-                >
-                  {availableClients.map((client) => (
-                    <Option key={client.id} value={client.id}>
-                      {client.nom_client || client.nom}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
+  name="client_id"
+  label="Client"
+  rules={[
+    {
+      required: true,
+      message: "Veuillez sélectionner un client",
+    },
+  ]}
+>
+  <Select
+    placeholder="Sélectionner un client"
+    value={selectedClientId}
+    status={invalidClientAlert ? 'error' : ''}
+    onSearch={(input) => {
+      // Si l'utilisateur tape manuellement, vérifier si le client existe
+      const found = availableClients.some(c => (c.nom_client || c.nom).toLowerCase() === input.toLowerCase());
+      setInvalidClientAlert(input && !found);
+    }}
+    onChange={(value, option) => {
+      setSelectedClientId(value);
+      // Vérifier si le client existe dans la liste
+      const selectedClient = availableClients.find(c => c.id === value);
+      if (selectedClient) {
+        setInvalidClientAlert(false);
+        drawerForm.setFieldsValue({
+          nom_client: selectedClient.nom_client || selectedClient.nom
+        });
+      } else {
+        setInvalidClientAlert(true);
+      }
+    }}
+    showSearch
+    filterOption={(input, option) =>
+      option.children.toLowerCase().includes(input.toLowerCase())
+    }
+    
+  >
+    {availableClients.map((client) => (
+      <Option key={client.id} value={client.id}>
+        {client.nom_client || client.nom}
+      </Option>
+    ))}
+  </Select>
+  {invalidClientAlert && (
+    <div style={{ color: '#ff4d4f', marginTop: 4 }}>
+      ⚠️ Ce client n'existe pas dans la liste.
+    </div>
+  )}
+</Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item name="statut" label="Statut">
@@ -1553,6 +1603,97 @@ export default function BonCommande() {
           </Form.Item>
         </Form>
       </Modal>
+      <Drawer
+  title="Filtres avancés"
+  open={filterDrawerVisible}
+  onClose={() => setFilterDrawerVisible(false)}
+  width={350}
+>
+  <Form
+    form={filterForm}
+    layout="vertical"
+    onFinish={applyFilters}
+    initialValues={filters}
+  >
+    <Form.Item name="numeroSearch" label="N° Facture">
+      <AutoComplete
+        placeholder="Saisir ou choisir un numéro de commande"
+        allowClear
+        onChange={(val) => filterForm.setFieldsValue({ numeroSearch: val })}
+        onSearch={(val) => filterForm.setFieldsValue({ numeroSearch: val })}
+        options={orders.map((order) => ({
+          value: order.numero_commande,
+        }))}
+      />
+    </Form.Item>
+
+    <Form.Item name="clientId" label="Client">
+      <AutoComplete
+        placeholder="Saisir ou choisir un client"
+        allowClear
+        value={filters.clientId || ''}
+        onChange={(val) => {
+          filterForm.setFieldsValue({ clientId: val });
+          setClientNameSearch(val);
+          // Vérifier si le client existe dans la liste
+          const clientExists = availableClients.some(
+            (client) => (client.nom_client || client.nom) === val
+          );
+          if (!val) {
+            setFormError(null);
+          } else {
+            setFormError(null);
+          }
+        }}
+        onSelect={(val) => {
+          filterForm.setFieldsValue({ clientId: val });
+          setClientNameSearch(val);
+          setFormError(null);
+        }}
+        options={availableClients.map((client) => ({
+          value: client.nom_client || client.nom,
+        }))}
+      />
+    </Form.Item>
+
+    <Form.Item name="status" label="Statut">
+      <Select allowClear placeholder="Filtrer par statut">
+        <Option value="pending">En attente</Option>
+        <Option value="processing">En cours</Option>
+        <Option value="completed">Terminée</Option>
+        <Option value="cancelled">Annulée</Option>
+        <Option value="invoiced">Facturée</Option>
+      </Select>
+    </Form.Item>
+
+    <Form.Item name="dateRange" label="Date commande">
+  <DatePicker.RangePicker 
+    style={{ width: "100%" }} 
+    format="DD/MM/YYYY"
+    disabledDate={current => current && current > moment().endOf('day')}
+  />
+</Form.Item>
+
+    <Form.Item>
+      <Space>
+        <Button
+          onClick={() => {
+            filterForm.resetFields();
+            setFilters({});
+            setClientNameSearch("");
+          }}
+        >
+          Réinitialiser
+        </Button>
+        <Button type="primary" htmlType="submit">
+          Appliquer
+        </Button>
+      </Space>
+    </Form.Item>
+  </Form>
+</Drawer>
+
     </Layout.Content>
   );
+
 }
