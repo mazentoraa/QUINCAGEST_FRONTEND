@@ -212,6 +212,11 @@ const updateInstallment = async (updatedInstallment) => {
       return [];
     }
   };
+const removeInstallment = (id) => {
+  setInstallments((prevInstallments) =>
+    prevInstallments.filter((installment) => installment.id !== id)
+  );
+};
 
   return (
     <InstallmentContext.Provider
@@ -220,6 +225,7 @@ const updateInstallment = async (updatedInstallment) => {
         addInstallment,
         updateInstallment,
         deleteInstallment,
+        removeInstallment,
         clients,
         getClients,
         addClient,
@@ -232,5 +238,7 @@ const updateInstallment = async (updatedInstallment) => {
     </InstallmentContext.Provider>
   );
 };
+
+
 
 export default InstallmentProvider;

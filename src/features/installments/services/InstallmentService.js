@@ -32,3 +32,12 @@ export const updatePlanStatus = async (planId, statusData) => {
   );
   return response.data;
 };
+
+
+export const softDeleteInstallment = async (planId) => {
+  const response = await axios.patch(
+    `${BASE_URL}/plans-traite/${planId}/soft-delete/`,
+    { is_deleted: true }
+  );
+  return response.data;
+};

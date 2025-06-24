@@ -4,12 +4,16 @@ import InstallmentForm from "./InstallmentForm";
 import InstallmentsPrinter from "./InstallmentsPrinter";
 import InstallmentDetails from "./InstallmentDetails";
 import "./InstallmentManagement.css";
+import { softDeleteInstallment } from "../services/InstallmentService";
+import { Popconfirm, message } from "antd";
+import {removeInstallment} from "../contexts/InstallmentContext";
 
 const InstallmentManagement = () => {
-  const { installments, updateInstallment } = useContext(InstallmentContext);
+  const { installments, updateInstallment, removeInstallment } = useContext(InstallmentContext);
   const [activeTab, setActiveTab] = useState("create");
   const [selectedInstallment, setSelectedInstallment] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+ 
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -35,6 +39,21 @@ const InstallmentManagement = () => {
     setSelectedInstallment(installment);
     setShowDetails(true);
   };
+
+
+const handleDelete = async (installmentId) => {
+  try {
+    await softDeleteInstallment(installmentId);
+    removeInstallment(installmentId); // Mise à jour immédiate de la liste affichée
+    message.success("Plan supprimé avec succès !");
+  } catch (error) {
+    message.error("Erreur lors de la suppression.");
+    console.error(error);
+  }
+};
+
+
+
 
   const handleBackToList = () => {
     setShowDetails(false);
@@ -230,17 +249,33 @@ const InstallmentManagement = () => {
                             </span>
                           </td>
 
-                          <td>
-                            <button
-                              className="action-button print-button"
-                              onClick={() => {
-                                setSelectedInstallment(installment);
-                                setActiveTab("print");
-                              }}
-                            >
-                              <i className="fas fa-print"></i> Imprimer
-                            </button>
-                          </td>
+                        <td className="action-buttons">
+  <button
+    className="action-button print-button"
+    onClick={() => {
+      setSelectedInstallment(installment);
+      setActiveTab("print");
+    }}
+  >
+    <i className="fas fa-print"></i> Imprimer
+  </button>
+
+
+
+<Popconfirm
+  title="Êtes-vous sûr de vouloir supprimer cette traite ?"
+  onConfirm={() => handleDelete(installment.id)}
+  okText="Oui"
+  cancelText="Non"
+  okButtonProps={{ style: { backgroundColor: "#1890ff", color: "#fff" } }}
+>
+  <button className="action-button delete-button">
+    <i className="fas fa-trash-alt"></i> Supprimer
+  </button>
+</Popconfirm>
+
+</td>
+
                         </tr>
                       ))}
                     </tbody>
