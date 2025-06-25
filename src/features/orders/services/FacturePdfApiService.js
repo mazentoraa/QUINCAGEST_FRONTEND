@@ -426,7 +426,8 @@ thead {
     <div style="flex: 1; border: 1px solid black; padding: 12px;">
       <p style="margin: 0;">
         <strong>Arrêtée la présente facture à la somme de:</strong><br>
-        ${this.formatMontantEnLettres((orderData.montant_ttc || 0) + 1)}
+        ${this.formatMontantEnLettres(netAPayer)}
+
       </p>
     </div>
     <div style="

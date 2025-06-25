@@ -400,7 +400,12 @@ class DevisPdfService {
 <tr>
   <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
   <td style="border: 1px solid black; padding: 2px;">
-    ${this.formatCurrency((data.montant_ht || 0) + (data.montant_tva || 0) + (data.timbre_fiscal || 0))}
+    ${this.formatCurrency(
+  parseFloat(data.montant_ht || 0) +
+  parseFloat(data.montant_tva || 0) +
+  parseFloat(data.timbre_fiscal || 0)
+)}
+
   </td>
 </tr>
 
@@ -418,7 +423,7 @@ class DevisPdfService {
          Arrêtée la présente devis à la somme de:
          </strong> <br>
          ${(() => {
-  const montantTTC = parseFloat(data.montant_ttc || 0);
+ const montantTTC = parseFloat(data.montant_ttc || 0) || 0;
   const timbre = parseFloat(data.timbre_fiscal || 0);
   const montantFinal = montantTTC + timbre;
   return this.formatMontantEnLettres(montantFinal);

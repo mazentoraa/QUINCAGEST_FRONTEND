@@ -400,22 +400,33 @@ class BonLivraisonDecoupePdfService {
       <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
       <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((totalBrut - totalRemise || 0) + totals.totalTVA )}</td>
     </tr>
-  </table>
+  </table> 
 </div>
-          <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
-  <div style="width:50% ; border: 1px solid black; padding: 5px ;">
-   <p style="padding : 12px ">
-         <strong>
-         Arrêtée la présente facture à la somme de:
-         </strong> <br>
-         ${this.formatMontantEnLettres((totals.totalTTC || 0))}
-    
-         </p>
-   </div>
-   <div style="width:50% ; border: 1px solid black; padding-left: 18px; padding-top:0;text-align:center;">
-    <p><strong>Signature</strong></p>
-    </div>
-    </div>
+       <div style="display: flex; justify-content: space-between; gap: 0px; height: 120px; margin-top: 20px;">
+
+  <!-- Texte "Arrêtée..." -->
+  <div style="flex: 1; border: 1px solid black; padding: 12px;">
+    <p style="margin: 0;">
+      <strong>Arrêtée la présente bon de livraison à la somme de:</strong><br>
+      ${this.formatMontantEnLettres((totalBrut - totalRemise || 0) + totals.totalTVA)}
+
+    </p>
+  </div>
+
+  <!-- Signature -->
+  <div style="
+    width: 32%;
+    border: 1px solid black;
+    text-align: center;
+    display: flex;
+    align-items: start;
+    justify-content: center;
+    padding-top: 8px;
+  ">
+    <strong>Signature du client</strong>
+  </div>
+</div>
+
     </div>
           
       </body>

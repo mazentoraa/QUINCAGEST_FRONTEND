@@ -291,7 +291,7 @@ class BonCommandePdfApiService {
   <div style="width:50% ; border: 1px solid black; padding: 5px ;">
    <p style="padding : 12px ">
          <strong>
-         Arrêtée la présente facture à la somme de:
+         Arrêtée la présente bon de commande à la somme de:
          </strong> <br>
          ${this.formatMontantEnLettres((orderData.montant_ttc || 0))}
     
