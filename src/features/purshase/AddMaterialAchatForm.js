@@ -27,6 +27,13 @@ export default function AddMaterialForm(props) {
     return `${yyyy}-${mm}-${dd}`;
   }
 
+  const updateSurface = () => {
+    const longueur = parseFloat(form.getFieldValue("longueur") || 0);
+    const largeur = parseFloat(form.getFieldValue("largeur") || 0);
+    const surface = longueur * largeur;
+    form.setFieldsValue({ surface: isNaN(surface) ? 0 : surface });
+  };
+
   useEffect(() => {
     if (props.initial_values) {
       form.setFieldsValue({
@@ -44,6 +51,10 @@ export default function AddMaterialForm(props) {
           ? moment(props.initial_values.date_reception)
           : null,
         ref_fournisseur: props.initial_values.ref_fournisseur || "",
+        longueur: props.initial_values.longueur || 0,
+        largeur: props.initial_values.largeur || 0,
+        epaisseur: props.initial_values.epaisseur || 0,
+        surface: props.initial_values.surface || 0,
       });
     } else {
       form.resetFields();
@@ -62,8 +73,14 @@ export default function AddMaterialForm(props) {
       emplacement: values.emplacement,
       fournisseur_principal: values.fournisseur_principal,
       prix_unitaire: values.prix_unitaire,
-      date_reception: formatDateToYYYYMMDD(values.date_reception),
+      date_reception: values.date_reception
+        ? formatDateToYYYYMMDD(values.date_reception)
+        : null,
       ref_fournisseur: values.ref_fournisseur,
+      longueur: values.longueur,
+      largeur: values.largeur,
+      epaisseur: values.epaisseur,
+      surface: values.surface,
     };
 
     props.on_finish(material_data);
@@ -75,13 +92,7 @@ export default function AddMaterialForm(props) {
       <Typography.Title level={5}>Informations Générales</Typography.Title>
       <Row gutter={16}>
         <Col span={8}>
-          <Form.Item
-            name="ref"
-            label="Référence"
-            rules={[
-              { required: true, message: "Veuillez saisir la référence" },
-            ]}
-          >
+          <Form.Item name="ref" label="Référence">
             <Input placeholder="MP-XXX-###" />
           </Form.Item>
         </Col>
@@ -91,48 +102,74 @@ export default function AddMaterialForm(props) {
           </Form.Item>
         </Col>
         <Col span={8}>
-          <Form.Item name="categorie" label="Catégorie">
-            <Select placeholder="Choisir une catégorie">
-              <Option value="metaux">Métaux</Option>
-              <Option value="fixation">Fixation</Option>
-              <Option value="plastique">Plastique</Option>
+          <Form.Item name="categorie" label="Type de matériau">
+            <Select placeholder="Sélectionner un matériau">
+              <Option value="acier">Acier</Option>
+              <Option value="acier_inoxydable">Acier inoxydable</Option>
+              <Option value="aluminium">Aluminium</Option>
+              <Option value="laiton">Laiton</Option>
+              <Option value="cuivre">Cuivre</Option>
+              <Option value="acier_galvanise">Acier galvanisé</Option>
               <Option value="autre">Autre</Option>
             </Select>
           </Form.Item>
         </Col>
       </Row>
 
-      <Form.Item name="description" label="Description">
-        <TextArea placeholder="Description détaillée de la matière première..." />
-      </Form.Item>
+      <Row gutter={16}>
+        <Col span={6}>
+          <Form.Item name="longueur" label="Longueur (m)">
+            <InputNumber
+              style={{ width: "100%" }}
+              min={0}
+              onChange={updateSurface}
+              placeholder="Ex: 2.5"
+            />
+          </Form.Item>
+        </Col>
+        <Col span={6}>
+          <Form.Item name="largeur" label="Largeur (m)">
+            <InputNumber
+              style={{ width: "100%" }}
+              min={0}
+              onChange={updateSurface}
+              placeholder="Ex: 1.2"
+            />
+          </Form.Item>
+        </Col>
+        <Col span={6}>
+          <Form.Item name="epaisseur" label="Épaisseur (mm)">
+            <InputNumber
+              style={{ width: "100%" }}
+              min={0}
+              placeholder="Ex: 0.5"
+            />
+          </Form.Item>
+        </Col>
+        <Col span={6}>
+          <Form.Item name="surface" label="Surface (m²)">
+            <InputNumber
+              style={{ width: "100%" }}
+              disabled
+              placeholder="Calcul automatique"
+            />
+          </Form.Item>
+        </Col>
+      </Row>
 
       <Typography.Title level={5}>Gestion de Stock</Typography.Title>
       <Row gutter={12}>
-        <Col span={5}>
-          <Form.Item
-            name="unite_mesure"
-            label="Unité de mesure"
-            rules={[{ required: true, message: "Unité obligatoire" }]}
-          >
-            <Select placeholder="Sélectionner une unité">
-              <Option value="kg">Kilogramme (kg)</Option>
-              <Option value="pcs">Pièce (pcs)</Option>
-              <Option value="m2">Mètre carré (m²)</Option>
-              <Option value="m3">Mètre cube (m³)</Option>
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col span={5}>
+        <Col span={7}>
           <Form.Item name="remaining_quantity" label="Stock actuel">
             <InputNumber style={{ width: "100%" }} min={0} placeholder="0" />
           </Form.Item>
         </Col>
-        <Col span={5}>
+        <Col span={7}>
           <Form.Item name="stock_minimum" label="Stock minimum">
             <InputNumber style={{ width: "100%" }} min={0} placeholder="10" />
           </Form.Item>
         </Col>
-        <Col span={9}>
+        <Col span={10}>
           <Form.Item name="emplacement" label="Emplacement">
             <Input placeholder="Zone de stockage" />
           </Form.Item>
@@ -142,16 +179,12 @@ export default function AddMaterialForm(props) {
       <Typography.Title level={5}>Informations Fournisseur</Typography.Title>
       <Row gutter={12}>
         <Col span={9}>
-          <Form.Item
-            name="fournisseur_principal"
-            label="Fournisseur principal"
-            rules={[{ required: true, message: "Fournisseur obligatoire" }]}
-          >
+          <Form.Item name="fournisseur_principal" label="Fournisseur principal">
             <Input placeholder="Saisir le fournisseur" />
           </Form.Item>
         </Col>
         <Col span={5}>
-          <Form.Item name="prix_unitaire" label="Prix unitaire (TND)">
+          <Form.Item name="prix_unitaire" label="Prix unitaire">
             <InputNumber
               min={0}
               step={0.001}
@@ -161,11 +194,7 @@ export default function AddMaterialForm(props) {
           </Form.Item>
         </Col>
         <Col span={5}>
-          <Form.Item
-            name="date_reception"
-            label="Date réception"
-            rules={[{ required: true, message: "Date requise" }]}
-          >
+          <Form.Item name="date_reception" label="Date réception">
             <DatePicker
               placeholder="Sélectionner une date"
               style={{ width: "100%" }}
@@ -179,6 +208,10 @@ export default function AddMaterialForm(props) {
           </Form.Item>
         </Col>
       </Row>
+
+      <Form.Item name="description" label="Description">
+        <TextArea placeholder="Description détaillée de la matière première..." />
+      </Form.Item>
 
       <Divider />
       <Form.Item>

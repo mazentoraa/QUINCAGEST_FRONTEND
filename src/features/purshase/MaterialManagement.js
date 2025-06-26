@@ -3,6 +3,8 @@ import {
   EditOutlined,
   PlusOutlined,
   SearchOutlined,
+  ReloadOutlined,
+  FilterOutlined,
 } from "@ant-design/icons";
 import {
   Button,
@@ -14,6 +16,7 @@ import {
   Modal,
   Popconfirm,
   Row,
+  Select,
   Space,
   Table,
   Tag,
@@ -25,6 +28,7 @@ import MaterialAchatService from "./Services/MaterialAchatService";
 import MaterialModel from "./models/MaterialModel";
 
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 export default function MaterialAchatManagement() {
   const [loading, setLoading] = useState(false);
@@ -33,50 +37,26 @@ export default function MaterialAchatManagement() {
   const [currentMaterial, setCurrentMaterial] = useState(null);
   const [materialList, setMaterialList] = useState([]);
   const [searchText, setSearchText] = useState("");
+  const [selectedCategorie, setSelectedCategorie] = useState("all");
 
   const columns = [
-    {
-      title: "Référence",
-      dataIndex: "ref",
-      key: "ref",
-    },
-    {
-      title: "Nom Matière",
-      dataIndex: "nom_matiere",
-      key: "nom_matiere",
-    },
+    { title: "Référence", dataIndex: "ref", key: "ref" },
+    { title: "Nom Matière", dataIndex: "nom_matiere", key: "nom_matiere" },
     {
       title: "Catégorie",
       dataIndex: "categorie",
       key: "categorie",
       render: (cat) => <Tag>{cat}</Tag>,
     },
-    {
-      title: "Quantité",
-      dataIndex: "remaining_quantity",
-      key: "remaining_quantity",
-    },
+    { title: "Quantité", dataIndex: "remaining_quantity", key: "remaining_quantity" },
     {
       title: "Prix Unitaire",
       dataIndex: "prix_unitaire",
       key: "prix_unitaire",
-      render: (prix) => `${prix} TND`,
+      render: (prix) => `${prix}`,
     },
-    {
-      title: "Emplacement",
-      dataIndex: "emplacement",
-      key: "emplacement",
-    },
-    {
-      title: "Date Réception",
-      dataIndex: "date_reception",
-      key: "date_reception",
-    },
-    {
-      title: "Réf. Fournisseur",
-      dataIndex: "ref_fournisseur",
-      key: "ref_fournisseur",
-    },
+    { title: "Fournisseur", dataIndex: "fournisseur_principal", key: "fournisseur_principal" },
+    { title: "Date Réception", dataIndex: "date_reception", key: "date_reception" },
     {
       title: "Actions",
       key: "actions",
@@ -100,9 +80,11 @@ export default function MaterialAchatManagement() {
     setLoading(true);
     try {
       const params = {};
-      if (searchText) params.ref = searchText;
+      if (searchText) params.search = searchText;
+      if (selectedCategorie !== "all") params.categorie = selectedCategorie;
+
       const result = await MaterialAchatService.getAllMaterial(params);
-      setMaterialList(result);
+      setMaterialList(result); // ✅ plus de tri ici, car le backend les fournit déjà triées
     } catch (err) {
       console.error(err);
       message.error("Erreur lors du chargement des matières achetées");
@@ -113,7 +95,7 @@ export default function MaterialAchatManagement() {
 
   useEffect(() => {
     fetchMaterial();
-  }, [searchText]);
+  }, [searchText, selectedCategorie]);
 
   const handleAddMaterial = () => {
     setCurrentMaterial(MaterialModel.createEmpty());
@@ -150,13 +132,15 @@ export default function MaterialAchatManagement() {
       if (isEditing) {
         await MaterialAchatService.updateMaterial(currentMaterial.id, payload);
         message.success("Matière mise à jour !");
+        fetchMaterial();
       } else {
-        await MaterialAchatService.createMaterial(payload);
+        const createdMaterial = await MaterialAchatService.createMaterial(payload);
         message.success("Matière ajoutée !");
+        // ✅ On l'ajoute en haut manuellement si on ne veut pas attendre fetch :
+        setMaterialList((prev) => [createdMaterial, ...prev]);
       }
 
       setIsModalVisible(false);
-      fetchMaterial();
     } catch (err) {
       console.error(err);
       message.error("Erreur lors de la sauvegarde");
@@ -165,29 +149,56 @@ export default function MaterialAchatManagement() {
     }
   };
 
+  const handleRefresh = () => {
+    setSearchText("");
+    setSelectedCategorie("all");
+    fetchMaterial();
+  };
+
   return (
     <div>
       <Card style={{ marginBottom: 16 }}>
         <Title level={2}>Matières Premières Achetées</Title>
         <Text type="secondary">Suivi des matières</Text>
-        <Row justify="space-between" align="middle" style={{ marginTop: 20 }}>
-          <Col span={10}>
+
+        <Row justify="space-between" align="middle" style={{ marginTop: 20 }} gutter={[16, 16]}>
+          <Col span={8}>
             <Input
-              placeholder="Rechercher par référence"
+              placeholder="Rechercher une matière..."
               prefix={<SearchOutlined />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               allowClear
             />
           </Col>
-          <Col>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleAddMaterial}
+          <Col span={6}>
+            <Select
+              style={{ width: "100%" }}
+              value={selectedCategorie}
+              onChange={(value) => setSelectedCategorie(value)}
+              placeholder="Tous les matériaux"
+              suffixIcon={<FilterOutlined />}
+              showArrow
             >
-              Nouvelle matière achetée
-            </Button>
+              <Option value="all">Tous les matériaux</Option>
+              <Option value="acier">Acier</Option>
+              <Option value="acier_inoxydable">Acier inoxydable</Option>
+              <Option value="aluminium">Aluminium</Option>
+              <Option value="laiton">Laiton</Option>
+              <Option value="cuivre">Cuivre</Option>
+              <Option value="acier_galvanise">Acier galvanisé</Option>
+              <Option value="autre">Autre</Option>
+            </Select>
+          </Col>
+          <Col>
+            <Space>
+              <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
+                Actualiser
+              </Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddMaterial}>
+                Nouvelle matière achetée
+              </Button>
+            </Space>
           </Col>
         </Row>
       </Card>
