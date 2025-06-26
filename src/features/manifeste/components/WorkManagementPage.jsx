@@ -498,7 +498,8 @@ const WorkManagementPage = () => {
             prix_unitaire_produit: productUnitPrice, // Use fetched product unit price as default
             quantite_produit: enrichedWork.quantite || 1, // Quantity of the product
             taxe: taxRate,
-            remise: enrichedWork.remise || 0,
+            remise_pourcentage: enrichedWork.remise || 0,
+            remise: (enrichedWork.remise / 100) * (enrichedWork.quantite * productUnitPrice) || 0,
             // total_ht will be calculated dynamically in the modal/PDF
           };
 
@@ -655,7 +656,8 @@ const WorkManagementPage = () => {
         const produitId = item.produit_id || item.produit?.id;
         const quantite = item.billable?.quantite_produit || 0;
         const prixUnitaire = item.billable?.prix_unitaire_produit || 0;
-        const remise = item.billable?.remise || 0;
+        const remisePourcentage = item.billable?.remise_pourcentage || 0;
+        const remise = (remisePourcentage / 100) * (quantite * prixUnitaire);
 
         const produitTotal = quantite * prixUnitaire - remise;
         finalMontantHt += produitTotal;
@@ -825,7 +827,7 @@ const WorkManagementPage = () => {
       ),
     },
     {
-      title: "Durée",
+      title: "Durée (minutes)",
       dataIndex: "duree",
       key: "duree",
     },
@@ -917,7 +919,8 @@ const WorkManagementPage = () => {
         const productItems = [];
 
         // Add product as an item
-        const remise = item.billable.remise || 0;
+        const remisePourcentage = item.billable?.remise_pourcentage || 0;
+        const remise = (remisePourcentage / 100) * (item.billable.quantite_produit * item.billable.prix_unitaire_produit);
         const productTotal =
           (item.billable.prix_unitaire_produit || 0) *
             (item.billable.quantite_produit || 0) -
@@ -934,6 +937,7 @@ const WorkManagementPage = () => {
             unitPrice: item.billable.prix_unitaire_produit || 0,
             discount: 0, // Default discount
             taxRate: taxRate,
+            remise: remise
           });
         }
 
@@ -993,8 +997,8 @@ const WorkManagementPage = () => {
         items: billableData.map((item) => {
           const quantity = item.billable.quantite_produit || 0;
           const unitPrice = item.billable.prix_unitaire_produit || 0;
-          const remise = item.billable.remise || 0;
-          const remisePercent = (remise / (quantity * unitPrice)) * 100 || 0;
+          const remisePercent = item.billable.remise_pourcentage
+          const remise = (remisePercent / 100) * (quantity * unitPrice) || 0;
           console.log("📦 PDF item:", {
             produit_id: item.produit_id,
             produit_name: item.produit_name,
@@ -1509,7 +1513,7 @@ const WorkManagementPage = () => {
 
             <Form.Item
               name="duree"
-              label="Durée"
+              label="Durée (minutes)"
               rules={[{ required: true, message: "Veuillez saisir la durée" }]}
             >
               <InputNumber min={1} style={{ width: "100%" }} />
@@ -1527,14 +1531,15 @@ const WorkManagementPage = () => {
             >
               <InputNumber min={0} step={1} style={{ width: "100%" }} />
             </Form.Item>
-            <Form.Item name="remise" label="Remise(%)">
+            {/* A supprimer */}
+            {/* <Form.Item name="remise" label="Remise(%)">
               <InputNumber
                 min={0}
                 step={1}
                 style={{ width: "100%" }}
                 placeholder="Ex: 5"
               />
-            </Form.Item>
+            </Form.Item> */}
 
             <Form.Item name="description" label="Description">
               <TextArea rows={4} placeholder="Description du travail..." />
@@ -1713,12 +1718,12 @@ const WorkManagementPage = () => {
                       <Row
                         gutter={16}
                         style={{
-                          marginBottom: 16,
                           borderBottom: "1px solid #f0f0f0",
+                          marginBottom: 16,
                           paddingBottom: 16,
                         }}
                       >
-                        <Col span={10}>
+                        <Col span={8}>
                           <Form.Item label="Produit / Service">
                             <Input
                               value={
@@ -1746,7 +1751,7 @@ const WorkManagementPage = () => {
                             />
                           </Form.Item>
                         </Col>
-                        <Col span={5}>
+                        <Col span={4}>
                           <Form.Item label="Prix U. Produit">
                             <InputNumber
                               style={{ width: "100%" }}
@@ -1762,7 +1767,23 @@ const WorkManagementPage = () => {
                             />
                           </Form.Item>
                         </Col>
-                        <Col span={5}>
+                        <Col span={4}>
+                          <Form.Item label="Remise (%)">
+                            <InputNumber
+                              style={{ width: "100%" }}
+                              min={0}
+                              step={1}
+                              value={item.billable.remise_pourcentage}
+                              onChange={(value) => {
+                                const newData = [...billableData];
+                                newData[index].billable.remise_pourcentage =
+                                  value;
+                                setBillableData(newData);
+                              }}
+                            />
+                          </Form.Item>
+                        </Col>
+                        <Col span={4}>
                           <Form.Item label="Total HT Produit">
                             <InputNumber
                               style={{ width: "100%" }}

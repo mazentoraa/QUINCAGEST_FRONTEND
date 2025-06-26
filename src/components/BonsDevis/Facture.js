@@ -91,7 +91,9 @@ const translatePaymentMethod = (method) => {
 export default function BonCommande() {
   const [selectedBonDetails, setSelectedBonDetails] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
-
+  
+  // Type facture : produit ou bon de livraison
+  const [invoiceType, setInvoiceType] = useState(null);
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -546,7 +548,7 @@ export default function BonCommande() {
           // numero_commande: randomOrderNumber, // Remove this line - backend will generate
           date_commande: toISO(values.date_commande),
           date_livraison_prevue: toISO(values.date_livraison_prevue),
-          
+          type_facture: values.type_facture || "",
           statut: values.statut || "pending",
           notes: values.notes || "",
           conditions_paiement: values.conditions_paiement || "",
@@ -606,6 +608,7 @@ export default function BonCommande() {
           date_commande: toISO(values.date_commande),
           date_livraison_prevue: toISO(values.date_livraison_prevue),
           tax_rate: taxRate,
+          type_facture: values.type_facture,
           timbre_fiscal: timbreFiscal, // Add timbre fiscal
           montant_ht: finalMontantHt,
           montant_tva: finalMontantTva,
@@ -1891,7 +1894,7 @@ export default function BonCommande() {
                     message: "Veuillez sélectionner un mode de paiement",
                   },
                 ]}
-              >
+                >
                 <Select placeholder="Sélectionner un mode de paiement">
                   <Option value="traite">Traite</Option>
                   <Option value="cash">Comptant</Option>
@@ -1902,7 +1905,7 @@ export default function BonCommande() {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="timbre_fiscal" label="Timbre Fiscal ( )">
+              <Form.Item name="timbre_fiscal" label="Timbre Fiscal">
                 <InputNumber
                   min={0}
                   style={{ width: "100%" }}
@@ -1916,7 +1919,27 @@ export default function BonCommande() {
                       currentBonInDrawer
                     );
                   }}
-                />
+                  />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="Type de facture"
+                name="type_facture"
+                rules={[
+                  {
+                    required: true,
+                    message: "Veuillez sélectionner un type de facture",
+                  },
+                ]}
+              >
+                <Select 
+                  placeholder="Choisir"
+                  onChange={(value) => setInvoiceType(value)}
+                >
+                  <Option value="produit">Produit</Option>
+                  <Option value="bon">Bon de livraison</Option>
+                </Select>
               </Form.Item>
             </Col>
           </Row>
@@ -1928,147 +1951,154 @@ export default function BonCommande() {
           <Form.Item name="notes" label="Notes">
             <Input.TextArea rows={3} />
           </Form.Item>
-          <Divider>Bon de livraison</Divider>
-          <Button
-            type="dashed"
-            onClick={handleAddBonToDrawerOrder}
-            style={{ width: "100%", marginBottom: 16 }}
-            icon={<PlusOutlined />}
-          >
-            Ajouter un Bon
-          </Button>
-          <Table
-            dataSource={currentBonInDrawer}
-            rowKey="id"
-            pagination={false}
-            size="small"
-            columns={[
-              {
-                title: "Bon de livraison",
-                dataIndex: "bon_numero",
-                key: "bon_numero",
-              },
-              {
-                title: "Client",
-                dataIndex: "nom_client",
-                key: "nom_client",
-              },
-              {
-                title: "Dat",
-                dataIndex: "date_emission",
-                key: "date_emission",
-              },
-              {
-                title: "Status",
-                dataIndex: "statut",
-                key: "statut",
-              },
-              {
-                title: "Prix Total",
-                dataIndex: "total_ttc",
-                key: "total_ttc",
-                render: (prix) => formatCurrency(prix),
-              },
-              {
-                title: "Actions",
-                key: "actions",
-                render: (_, record) => (
+          {invoiceType=="bon"?(
+            <>
+              <Divider>Bon de livraison</Divider>
+              <Button
+                type="dashed"
+                onClick={handleAddBonToDrawerOrder}
+                style={{ width: "100%", marginBottom: 16 }}
+                icon={<PlusOutlined />}
+              >
+                Ajouter un Bon
+              </Button>
+              <Table
+                dataSource={currentBonInDrawer}
+                rowKey="id"
+                pagination={false}
+                size="small"
+                columns={[
+                  {
+                    title: "Bon de livraison",
+                    dataIndex: "bon_numero",
+                    key: "bon_numero",
+                  },
+                  {
+                    title: "Client",
+                    dataIndex: "nom_client",
+                    key: "nom_client",
+                  },
+                  {
+                    title: "Dat",
+                    dataIndex: "date_emission",
+                    key: "date_emission",
+                  },
+                  {
+                    title: "Status",
+                    dataIndex: "statut",
+                    key: "statut",
+                  },
+                  {
+                    title: "Prix Total",
+                    dataIndex: "total_ttc",
+                    key: "total_ttc",
+                    render: (prix) => formatCurrency(prix),
+                  },
+                  {
+                    title: "Actions",
+                    key: "actions",
+                    render: (_, record) => (
+                      
+                
+                      <Button
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                        onClick={() =>
+                          handleRemoveBonFromDrawer(record.bon_numero || record.id)
+                        }
+                      />
                   
-            
-                  <Button
-                    danger
-                    size="small"
-                    icon={<DeleteOutlined />}
-                    onClick={() =>
-                      handleRemoveBonFromDrawer(record.bon_numero || record.id)
-                    }
-                  />
-               
-                ),
-              },
-            ]}
-          />
-          <Divider>Produits</Divider>
+                    ),
+                  },
+                ]}
+              />
+            </>
+          ): invoiceType == "produit" ? (
+            <>
+              <Divider>Produits</Divider>
 
-          <Button
-            type="dashed"
-            onClick={handleAddProductToDrawerOrder}
-            style={{ width: "100%", marginBottom: 16 }}
-            icon={<PlusOutlined />}
-          >
-            Ajouter un Produit
-          </Button>
+              <Button
+                type="dashed"
+                onClick={handleAddProductToDrawerOrder}
+                style={{ width: "100%", marginBottom: 16 }}
+                icon={<PlusOutlined />}
+              >
+                Ajouter un Produit
+              </Button>
 
-          <Table
-            dataSource={currentProductsInDrawer}
-            rowKey="id"
-            pagination={false}
-            size="small"
-            columns={[
-              {
-                title: "Produit",
-                dataIndex: "nom_produit",
-                key: "nom_produit",
-              },
-              {
-                title: "Quantité",
-                dataIndex: "quantite",
-                key: "quantite",
-              },
-              {
-                title: "Prix Unitaire",
-                dataIndex: "prix_unitaire",
-                key: "prix_unitaire",
-                render: (prix) => formatCurrency(prix),
-              },
-              {
-                title: "Remise %",
-                dataIndex: "remise_pourcentage",
-                key: "remise_pourcentage",
-                render: (remise) => `${remise || 0}%`,
-              },
-              {
-                title: "Prix Total",
-                dataIndex: "prix_total",
-                key: "prix_total",
-                render: (prix) => formatCurrency(prix),
-              },
-              {
-                title: "Actions",
-                key: "actions",
-                render: (_, record) => (
-                  <Space>
-                  <Button
-                    icon={<EditOutlined />}
-                    size="small"
-                    onClick={() => {
-                      productForm.setFieldsValue({
-                        produit_id: record.produit_id,
-                        quantite: record.quantite,
-                        prix_unitaire: record.prix_unitaire,
-                        remise_pourcentage: record.remise_pourcentage,
-                      });
-                      setEditingProduct(record); // set the product being edited
-                      setIsProductModalVisible(true);
-                    }}
-                  />
-                  <Button
-                    danger
-                    size="small"
-                    icon={<DeleteOutlined />}
-                    onClick={() =>
-                      handleRemoveProductFromDrawerOrder(
-                        record.product_id || record.id
-                      )
-                    }
-                  />
-                         </Space>
-                ),
-              },
-            ]}
-          />
+              <Table
+                dataSource={currentProductsInDrawer}
+                rowKey="id"
+                pagination={false}
+                size="small"
+                columns={[
+                  {
+                    title: "Produit",
+                    dataIndex: "nom_produit",
+                    key: "nom_produit",
+                  },
+                  {
+                    title: "Quantité",
+                    dataIndex: "quantite",
+                    key: "quantite",
+                  },
+                  {
+                    title: "Prix Unitaire",
+                    dataIndex: "prix_unitaire",
+                    key: "prix_unitaire",
+                    render: (prix) => formatCurrency(prix),
+                  },
+                  {
+                    title: "Remise %",
+                    dataIndex: "remise_pourcentage",
+                    key: "remise_pourcentage",
+                    render: (remise) => `${remise || 0}%`,
+                  },
+                  {
+                    title: "Prix Total",
+                    dataIndex: "prix_total",
+                    key: "prix_total",
+                    render: (prix) => formatCurrency(prix),
+                  },
+                  {
+                    title: "Actions",
+                    key: "actions",
+                    render: (_, record) => (
+                      <Space>
+                      <Button
+                        icon={<EditOutlined />}
+                        size="small"
+                        onClick={() => {
+                          productForm.setFieldsValue({
+                            produit_id: record.produit_id,
+                            quantite: record.quantite,
+                            prix_unitaire: record.prix_unitaire,
+                            remise_pourcentage: record.remise_pourcentage,
+                          });
+                          setEditingProduct(record); // set the product being edited
+                          setIsProductModalVisible(true);
+                        }}
+                      />
+                      <Button
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                        onClick={() =>
+                          handleRemoveProductFromDrawerOrder(
+                            record.product_id || record.id
+                          )
+                        }
+                      />
+                            </Space>
+                    ),
+                  },
+                ]}
+              />
 
-          <Divider />
+              <Divider />
+            </>
+          ): ''}
 
           <Row gutter={16}>
             <Col span={8}>

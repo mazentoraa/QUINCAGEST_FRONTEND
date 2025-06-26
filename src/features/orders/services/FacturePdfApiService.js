@@ -439,7 +439,7 @@ thead {
   justify-content: center;
   padding-top: 8px;
 ">
-  <strong>Signature</strong>
+  <strong>Signature du client</strong>
 </div>
 
   </div>
