@@ -27,6 +27,7 @@ import {
   Card,
   Badge,
   Radio,
+  Checkbox,
 } from "antd";
 import {
   PrinterOutlined,
@@ -93,7 +94,7 @@ export default function BonCommande() {
   const [editingProduct, setEditingProduct] = useState(null);
   
   // Type facture : produit ou bon de livraison
-  const [invoiceType, setInvoiceType] = useState(null);
+  const [invoiceType, setInvoiceType] = useState("");
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -128,7 +129,7 @@ export default function BonCommande() {
   const [productForm] = Form.useForm();
   const [BonForm] = Form.useForm();
   const [currentProductsInDrawer, setCurrentProductsInDrawer] = useState([]);
-  const [currentBonInDrawer, setCurrentBonInDrawer] = useState([]);
+  const [currentBonInDrawer, setCurrentBonInDrawer] = useState([]); // many bons
 
   // New state variables for creating orders
   const [isCreating, setIsCreating] = useState(false);
@@ -357,8 +358,25 @@ export default function BonCommande() {
 
   const handleEditOrder = async (order) => {
     setLoading(true);
+    setIsCreating(false)
     try {
       const fullOrderDetails = await cdsService.getOrderById(order.id);
+      const bons_list = await Promise.all(
+        fullOrderDetails.bons.map(async(bonId) => {
+        return await InvoiceService.getInvoiceById(bonId)
+      }))
+      setInvoiceType(fullOrderDetails.type_facture)
+      console.log(fullOrderDetails)
+      const formattedBonsList = [
+        ...currentBonInDrawer,
+        ...bons_list.map(bon => ({
+          ...bon,
+          nom_client: bon.client_name,
+          bon_numero: bon.numero_facture,
+        }))
+      ]
+      setCurrentBonInDrawer(formattedBonsList)
+      console.log(formattedBonsList)
       if (fullOrderDetails) {
         setEditingOrder(fullOrderDetails);
 
@@ -524,11 +542,6 @@ export default function BonCommande() {
           return;
         }
 
-        // Remove random number generation - let backend handle it
-        // const randomOrderNumber = `FAC-${new Date().getFullYear()}-${Math.floor(
-        //   10000 + Math.random() * 90000
-        // )}`;
-
         // Recalculate totals based on the final product list (newOrderProducts) and tax rate
         const ProdMontantHt = newOrderProducts.reduce(
           (sum, p) => sum + (p.prix_total || 0),
@@ -541,7 +554,7 @@ export default function BonCommande() {
         const finalMontantHt = ProdMontantHt + BonMontant;
         const finalMontantTva = finalMontantHt * (taxRate / 100);
         const finalMontantTtc = finalMontantHt + finalMontantTva + timbreFiscal;
-      
+        setInvoiceType(values.type_facture)
         const orderPayload = {
           client_id: selectedClientId,
           client: selectedClientId,
@@ -578,7 +591,8 @@ export default function BonCommande() {
                 quantite: item.billable.quantite,
                 prix_unitaire: item.billable.prix_unitaire,
               })),
-          ],
+          ], 
+          bons: currentBonInDrawer.map((bon)=> bon.bon_id),
         };
         console.log("orderPayload:", orderPayload);
 
@@ -601,7 +615,7 @@ export default function BonCommande() {
         // Destructure to safely separate product lists from the rest of the order data
         const { produit_commande, produits, ...restOfEditingOrder } =
           editingOrder;
-
+        setInvoiceType(values.type_facture)
         const orderPayload = {
           ...restOfEditingOrder, // Base with existing data (excluding old product lists)
           ...values, // Override with form values (like notes, dates, status, client_id if changed)
@@ -638,7 +652,6 @@ export default function BonCommande() {
           orderPayload.client_id = values.client_id;
           orderPayload.client = values.client_id; // Ensure backend compatibility
         }
-
         delete orderPayload.montant_ht_display; // These are UI only
         delete orderPayload.montant_tva_display;
         delete orderPayload.montant_ttc_display;
@@ -675,6 +688,7 @@ export default function BonCommande() {
     productForm.resetFields();
     setIsProductModalVisible(true);
   };
+
   const handleAddBonToDrawerOrder = () => {
     if (!selectedClientId) {
       message.warning("Veuillez d'abord sélectionner un client.");
@@ -685,67 +699,84 @@ export default function BonCommande() {
     BonForm.resetFields();
     setIsBonModalVisible(true);
   };
+  
   const handleBonModalSave = async () => {
     try {
       const values = await BonForm.validateFields();
+      const selectedBonNumbers = values.numero_facture || [];
 
-      const selectedBon = availableBon.find(
-        (bon) => bon.numero_facture === values.numero_facture
-      );
-
-      if (!selectedBon) {
-        message.error("Bon de livraison non trouvable");
+      if (!Array.isArray(selectedBonNumbers) || selectedBonNumbers.length === 0) {
+        message.error("Aucun bon sélectionné");
         return;
       }
 
-      const newBonData = {
-        bon_id: selectedBon.id,
-        bon_numero: selectedBon.numero_facture,
-        nom_client: selectedBon.client_details?.nom_client || "",
-        date_emission: selectedBon.date_emission,
-        statut: selectedBon.statut,
-        total_ttc: selectedBon.total_ttc,
-        items_count: selectedBon.items?.length || 0,
-      };
+      const selectedBons = availableBon.filter(bon =>
+        selectedBonNumbers.includes(bon.numero_facture)
+      );
 
-      console.log("Détails du bon sélectionné:", newBonData);
+      if (selectedBons.length === 0) {
+        message.error("Aucun bon valide trouvé");
+        return;
+      }
 
-      setCurrentBonInDrawer((prev) => {
-        const alreadyExists = prev.some(
-          (bon) => bon.bon_numero === newBonData.bon_numero
+      let addedCount = 0;
+      let updatedBonList = [...currentBonInDrawer];
+      let allNewItems = [...newOrderBon];
+      const existingProductIds = new Set(
+        allNewItems.map((item) => item.produit_id || item.produit)
+      );
+
+      for (const bon of selectedBons) {
+        const bonAlreadyAdded = currentBonInDrawer.some(
+          (b) => b.bon_numero === bon.numero_facture
         );
-        if (alreadyExists) {
-          message.warning("Ce bon a déjà été ajouté.");
-          return prev;
+        if (bonAlreadyAdded) {
+          continue;
         }
-        return [...prev, newBonData];
-      });
-      const updatedBonList = [...currentBonInDrawer, newBonData];
-      setCurrentBonInDrawer(updatedBonList);
-      setNewOrderBon((prev) => {
-        const newItems = selectedBon.items || [];
-        const existingProductIds = new Set(
-          prev.map((item) => item.produit_id || item.produit)
-        );
+
+        const newBonData = {
+          bon_id: bon.id,
+          bon_numero: bon.numero_facture,
+          nom_client: bon.client_details?.nom_client || "",
+          date_emission: bon.date_emission,
+          statut: bon.statut,
+          total_ttc: bon.total_ttc,
+          items_count: bon.items?.length || 0,
+        };
+
+        updatedBonList.push(newBonData);
+
+        const newItems = bon.items || [];
         const uniqueNewItems = newItems.filter(
           (item) => !existingProductIds.has(item.produit_id || item.produit)
         );
-        const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
-        recalculateTotalsInDrawer(
-          newOrderProducts,
-          currentTaxRate,
-          updatedBonList
+        uniqueNewItems.forEach((item) =>
+          existingProductIds.add(item.produit_id || item.produit)
         );
-        return [...prev, ...uniqueNewItems];
-      });
+        allNewItems = [...allNewItems, ...uniqueNewItems];
 
-      message.success("Bon ajouté avec succès !");
+        addedCount++;
+      }
+
+      if (addedCount === 0) {
+        message.warning("Tous les bons sélectionnés sont déjà ajoutés.");
+        return;
+      }
+
+      setCurrentBonInDrawer(updatedBonList);
+      setNewOrderBon(allNewItems);
+
+      const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
+      recalculateTotalsInDrawer(newOrderProducts, currentTaxRate, updatedBonList);
+
+      message.success(`${addedCount} bon(s) ajouté(s) avec succès !`);
       setIsBonModalVisible(false);
     } catch (err) {
-      console.error("Erreur lors de la validation du bon:", err);
-      message.error("Échec de l'ajout du bon");
+      console.error("Erreur lors de la validation des bons:", err);
+      message.error("Échec de l'ajout des bons");
     }
   };
+
 
   const handleProductModalSave = async () => {
     try {
@@ -774,7 +805,7 @@ export default function BonCommande() {
             : p
         );
         setCurrentProductsInDrawer(updatedProducts);
-        if (isCreating) {
+        if (isCreating){
           setNewOrderProducts(updatedProducts);
         }
         setEditingProduct(null);
@@ -1027,7 +1058,9 @@ export default function BonCommande() {
         hideLoading();
         return;
       }
-
+      setCurrentBonInDrawer(detailedOrder.bons)
+      setInvoiceType(detailedOrder.type_facture)
+      console.log(detailedOrder.bons)
       // Find the client in availableClients list
       let clientDetailsForPdf = null;
       const clientIdToFind =
@@ -1443,6 +1476,7 @@ export default function BonCommande() {
       title: "N° Facture",
       dataIndex: "id",
       key: "id",
+      defaultSortOrder: "descend",
       sorter: (a, b) => (a.id || 0) - (b.id || 0),
       render: (id, record) => formatInvoiceNumber(record),
     },
@@ -1755,11 +1789,10 @@ export default function BonCommande() {
             )}
           </Row>
         </div>
-
         <Spin spinning={loading}>
           <Table
             columns={columns}
-            dataSource={filteredOrders}
+            dataSource={filteredOrders} // Initial sort
             rowKey="id"
             // rowSelection={rowSelection}
             pagination={{
@@ -1851,15 +1884,15 @@ export default function BonCommande() {
             </Col>
             <Col span={12}>
             <Form.Item
-   name="date_livraison_prevue"
-   label="Date Livraison Prévue"
-   rules={[{ required: true, message: "Veuillez entrer une date" }]}
- >
-   <Input
-     type="date"
-     style={{ width: "100%" }}
-   />
- </Form.Item>
+              name="date_livraison_prevue"
+              label="Date Livraison Prévue"
+              rules={[{ required: true, message: "Veuillez entrer une date" }]}
+            >
+              <Input
+                type="date"
+                style={{ width: "100%" }}
+              />
+            </Form.Item>
             </Col>
           </Row>
 
@@ -1935,7 +1968,9 @@ export default function BonCommande() {
               >
                 <Select 
                   placeholder="Choisir"
+                  value={invoiceType}
                   onChange={(value) => setInvoiceType(value)}
+                  default=""
                 >
                   <Option value="produit">Produit</Option>
                   <Option value="bon">Bon de livraison</Option>
@@ -1979,15 +2014,16 @@ export default function BonCommande() {
                     key: "nom_client",
                   },
                   {
-                    title: "Dat",
+                    title: "Date",
                     dataIndex: "date_emission",
                     key: "date_emission",
                   },
-                  {
-                    title: "Status",
-                    dataIndex: "statut",
-                    key: "statut",
-                  },
+                  // A supprimer
+                  // {
+                  //   title: "Status",
+                  //   dataIndex: "statut",
+                  //   key: "statut",
+                  // },
                   {
                     title: "Prix Total",
                     dataIndex: "total_ttc",
@@ -2229,45 +2265,23 @@ export default function BonCommande() {
                 showIcon
               />
             ) : (
-              <Radio.Group
-                style={{ width: "100%" }}
-                onChange={(e) => {
-                  BonForm.setFieldsValue({ numero_facture: e.target.value });
-                  const bon = availableBon.find((b) => b.numero_facture === e.target.value);
-                  console.log("Selected Bon:", bon); // Inspect its structure here
-                  setSelectedBonDetails(bon);
-                }}
-                
-                value={BonForm.getFieldValue("numero_facture")}
-              >
-                <Space direction="vertical" style={{ width: "100%" }}>
-                  {availableBon.map((bon) => (
-                    <Radio
-                      key={bon.numero_facture}
-                      value={bon.numero_facture}
-                      style={{
-                        padding: "8px",
-                        border: "1px solid #d9d9d9",
-                        borderRadius: "6px",
-                        width: "100%",
-                      }}
-                    >
-                      <div>
-                        <strong style={{ color: "black" }}>
-                          {bon.numero_facture}
-                        </strong>
-                        <p style={{ margin: 0, color: "grey" }}>
-                          Date: {bon.date_emission} - {bon.items.length}{" "}
-                          articles - {bon.total_ttc}
-                        </p>
-                        <p style={{ margin: 0, color: "green" }}>
-                          {bon.statut}
-                        </p>
-                      </div>
-                    </Radio>
-                  ))}
-                </Space>
-              </Radio.Group>
+              <Checkbox.Group
+    value={BonForm.getFieldValue("numero_facture") || []}
+    onChange={(checkedValues) => {
+      BonForm.setFieldsValue({ numero_facture: checkedValues });
+
+      const selectedBons = availableBon.filter(bon =>
+        checkedValues.includes(bon.numero_facture)
+      );
+      setSelectedBonDetails(selectedBons); // Be sure this expects an array now
+    }}
+  >
+    {availableBon.map((bon) => (
+      <Checkbox key={bon.numero_facture} value={bon.numero_facture}>
+        {bon.numero_facture} - {bon.client_details?.nom_client}
+      </Checkbox>
+    ))}
+  </Checkbox.Group>
             )}
             {selectedBonDetails && (
               <div
