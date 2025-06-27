@@ -39,6 +39,22 @@ export default function MaterialAchatManagement() {
   const [searchText, setSearchText] = useState("");
   const [selectedCategorie, setSelectedCategorie] = useState("all");
 
+  const getStatus = (remaining, min) => {
+    if (remaining < min) return "ALERTE";
+    return "OK";
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "ALERTE":
+        return "red";
+      case "OK":
+        return "green";
+      default:
+        return "gray";
+    }
+  };
+
   const columns = [
     { title: "Référence", dataIndex: "ref", key: "ref" },
     { title: "Nom Matière", dataIndex: "nom_matiere", key: "nom_matiere" },
@@ -48,15 +64,37 @@ export default function MaterialAchatManagement() {
       key: "categorie",
       render: (cat) => <Tag>{cat}</Tag>,
     },
-    { title: "Quantité", dataIndex: "remaining_quantity", key: "remaining_quantity" },
+    {
+      title: "Quantité",
+      dataIndex: "remaining_quantity",
+      key: "remaining_quantity",
+      render: (qty, record) => `${qty} ${record.unite_mesure || ''}`,
+    },
+    {
+      title: "Stock Min",
+      dataIndex: "stock_minimum",
+      key: "stock_minimum",
+      render: (qty, record) => `${qty} ${record.unite_mesure || ''}`,
+    },
+   
     {
       title: "Prix Unitaire",
       dataIndex: "prix_unitaire",
       key: "prix_unitaire",
-      render: (prix) => `${prix}`,
+      render: (prix) => `${prix} TND`,
     },
     { title: "Fournisseur", dataIndex: "fournisseur_principal", key: "fournisseur_principal" },
     { title: "Date Réception", dataIndex: "date_reception", key: "date_reception" },
+     {
+      title: "Statut",
+      key: "statut",
+      render: (_, record) => {
+        const statut = getStatus(record.remaining_quantity, record.stock_minimum);
+        const color = getStatusColor(statut);
+        const fontWeight = statut === "ALERTE" ? "bold" : "normal";
+        return <Tag color={color} style={{ fontWeight }}>{statut}</Tag>;
+      },
+    },
     {
       title: "Actions",
       key: "actions",
@@ -84,7 +122,7 @@ export default function MaterialAchatManagement() {
       if (selectedCategorie !== "all") params.categorie = selectedCategorie;
 
       const result = await MaterialAchatService.getAllMaterial(params);
-      setMaterialList(result); // ✅ plus de tri ici, car le backend les fournit déjà triées
+      setMaterialList(result);
     } catch (err) {
       console.error(err);
       message.error("Erreur lors du chargement des matières achetées");
@@ -136,7 +174,6 @@ export default function MaterialAchatManagement() {
       } else {
         const createdMaterial = await MaterialAchatService.createMaterial(payload);
         message.success("Matière ajoutée !");
-        // ✅ On l'ajoute en haut manuellement si on ne veut pas attendre fetch :
         setMaterialList((prev) => [createdMaterial, ...prev]);
       }
 
