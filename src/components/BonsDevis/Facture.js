@@ -124,6 +124,7 @@ export default function BonCommande() {
 
   const [availableProducts, setAvailableProducts] = useState([]);
   const [availableBon, setAvailableBon] = useState([]);
+  const [checkedBons, setCheckedBons] = useState([]);
   const [isProductModalVisible, setIsProductModalVisible] = useState(false);
   const [isBonModalVisible, setIsBonModalVisible] = useState(false);
   const [productForm] = Form.useForm();
@@ -137,6 +138,15 @@ export default function BonCommande() {
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [newOrderProducts, setNewOrderProducts] = useState([]);
   const [newOrderBon, setNewOrderBon] = useState([]);
+
+  // // To check the bons checkboxes when opening the bon form
+  // useEffect(() => {
+  //   if (isDrawerVisible) {
+  //     const selected = currentBonInDrawer.map((b) => b.numero_facture);
+  //     setCheckedBons(selected);
+  //     BonForm.setFieldsValue({ numero_facture: selected });
+  //   }
+  // }, [isDrawerVisible, currentBonInDrawer]);
 
   const recalculateTotalsInDrawer = (products, taxRate, bons) => {
     const currentTaxRate =
@@ -312,8 +322,6 @@ export default function BonCommande() {
           )
         : [];
 
-      console.log("Selected client:", selectedClientId);
-      console.log("Filtered bons:", filteredBons);
       setAvailableBon(filteredBons);
     } catch (err) {
       console.error("Error fetching bons:", err);
@@ -337,7 +345,6 @@ export default function BonCommande() {
         prix_unitaire: product.prix, // Map the prix field to prix_unitaire for compatibility
       }));
       setAvailableProducts(mappedProducts);
-      console.log("Available products:", mappedProducts); // Debug log
     } catch (err) {
       console.error("Error fetching products:", err);
       message.error("Failed to fetch available products: " + err.message);
@@ -366,7 +373,6 @@ export default function BonCommande() {
         return await InvoiceService.getInvoiceById(bonId)
       }))
       setInvoiceType(fullOrderDetails.type_facture)
-      console.log(fullOrderDetails)
       const formattedBonsList = [
         ...currentBonInDrawer,
         ...bons_list.map(bon => ({
@@ -376,7 +382,6 @@ export default function BonCommande() {
         }))
       ]
       setCurrentBonInDrawer(formattedBonsList)
-      console.log(formattedBonsList)
       if (fullOrderDetails) {
         setEditingOrder(fullOrderDetails);
 
@@ -513,6 +518,7 @@ export default function BonCommande() {
     setIsCreating(false);
     setSelectedClientId(null);
     drawerForm.resetFields();
+    setInvoiceType("")
   };
 
   const handleDrawerSave = async () => {
@@ -594,7 +600,6 @@ export default function BonCommande() {
           ], 
           bons: currentBonInDrawer.map((bon)=> bon.bon_id),
         };
-        console.log("orderPayload:", orderPayload);
 
         const createdOrder = await cdsService.createOrder(orderPayload);
         message.success(
@@ -954,7 +959,6 @@ export default function BonCommande() {
   };
 
   const handleRemoveBonFromDrawer = async (bonId) => {
-    console.log("bonIdToRemove:", bonId);
     console.log(
       "Current bon IDs:",
       currentBonInDrawer.map((b) => b.bon_id)
@@ -965,7 +969,6 @@ export default function BonCommande() {
       const updatedBonList = currentBonInDrawer.filter(
         (bon) => bon.bon_numero !== bonId
       );
-      console.log(currentBonInDrawer);
       setCurrentBonInDrawer(updatedBonList);
 
       // Remove corresponding items from the newOrderBon list
@@ -977,6 +980,17 @@ export default function BonCommande() {
       // In that case, keep track when you add them
 
       setNewOrderBon(updatedNewOrderBon);
+
+      // Remove bon from checkedBons (by numero_facture / bon_numero)
+      setCheckedBons((prev) => prev.filter((val) => val !== bonId));
+      // ✅ Remove from selectedBonDetails
+      setSelectedBonDetails((prev) =>
+        Array.isArray(prev) ? prev.filter((bon) =>
+          bon.bon_numero !== bonId &&
+          bon.numero_facture !== bonId &&
+          bon.id !== bonId
+        ) : []
+      );
 
       // Recalculate totals after removal
       const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
@@ -1060,7 +1074,6 @@ export default function BonCommande() {
       }
       setCurrentBonInDrawer(detailedOrder.bons)
       setInvoiceType(detailedOrder.type_facture)
-      console.log(detailedOrder.bons)
       // Find the client in availableClients list
       let clientDetailsForPdf = null;
       const clientIdToFind =
@@ -2266,60 +2279,53 @@ export default function BonCommande() {
               />
             ) : (
               <Checkbox.Group
-    value={BonForm.getFieldValue("numero_facture") || []}
-    onChange={(checkedValues) => {
-      BonForm.setFieldsValue({ numero_facture: checkedValues });
+  value={checkedBons}
+  onChange={(checkedValues) => {
+    setCheckedBons(checkedValues);
+    // Optional: update BonForm or other logic
+    BonForm.setFieldsValue({ numero_facture: checkedValues });
 
-      const selectedBons = availableBon.filter(bon =>
-        checkedValues.includes(bon.numero_facture)
-      );
-      setSelectedBonDetails(selectedBons); // Be sure this expects an array now
+    console.log("✅ Checked bons:", checkedValues);
+  }}
+>
+  {availableBon.map((bon) => (
+    <Checkbox key={bon.numero_facture} value={bon.numero_facture}>
+      {bon.numero_facture} - {bon.client_details?.nom_client}
+    </Checkbox>
+  ))}
+</Checkbox.Group>
+            )}
+{checkedBons.length > 0 && (
+  <div
+    style={{
+      border: "1px solid #e5e5e5",
+      borderRadius: "8px",
+      padding: "12px",
+      marginTop: "16px",
+      backgroundColor: "#f9f9f9",
     }}
   >
-    {availableBon.map((bon) => (
-      <Checkbox key={bon.numero_facture} value={bon.numero_facture}>
-        {bon.numero_facture} - {bon.client_details?.nom_client}
-      </Checkbox>
-    ))}
-  </Checkbox.Group>
-            )}
-            {selectedBonDetails && (
-              <div
-                style={{
-                  border: "1px solid #e5e5e5",
-                  borderRadius: "8px",
-                  padding: "12px",
-                  marginTop: "16px",
-                  backgroundColor: "#f9f9f9",
-                }}
-              >
-                <p>
-                  <Tag color="blue">
-                    {selectedBonDetails.numero_facture} -{" "}
-                    {moment(selectedBonDetails.date_emission).format(
-                      "DD/MM/YYYY"
-                    )}
-                  </Tag>
-                </p>
-                <p>
-                  <strong>Articles inclus:</strong>
-                </p>
-                <ul style={{ paddingLeft: 20 }}>
-                {selectedBonDetails?.items?.length > 0 && (
-  <ul style={{ paddingLeft: 20 }}>
-    {selectedBonDetails.items.map((item, index) => (
-      <li key={index}>
-        {item.nom_produit || "Produit"} – Qté:{" "}
-        {item.billable?.quantite ?? "?"} –{" "}
-        {selectedBonDetails.total_ttc}
-      </li>
-    ))}
-  </ul>
+    <p><strong>Articles inclus:</strong></p>
+    <ul style={{ paddingLeft: 20 }}>
+      {availableBon
+        .filter(bon => checkedBons.includes(bon.numero_facture))
+        .map((bon, bonIndex) => (
+          <li key={bonIndex}>
+            <strong>
+              Bon N° {bon.bon_numero || bon.numero_facture || bon.id} – Total TTC: {bon.total_ttc}
+            </strong>
+            <ul style={{ paddingLeft: 20 }}>
+              {(bon.items || []).map((item, itemIndex) => (
+                <li key={itemIndex}>
+                  {item.nom_produit || "Produit"} – Qté: {item.billable?.quantite ?? "?"}
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))}
+    </ul>
+  </div>
 )}
-
-                </ul>
-              </div>
-            )}
           </Form.Item>
         </Form>
       </Modal>
