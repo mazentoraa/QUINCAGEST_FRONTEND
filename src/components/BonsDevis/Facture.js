@@ -2047,8 +2047,21 @@ export default function BonCommande() {
                     title: "Actions",
                     key: "actions",
                     render: (_, record) => (
-                      
-                
+                      <Space>
+                      <Button
+                        icon={<EditOutlined />}
+                        size="small"
+                        // onClick={() => {
+                        //   BonForm.setFieldsValue({
+                        //     produit_id: record.produit_id,
+                        //     quantite: record.quantite,
+                        //     prix_unitaire: record.prix_unitaire,
+                        //     remise_pourcentage: record.remise_pourcentage,
+                        //   });
+                        //   setEditingProduct(record); // set the product being edited
+                        //   setIsBonModalVisible(true);
+                        // }}
+                      />
                       <Button
                         danger
                         size="small"
@@ -2057,7 +2070,7 @@ export default function BonCommande() {
                           handleRemoveBonFromDrawer(record.bon_numero || record.id)
                         }
                       />
-                  
+                      </Space>
                     ),
                   },
                 ]}
@@ -2139,7 +2152,7 @@ export default function BonCommande() {
                           )
                         }
                       />
-                            </Space>
+                      </Space>
                     ),
                   },
                 ]}

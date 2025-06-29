@@ -347,10 +347,12 @@ const BonLivraisonDecoupe = () => {
         content: "Génération de la facture...",
         key: "generatePDF",
       });
+      const fetchedInvoice = await InvoiceService.getInvoiceById(invoice.id)
+      console.log(fetchedInvoice)
 
       // Use the new PDF API service
       await BonLivraisonDecoupePdfService.generateDecoupeInvoicePDF(
-        invoice,
+        fetchedInvoice,
         `facture-decoupe-${invoice.numero_facture}.pdf`
       );
 
@@ -493,7 +495,7 @@ const BonLivraisonDecoupe = () => {
             marginBottom: 20,
           }}
         >
-          <Title level={2}>Bon de Livraison Découpé</Title>
+          <Title level={2}>Bon de Livraison Découpe</Title>
           <Space size="middle">
             <Tooltip title="Rafraîchir">
               <Button

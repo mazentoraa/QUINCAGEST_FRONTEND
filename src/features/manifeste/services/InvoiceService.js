@@ -26,7 +26,7 @@ class InvoiceService {
           client_id: clientId,
         }
       };
-
+      console.log(requestData)
       const response = await axios.post(`${API_URL}/factures/`, requestData);
       return response.data;
     } catch (error) {

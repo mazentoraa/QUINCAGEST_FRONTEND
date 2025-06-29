@@ -8,7 +8,9 @@ import {
   ToolOutlined,
   FileOutlined,
   BankOutlined,
-  BarChartOutlined
+  BarChartOutlined,
+  CarOutlined,
+  InboxOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -56,14 +58,6 @@ function SideMenu() {
           </Menu.Item>
         </SubMenu>
 
-        <SubMenu key="achats" icon={<ShoppingOutlined />} title="Gestion des Achats">
-          <Menu.Item key="/achats" onClick={() => handleMenuClick('/achats')}>
-            Achats
-          </Menu.Item>
-          <Menu.Item key="/achats/matieres" onClick={() => handleMenuClick('/achats/matieres')}>
-            Matières Premières
-          </Menu.Item>
-        </SubMenu>
 
         <SubMenu key="manifeste" icon={<FileTextOutlined />} title="Manifeste">
           <Menu.Item key="/manifeste/travaux" icon={<ToolOutlined />} onClick={() => handleMenuClick('/manifeste/travaux')}>
@@ -94,6 +88,22 @@ function SideMenu() {
           </Menu.Item>
           <Menu.Item key="/reglements/traites" icon={<BankOutlined />} onClick={() => handleMenuClick('/reglements/traites')}>
             Traites
+          </Menu.Item>
+        </SubMenu>
+
+        <Menu.Item key="" icon={<InboxOutlined />}>
+          Fournisseur
+        </Menu.Item>
+
+        <SubMenu key="achats" icon={<ShoppingOutlined />} title="Gestion des Achats">
+          <Menu.Item key="/achats/matieres" onClick={() => handleMenuClick('/achats/matieres')}>
+            Matières Premières
+          </Menu.Item>
+          <Menu.Item key="" onClick={() => {}}>
+            Consommables
+          </Menu.Item>
+          <Menu.Item key="/achats" onClick={() => handleMenuClick('/achats')}>
+            Autres Achats
           </Menu.Item>
         </SubMenu>
 
