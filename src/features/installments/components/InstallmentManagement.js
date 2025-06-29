@@ -28,8 +28,8 @@ const InstallmentManagement = () => {
       clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === "all" || installment.status === statusFilter;
+const matchesStatus =
+  statusFilter === "all" || installment.status === statusFilter;
     const matchesBank =
       bankFilter === "all" || installment.bankName === bankFilter;
     return matchesSearch && matchesStatus && matchesBank;
@@ -135,17 +135,20 @@ const handleDelete = async (installmentId) => {
                     <i className="fas fa-search search-icon"></i>
                   </div>
 
-                  <div className="status-filter">
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="status-select"
-                    >
-                      <option value="all">Tous les statuts</option>
-                      <option value="non_paye">Non payé</option>
-                      <option value="paye">Payé</option>
-                    </select>
-                  </div>
+            <div className="status-filter">
+  <select
+    id="status-select"
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+    className="status-select"
+  >
+    <option value="all">Tous les statuts</option>
+    <option value="NON_PAYEE">Non payé</option>
+    <option value="PAYEE">Payé</option>
+    <option value="PARTIELLEMENT_PAYEE">Partiellement payé</option>
+  </select>
+</div>
+
 
                   <div className="bank-filter">
                     <select
