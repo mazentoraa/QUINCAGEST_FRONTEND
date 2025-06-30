@@ -247,7 +247,7 @@ class BonLivraisonDecoupePdfService {
     const totalHTVA = invoice.total_ht || 0;
     const fodec = totalHTVA * 0.01;
     const totalTVA = (totalHTVA + fodec) * ((invoice.tax_rate || 0) / 100);
-    const timbreFiscal = invoice.timbre_fiscal || 0;
+    const timbreFiscal = Number(invoice.timbre_fiscal) || 0;
     const netAPayer = totalHTVA + fodec + totalTVA + timbreFiscal;
 
     return `
