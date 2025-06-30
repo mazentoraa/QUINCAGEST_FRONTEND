@@ -1376,6 +1376,7 @@ export default function Devis() {
                 />
                 <Statistic
                   title={`TVA (${devisDetail.tax_rate}%)`}
+                  name="tax_rate"
                   value={devisDetail.montant_tva}
                   formatter={(val) => formatCurrency(val)}
                 />

@@ -137,6 +137,10 @@ class BonCommandePdfApiService {
          const t = prixUnitaire*quantite ; 
          return acc + t;
       },0) ;
+      const totalHTVA = totalBrut - totalRemise
+      const fodec = orderData.montant_ht * 0.01
+      const totalTVA = (orderData.montant_ht + fodec) * orderData.tax_rate/100
+      const netAPayer = totalHTVA + fodec + totalTVA + (orderData.timbre_fiscal||0)
     return `
 <!DOCTYPE html>
 <html lang="fr">
@@ -245,11 +249,11 @@ class BonCommandePdfApiService {
       <tr style="height: 80px;">
         <td style="border: 1px solid black; padding: 8px;">${this.formatFloat(orderData.montant_ht)}</td>
         <td style="border: 1px solid black; padding: 8px;">${orderData.tax_rate} %</td>
-        <td style="border: 1px solid black; padding: 8px;">${this.formatFloat(orderData.montant_tva)}</td>
+        <td style="border: 1px solid black; padding: 8px;">${this.formatFloat(totalTVA)}</td>
       </tr>
       <tr style="height: 20px;">
         <td colspan="2" style="border: 1px solid black; padding: 8px;">${this.formatFloat(orderData.montant_ht)}</td>
-        <td style="border: 1px solid black; padding: 8px;">${this.formatFloat(orderData.montant_tva)}</td>
+        <td style="border: 1px solid black; padding: 8px;">${this.formatFloat(totalTVA)}</td>
       </tr>
     </tbody>
   </table>
@@ -269,19 +273,26 @@ class BonCommandePdfApiService {
       <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
       <td style="border: 1px solid black; padding: 2px;">${this.formatFloat(totalRemise)}</td>
     </tr>
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Fodec (1%)</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatFloat(fodec)}</td>
+    </tr>
 
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatFloat(orderData.montant_ht || 0)}</td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatFloat(totalHTVA || 0)}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatFloat(orderData.montant_tva || 0)}</td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatFloat(totalTVA || 0)}</td>
     </tr>
-
+    <tr>
+      <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatFloat(orderData.timbre_fiscal || 0)}</td>
+    </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatFloat((orderData.montant_ht || 0)+(orderData.montant_tva))  }</td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatFloat(netAPayer)}</td>
     </tr>
   </table>
 </div>
@@ -293,7 +304,7 @@ class BonCommandePdfApiService {
          <strong>
          Arrêtée la présente bon de commande à la somme de:
          </strong> <br>
-         ${this.formatMontantEnLettres((orderData.montant_ttc || 0))}
+         ${this.formatMontantEnLettres((netAPayer || 0))}
     
          </p>
    </div>
