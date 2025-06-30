@@ -77,6 +77,7 @@ const WorkManagementPage = () => {
   const [billableData, setBillableData] = useState([]);
   const [isBillModalVisible, setIsBillModalVisible] = useState(false);
   const [taxRate, setTaxRate] = useState(19); // Default tax rate of 19%
+  const [timbreFiscal, setTimbreFiscal] = useState(0); // Default 
   const [billDate, setBillDate] = useState(moment().format("YYYY-MM-DD"));
   const [invoiceNumber, setInvoiceNumber] = useState(""); // State for invoice number
 
@@ -498,6 +499,7 @@ const WorkManagementPage = () => {
             prix_unitaire_produit: productUnitPrice, // Use fetched product unit price as default
             quantite_produit: enrichedWork.quantite || 1, // Quantity of the product
             taxe: taxRate,
+            timbre_fiscal: timbreFiscal,
             remise_pourcentage: enrichedWork.remise || 0,
             remise: (enrichedWork.remise / 100) * (enrichedWork.quantite * productUnitPrice) || 0,
             // total_ht will be calculated dynamically in the modal/PDF
@@ -630,6 +632,7 @@ const WorkManagementPage = () => {
               prix_unitaire_produit: productUnitPrice,
               quantite_produit: enrichedWork.quantite || 1,
               taxe: taxRate,
+              timbre_fiscal: timbreFiscal,
               remise: enrichedWork.remise || 0,
             };
 
@@ -701,7 +704,7 @@ const WorkManagementPage = () => {
         conditions_paiement: "",
         mode_paiement: "cash",
         tax_rate: taxRate,
-        timbre_fiscal: 1,
+        timbre_fiscal: timbreFiscal,
         montant_ht: finalMontantHt,
         montant_tva: finalMontantTva,
         montant_ttc: finalMontantTtc,
@@ -892,139 +895,126 @@ const WorkManagementPage = () => {
     },
   ];
 
-  // Function to generate PDF from bill data using PDF API
-  const generateBillPDF = async () => {
-    try {
-      if (!billableData || billableData.length === 0) {
-        message.error("Aucune donnée à imprimer");
-        return;
-      }
 
-      message.loading({
-        content: "Génération de la facture via API...",
-        key: "generatePDF",
+  // Function to prepare data for print and save bon
+  const prepareInvoiceData = () => {
+    if (!billableData || billableData.length === 0) return null;
+
+    const clientRaw = billableData[0].clientDetails || billableData[0].client || {};
+    const clientId = clientRaw?.id;
+
+    let totalHT = 0;
+    let totalTVA = 0;
+
+    const invoiceItems = [];
+    const lineItems = [];
+    console.log(billableData)
+    billableData.forEach((item) => {
+      const remisePourcentage = item.billable?.remise_pourcentage || 0;
+      const remise = (remisePourcentage / 100) * (item.billable.quantite_produit * item.billable.prix_unitaire_produit);
+      const productTotal = (item.billable.prix_unitaire_produit || 0) * (item.billable.quantite_produit || 0) - remise;
+      totalHT += productTotal;
+
+      invoiceItems.push({
+        code: item.code_produit || "",
+        description:
+          (item.produit_name || "N/A") +
+          (item.description ? ` (${item.description})` : ""),
+        quantity: item.billable.quantite_produit || item.quantite,
+        unitPrice: item.billable.prix_unitaire_produit || 0,
+        taxRate,
+        remise,
+        remise_percent: remisePourcentage
       });
 
-      // Get client data from the first billable item
-      const clientData =
-        billableData[0].clientDetails || billableData[0].client || {};
-      console.log("Client data for PDF:", clientData);
-
-      // Calculate totals
-      let totalHT = 0;
-      let totalTVA = 0;
-
-      // Prepare items for the invoice
-      const invoiceItems = billableData.flatMap((item) => {
-        const productItems = [];
-
-        // Add product as an item
-        const remisePourcentage = item.billable?.remise_pourcentage || 0;
-        const remise = (remisePourcentage / 100) * (item.billable.quantite_produit * item.billable.prix_unitaire_produit);
-        const productTotal =
-          (item.billable.prix_unitaire_produit || 0) *
-            (item.billable.quantite_produit || 0) -
-          remise;
-        totalHT += productTotal;
-
-        if (productTotal > 0) {
-          productItems.push({
-            code: item.code_produit || "",
-            description:
-              (item.produit_name || "N/A") +
-              (item.description ? ` (${item.description})` : ""),
-            quantity: item.billable.quantite_produit || item.quantite,
-            unitPrice: item.billable.prix_unitaire_produit || 0,
-            discount: 0, // Default discount
-            taxRate: taxRate,
-            remise: remise
-          });
-        }
-
-        // Add materials as items if they exist
-        if (item.matiere_usages && item.matiere_usages.length > 0) {
-          const materialItems = item.matiere_usages
-            .filter((mat) => {
-              const matTotal =
-                (mat.prix_unitaire || 0) * (mat.quantite_utilisee || 0);
-              if (matTotal > 0) {
-                totalHT += matTotal;
-                return true;
-              }
-              return false;
-            })
-            .map((mat) => ({
-              code: mat.matiere_id || "",
-              description: `Matériau: ${mat.nom_matiere || mat.designation} (${
-                mat.type_matiere || ""
-              }) ${mat.thickness || ""}x${mat.length || ""}x${
-                mat.width || ""
-              }mm`,
-              quantity: mat.quantite_utilisee,
-              unitPrice: mat.prix_unitaire || 0,
-              discount: 0,
-              taxRate: taxRate,
-            }));
-
-          productItems.push(...materialItems);
-        }
-
-        return productItems;
-      });
-
-      console.log("Invoice items:", invoiceItems);
-
-      // Calculate totals
-      totalTVA = totalHT * (taxRate / 100);
-      const totalTTC = totalHT + totalTVA;
-
-      // No discount in this implementation
-      const discountRate = 0;
-      const totalHTAfterDiscount = totalHT;
-
-      // Create invoice data object
-      const invoiceData = {
-        numero_facture: invoiceNumber,
-        date_emission: billDate,
-        tax_rate: taxRate,
-        client_details: {
-          nom_client: clientData.nom_cf || clientData.nom_client || "N/A",
-          adresse: clientData.adresse || "N/A",
-          numero_fiscal:
-            clientData.matricule_fiscale || clientData.numero_fiscal || "N/A",
-          telephone: clientData.tel || clientData.telephone || "N/A",
-        },
-        items: billableData.map((item) => {
-          const quantity = item.billable.quantite_produit || 0;
-          const unitPrice = item.billable.prix_unitaire_produit || 0;
-          const remisePercent = item.billable.remise_pourcentage
-          const remise = (remisePercent / 100) * (quantity * unitPrice) || 0;
-          console.log("📦 PDF item:", {
-            produit_id: item.produit_id,
-            produit_name: item.produit_name,
-            code_produit: item.code_produit,
-          });
+      lineItems.push({
+        work_id: item.id,
+        produit_id: item.produit_id || item.produit?.id,
+        produit_name: item.produit_name || item.produit?.nom_produit || "Produit inconnu",
+        code_produit: item.code_produit || item.produit?.code_produit,
+        description_travail: item.description,
+        quantite_produit: item.billable.quantite_produit,
+        remise_produit: remise,
+        remise_percent_produit: remisePourcentage, 
+        prix_unitaire_produit: item.billable.prix_unitaire_produit,
+        matiere_usages: (item.matiere_usages || []).map((mat) => {
+          const matTotal = (mat.prix_unitaire || 0) * (mat.quantite_utilisee || 0);
+          if (matTotal > 0) totalHT += matTotal;
 
           return {
-            code_produit: item.code_produit || "N/A",
-            nom_produit:
-              item.produit_name || item.produit?.nom_produit || "N/A",
-            description: item.description || "",
-            billable: {
-              quantite: quantity,
-              prix_unitaire: unitPrice,
-              remise_percent: parseFloat(remisePercent.toFixed(2)),
-              total_ht: quantity * unitPrice - remise,
-            },
+            matiere_id: mat.matiere_id,
+            nom_matiere: mat.nom_matiere || mat.designation || "Matériau inconnu",
+            type_matiere: mat.type_matiere || "",
+            thickness: mat.thickness,
+            length: mat.length,
+            width: mat.width,
+            quantite_utilisee: mat.quantite_utilisee,
+            prix_unitaire: mat.prix_unitaire,
           };
         }),
-        total_ht: totalHT,
-        total_tax: totalTVA,
-        total_ttc: totalTTC,
-      };
+      });
+    });
 
-      console.log("Final invoice data being sent to PDF API:", invoiceData);
+    const fodec = totalHT * 0.01;
+    totalTVA = (totalHT + fodec) * (taxRate / 100);
+    const totalTTC = totalHT + fodec + totalTVA + timbreFiscal;
 
+    return {
+      clientId,
+      invoiceItems,
+      lineItems,
+      totalHT,
+      totalTVA,
+      totalTTC,
+      clientDetails: {
+        nom_client: clientRaw.nom_cf || clientRaw.nom_client || "N/A",
+        adresse: clientRaw.adresse || "N/A",
+        numero_fiscal: clientRaw.matricule_fiscale || clientRaw.numero_fiscal || "N/A",
+        telephone: clientRaw.tel || clientRaw.telephone || "N/A",
+      },
+    };
+  };
+
+
+  // Function to generate PDF from bill data using PDF API
+  const generateBillPDF = async () => {
+    const prepared = prepareInvoiceData();
+    if (!prepared) {
+      message.error("Aucune donnée à imprimer");
+      return;
+    }
+
+    const invoiceData = {
+      numero_facture: invoiceNumber,
+      date_emission: billDate,
+      tax_rate: taxRate,
+      client_details: prepared.clientDetails,
+      items: billableData.map((item) => {
+        const quantity = item.billable.quantite_produit || 0;
+        const unitPrice = item.billable.prix_unitaire_produit || 0;
+        const remisePercent = item.billable.remise_pourcentage;
+        const remise = (remisePercent / 100) * (quantity * unitPrice) || 0;
+
+        return {
+          code_produit: item.code_produit || "N/A",
+          nom_produit: item.produit_name || item.produit?.nom_produit || "N/A",
+          description: item.description || "",
+          billable: {
+            quantite: quantity,
+            prix_unitaire: unitPrice,
+            remise_percent: parseFloat(remisePercent.toFixed(2)),
+            total_remise: remise,
+            total_ht: quantity * unitPrice - remise,
+          },
+        };
+      }),
+      timbre_fiscal: timbreFiscal,
+      total_ht: prepared.totalHT,
+      total_tax: prepared.totalTVA,
+      total_ttc: prepared.totalTTC,
+    };
+    console.log("Final invoice data being sent to PDF API:", invoiceData);
+    try{
       // Use the PDF API service
       await BonLivraisonDecoupePdfService.generateDecoupeInvoicePDF(
         invoiceData,
@@ -1046,71 +1036,28 @@ const WorkManagementPage = () => {
     }
   };
 
-  // Function to save invoice data using InvoiceService
+
+    // Function to save invoice data using InvoiceService
   const saveBillableData = async () => {
-    try {
-      if (!billableData || billableData.length === 0) {
-        message.error("Aucune donnée à enregistrer");
-        return false;
-      }
-
-      // Extract client ID from the first item (all items should be for the same client)
-      // Ensure clientDetails is preferred if available, otherwise fallback to client object
-      const firstBillableItemClient =
-        billableData[0].clientDetails || billableData[0].client;
-      const clientId = firstBillableItemClient?.id;
-
-      if (!clientId) {
-        message.error("ID du client manquant dans les données à facturer.");
-        return false;
-      }
-
-      // Construct the detailed line items for the invoice
-      const lineItems = billableData.map((item) => {
-        // Ensure product details are available
-        const produitName =
-          item.produit_name || item.produit?.nom_produit || "Produit inconnu";
-        const produitId = item.produit_id || item.produit?.id;
-        const code_produit = item.code_produit || item.produit?.code_produit;
-
-        return {
-          work_id: item.id, // Original Work ID
-          produit_id: produitId,
-          produit_name: produitName,
-          code_produit: code_produit,
-          description_travail: item.description, // Description from the work item
-          quantite_produit: item.billable.quantite_produit,
-          prix_unitaire_produit: item.billable.prix_unitaire_produit,
-          matiere_usages: (item.matiere_usages || []).map((mat) => ({
-            matiere_id: mat.matiere_id,
-            nom_matiere:
-              mat.nom_matiere || mat.designation || "Matériau inconnu",
-            type_matiere: mat.type_matiere || "",
-            thickness: mat.thickness,
-            length: mat.length,
-            width: mat.width,
-            quantite_utilisee: mat.quantite_utilisee,
-            prix_unitaire: mat.prix_unitaire, // Unit price of the material from the bill modal
-          })),
-        };
-      });
-
-      // Create the complete data object to save
-      const invoiceToPost = {
-        client_id: clientId,
-        client: clientId,
-        numero_facture: invoiceNumber,
-        tax_rate: taxRate,
-        date_emission: billDate,
-        date_echeance: moment(billDate).add(30, "days").format("YYYY-MM-DD"), // Default due date 30 days from bill date
-        statut: "draft", // Or any other appropriate status
-        line_items: lineItems,
-        // Optionally, include totals if the backend expects them, otherwise, it can calculate them.
-        // total_ht: billableData.reduce(...), // Calculate total HT based on line_items
-        // total_ttc: billableData.reduce(...), // Calculate total TTC
-      };
-
-      // Log the data that will be posted
+    const prepared = prepareInvoiceData();
+    if (!prepared || !prepared.clientId) {
+      message.error("Données invalides ou client manquant");
+      return false;
+    }
+    console.log(prepared)
+    const invoiceToPost = {
+      client_id: prepared.clientId,
+      client: prepared.clientId,
+      numero_facture: invoiceNumber,
+      tax_rate: taxRate,
+      timbre_fiscal: timbreFiscal,
+      date_emission: billDate,
+      date_echeance: moment(billDate).add(30, "days").format("YYYY-MM-DD"),
+      statut: "draft",
+      line_items: prepared.lineItems,
+    };
+    try{
+     // Log the data that will be posted
       console.log(
         "Data to be posted for invoice:",
         JSON.stringify(invoiceToPost, null, 2)
@@ -1126,7 +1073,7 @@ const WorkManagementPage = () => {
       // The InvoiceService.createInvoice method should be adapted to accept this single object.
       const savedInvoice = await InvoiceService.createInvoice(
         invoiceToPost,
-        clientId
+        prepared.clientId  
       );
         setTraiteMessage ("Travail traité avec succée ! ") ;
         setTimeout(() => setTraiteMessage(null), 4000);
@@ -1154,26 +1101,8 @@ const WorkManagementPage = () => {
       });
       return false;
     }
-  };
+  };   
 
-  // Add this function before the return statement
-  const testPDFAPI = async () => {
-    try {
-      message.loading({ content: "Testing PDF API...", key: "testAPI" });
-      const result = await PdfApiService.testAPI();
-
-      if (result.success) {
-        message.success({ content: result.message, key: "testAPI" });
-      } else {
-        message.error({ content: result.message, key: "testAPI" });
-      }
-    } catch (error) {
-      message.error({
-        content: `Test failed: ${error.message}`,
-        key: "testAPI",
-      });
-    }
-  };
 
   return (
     <Content style={{ padding: "24px", minHeight: "calc(100vh - 64px)" }}>
@@ -1665,6 +1594,17 @@ const WorkManagementPage = () => {
                       <Option value={7}>7%</Option>
                       <Option value={19}>19%</Option>
                     </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item label="Timbre Fiscal">
+                    <InputNumber
+                      min={0}
+                      step={0.001}
+                      onChange={(value) => {
+                        setTimbreFiscal(value)                       
+                      }}
+                    ></InputNumber>
                   </Form.Item>
                 </Col>
               </Row>

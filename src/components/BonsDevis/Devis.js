@@ -701,7 +701,7 @@ export default function Devis() {
         notification.destroy(notificationKey);
         return;
       }
-
+      console.log(devisDetail)
       // Find the client details from the clients array
       const clientDetails = clients.find(
         (client) => client.id === detailedDevis.client
@@ -1376,6 +1376,7 @@ export default function Devis() {
                 />
                 <Statistic
                   title={`TVA (${devisDetail.tax_rate}%)`}
+                  name="tax_rate"
                   value={devisDetail.montant_tva}
                   formatter={(val) => formatCurrency(val)}
                 />

@@ -392,10 +392,11 @@ export default function BonCommande() {
           fullOrderDetails.produit_commande &&
           fullOrderDetails.produit_commande.length > 0
         ) {
-          // Use produit_commande if available (preferred)
           mappedProducts = fullOrderDetails.produit_commande.map((product) => ({
             id: product.id,
             produit_id: product.produit_id || product.produit,
+            bon_id: product.bonId,
+            bon_numero: product.bon_numero,
             nom_produit: product.nom_produit,
             quantite: Number(product.quantite) || 1,
             prix_unitaire: Number(product.prix_unitaire) || 0,
@@ -543,7 +544,7 @@ export default function BonCommande() {
           return;
         }
         if (newOrderProducts.length === 0 && newOrderBon.length === 0) {
-          message.error("Veuillez ajouter au moins un produit à la commande");
+          message.error("Veuillez ajouter au moins un produit/bon à la commande");
           setLoading(false);
           return;
         }
@@ -561,6 +562,7 @@ export default function BonCommande() {
         const finalMontantTva = finalMontantHt * (taxRate / 100);
         const finalMontantTtc = finalMontantHt + finalMontantTva + timbreFiscal;
         setInvoiceType(values.type_facture)
+        console.log("values: ", values)
         const orderPayload = {
           client_id: selectedClientId,
           client: selectedClientId,
@@ -593,6 +595,8 @@ export default function BonCommande() {
                   item.billable?.prix_unitaire > 0
               )
               .map((item) => ({
+                bonId: item.bonId,
+                bon_numero: item.bon_numero,
                 produit: item.produit_id || item.produit || item.id,
                 quantite: item.billable.quantite,
                 prix_unitaire: item.billable.prix_unitaire,
@@ -600,7 +604,10 @@ export default function BonCommande() {
           ], 
           bons: currentBonInDrawer.map((bon)=> bon.bon_id),
         };
-
+        
+        console.log("newOrderBon ", newOrderBon)
+        console.log("currentBonInDrawer ", currentBonInDrawer)
+        console.log("orderPayload ", orderPayload)
         const createdOrder = await cdsService.createOrder(orderPayload);
         message.success(
           `Commande ${
@@ -636,6 +643,8 @@ export default function BonCommande() {
           produit_commande: [
             ...currentProductsInDrawer.map((p) => ({
               id: p.id,
+              bon_id: p.bonId,
+              bon_numero: p.bon_numero,
               produit: p.produit_id || p.produit,
               quantite: p.quantite,
               prix_unitaire: p.prix_unitaire,
@@ -643,8 +652,10 @@ export default function BonCommande() {
             })),
 
             // 2. Products from bons
-            ...newOrderBon.map((item) => ({
-              produit_nom: item.produit_name, // or map this to your real `produit` ID if needed
+            ...currentBonInDrawer.map((item) => ({
+              bonId: item.bonId,
+              bon_numero: item.bon_numero,
+              produit_nom: item.produit_name, 
               quantite: item.billable?.quantite || 0,
               prix_unitaire: item.billable?.prix_unitaire || 0,
               //  remise_pourcentage: 0,
@@ -652,6 +663,8 @@ export default function BonCommande() {
           ],
           mode_paiement: values.mode_paiement,
         };
+        console.log(newOrderBon)
+        console.log(currentBonInDrawer)
         // If client_id is in `values` (meaning it could have been changed in the form for an existing order)
         if (values.client_id) {
           orderPayload.client_id = values.client_id;
@@ -669,6 +682,7 @@ export default function BonCommande() {
           editingOrder.id,
           orderPayload
         );
+        setCheckedBons([])
         // The setEditingOrder and recalculateTotalsInDrawer might be redundant here if closing drawer
         // but good for consistency if drawer remained open.
         // setEditingOrder(updatedOrder);
@@ -738,7 +752,11 @@ export default function BonCommande() {
         if (bonAlreadyAdded) {
           continue;
         }
-
+        console.log(bon)
+        bon.items.forEach((item)=> {
+          item.bonId = bon.id
+          item.bon_numero = bon.numero_facture
+        })
         const newBonData = {
           bon_id: bon.id,
           bon_numero: bon.numero_facture,
@@ -747,10 +765,10 @@ export default function BonCommande() {
           statut: bon.statut,
           total_ttc: bon.total_ttc,
           items_count: bon.items?.length || 0,
+          items: bon.items || []
         };
 
         updatedBonList.push(newBonData);
-
         const newItems = bon.items || [];
         const uniqueNewItems = newItems.filter(
           (item) => !existingProductIds.has(item.produit_id || item.produit)
@@ -1101,8 +1119,10 @@ export default function BonCommande() {
 
       let mappedProduitCommande;
 
-      if (filteredProduitCommande.length > 0) {
+      if (filteredProduitCommande.length > 0) { 
         mappedProduitCommande = filteredProduitCommande.map((orderProduct) => {
+          console.log(detailedOrder)
+          console.log(orderProduct)
           const productDetailsFromCatalog = availableProducts.find(
             (p) => p.id === (orderProduct.produit_id || orderProduct.produit)
           );
@@ -1130,10 +1150,11 @@ export default function BonCommande() {
             typeof orderProduct.prix_total === "number"
               ? orderProduct.prix_total
               : calculatedLineTotal;
-
           return {
             id: orderProduct.id,
             produit_id: orderProduct.produit_id || orderProduct.produit,
+            bon_id: orderProduct.bonId,
+            bon_numero: orderProduct.bon_numero,
             code_produit:
               orderProduct.code_produit ||
               productDetailsFromCatalog?.code_produit ||
@@ -2047,8 +2068,21 @@ export default function BonCommande() {
                     title: "Actions",
                     key: "actions",
                     render: (_, record) => (
-                      
-                
+                      <Space>
+                      <Button
+                        icon={<EditOutlined />}
+                        size="small"
+                        // onClick={() => {
+                        //   BonForm.setFieldsValue({
+                        //     produit_id: record.produit_id,
+                        //     quantite: record.quantite,
+                        //     prix_unitaire: record.prix_unitaire,
+                        //     remise_pourcentage: record.remise_pourcentage,
+                        //   });
+                        //   setEditingProduct(record); // set the product being edited
+                        //   setIsBonModalVisible(true);
+                        // }}
+                      />
                       <Button
                         danger
                         size="small"
@@ -2057,7 +2091,7 @@ export default function BonCommande() {
                           handleRemoveBonFromDrawer(record.bon_numero || record.id)
                         }
                       />
-                  
+                      </Space>
                     ),
                   },
                 ]}
@@ -2139,7 +2173,7 @@ export default function BonCommande() {
                           )
                         }
                       />
-                            </Space>
+                      </Space>
                     ),
                   },
                 ]}
