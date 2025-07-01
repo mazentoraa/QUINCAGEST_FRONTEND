@@ -402,9 +402,7 @@ class DevisPdfService {
       <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
       <td style="border: 1px solid black; padding: 2px;">
         ${this.formatCurrency(
-      parseFloat(data.montant_ht || 0) +
-      parseFloat(data.montant_tva || 0) +
-      parseFloat(data.timbre_fiscal || 0)
+      parseFloat(data.montant_ttc || 0)
     )}
 
       </td>
@@ -426,7 +424,7 @@ class DevisPdfService {
          ${(() => {
  const montantTTC = parseFloat(data.montant_ttc || 0) || 0;
   const timbre = parseFloat(data.timbre_fiscal || 0);
-  const montantFinal = montantTTC + timbre;
+  const montantFinal = montantTTC;
   return this.formatMontantEnLettres(montantFinal);
 })()}
 

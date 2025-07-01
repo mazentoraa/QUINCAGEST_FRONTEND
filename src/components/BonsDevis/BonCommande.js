@@ -81,6 +81,7 @@ export default function BonCommande() {
   const [dateRange, setDateRange] = useState(null);
   const [priceRange, setPriceRange] = useState([null, null]); // [min, max]
   const [filteredOrders, setFilteredOrders] = useState([]);
+  const [timbreFiscal, setTimbreFiscal] = useState([]);
 
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
@@ -277,6 +278,7 @@ export default function BonCommande() {
       date_commande: moment(),
       date_livraison_prevue: moment().add(7, "days"),
       tax_rate: 0,
+      timbre_fiscal: 0,
       statut: "pending",
       conditions_paiement: "À régler dans les 30 jours",
     });
@@ -315,20 +317,20 @@ export default function BonCommande() {
           return;
         }
 
-             const allOrders = await orderService.getOrders();
+        const allOrders = await orderService.getOrders();
         const currentYear = new Date().getFullYear();
         const currentYearOrders = allOrders.filter(order => 
           order.numero_commande?.includes(`-${currentYear}-`)
         );
         let maxSequence = 0;
-         currentYearOrders.forEach(order => {
-           const parts = order.numero_commande.split('-');
-           const sequencePart = parts[parts.length - 1];
-           const sequenceNumber = parseInt(sequencePart, 10) || 0;
+        currentYearOrders.forEach(order => {
+          const parts = order.numero_commande.split('-');
+          const sequencePart = parts[parts.length - 1];
+          const sequenceNumber = parseInt(sequencePart, 10) || 0;
 
-           if (sequenceNumber > maxSequence) {
-             maxSequence = sequenceNumber;
-           }
+          if (sequenceNumber > maxSequence) {
+            maxSequence = sequenceNumber;
+          }
          });
          const newSequence = String(maxSequence + 1).padStart(5, '0');
         // Generate a random order number
@@ -336,7 +338,7 @@ export default function BonCommande() {
         const montant_ht = newOrderProducts.reduce((sum, p) => sum + p.prix_total, 0);
         const montant_tva = montant_ht * (values.tax_rate / 100);
         const montant_ttc = montant_ht + montant_tva;
-        
+        console.log('new order products ', newOrderProducts)
         const orderPayload = {
           client_id: selectedClientId,
           client: selectedClientId, // Add client field as required by backend
@@ -351,16 +353,16 @@ export default function BonCommande() {
           notes: values.notes || "",
           conditions_paiement: values.conditions_paiement || "",
           tax_rate: values.tax_rate || 0,
+          timbre_fiscal: timbreFiscal,
           montant_ht:montant_ht,
           montant_tva:montant_tva,
           montant_ttc:montant_ttc,
           produits: newOrderProducts.map((p) => ({
-            produit: p.produit_id,
+            produit: p.produit,
             quantite: p.quantite,
             prix_unitaire: p.prix_unitaire,
             remise_pourcentage: p.remise_pourcentage || 0,
           })),
-          
         };
 
         console.log("saving",orderPayload);
@@ -392,6 +394,7 @@ export default function BonCommande() {
             remise_pourcentage: p.remise_pourcentage || 0,
           })),
           tax_rate: values.tax_rate,
+          timbre_fiscal: timbreFiscal,
           montant_ht:montant_ht,
           montant_tva:montant_tva,
           montant_ttc:montant_ttc,
@@ -586,7 +589,8 @@ export default function BonCommande() {
         hideLoading();
         return;
       }
-        console.log("detailed",detailedOrder)
+      console.log("record ",orderRecord)
+      console.log("detailed",detailedOrder)
       // Find the client in availableClients list
       let clientDetailsForPdf = null;
       const clientIdToFind =
@@ -747,6 +751,7 @@ export default function BonCommande() {
         montant_tva: detailedOrder.montant_tva || 0,
         montant_ttc: detailedOrder.montant_ttc || 0,
         tax_rate: detailedOrder.tax_rate || 0,
+        timbre_fiscal: timbreFiscal || 0,
       };
 
       console.log("Order data for PDF:", orderDataForPDF); // Debug log
@@ -1370,23 +1375,38 @@ export default function BonCommande() {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item 
-    name="tax_rate" 
-    label="Taux TVA (%)"
-    // rules={[{ required: true, message: "Veuillez sélectionner un taux de TVA" }]}
-  >
-    <Select
-      style={{ width: "100%" }}
-      onChange={(value) => {
-        recalculateTotalsInDrawer(currentProductsInDrawer, value);
-      }}
-    >
-      
-      <Option value={0}>0%</Option>
-      <Option value={7}>7%</Option>
-      <Option value={19}>19%</Option>
-    </Select>
-  </Form.Item>
-
+                name="tax_rate" 
+                label="Taux TVA (%)"
+                // rules={[{ required: true, message: "Veuillez sélectionner un taux de TVA" }]}
+              >
+                <Select
+                  style={{ width: "100%" }}
+                  onChange={(value) => {
+                    recalculateTotalsInDrawer(currentProductsInDrawer, value);
+                  }}
+                >
+                  
+                  <Option value={0}>0%</Option>
+                  <Option value={7}>7%</Option>
+                  <Option value={19}>19%</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item 
+                name="timbre_fiscal" 
+                label="Timbre Fiscal"
+                
+              >
+                <InputNumber
+                  min={0}
+                  step={0.001}
+                  style={{"width":"100%"}}
+                  value={timbreFiscal}
+                  onChange={(value)=>setTimbreFiscal(value)}
+                >
+                </InputNumber>
+              </Form.Item>
             </Col>
           </Row>
 
