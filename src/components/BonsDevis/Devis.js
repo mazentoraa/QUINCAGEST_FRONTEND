@@ -116,6 +116,9 @@ export default function Devis() {
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [dateRange, setDateRange] = useState(null);
   const [priceRange, setPriceRange] = useState([null, null]); // [min, max]
+  const [timbreFiscal, setTimbreFiscal] = useState(0); // [min, max]
+
+
   const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
   // randomId of 2 letter and 3 digits placed randomly in the string
   const randomId = `ID-${Math.random()
@@ -540,7 +543,7 @@ export default function Devis() {
           remise_pourcentage: product.remise_pourcentage || 0,
         })),
       };
-
+      console.log(values)
       if (currentView === "create") {
         const response = await axios.post(
           `${API_BASE_URL}/devis/`,
@@ -1581,12 +1584,10 @@ export default function Devis() {
   >
     <InputNumber
       min={0}
-      precision={2}
+      step={0.001}
       style={{ width: "100%" }}
-      formatter={(value) =>
-        `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
-      }
-      parser={(value) => value.replace(/\s+/g, "")}
+      value={timbreFiscal}
+      onChange={(value)=>setTimbreFiscal(value)}
     />
   </Form.Item>
 </Col>
