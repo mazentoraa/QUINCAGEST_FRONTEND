@@ -335,7 +335,7 @@ class FacturePdfApiService {
       <!-- Facture Section -->
       <div style="width: 50%;">
         <div class="order-header" style="margin-bottom: 10px;">
-          <h2 style="text-align:center">Facture ${type_facture=='bon'?'BL':''}</h2>
+          <h2 style="text-align:center">Facture</h2>
         </div>
     <div style="display: flex; flex-direction: row;gap: 10px; width:100%">
           <div  style="flex: 1;" class="order-header">
