@@ -42,7 +42,10 @@ import PurshaseMatiere from "./features/purshase/purshase_matiere";
 
 import { Spin } from "antd"; // Import Spin
 import MaterialAchatManagement from './features/purshase/MaterialManagement';
-
+import FactureMatiere from './features/purshase/FactureMatiere';
+import BonLivraison from './features/purshase/BonLivraison';
+import Fournisseur from "./features/purshase/Fournisseur";
+import Consommable from './features/purshase/Consommable';
 
 
 const { Header, Content, Sider } = Layout;
@@ -191,6 +194,11 @@ function App() {
                                   />
                                   <Route path="/achats" element={<PurshaseMatiere />} />
                                  <Route path="/achats/matieres" element={<MaterialAchatManagement />} />
+                                <Route path="/achats/factures-matieres" element={<FactureMatiere />} />
+                                <Route path="/achats/bon-livraison" element={<BonLivraison />} />
+                       <Route path="/fournisseurs" element={<Fournisseur />} />
+              <Route path="/achats/consommables" element={<Consommable />} />
+
 
 
                                 </Routes>

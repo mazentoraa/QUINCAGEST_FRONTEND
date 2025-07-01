@@ -58,7 +58,6 @@ function SideMenu() {
           </Menu.Item>
         </SubMenu>
 
-
         <SubMenu key="manifeste" icon={<FileTextOutlined />} title="Manifeste">
           <Menu.Item key="/manifeste/travaux" icon={<ToolOutlined />} onClick={() => handleMenuClick('/manifeste/travaux')}>
             Travaux
@@ -91,20 +90,33 @@ function SideMenu() {
           </Menu.Item>
         </SubMenu>
 
-        <Menu.Item key="" icon={<InboxOutlined />}>
-          Fournisseur
-        </Menu.Item>
+        <Menu.Item key="/fournisseurs" icon={<InboxOutlined />} onClick={() => handleMenuClick('/fournisseurs')}>
+  Fournisseur
+</Menu.Item>
+
 
         <SubMenu key="achats" icon={<ShoppingOutlined />} title="Gestion des Achats">
+          {/* Ajout du menu Bon de Livraison ici */}
+        
+
           <Menu.Item key="/achats/matieres" onClick={() => handleMenuClick('/achats/matieres')}>
             Matières Premières
           </Menu.Item>
-          <Menu.Item key="" onClick={() => {}}>
-            Consommables
-          </Menu.Item>
+          <Menu.Item key="/achats/consommables" onClick={() => handleMenuClick('/achats/consommables')}>
+  Consommables
+</Menu.Item>
+
+
           <Menu.Item key="/achats" onClick={() => handleMenuClick('/achats')}>
             Autres Achats
           </Menu.Item>
+          <Menu.Item key="/achats/factures-matieres" onClick={() => handleMenuClick('/achats/factures-matieres')}>
+            Factures 
+          </Menu.Item>
+           <Menu.Item key="/achats/bon-livraison" onClick={() => handleMenuClick('/achats/bon-livraison')}>
+  Bon de Livraison
+</Menu.Item>
+
         </SubMenu>
 
         <Menu.Item key="/reglements/rapport" icon={<BarChartOutlined />} onClick={() => handleMenuClick('/reglements/rapport')}>
