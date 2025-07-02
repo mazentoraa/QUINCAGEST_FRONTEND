@@ -224,6 +224,7 @@ export default function MaterialAchatManagement() {
               <Option value="laiton">Laiton</Option>
               <Option value="cuivre">Cuivre</Option>
               <Option value="acier_galvanise">Acier galvanisé</Option>
+              <Option value="metaux">Metaux</Option>
               <Option value="autre">Autre</Option>
             </Select>
           </Col>
