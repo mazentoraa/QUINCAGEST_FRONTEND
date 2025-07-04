@@ -36,6 +36,8 @@ import {
   SearchOutlined,
 } from "@ant-design/icons";
 
+ // <-- Ajoute cette ligne
+
 import { getApiService } from "../../services/apiServiceFactory";
 import ClientService from "../../features/clientManagement/services/ClientService";
 import ProductService from "../../components/BonsDevis/ProductService";
@@ -43,9 +45,11 @@ import BonCommandePdfApiService from "../../features/orders/services/BonCommande
 
 import moment from "moment";
 
+
 const { orderService } = getApiService();
 const { Option } = Select;
-const { Title } = Typography;
+
+const { Title, Text } = Typography;
 
 // Fix the formatCurrency function
 const formatCurrency = (amount, currency = " ") => {
@@ -81,7 +85,6 @@ export default function BonCommande() {
   const [dateRange, setDateRange] = useState(null);
   const [priceRange, setPriceRange] = useState([null, null]); // [min, max]
   const [filteredOrders, setFilteredOrders] = useState([]);
-  const [timbreFiscal, setTimbreFiscal] = useState([]);
 
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
@@ -241,21 +244,29 @@ export default function BonCommande() {
   }, [fetchOrders, fetchAvailableProducts, fetchAvailableClients]);
 
   const handleEditOrder = async (order) => {
+    
     setLoading(true);
     try {
       const fullOrderDetails = await orderService.getOrderById(order.id);
+       console.log("✅ fullOrderDetails:", fullOrderDetails);
       if (fullOrderDetails) {
         setEditingOrder(fullOrderDetails);
         setCurrentProductsInDrawer(fullOrderDetails.produit_commande || []);
-        drawerForm.setFieldsValue({
-          ...fullOrderDetails,
-          date_commande: fullOrderDetails.date_commande
-            ? moment(fullOrderDetails.date_commande)
-            : null,
-          date_livraison_prevue: fullOrderDetails.date_livraison_prevue
-            ? moment(fullOrderDetails.date_livraison_prevue)
-            : null,
-        });
+   drawerForm.setFieldsValue({
+        ...fullOrderDetails,
+        client_id: fullOrderDetails.client,
+        date_commande: fullOrderDetails.date_commande
+          ? moment(fullOrderDetails.date_commande)
+          : null,
+        date_livraison_prevue: fullOrderDetails.date_livraison_prevue
+          ? moment(fullOrderDetails.date_livraison_prevue)
+          : null,
+        timbre_fiscal: fullOrderDetails.timbre_fiscal ?? 0, // Utiliser 0 si null
+        tax_rate: fullOrderDetails.tax_rate ?? 0,
+        notes: fullOrderDetails.notes ?? "", // Utiliser chaîne vide si null
+        conditions_paiement: fullOrderDetails.conditions_paiement ?? "",
+      });
+
         setIsDrawerVisible(true);
       } else {
         message.error("Order details not found.");
@@ -353,7 +364,7 @@ export default function BonCommande() {
           notes: values.notes || "",
           conditions_paiement: values.conditions_paiement || "",
           tax_rate: values.tax_rate || 0,
-          timbre_fiscal: timbreFiscal,
+          timbre_fiscal: values.timbre_fiscal ?? 0,
           montant_ht:montant_ht,
           montant_tva:montant_tva,
           montant_ttc:montant_ttc,
@@ -394,7 +405,7 @@ export default function BonCommande() {
             remise_pourcentage: p.remise_pourcentage || 0,
           })),
           tax_rate: values.tax_rate,
-          timbre_fiscal: timbreFiscal,
+          timbre_fiscal: values.timbre_fiscal ?? 0,
           montant_ht:montant_ht,
           montant_tva:montant_tva,
           montant_ttc:montant_ttc,
@@ -751,7 +762,7 @@ export default function BonCommande() {
         montant_tva: detailedOrder.montant_tva || 0,
         montant_ttc: detailedOrder.montant_ttc || 0,
         tax_rate: detailedOrder.tax_rate || 0,
-        timbre_fiscal: timbreFiscal || 0,
+        timbre_fiscal: detailedOrder.timbre_fiscal ?? 0,
       };
 
       console.log("Order data for PDF:", orderDataForPDF); // Debug log
@@ -1000,12 +1011,6 @@ export default function BonCommande() {
         moment(a.date_commande).valueOf() - moment(b.date_commande).valueOf(),
     },
     {
-      title: "Date Livraison",
-      dataIndex: "date_livraison_prevue",
-      key: "date_livraison_prevue",
-      render: (date) => (date ? moment(date).format("DD/MM/YYYY") : ""),
-    },
-    {
       title: "Statut",
       dataIndex: "statut",
       key: "statut",
@@ -1130,40 +1135,56 @@ export default function BonCommande() {
             )}
           
           {/* Statistics */}
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={6}>
-              <Statistic
-                title="Total Commandes"
-                value={filteredOrders.length}
-                prefix={<FileDoneOutlined />}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="Montant Total TTC"
-                value={totalAmount}
-                formatter={(value) => formatCurrency(value)}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="En Attente"
-                value={
-                  filteredOrders.filter((o) => o.statut === "pending").length
-                }
-                valueStyle={{ color: "#fa8c16" }}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="Terminées"
-                value={
-                  filteredOrders.filter((o) => o.statut === "completed").length
-                }
-                valueStyle={{ color: "#52c41a" }}
-              />
-            </Col>
-          </Row>
+
+
+<Row gutter={16} style={{ marginBottom: 16 }}>
+  <Col span={6}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>
+        Total Commandes
+      </Title>
+      <Text style={{ fontSize: 20, fontWeight: '700', display: 'flex', alignItems: 'center' }}>
+        <FileDoneOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+        {filteredOrders.length}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col span={6}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>
+        Montant Total TTC
+      </Title>
+      <Text style={{ fontSize: 20, fontWeight: '700'}}>
+        {formatCurrency(totalAmount)}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col span={6}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>
+        En Attente
+      </Title>
+      <Text style={{ fontSize: 20, fontWeight: '700', color: "#fa8c16" }}>
+        {filteredOrders.filter((o) => o.statut === "pending").length}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col span={6}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>
+        Terminées
+      </Title>
+      <Text style={{ fontSize: 20, fontWeight: '700', color: "#52c41a" }}>
+        {filteredOrders.filter((o) => o.statut === "completed").length}
+      </Text>
+    </Card>
+  </Col>
+</Row>
+
+
 
           <Divider />
 
@@ -1205,7 +1226,7 @@ export default function BonCommande() {
                 <Option value="processing">En cours</Option>
                 <Option value="completed">Terminée</Option>
                 <Option value="cancelled">Annulée</Option>
-                <Option value="invoiced">Facturée</Option>
+           
               </Select>
             </Col>
             <Col span={6}>
@@ -1223,52 +1244,56 @@ export default function BonCommande() {
           </Row>
 
           {/* Action buttons */}
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={handleCreateOrder}
-              >
-                Nouvelle Commande
-              </Button>
-            </Col>
-            <Col>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={fetchOrders}
-                loading={loading}
-              >
-                Actualiser
-              </Button>
-            </Col>
-            {selectedRowKeys.length > 0 && (
-              <>
-                <Col>
-                  <Badge count={selectedRowKeys.length}>
-                    <Button
-                      icon={<PrinterOutlined />}
-                      onClick={handlePrintSelectedOrdersSummary}
-                    >
-                      Imprimer Sélection
-                    </Button>
-                  </Badge>
-                </Col>
-                <Col>
-                  <Popconfirm
-                    title="Supprimer les commandes sélectionnées ?"
-                    onConfirm={handleDeleteSelected}
-                    okText="Oui"
-                    cancelText="Non"
-                  >
-                    <Button danger icon={<DeleteOutlined />}>
-                      Supprimer Sélection
-                    </Button>
-                  </Popconfirm>
-                </Col>
-              </>
-            )}
-          </Row>
+{/* Ligne des 2 boutons alignés à droite */}
+<Row justify="end" gutter={16} style={{ marginBottom: 16 }}>
+  <Col>
+    <Button
+      type="primary"
+      icon={<PlusOutlined />}
+      onClick={handleCreateOrder}
+    >
+      Nouvelle Commande
+    </Button>
+  </Col>
+  <Col>
+    <Button
+      icon={<ReloadOutlined />}
+      onClick={fetchOrders}
+      loading={loading}
+    >
+      Actualiser
+    </Button>
+  </Col>
+</Row>
+
+{/* Ligne des boutons sélection, en position normale (gauche) */}
+{selectedRowKeys.length > 0 && (
+  <Row gutter={16} style={{ marginBottom: 16 }}>
+    <Col>
+      <Badge count={selectedRowKeys.length}>
+        <Button
+          icon={<PrinterOutlined />}
+          onClick={handlePrintSelectedOrdersSummary}
+        >
+          Imprimer Sélection
+        </Button>
+      </Badge>
+    </Col>
+    <Col>
+      <Popconfirm
+        title="Supprimer les commandes sélectionnées ?"
+        onConfirm={handleDeleteSelected}
+        okText="Oui"
+        cancelText="Non"
+      >
+        <Button danger icon={<DeleteOutlined />}>
+          Supprimer Sélection
+        </Button>
+      </Popconfirm>
+    </Col>
+  </Row>
+)}
+
         </div>
 
         <Spin spinning={loading}>
@@ -1346,7 +1371,7 @@ export default function BonCommande() {
                   <Option value="processing">En cours</Option>
                   <Option value="completed">Terminée</Option>
                   <Option value="cancelled">Annulée</Option>
-                  <Option value="invoiced">Facturée</Option>
+                
                 </Select>
               </Form.Item>
             </Col>
@@ -1354,21 +1379,16 @@ export default function BonCommande() {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="date_commande" label="Date Commande">
-                <div>
-                <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
-                </div>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="date_livraison_prevue"
-                label="Date Livraison Prévue"
-              >
-                <div>
-                <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
-                </div>
-              </Form.Item>
+            <Form.Item name="date_commande" label="Date Commande">
+  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+</Form.Item>
+
+            </Col> 
+              <Col span={12}>
+              <Form.Item name="timbre_fiscal" label="Timbre Fiscal">
+  <InputNumber min={0} step={0.001} style={{ width: "100%" }} />
+</Form.Item>
+
             </Col>
           </Row>
 
@@ -1392,22 +1412,7 @@ export default function BonCommande() {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item 
-                name="timbre_fiscal" 
-                label="Timbre Fiscal"
-                
-              >
-                <InputNumber
-                  min={0}
-                  step={0.001}
-                  style={{"width":"100%"}}
-                  value={timbreFiscal}
-                  onChange={(value)=>setTimbreFiscal(value)}
-                >
-                </InputNumber>
-              </Form.Item>
-            </Col>
+          
           </Row>
 
           <Form.Item name="conditions_paiement" label="Conditions de Paiement">

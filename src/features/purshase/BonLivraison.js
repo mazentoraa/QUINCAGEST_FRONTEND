@@ -21,6 +21,7 @@ import {
 } from "@ant-design/icons";
 import moment from "moment";
 import BonLivraisonMatiereService from "./Services/BonLivraisonMatiereService";
+import FournisseurService from "./Services/FournisseurService";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -28,11 +29,12 @@ const { Option } = Select;
 export default function BonLivraisonMatiere() {
   const [form] = Form.useForm();
   const [bons, setBons] = useState([]);
+  const [fournisseurs, setFournisseurs] = useState([]);
   const [visible, setVisible] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [livraisons, setLivraisons] = useState([]);
-  const [editingLivraisonIndex, setEditingLivraisonIndex] = useState(null); // index de la livraison modifiée
+  const [editingLivraisonIndex, setEditingLivraisonIndex] = useState(null);
 
   // Filtres
   const [filterNumero, setFilterNumero] = useState("");
@@ -41,20 +43,39 @@ export default function BonLivraisonMatiere() {
 
   const typeOptions = ["matière première", "consommable", "autres"];
 
+  // Charger bons
   const fetchBons = async () => {
     setLoading(true);
     try {
       const data = await BonLivraisonMatiereService.getAll();
       setBons(data);
-    } catch (error) {
+    } catch {
       message.error("Erreur lors du chargement des bons");
     } finally {
       setLoading(false);
     }
   };
 
+  // Charger fournisseurs
+  const fetchFournisseurs = async () => {
+    try {
+      const data = await FournisseurService.getAll();
+      let list = [];
+      if (data && Array.isArray(data.results)) {
+        list = data.results;
+      } else if (Array.isArray(data)) {
+        list = data;
+      }
+      setFournisseurs(list);
+    } catch {
+      message.error("Erreur lors du chargement des fournisseurs");
+      setFournisseurs([]);
+    }
+  };
+
   useEffect(() => {
     fetchBons();
+    fetchFournisseurs();
   }, []);
 
   const filteredBons = bons.filter((b) => {
@@ -84,6 +105,8 @@ export default function BonLivraisonMatiere() {
         livraisons,
       };
 
+      setLoading(true);
+
       if (currentId) {
         await BonLivraisonMatiereService.update(currentId, payload);
         message.success("Bon mis à jour avec succès");
@@ -96,19 +119,24 @@ export default function BonLivraisonMatiere() {
       form.resetFields();
       setLivraisons([]);
       setEditingLivraisonIndex(null);
-      fetchBons();
-    } catch (error) {
+      await fetchBons();
+    } catch {
       message.error("Erreur lors de l'enregistrement");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
+    setLoading(true);
     try {
       await BonLivraisonMatiereService.delete(id);
       message.success("Bon supprimé avec succès");
-      fetchBons();
-    } catch (error) {
+      await fetchBons();
+    } catch {
       message.error("Erreur lors de la suppression");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,7 +155,6 @@ export default function BonLivraisonMatiere() {
     }
 
     if (editingLivraisonIndex !== null) {
-      // Modifier une livraison existante
       setLivraisons((prev) =>
         prev.map((item, idx) =>
           idx === editingLivraisonIndex
@@ -141,7 +168,6 @@ export default function BonLivraisonMatiere() {
       );
       setEditingLivraisonIndex(null);
     } else {
-      // Ajouter une nouvelle livraison
       setLivraisons((prev) => [
         ...prev,
         {
@@ -157,7 +183,6 @@ export default function BonLivraisonMatiere() {
 
   const removeLivraison = (index) => {
     setLivraisons((prev) => prev.filter((_, i) => i !== index));
-    // Si on supprimait la livraison en cours d'édition, reset
     if (editingLivraisonIndex === index) {
       setEditingLivraisonIndex(null);
       form.setFieldsValue({ achat_nom: "", achat_prix: null, achat_quantite: null });
@@ -351,17 +376,39 @@ export default function BonLivraisonMatiere() {
 
   return (
     <>
-      {/* Style pour bordures noires dans le tableau */}
       <style>{`
-        /* Bordures des cellules du tableau bons */
-        .bon-table .ant-table-cell {
-          border-color: black !important;
+        /* Suppression des bordures par défaut du tableau */
+        .custom-table .ant-table-container {
+          border: none !important;
         }
-
-        /* Bordure extérieure du tableau */
-        .bon-table .ant-table-container,
-        .bon-table .ant-table {
-          border-color: black !important;
+        /* Lignes horizontales noires */
+        .custom-table .ant-table-tbody > tr > td {
+          border-bottom:  0.5 px solid #e0e0e0 !important;
+        }
+        /* Bordures verticales grises claires */
+        .custom-table .ant-table-cell {
+          border-left: 0.2px solid #d9d9d9 !important;
+          border-right: 0px solid #d9d9d9 !important;
+        }
+        /* Pas de double bordure à gauche du tableau */
+        .custom-table .ant-table-tbody > tr > td:first-child {
+          border-left: none !important;
+        }
+        /* Pas de double bordure à droite du tableau */
+        .custom-table .ant-table-tbody > tr > td:last-child {
+          border-right: none !important;
+        }
+        /* Même pour l'en-tête */
+        .custom-table .ant-table-thead > tr > th {
+          border-left: 0.2px solid #d9d9d9 !important;
+          border-right: 0px solid #d9d9d9 !important;
+          border-bottom:  0.2px solid #e0e0e0 !important;
+        }
+        .custom-table .ant-table-thead > tr > th:first-child {
+          border-left: none !important;
+        }
+        .custom-table .ant-table-thead > tr > th:last-child {
+          border-right: none !important;
         }
       `}</style>
 
@@ -375,43 +422,62 @@ export default function BonLivraisonMatiere() {
           </Space>
         }
       >
+        {/* FILTRES + BOUTON AJOUT */}
         <div
           style={{
             marginBottom: 32,
             display: "flex",
             gap: 16,
             flexWrap: "wrap",
-            alignItems: "center",
+            alignItems: "flex-start",
           }}
         >
-          {/* Filtres */}
-          <Input
-            placeholder="Filtrer par numéro"
-            value={filterNumero}
-            onChange={(e) => setFilterNumero(e.target.value)}
-            style={{ width: 200 }}
-            allowClear
-          />
-          <Input
-            placeholder="Filtrer par fournisseur"
-            value={filterFournisseur}
-            onChange={(e) => setFilterFournisseur(e.target.value)}
-            style={{ width: 200 }}
-            allowClear
-          />
-          <Select
-            placeholder="Filtrer par type d'achat"
-            value={filterType}
-            onChange={(value) => setFilterType(value)}
-            allowClear
-            style={{ width: 180 }}
-          >
-            {typeOptions.map((type) => (
-              <Option key={type} value={type}>
-                {type}
-              </Option>
-            ))}
-          </Select>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <Input
+              placeholder="Numéro"
+              value={filterNumero}
+              onChange={(e) => setFilterNumero(e.target.value)}
+              style={{ width: 200 }}
+              allowClear
+            />
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <Select
+              placeholder="Sélectionner un fournisseur"
+              value={filterFournisseur || undefined}
+              onChange={(value) => setFilterFournisseur(value)}
+              allowClear
+              style={{ width: 200 }}
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                option.children.toLowerCase().includes(input.toLowerCase())
+              }
+            >
+              {fournisseurs.map((f) => (
+                <Option key={f.id} value={f.nom}>
+                  {f.nom}
+                </Option>
+              ))}
+            </Select>
+          </div>
+
+          <Form.Item style={{ marginBottom: 0, minWidth: 180 }}>
+            <Select
+              placeholder="Sélectionner un type"
+              value={filterType || undefined}
+              onChange={(value) => setFilterType(value)}
+              allowClear
+              style={{ width: 180 }}
+            >
+              {typeOptions.map((type) => (
+                <Option key={type} value={type}>
+                  {type}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
 
           <Button
             type="primary"
@@ -423,24 +489,26 @@ export default function BonLivraisonMatiere() {
               setEditingLivraisonIndex(null);
               setVisible(true);
             }}
-            style={{ marginLeft: "auto" }}
+            style={{ marginLeft: "auto", height: 32, alignSelf: "center" }}
           >
             Ajouter un bon
           </Button>
         </div>
 
+        {/* TABLEAU PRINCIPAL */}
         <Table
-          className="bon-table"
+          className="custom-table"
           columns={columns}
           dataSource={filteredBons}
           rowKey="id"
           loading={loading}
-          bordered
+          bordered={false}  /* Important pour enlever bordures par défaut */
           scroll={{ x: 900 }}
           pagination={{ pageSize: 5 }}
           style={{ width: "100%" }}
         />
 
+        {/* MODAL FORM */}
         <Modal
           title={currentId ? "Modifier le bon" : "Nouveau bon"}
           open={visible}
@@ -454,17 +522,46 @@ export default function BonLivraisonMatiere() {
           width={800}
           okText="Enregistrer"
           cancelText="Annuler"
+          confirmLoading={loading}
+          destroyOnClose
         >
           <Form form={form} layout="vertical">
-            <Form.Item name="numero" label="Numéro de bon">
+            {/* Form fields comme avant */}
+            <Form.Item
+              name="numero"
+              label="Numéro de bon"
+              rules={[{ required: false, message: "Veuillez entrer un numéro" }]}
+            >
               <Input placeholder="Ex: BON-2024-001" />
             </Form.Item>
 
-            <Form.Item name="fournisseur" label="Fournisseur">
-              <Input placeholder="Nom du fournisseur" />
+            <Form.Item
+              name="fournisseur"
+              label="Fournisseur"
+              rules={[{ required: false, message: "Veuillez sélectionner un fournisseur" }]}
+            >
+              <Select
+                placeholder="Sélectionner un fournisseur"
+                showSearch
+                optionFilterProp="children"
+                allowClear
+                filterOption={(input, option) =>
+                  option.children.toLowerCase().includes(input.toLowerCase())
+                }
+              >
+                {fournisseurs.map((f) => (
+                  <Option key={f.id} value={f.nom}>
+                    {f.nom}
+                  </Option>
+                ))}
+              </Select>
             </Form.Item>
 
-            <Form.Item name="type_achat" label="Type d'achat">
+            <Form.Item
+              name="type_achat"
+              label="Type d'achat"
+              rules={[{ required: false, message: "Veuillez sélectionner un type" }]}
+            >
               <Select placeholder="Sélectionner un type">
                 {typeOptions.map((type) => (
                   <Option key={type} value={type}>
@@ -475,7 +572,7 @@ export default function BonLivraisonMatiere() {
             </Form.Item>
 
             <Form.Item name="prix_total" label="Prix total">
-              <Input type="number" />
+              <Input type="number" min={0} placeholder="Prix total (optionnel)" />
             </Form.Item>
 
             <Form.Item name="date_livraison" label="Date de livraison">
@@ -488,10 +585,10 @@ export default function BonLivraisonMatiere() {
                 <Input placeholder="Nom" style={{ width: 150 }} />
               </Form.Item>
               <Form.Item name="achat_prix" noStyle>
-                <Input type="number" placeholder="Prix" style={{ width: 120 }} />
+                <Input type="number" min={0} placeholder="Prix" style={{ width: 120 }} />
               </Form.Item>
               <Form.Item name="achat_quantite" noStyle>
-                <Input type="number" placeholder="Quantité" style={{ width: 120 }} />
+                <Input type="number" min={1} placeholder="Quantité" style={{ width: 120 }} />
               </Form.Item>
               <Button onClick={addLivraison} icon={<PlusOutlined />}>
                 {editingLivraisonIndex !== null ? "Modifier" : "Ajouter"}

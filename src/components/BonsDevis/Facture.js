@@ -48,6 +48,9 @@ import moment from "moment";
 import FacturePdfApiService from "../../features/orders/services/FacturePdfApiService";
 import InvoiceService from "../../features/manifeste/services/InvoiceService";
 
+const { Text } = Typography;
+
+
 const { cdsService } = getApiService();
 const { Option } = Select;
 const { Title } = Typography;
@@ -1665,40 +1668,53 @@ export default function BonCommande() {
           </Row>
 
           {/* Statistics */}
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={6}>
-              <Statistic
-                title="Total Factures"
-                value={filteredOrders.length}
-                prefix={<FileDoneOutlined />}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="Montant Total TTC"
-                value={totalAmount}
-                formatter={(value) => formatCurrency(value)}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="En Attente"
-                value={
-                  filteredOrders.filter((o) => o.statut === "pending").length
-                }
-                valueStyle={{ color: "#fa8c16" }}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="Terminées"
-                value={
-                  filteredOrders.filter((o) => o.statut === "completed").length
-                }
-                valueStyle={{ color: "#52c41a" }}
-              />
-            </Col>
-          </Row>
+  <Row gutter={16} style={{ marginBottom: 16 }}>
+  <Col span={6}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+        Total Factures
+      </Title>
+      <Text style={{ fontSize: 20, fontWeight: "700", display: "flex", alignItems: "center" }}>
+        <FileDoneOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+        {filteredOrders.length}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col span={6}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+        Montant Total TTC
+      </Title>
+      <Text style={{ fontSize: 20, fontWeight: "700" }}>
+        {formatCurrency(totalAmount)}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col span={6}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+        En Attente
+      </Title>
+      <Text style={{ fontSize: 20, fontWeight: "700", color: "#fa8c16" }}>
+        {filteredOrders.filter((o) => o.statut === "pending").length}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col span={6}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+        Terminées
+      </Title>
+      <Text style={{ fontSize: 20, fontWeight: "700", color: "#52c41a" }}>
+        {filteredOrders.filter((o) => o.statut === "completed").length}
+      </Text>
+    </Card>
+  </Col>
+</Row>
+
 
           <Divider />
 
@@ -1776,52 +1792,53 @@ export default function BonCommande() {
           </Row>
 
           {/* Action buttons */}
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={handleCreateOrder}
-              >
-                Nouvelle Facture
-              </Button>
-            </Col>
-            <Col>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={fetchOrders}
-                loading={loading}
-              >
-                Actualiser
-              </Button>
-            </Col>
-            {selectedRowKeys.length > 0 && (
-              <>
-                <Col>
-                  <Badge count={selectedRowKeys.length}>
-                    <Button
-                      icon={<PrinterOutlined />}
-                      onClick={handlePrintSelectedOrdersSummary}
-                    >
-                      Imprimer Sélection
-                    </Button>
-                  </Badge>
-                </Col>
-                <Col>
-                  <Popconfirm
-                    title="Supprimer les Facture sélectionnées ?"
-                    onConfirm={handleDeleteSelected}
-                    okText="Oui"
-                    cancelText="Non"
-                  >
-                    <Button danger icon={<DeleteOutlined />}>
-                      Supprimer Sélection
-                    </Button>
-                  </Popconfirm>
-                </Col>
-              </>
-            )}
-          </Row>
+    <Row gutter={16} justify="end" style={{ marginBottom: 16 }}>
+  <Col>
+    <Button
+      type="primary"
+      icon={<PlusOutlined />}
+      onClick={handleCreateOrder}
+    >
+      Nouvelle Facture
+    </Button>
+  </Col>
+  <Col>
+    <Button
+      icon={<ReloadOutlined />}
+      onClick={fetchOrders}
+      loading={loading}
+    >
+      Actualiser
+    </Button>
+  </Col>
+  {selectedRowKeys.length > 0 && (
+    <>
+      <Col>
+        <Badge count={selectedRowKeys.length}>
+          <Button
+            icon={<PrinterOutlined />}
+            onClick={handlePrintSelectedOrdersSummary}
+          >
+            Imprimer Sélection
+          </Button>
+        </Badge>
+      </Col>
+      <Col>
+        <Popconfirm
+          title="Supprimer les Facture sélectionnées ?"
+          onConfirm={handleDeleteSelected}
+          okText="Oui"
+          cancelText="Non"
+        >
+          <Button danger icon={<DeleteOutlined />}>
+            Supprimer Sélection
+          </Button>
+        </Popconfirm>
+      </Col>
+    </>
+  )}
+</Row>
+
         </div>
         <Spin spinning={loading}>
           <Table

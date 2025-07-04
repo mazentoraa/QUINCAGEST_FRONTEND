@@ -64,6 +64,9 @@ const ClientRawMaterialsPage = () => {
   const [billDate, setBillDate] = useState(moment()); // Store as moment object
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [billableData, setBillableData] = useState([]);
+  const [clientNameFilter, setClientNameFilter] = useState("");
+  const [startDateFilter, setStartDateFilter] = useState(null);
+const [endDateFilter, setEndDateFilter] = useState(null);
 
   // Material types options
   const material_types = [
@@ -411,15 +414,56 @@ const ClientRawMaterialsPage = () => {
   };
 
   // Get filtered materials based on material type filter
-  const getFilteredMaterials = () => {
-    if (!materialTypeFilter) {
-      return materials;
-    }
+const getFilteredMaterials = () => {
+  let filtered = [...materials];
 
-    return materials.filter(
+  // Filtre par type de matériau
+  if (materialTypeFilter) {
+    filtered = filtered.filter(
       (material) => material.type_matiere === materialTypeFilter
     );
-  };
+  }
+
+  // Filtre par nom de client
+  if (clientNameFilter) {
+    const lowerCaseFilter = clientNameFilter.toLowerCase();
+    filtered = filtered.filter((material) =>
+      (material.client_name || "").toLowerCase().includes(lowerCaseFilter)
+    );
+  }
+
+  // Filtre par date de réception (affiche les données entre startDateFilter ET endDateFilter)
+  if (startDateFilter || endDateFilter) {
+    const start = startDateFilter ? moment(startDateFilter).startOf("day") : null;
+    const end = endDateFilter ? moment(endDateFilter).endOf("day") : null;
+
+    filtered = filtered.filter((material) => {
+      const date = material.reception_date
+        ? moment(material.reception_date)
+        : null;
+
+      // Si aucune date valide
+      if (!date) return false;
+
+      // Si les deux dates sont définies
+      if (start && end) {
+        return date.isBetween(start, end, null, "[]"); // Inclusif
+      }
+      // Si seulement la date de début est définie
+      if (start) {
+        return date.isSameOrAfter(start);
+      }
+      // Si seulement la date de fin est définie
+      if (end) {
+        return date.isSameOrBefore(end);
+      }
+
+      return true;
+    });
+  }
+
+  return filtered;
+};
   // Edit handler
   const handleEdit = (material) => {
     // If we're in "view all materials" mode and the selected client doesn't match
@@ -1011,15 +1055,63 @@ const handleSubmit = async (values) => {
                 <div></div>
               )}
             </div>
-            <Table
-              columns={getColumns()}
-              dataSource={
-                materialTypeFilter ? getFilteredMaterials() : materials
-              }
-              rowKey="id"
-              loading={loading}
-              pagination={{ pageSize: 10 }}
-            />
+            <div style={{ marginBottom: 16 }}>
+  <Space size="middle">
+    {/* Filtre par nom de client */}
+    <Input
+      placeholder="Filtrer par nom de client"
+      value={clientNameFilter}
+      onChange={(e) => setClientNameFilter(e.target.value)}
+      style={{ width: 200 }}
+    />
+
+    {/* Filtre par date */}
+    <DatePicker
+      placeholder="Du"
+      value={startDateFilter}
+      onChange={(date) => setStartDateFilter(date)}
+      format="YYYY-MM-DD"
+    />
+    <DatePicker
+      placeholder="Au"
+      value={endDateFilter}
+      onChange={(date) => setEndDateFilter(date)}
+      format="YYYY-MM-DD"
+    />
+
+    {/* Filtre par type de matériau */}
+    <Select
+      style={{ width: 200 }}
+      placeholder="Filtrer par type de matériau"
+      onChange={handleMaterialTypeFilterChange}
+      value={materialTypeFilter}
+      allowClear
+    >
+      {material_types.map((type) => (
+        <Option key={type.value} value={type.value}>
+          <Tag color={getMaterialTypeColor(type.value)}>{type.label}</Tag>
+        </Option>
+      ))}
+    </Select>
+
+    {/* Réinitialiser les filtres */}
+    <Button onClick={() => {
+      setClientNameFilter("");
+      setStartDateFilter(null);
+      setEndDateFilter(null);
+      setMaterialTypeFilter(null);
+    }}>
+     Effacer les filtres
+    </Button>
+  </Space>
+</div>
+          <Table
+  columns={getColumns()}
+  dataSource={getFilteredMaterials()} // Toujours utiliser les données filtrées
+  rowKey="id"
+  loading={loading}
+  pagination={{ pageSize: 10 }}
+/>
           </>
         )}{" "}
         {!selectedClient && materials.length === 0 && !loading && (

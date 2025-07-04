@@ -45,6 +45,9 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import DevisPdfService from "../../features/devis/services/DevisPdfService";
+import {
+  FileDoneOutlined,
+} from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -589,60 +592,68 @@ export default function Devis() {
   };
 
   // Convert quote to order - Updated to work from both list and detail views
-  const handleConvertToOrder = async (devisToConvert = null) => {
-    const targetDevis = devisToConvert || devisDetail;
+const handleConvertToOrder = async (devisToConvert = null) => {
+  const targetDevis = devisToConvert || devisDetail;
 
-    if (!targetDevis || !targetDevis.id) {
-      notification.error({
-        message: "Erreur",
-        description: "Aucun devis sélectionné pour la conversion",
-      });
-      return;
+  if (!targetDevis || !targetDevis.id) {
+    notification.error({
+      message: "Erreur",
+      description: "Aucun devis sélectionné pour la conversion",
+    });
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setError(null);
+
+    const payload = {
+      confirmation: true,
+      timbre_fiscal: targetDevis.timbre_fiscal ?? 0,
+      notes: targetDevis.notes ?? "",
+    };
+
+    // 👉 Log ici pour voir les données envoyées
+    console.log("🔄 Données envoyées pour conversion en commande :", payload);
+
+    const response = await axios.post(
+      `${API_BASE_URL}/devis/${targetDevis.id}/convert_to_commande/`,
+      payload
+    );
+
+    setConvertSuccess({
+      message: "Le devis a été converti en commande avec succès!",
+      orderId: response.data.id,
+      orderNumber: response.data.numero_commande,
+    });
+
+    notification.success({
+      message: "Succès",
+      description: "Le devis a été converti en commande avec succès!",
+    });
+
+    if (currentView === "detail" && devisDetail?.id === targetDevis.id) {
+      await fetchDevisDetail(targetDevis.id);
+    } else {
+      await fetchDevisList();
     }
 
-    try {
-      setLoading(true);
-      setError(null);
+    setShowConvertModal(false);
+  } catch (err) {
+    const errorMessage =
+      err.response?.data?.error ||
+      err.response?.data?.message ||
+      "Erreur lors de la conversion du devis en commande";
+    setError(errorMessage);
+    notification.error({
+      message: "Erreur",
+      description: errorMessage,
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
-      const response = await axios.post(
-        `${API_BASE_URL}/devis/${targetDevis.id}/convert_to_commande/`,
-        { confirmation: true }
-      );
-
-      setConvertSuccess({
-        message: "Le devis a été converti en commande avec succès!",
-        orderId: response.data.id,
-        orderNumber: response.data.numero_commande,
-      });
-
-      notification.success({
-        message: "Succès",
-        description: "Le devis a été converti en commande avec succès!",
-      });
-
-      // Update the devis status
-      if (currentView === "detail" && devisDetail?.id === targetDevis.id) {
-        await fetchDevisDetail(targetDevis.id);
-      } else {
-        await fetchDevisList();
-      }
-
-      // Close modal
-      setShowConvertModal(false);
-    } catch (err) {
-      const errorMessage =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        "Erreur lors de la conversion du devis en commande";
-      setError(errorMessage);
-      notification.error({
-        message: "Erreur",
-        description: errorMessage,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Status update handler
   const handleUpdateStatus = async (devisId, newStatus) => {
@@ -985,9 +996,11 @@ export default function Devis() {
   // };
 
   // Render the main list view
+  
   const renderDevisList = () => (
+    
     <Content style={{ padding: "20px" }}>
-      <Card title="Gestion des Devis">
+      <Card >
       {successMessage && (
             <div style={{   marginBottom: 16,
               padding: "12px",
@@ -1011,66 +1024,61 @@ export default function Devis() {
               </div>
             )}
         {/* Statistics Row */}
-        <Row gutter={16} style={{ marginBottom: 16 }}>
-          <Col xs={24} sm={12} md={6} lg={6}>
-            <Card size="small">
-              <Statistic
-                title="Total devis"
-                value={
-                  Array.isArray(filteredDevisList)
-                    ? filteredDevisList.length
-                    : 0
-                }
-                suffix={`/ ${Array.isArray(devisList) ? devisList.length : 0}`}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6} lg={6}>
-            <Card size="small">
-              <Statistic
-                title="Montant total TTC"
-                value={(Array.isArray(filteredDevisList)
-                  ? filteredDevisList
-                  : []
-                ).reduce(
-                  (sum, devis) => sum + (Number(devis.montant_ttc) || 0),
-                  0
-                )}
-                formatter={(value) => formatCurrency(value)}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6} lg={6}>
-            <Card size="small">
-              <Statistic
-                title="En attente"
-                value={
-                  Array.isArray(filteredDevisList)
-                    ? filteredDevisList.filter(
-                        (devis) => devis.statut === "sent"
-                      ).length
-                    : 0
-                }
-                valueStyle={{ color: "#1890ff" }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6} lg={6}>
-            <Card size="small">
-              <Statistic
-                title="Acceptés"
-                value={
-                  Array.isArray(filteredDevisList)
-                    ? filteredDevisList.filter(
-                        (devis) => devis.statut === "accepted"
-                      ).length
-                    : 0
-                }
-                valueStyle={{ color: "#52c41a" }}
-              />
-            </Card>
-          </Col>
-        </Row>
+
+<>
+
+  <Title level={2} style={{ marginBottom: 24 }}><FileDoneOutlined /> Devis</Title>
+
+  <Row gutter={16} style={{ marginBottom: 16 }}>
+  <Col xs={24} sm={12} md={6} lg={6}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>Total devis</Title>
+      <Text style={{ fontSize: 20, fontWeight: '700'}} >
+        <FileDoneOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+        {Array.isArray(filteredDevisList) ? filteredDevisList.length : 0} / {Array.isArray(devisList) ? devisList.length : 0}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col xs={24} sm={12} md={6} lg={6}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>Montant total TTC</Title>
+      <Text style={{ fontSize: 20, fontWeight: '700' }}>
+        {formatCurrency(
+          (Array.isArray(filteredDevisList) ? filteredDevisList : []).reduce(
+            (sum, devis) => sum + (Number(devis.montant_ttc) || 0),
+            0
+          )
+        )}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col xs={24} sm={12} md={6} lg={6}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>En attente</Title>
+      <Text style={{ fontSize: 20, fontWeight: '700', color: "#1890ff" }}>
+        {Array.isArray(filteredDevisList)
+          ? filteredDevisList.filter(devis => devis.statut === "sent").length
+          : 0}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col xs={24} sm={12} md={6} lg={6}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>Acceptés</Title>
+      <Text style={{ fontSize: 20, fontWeight: '700', color: "#52c41a" }}>
+        {Array.isArray(filteredDevisList)
+          ? filteredDevisList.filter(devis => devis.statut === "accepted").length
+          : 0}
+      </Text>
+    </Card>
+  </Col>
+</Row>
+
+</>
+
 
         {/* Filters and Search */}
         <Row style={{ marginBottom: 16 }} gutter={[16, 16]} align="middle">
