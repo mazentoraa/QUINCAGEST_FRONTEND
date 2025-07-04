@@ -124,23 +124,33 @@ class BonCommandePdfApiService {
       )
       .join("");
       const totalRemise = orderData.produit_commande.reduce((acc, item) => {
-        const prixUnitaire = item.prix_unitaire || 0;
-        const quantite = item.quantite || 0;
-        const remisePourcentage = item.remise_pourcentage || 0;
-  
-        const remise = prixUnitaire * quantite * (remisePourcentage / 100);
-        return acc + remise;
-      }, 0);
-      const totalBrut = orderData.produit_commande.reduce((acc, item) => {
-        const prixUnitaire = item.prix_unitaire || 0;
-        const quantite = item.quantite || 0;
-         const t = prixUnitaire*quantite ; 
-         return acc + t;
-      },0) ;
-      const totalHTVA = totalBrut - totalRemise
-      const fodec = orderData.montant_ht * 0.01
-      const totalTVA = (orderData.montant_ht + fodec) * orderData.tax_rate/100
-      const netAPayer = totalHTVA + fodec + totalTVA + (orderData.timbre_fiscal||0)
+  const prixUnitaire = item.prix_unitaire || 0;
+  const quantite = item.quantite || 0;
+  const remisePourcentage = item.remise_pourcentage || 0;
+
+  const remise = prixUnitaire * quantite * (remisePourcentage / 100);
+  return acc + remise;
+}, 0);
+
+// ✅ total brut = somme des PU * quantité
+const totalBrut = orderData.produit_commande.reduce((acc, item) => {
+  const prixUnitaire = item.prix_unitaire || 0;
+  const quantite = item.quantite || 0;
+  return acc + prixUnitaire * quantite;
+}, 0);
+
+// ✅ FODEC = 1% du total brut
+const fodec = totalBrut * 0.01;
+
+// ✅ total HTVA = total brut + fodec
+const totalHTVA = totalBrut + fodec;
+
+// ✅ TVA = total HTVA * taux
+const totalTVA = (totalHTVA + fodec) * ((orderData.tax_rate || 0) / 100);
+
+// ✅ net à payer = total HTVA + TVA + timbre fiscal
+const netAPayer = totalHTVA + totalTVA + (orderData.timbre_fiscal || 0);
+
     return `
 <!DOCTYPE html>
 <html lang="fr">
@@ -247,7 +257,7 @@ class BonCommandePdfApiService {
     </thead>
     <tbody>
       <tr style="height: 80px;">
-        <td style="border: 1px solid black; padding: 8px;">${this.formatFloat(orderData.montant_ht)}</td>
+        <td style="border: 1px solid black; padding: 8px;">${this.formatFloat(totalHTVA || 0)}</td>
         <td style="border: 1px solid black; padding: 8px;">${orderData.tax_rate} %</td>
         <td style="border: 1px solid black; padding: 8px;">${this.formatFloat(totalTVA)}</td>
       </tr>
