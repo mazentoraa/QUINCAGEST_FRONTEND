@@ -9,7 +9,6 @@ import {
   FileOutlined,
   BankOutlined,
   BarChartOutlined,
-  CarOutlined,
   InboxOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -27,7 +26,7 @@ function SideMenu() {
   const getOpenKeys = () => {
     const path = location.pathname;
     if (path.includes('/stock')) return ['stock'];
-    if (path.includes('/achats')) return ['achats'];
+    if (path.includes('/achats') && !path.includes('/bon-livraison') && !path.includes('/factures')) return ['achats'];
     if (path.includes('/manifeste')) return ['manifeste'];
     if (path.includes('/reglements')) return ['reglements'];
     if (path.includes('/bons')) return ['bons_devis'];
@@ -64,60 +63,59 @@ function SideMenu() {
           </Menu.Item>
           <SubMenu key="bons_devis" icon={<FileTextOutlined />} title="Bons et Devis">
             <Menu.Item key="/bons/livraison-reception" onClick={() => handleMenuClick('/bons/livraison-reception')}>
-              Bon de Livraison (Réception)
+              Bons de Livraison (Réception)
             </Menu.Item>
             <Menu.Item key="/bons/livraison-decoupe" onClick={() => handleMenuClick('/bons/livraison-decoupe')}>
-              Bon de Livraison (Découpe)
+              Bons de Livraison (Découpe)
             </Menu.Item>
             <Menu.Item key="/bons/devis" onClick={() => handleMenuClick('/bons/devis')}>
               Devis
             </Menu.Item>
             <Menu.Item key="/bons/commande" onClick={() => handleMenuClick('/bons/commande')}>
-              Bon de Commande
+              Bons de Commande
             </Menu.Item>
             <Menu.Item key="/bons/retour" onClick={() => handleMenuClick('/bons/retour')}>
-              Bon de Retour
+              Bons de Retour
             </Menu.Item>
           </SubMenu>
         </SubMenu>
 
         <SubMenu key="reglements" icon={<AccountBookOutlined />} title="Règlements">
           <Menu.Item key="/reglements/factures" icon={<FileOutlined />} onClick={() => handleMenuClick('/reglements/factures')}>
-            Facture
+            Factures
           </Menu.Item>
           <Menu.Item key="/reglements/traites" icon={<BankOutlined />} onClick={() => handleMenuClick('/reglements/traites')}>
             Traites
           </Menu.Item>
         </SubMenu>
 
+        {/* Fournisseurs */}
         <Menu.Item key="/fournisseurs" icon={<InboxOutlined />} onClick={() => handleMenuClick('/fournisseurs')}>
-  Fournisseur
-</Menu.Item>
+          Fournisseurs
+        </Menu.Item>
 
-
+        {/* Gestion des Achats */}
         <SubMenu key="achats" icon={<ShoppingOutlined />} title="Gestion des Achats">
-          {/* Ajout du menu Bon de Livraison ici */}
-        
-
           <Menu.Item key="/achats/matieres" onClick={() => handleMenuClick('/achats/matieres')}>
             Matières Premières
           </Menu.Item>
           <Menu.Item key="/achats/consommables" onClick={() => handleMenuClick('/achats/consommables')}>
-  Consommables
-</Menu.Item>
-
-
+            Consommables
+          </Menu.Item>
           <Menu.Item key="/achats" onClick={() => handleMenuClick('/achats')}>
             Autres Achats
           </Menu.Item>
-          <Menu.Item key="/achats/factures-matieres" onClick={() => handleMenuClick('/achats/factures-matieres')}>
-            Factures 
-          </Menu.Item>
-           <Menu.Item key="/achats/bon-livraison" onClick={() => handleMenuClick('/achats/bon-livraison')}>
-  Bon de Livraison
-</Menu.Item>
-
         </SubMenu>
+
+        {/* Bons de Livraison */}
+        <Menu.Item key="/achats/bon-livraison" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/achats/bon-livraison')}>
+          Bons de Livraison
+        </Menu.Item>
+
+        {/* Factures */}
+        <Menu.Item key="/achats/factures-matieres" icon={<FileOutlined />} onClick={() => handleMenuClick('/achats/factures-matieres')}>
+          Factures
+        </Menu.Item>
 
         <Menu.Item key="/reglements/rapport" icon={<BarChartOutlined />} onClick={() => handleMenuClick('/reglements/rapport')}>
           Rapport

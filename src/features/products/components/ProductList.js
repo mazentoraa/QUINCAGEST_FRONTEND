@@ -16,6 +16,7 @@ import {
   ReloadOutlined,
   FilterOutlined,
   SearchOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import { useProducts } from "../contexts/ProductContext";
 import ProductCard from "./ProductCard";
@@ -24,7 +25,7 @@ const { Option } = Select;
 const { Title } = Typography;
 const { Search } = Input;
 
-const ProductList = ({onDuplicateSuccess }) => {
+const ProductList = ({ onDuplicateSuccess }) => {
   const {
     products,
     loading,
@@ -37,23 +38,16 @@ const ProductList = ({onDuplicateSuccess }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [displayedProducts, setDisplayedProducts] = useState([]);
 
-  // Add debugging logs to see what's happening
   useEffect(() => {
-    console.log("Raw products from context:", products);
-    console.log("Selected material:", selectedMaterial);
-    console.log("Search term:", searchTerm);
-
-    // Make sure products is an array before filtering
     if (!Array.isArray(products)) {
-      console.error("Products is not an array:", products);
       setDisplayedProducts([]);
       return;
     }
 
-    let materialFilteredProducts = products;
+    let filtered = products;
+
     if (selectedMaterial && selectedMaterial !== "all") {
-      materialFilteredProducts = products.filter((product) => {
-        // Use the backend field name type_matiere for consistent filtering
+      filtered = filtered.filter((product) => {
         const productMaterial = product.type_matiere || product.material_type;
         return (
           productMaterial?.trim().toLowerCase() ===
@@ -62,7 +56,7 @@ const ProductList = ({onDuplicateSuccess }) => {
       });
     }
 
-    const searchFilteredProducts = materialFilteredProducts.filter(
+    const searchFiltered = filtered.filter(
       (product) =>
         !searchTerm ||
         (product.nom_produit || product.name)
@@ -72,12 +66,8 @@ const ProductList = ({onDuplicateSuccess }) => {
         String(product.id)?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    console.log(
-      "Filtered products (after material and search):",
-      searchFilteredProducts
-    );
-    setDisplayedProducts(searchFilteredProducts);
-  }, [products, searchTerm, selectedMaterial]); // Added selectedMaterial to dependencies
+    setDisplayedProducts(searchFiltered);
+  }, [products, searchTerm, selectedMaterial]);
 
   const handleSearch = (value) => {
     setSearchTerm(value);
@@ -85,6 +75,11 @@ const ProductList = ({onDuplicateSuccess }) => {
 
   const handleMaterialFilter = (value) => {
     filterByMaterial(value);
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    filterByMaterial("all");
   };
 
   const materialOptions = [
@@ -109,9 +104,6 @@ const ProductList = ({onDuplicateSuccess }) => {
     );
   }
 
-  // Add a debug display to see what's happening with our state
-  console.log("Rendering with displayedProducts:", displayedProducts);
-
   return (
     <Card className="product-list-container">
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
@@ -131,6 +123,7 @@ const ProductList = ({onDuplicateSuccess }) => {
             <Search
               placeholder="Rechercher un produit..."
               allowClear
+              value={searchTerm}
               onSearch={handleSearch}
               onChange={(e) => handleSearch(e.target.value)}
               style={{ width: 250 }}
@@ -149,12 +142,13 @@ const ProductList = ({onDuplicateSuccess }) => {
               ))}
             </Select>
             <Button
-              icon={<ReloadOutlined />}
-              onClick={refreshProducts}
-              loading={loading}
+       
+              onClick={handleClearFilters}
+              type="default"
             >
-              Actualiser
+              Effacer les filtres
             </Button>
+  
           </Space>
         </div>
 
@@ -171,11 +165,10 @@ const ProductList = ({onDuplicateSuccess }) => {
           <Row gutter={[16, 16]}>
             {displayedProducts.map((product) => (
               <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
-               <ProductCard
-  product={product}
-  onDuplicateSuccess={onDuplicateSuccess}
-/>
-
+                <ProductCard
+                  product={product}
+                  onDuplicateSuccess={onDuplicateSuccess}
+                />
               </Col>
             ))}
           </Row>

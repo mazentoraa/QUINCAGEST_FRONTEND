@@ -7,6 +7,7 @@ import {
   Space,
   Tooltip,
   Drawer,
+  InputNumber,
   Form,
   Select,
   DatePicker,
@@ -40,6 +41,7 @@ import InvoiceService from "../../features/manifeste/services/InvoiceService";
 import ClientService from "../../features/clientManagement/services/ClientService";
 // Import new PDF service
 import BonLivraisonDecoupePdfService from "../../services/BonLivraisonDecoupePdfService";
+import { FileDoneOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -50,14 +52,32 @@ const BonLivraisonDecoupe = () => {
   const [filteredInvoices, setFilteredInvoices] = useState([]); // Add filtered invoices state
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
+const computeGlobalStats = useCallback(() => {
+  const stats = {
+    totalBon: filteredInvoices.length,
+    totalArticles: 0,
+    totalHT: 0,
+    totalTTC: 0,
+  };
+
+  filteredInvoices.forEach((invoice) => {
+    stats.totalArticles += invoice.itemsCount || 0;
+    stats.totalHT += invoice.calculatedTotals?.totalHT || 0;
+    stats.totalTTC += invoice.calculatedTotals?.totalTTC || 0;
+  });
+
+  return stats;
+}, [filteredInvoices]);
 
   // State for filters
-  const [filters, setFilters] = useState({
-    clientId: null,
-    dateRange: null,
-    numeroSearch: "",
-    status: null,
-  });
+const [filters, setFilters] = useState({
+  clientId: null,
+  dateRange: null,
+  numeroSearch: "",
+  montantRange: [null, null], // <-- au lieu de montantMin/montantMax
+});
+
+
 
   // State for data display
   const [pagination, setPagination] = useState({
@@ -70,7 +90,6 @@ const BonLivraisonDecoupe = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   // State for advanced filter drawer
-  const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
   const [clientOptions, setClientOptions] = useState([]);
   const [clientSearchLoading, setClientSearchLoading] = useState(false);
 
@@ -182,12 +201,26 @@ const BonLivraisonDecoupe = () => {
       );
     }
 
-    // Filter by status
-    if (currentFilters.status) {
-      filtered = filtered.filter(
-        (invoice) => invoice.statut === currentFilters.status
-      );
-    }
+    // Filter by montant TTC min/max
+if (currentFilters.montantRange) {
+  const [min, max] = currentFilters.montantRange;
+
+  if (min != null) {
+    filtered = filtered.filter(
+      (invoice) =>
+        (invoice.calculatedTotals?.totalTTC || 0) >= min
+    );
+  }
+
+  if (max != null) {
+    filtered = filtered.filter(
+      (invoice) =>
+        (invoice.calculatedTotals?.totalTTC || 0) <= max
+    );
+  }
+}
+
+
 
     setFilteredInvoices(filtered);
   }, []);
@@ -294,7 +327,7 @@ const BonLivraisonDecoupe = () => {
       pageSize: pagination.pageSize,
     });
 
-    setFilterDrawerVisible(false);
+  
   };
 
   // Reset filters
@@ -495,7 +528,7 @@ const BonLivraisonDecoupe = () => {
             marginBottom: 20,
           }}
         >
-          <Title level={2}>Bon de Livraison Découpe</Title>
+          <Title level={2}><FileDoneOutlined /> Bon de Livraison Découpe</Title>
           <Space size="middle">
             <Tooltip title="Rafraîchir">
               <Button
@@ -505,95 +538,148 @@ const BonLivraisonDecoupe = () => {
             </Tooltip>
           </Space>
         </div>
+{/* Résumé global des bons de livraison */}
+<Card style={{ marginBottom: 24 }}>
+  <Row gutter={16}>
+    <Col span={6}>
+      <Card bordered={false}>
+        <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+          Total Bons
+        </Title>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: "700",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <FileDoneOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+          {computeGlobalStats().totalBon}
+        </Text>
+      </Card>
+    </Col>
 
-        {/* Quick filters */}
-        <div style={{ display: "flex", marginBottom: 16, gap: 16 }}>
-          <Input.Search
-            placeholder="Rechercher par N° Bon"
-            allowClear
-            style={{ width: 300 }}
-            value={filters.numeroSearch}
-            onChange={(e) => handleQuickSearch(e.target.value)}
-            onSearch={handleQuickSearch}
-          />
-          <Button
-            icon={<FilterOutlined />}
-            onClick={() => setFilterDrawerVisible(true)}
-          >
-            Filtres avancés
-          </Button>
+    <Col span={6}>
+      <Card bordered={false}>
+        <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+          Total Articles
+        </Title>
+        <Text style={{ fontSize: 20, fontWeight: "700" }}>
+          {computeGlobalStats().totalArticles}
+        </Text>
+      </Card>
+    </Col>
 
-          {(filters.clientId ||
-            (filters.dateRange && filters.dateRange.length) ||
-            filters.status ||
-            filters.numeroSearch) && (
-            <Button danger onClick={resetFilters}>
-              Réinitialiser les filtres
-            </Button>
-          )}
-        </div>
+    <Col span={6}>
+      <Card bordered={false}>
+        <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+          Montant HT
+        </Title>
+        <Text style={{ fontSize: 20, fontWeight: "700" }}>
+          {computeGlobalStats().totalHT.toFixed(3)} 
+        </Text>
+      </Card>
+    </Col>
 
-        {/* Active filters display */}
-        {(filters.clientId ||
-          (filters.dateRange && filters.dateRange.length) ||
-          filters.status ||
-          filters.numeroSearch) && (
-          <div style={{ marginBottom: 16 }}>
-            <Text type="secondary">Filtres actifs: </Text>
-            <Space size="small">
-              {filters.clientId && (
-                <Tag
-                  color="blue"
-                  closable
-                  onClose={() => {
-                    setFilters({ ...filters, clientId: null });
-                  }}
-                >
-                  Client:{" "}
-                  {clientOptions.find((c) => c.value === filters.clientId)
-                    ?.label || `ID: ${filters.clientId}`}
-                </Tag>
-              )}
+    <Col span={6}>
+      <Card bordered={false}>
+        <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+          Montant TTC
+        </Title>
+        <Text style={{ fontSize: 20, fontWeight: "700" }}>
+          {computeGlobalStats().totalTTC.toFixed(3)} 
+        </Text>
+      </Card>
+    </Col>
+  </Row>
+</Card>
 
-              {filters.dateRange && filters.dateRange.length === 2 && (
-                <Tag
-                  color="blue"
-                  closable
-                  onClose={() => {
-                    setFilters({ ...filters, dateRange: null });
-                  }}
-                >
-                  Période: {filters.dateRange[0].format("DD/MM/YYYY")} -{" "}
-                  {filters.dateRange[1].format("DD/MM/YYYY")}
-                </Tag>
-              )}
+{/* Filtres simples visibles */}
+<div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 16 }}>
+  {/* N° Bon Search */}
+  <Input.Search
+    placeholder="Rechercher par N° Bon"
+    allowClear
+    style={{ width: 200 }}
+    value={filters.numeroSearch}
+    onChange={(e) => handleQuickSearch(e.target.value)}
+    onSearch={handleQuickSearch}
+  />
 
-              {filters.status && (
-                <Tag
-                  color="blue"
-                  closable
-                  onClose={() => {
-                    setFilters({ ...filters, status: null });
-                  }}
-                >
-                  Statut: {filters.status}
-                </Tag>
-              )}
+  {/* Client */}
+  <Select
+    allowClear
+    showSearch
+    style={{ width: 220 }}
+    placeholder="Client"
+    loading={clientSearchLoading}
+    onSearch={debouncedClientSearch}
+    value={filters.clientId}
+    options={clientOptions}
+    onChange={(value) =>
+      setFilters((prev) => ({ ...prev, clientId: value }))
+    }
+  />
 
-              {filters.numeroSearch && (
-                <Tag
-                  color="blue"
-                  closable
-                  onClose={() => {
-                    setFilters({ ...filters, numeroSearch: "" });
-                  }}
-                >
-                  N° Bon: {filters.numeroSearch}
-                </Tag>
-              )}
-            </Space>
-          </div>
-        )}
+  {/* Période */}
+<Row gutter={8} align="middle" style={{ marginBottom: 8 }}>
+  <Col>
+    <RangePicker
+      style={{ width: 280 }}
+      format="DD/MM/YYYY"
+      value={filters.dateRange}
+      onChange={(value) =>
+        setFilters((prev) => ({ ...prev, dateRange: value }))
+      }
+    />
+  </Col>
+
+  <Col>
+    <Input.Group compact>
+  <InputNumber
+    style={{ width: 120, borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
+    placeholder="Montant min"
+    min={0}
+    value={filters.montantRange?.[0] || null}
+    onChange={(value) =>
+      setFilters((prev) => ({
+        ...prev,
+        montantRange: [value || null, prev.montantRange?.[1] || null],
+      }))
+    }
+  />
+  <InputNumber
+    style={{ width: 120, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+    placeholder="Montant max"
+    min={0}
+    value={filters.montantRange?.[1] || null}
+    onChange={(value) =>
+      setFilters((prev) => ({
+        ...prev,
+        montantRange: [prev.montantRange?.[0] || null, value || null],
+      }))
+    }
+  />
+</Input.Group>
+
+  </Col>
+</Row>
+
+
+  {/* Bouton reset */}
+  {(filters.clientId ||
+    filters.dateRange?.length ||
+    filters.numeroSearch ||
+    (filters.montantRange && (filters.montantRange[0] != null || filters.montantRange[1] != null))) && (
+    <Button danger onClick={resetFilters}>
+      Réinitialiser
+    </Button>
+  )}
+</div>
+
+
+        
 
         {/* Data table */}
         <Table
@@ -621,82 +707,7 @@ const BonLivraisonDecoupe = () => {
         />
       </Card>
 
-      {/* Advanced filter drawer */}
-      <Drawer
-        title="Filtres avancés"
-        width={400}
-        onClose={() => setFilterDrawerVisible(false)}
-        open={filterDrawerVisible}
-        bodyStyle={{ paddingBottom: 80 }}
-        extra={
-          <Space>
-            <Button onClick={() => setFilterDrawerVisible(false)}>
-              Annuler
-            </Button>
-            <Button onClick={() => filterForm.submit()} type="primary">
-              Appliquer
-            </Button>
-          </Space>
-        }
-      >
-        <Form
-          form={filterForm}
-          layout="vertical"
-          onFinish={applyFilters}
-          initialValues={{
-            clientId: filters.clientId,
-            dateRange: filters.dateRange,
-            numeroSearch: filters.numeroSearch,
-            status: filters.status,
-          }}
-        >
-          <Form.Item name="clientId" label="Client">
-            <Select
-              allowClear
-              showSearch
-              placeholder="Sélectionner un client"
-              optionFilterProp="label"
-              loading={clientSearchLoading}
-              onSearch={debouncedClientSearch}
-              options={clientOptions}
-            />
-          </Form.Item>
 
-          <Form.Item name="dateRange" label="Période d'émission">
-            <RangePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
-          </Form.Item>
-
-          <Form.Item name="numeroSearch" label="N° Bon">
-            <Input placeholder="Rechercher par numéro" />
-          </Form.Item>
-
-          <Form.Item name="status" label="Statut">
-            <Select
-              allowClear
-              placeholder="Sélectionner un statut"
-              options={[
-                { value: "draft", label: "Brouillon" },
-                { value: "sent", label: "Envoyée" },
-                { value: "paid", label: "Payée" },
-                { value: "cancelled", label: "Annulée" },
-              ]}
-            />
-          </Form.Item>
-
-          <Divider />
-
-          <div style={{ textAlign: "right" }}>
-            <Space>
-              <Button onClick={() => filterForm.resetFields()}>
-                Effacer les filtres
-              </Button>
-              <Button type="primary" htmlType="submit">
-                Appliquer les filtres
-              </Button>
-            </Space>
-          </div>
-        </Form>
-      </Drawer>
 
       {/* Detail drawer */}
       <Drawer

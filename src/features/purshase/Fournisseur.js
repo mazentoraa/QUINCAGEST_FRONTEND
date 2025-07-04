@@ -22,7 +22,10 @@ export default function Fournisseur() {
   const [visible, setVisible] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [searchText, setSearchText] = useState("");
+
+  // États pour les filtres
+  const [searchNom, setSearchNom] = useState("");
+  const [searchNumRegFiscal, setSearchNumRegFiscal] = useState("");
 
   const fetchFournisseurs = async () => {
     setLoading(true);
@@ -49,17 +52,37 @@ export default function Fournisseur() {
     fetchFournisseurs();
   }, []);
 
-  const onSearchChange = (e) => {
-    const { value } = e.target;
-    setSearchText(value);
-    if (!value) {
-      setFilteredFournisseurs(fournisseurs);
-      return;
+  // Filtrer fournisseurs selon nom et numéro d'enregistrement fiscal
+  useEffect(() => {
+    let filtered = fournisseurs;
+
+    if (searchNom) {
+      filtered = filtered.filter((f) =>
+        f.nom.toLowerCase().includes(searchNom.toLowerCase())
+      );
     }
-    const filtered = fournisseurs.filter((f) =>
-      f.nom.toLowerCase().includes(value.toLowerCase())
-    );
+    if (searchNumRegFiscal) {
+      filtered = filtered.filter((f) =>
+        f.num_reg_fiscal
+          ? f.num_reg_fiscal.toLowerCase().includes(searchNumRegFiscal.toLowerCase())
+          : false
+      );
+    }
     setFilteredFournisseurs(filtered);
+  }, [searchNom, searchNumRegFiscal, fournisseurs]);
+
+  const onSearchNomChange = (e) => {
+    setSearchNom(e.target.value);
+  };
+
+  const onSearchNumRegFiscalChange = (e) => {
+    setSearchNumRegFiscal(e.target.value);
+  };
+
+  // Effacer les filtres
+  const clearFilters = () => {
+    setSearchNom("");
+    setSearchNumRegFiscal("");
   };
 
   const openModalForAdd = () => {
@@ -80,7 +103,7 @@ export default function Fournisseur() {
       await FournisseurService.delete(id);
       message.success("Fournisseur supprimé avec succès");
       await fetchFournisseurs();
-      setSearchText("");
+      clearFilters();
     } catch (error) {
       message.error("Erreur lors de la suppression");
     } finally {
@@ -102,7 +125,7 @@ export default function Fournisseur() {
       setVisible(false);
       form.resetFields();
       await fetchFournisseurs();
-      setSearchText("");
+      clearFilters();
     } catch (error) {
       message.error("Veuillez remplir correctement le formulaire");
     } finally {
@@ -169,7 +192,7 @@ export default function Fournisseur() {
       style={{ margin: 24 }}
       bodyStyle={{ padding: 24 }}
       title={
-        <div style={{ fontSize: 26, fontWeight: "bold" }}>
+        <div style={{ fontSize: 22 }}>
           Gestion des fournisseurs
         </div>
       }
@@ -192,13 +215,40 @@ export default function Fournisseur() {
         </Col>
       </Row>
 
-      <Input
-        placeholder="Filtrer par nom"
-        value={searchText}
-        onChange={onSearchChange}
-        style={{ marginBottom: 16, maxWidth: 300 }}
-        allowClear
-      />
+      {/* Ligne des filtres et bouton */}
+      <Row
+        gutter={16}
+        align="middle"
+        style={{ marginBottom: 16, maxWidth: 800, width: "100%" }}
+      >
+        <Col>
+          <Input
+            placeholder="Filtrer par nom"
+            value={searchNom}
+            onChange={onSearchNomChange}
+            allowClear
+            style={{ width: 280 }}
+          />
+        </Col>
+        <Col>
+          <Input
+            placeholder="Filtrer par numéro d'enregistrement fiscal"
+            value={searchNumRegFiscal}
+            onChange={onSearchNumRegFiscalChange}
+            allowClear
+            style={{ width: 280 }}
+          />
+        </Col>
+        <Col>
+          <Button
+            onClick={clearFilters}
+            style={{ height: 32, marginTop: 2 }} // Aligne verticalement avec les inputs
+          >
+            Effacer filtres
+          </Button>
+        </Col>
+        
+      </Row>
 
       <Table
         columns={columns}

@@ -35,6 +35,9 @@ import { debounce } from "lodash";
 import ClientMaterialService from "../../features/clientMaterials/services/ClientMaterialService";
 import ClientService from "../../features/clientManagement/services/ClientService";
 import ClientMaterialPdfService from "../../features/clientMaterials/services/ClientMaterialPdfService";
+import { Statistic } from "antd";
+import { FileDoneOutlined } from "@ant-design/icons";
+
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -44,7 +47,11 @@ const BonLivraisonReception = () => {
   const [deliveryNotes, setDeliveryNotes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
-
+  const totalQuantiteLivree = deliveryNotes.reduce(
+  (acc, note) => acc + (note.totalQuantity || 0),
+  0
+);
+const numerosBons = deliveryNotes.map((note) => note.numero_bon).join(", ");
   // State for filters
   const [filters, setFilters] = useState({
     clientId: null,
@@ -64,12 +71,11 @@ const BonLivraisonReception = () => {
   const [selectedDeliveryNote, setSelectedDeliveryNote] = useState(null);
 
   // State for advanced filter drawer
-  const [filterDrawerVisible, setFilterDrawerVisible] = useState(false);
+  
   const [clientOptions, setClientOptions] = useState([]);
   const [clientSearchLoading, setClientSearchLoading] = useState(false);
 
   // Form for filters
-  const [filterForm] = Form.useForm();
    const handleDeleteInvoice = async (Id) => {
       try {
         setLoading(true);
@@ -276,42 +282,8 @@ const BonLivraisonReception = () => {
     });
   };
 
-  // Apply advanced filters
-  const applyFilters = (values) => {
-    const newFilters = {
-      clientId: values.clientId,
-      dateRange: values.dateRange,
-      numeroSearch: values.numeroSearch || filters.numeroSearch,
-      status: values.status,
-    };
 
-    setFilters(newFilters);
-    setPagination({
-      ...pagination,
-      current: 1, // Reset to first page when filtering
-    });
-
-    setFilterDrawerVisible(false);
-
-    // Trigger fetch with new filters
-    fetchDeliveryNotes();
-  };
-
-  // Reset filters
-  const resetFilters = () => {
-    filterForm.resetFields();
-    setFilters({
-      clientId: null,
-      dateRange: null,
-      numeroSearch: "",
-      status: null,
-    });
-    setPagination({
-      ...pagination,
-      current: 1,
-    });
-    fetchDeliveryNotes();
-  };
+  
 
   // Handle table change (pagination, filters, sorter)
   const handleTableChange = (newPagination, tableFilters, sorter) => {
@@ -537,7 +509,7 @@ const getMaterialTypeColor = (type) => {
           }}
         >
         
-          <Title level={2}>Bons de Livraison (Réception)</Title>
+          <Title level={2}> <FileDoneOutlined /> Bons de Livraison (Réception)</Title>
           <Space size="middle">
             <Tooltip title="Rafraîchir">
               <Button
@@ -547,32 +519,87 @@ const getMaterialTypeColor = (type) => {
             </Tooltip>
           </Space>
         </div>
+    <Row gutter={16} style={{ marginBottom: 16 }}>
+  <Col span={12}>
+    <Card bordered={false}>
+      <Title level={4} style={{  fontWeight: '600' }}>
+        Total Bons de Livraison
+      </Title>
+      <Text style={{ fontSize: 28, fontWeight: '700', display: 'flex', alignItems: 'center' }}>
+        <FileDoneOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+        {totalQuantiteLivree}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col span={12}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>
+        Quantité Totale Livrée
+      </Title>
+      <Text style={{ fontSize: 28, fontWeight: '700', color: "#000" }}>
+        {totalQuantiteLivree}
+      </Text>
+    </Card>
+  </Col>
+</Row>
+
+
 
         {/* Quick filters */}
-        <div style={{ display: "flex", marginBottom: 16, gap: 16 }}>
-          <Input.Search
-            placeholder="Rechercher par N° bon"
-            allowClear
-            style={{ width: 300 }}
-            value={filters.numeroSearch}
-            onChange={(e) => handleQuickSearch(e.target.value)}
-            onSearch={handleQuickSearch}
-          />
-          <Button
-            icon={<FilterOutlined />}
-            onClick={() => setFilterDrawerVisible(true)}
-          >
-            Filtres avancés
-          </Button>
+   {/* Quick filters */}
+<div style={{ display: "flex", marginBottom: 16, gap: 16, flexWrap: 'wrap' }}>
+  <Input.Search
+    placeholder="Rechercher par N° bon"
+    allowClear
+    style={{ width: 220 }}
+    value={filters.numeroSearch}
+    onChange={(e) => handleQuickSearch(e.target.value)}
+    onSearch={handleQuickSearch}
+  />
 
-          {(filters.clientId ||
-            (filters.dateRange && filters.dateRange.length) ||
-            filters.status) && (
-            <Button danger onClick={resetFilters}>
-              Réinitialiser les filtres
-            </Button>
-          )}
-        </div>
+  <Select
+    showSearch
+    allowClear
+    placeholder="Filtrer par client"
+    style={{ width: 220 }}
+    loading={clientSearchLoading}
+    onSearch={debouncedClientSearch}
+    onChange={(value) => {
+      setFilters(prev => ({ ...prev, clientId: value }));
+      setPagination(prev => ({ ...prev, current: 1 }));
+    }}
+    value={filters.clientId}
+    options={clientOptions}
+    filterOption={false} // onSearch gère la recherche côté serveur
+  />
+
+  <RangePicker
+    style={{ width: 280 }}
+    allowClear
+    format="DD/MM/YYYY"
+    value={filters.dateRange}
+    onChange={(dates) => {
+      setFilters(prev => ({ ...prev, dateRange: dates }));
+      setPagination(prev => ({ ...prev, current: 1 }));
+    }}
+  />
+
+  {(filters.clientId || (filters.dateRange && filters.dateRange.length) || filters.numeroSearch) && (
+    <Button danger onClick={() => {
+      setFilters({
+        clientId: null,
+        dateRange: null,
+        numeroSearch: "",
+        status: null,
+      });
+      setPagination(prev => ({ ...prev, current: 1 }));
+      fetchDeliveryNotes();
+    }}>
+      Réinitialiser les filtres
+    </Button>
+  )}
+</div>
 
         {/* Active filters display */}
         {(filters.clientId ||
@@ -652,69 +679,6 @@ const getMaterialTypeColor = (type) => {
         />
       </Card>
 
-      {/* Advanced filter drawer */}
-      <Drawer
-        title="Filtres avancés"
-        width={400}
-        onClose={() => setFilterDrawerVisible(false)}
-        open={filterDrawerVisible}
-        bodyStyle={{ paddingBottom: 80 }}
-        extra={
-          <Space>
-            <Button onClick={() => setFilterDrawerVisible(false)}>
-              Annuler
-            </Button>
-            <Button onClick={() => filterForm.submit()} type="primary">
-              Appliquer
-            </Button>
-          </Space>
-        }
-      >
-        <Form
-          form={filterForm}
-          layout="vertical"
-          onFinish={applyFilters}
-          initialValues={{
-            clientId: filters.clientId,
-            dateRange: filters.dateRange,
-            numeroSearch: filters.numeroSearch,
-            status: filters.status,
-          }}
-        >
-          <Form.Item name="clientId" label="Client">
-            <Select
-              allowClear
-              showSearch
-              placeholder="Sélectionner un client"
-              optionFilterProp="label"
-              loading={clientSearchLoading}
-              onSearch={debouncedClientSearch}
-              options={clientOptions}
-            />
-          </Form.Item>
-
-          <Form.Item name="dateRange" label="Période de réception">
-            <RangePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
-          </Form.Item>
-
-          <Form.Item name="numeroSearch" label="N° Bon de livraison">
-            <Input placeholder="Rechercher par numéro" />
-          </Form.Item>
-
-          <Divider />
-
-          <div style={{ textAlign: "right" }}>
-            <Space>
-              <Button onClick={() => filterForm.resetFields()}>
-                Effacer les filtres
-              </Button>
-              <Button type="primary" htmlType="submit">
-                Appliquer les filtres
-              </Button>
-            </Space>
-          </div>
-        </Form>
-      </Drawer>
 
       {/* Detail drawer */}
       <Drawer

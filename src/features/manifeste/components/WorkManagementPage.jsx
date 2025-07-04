@@ -46,8 +46,8 @@ import RawMaterialService from "../services/RawMaterialService";
 import InvoiceService from "../services/InvoiceService"; // Import CSS
 import "./WorkManagementPage.css";
 import { getApiService } from "../../../services/apiServiceFactory";
-import BonLivraisonDecoupePdfService from "../../../services/BonLivraisonDecoupePdfService";
-
+import BonLivraisonDecoupePdfService from "../../../services/BonLivraisonDecoupePdfService"; // si pas déjà importé
+import { BuildOutlined } from "@ant-design/icons";
 const { Option } = Select;
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -83,6 +83,7 @@ const WorkManagementPage = () => {
 
   // Add new state for client filter
   const [selectedClientFilter, setSelectedClientFilter] = useState(null);
+  const [dateRangeFilter, setDateRangeFilter] = useState(null); // Pour la plage de dates
 
   // Add state for selected rows
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -119,25 +120,35 @@ const WorkManagementPage = () => {
     fetchWorks();
     fetchInitialOptions();
   }, [selectedClientFilter]); // Re-fetch works when client filter changes
-
-  const fetchWorks = async () => {
-    setLoading(true);
-    try {
-      let data;
-      if (selectedClientFilter) {
-        // Fetch works for specific client
-        data = await WorkService.getWorksByClientId(selectedClientFilter);
-      } else {
-        // Fetch all works
-        data = await WorkService.getAllWorks();
-      }
-      setWorks(data);
-    } catch (error) {
-      message.error("Erreur lors du chargement des travaux");
-    } finally {
-      setLoading(false);
+const fetchWorks = async () => {
+  setLoading(true);
+  try {
+    let data;
+    if (selectedClientFilter) {
+      data = await WorkService.getWorksByClientId(selectedClientFilter);
+    } else {
+      data = await WorkService.getAllWorks();
     }
-  };
+
+    // Appliquer le filtre par date si nécessaire
+    if (dateRangeFilter && dateRangeFilter.length === 2) {
+      const [startDate, endDate] = dateRangeFilter;
+      const start = startDate.startOf("day").valueOf();
+      const end = endDate.endOf("day").valueOf();
+
+      data = data.filter((work) => {
+        const workDate = moment(work.date_creation).valueOf(); // ou une autre date pertinente
+        return workDate >= start && workDate <= end;
+      });
+    }
+
+    setWorks(data);
+  } catch (error) {
+    message.error("Erreur lors du chargement des travaux");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchInitialOptions = async () => {
     try {
@@ -1220,6 +1231,13 @@ const WorkManagementPage = () => {
             ]}
             loading={clientSearchLoading}
           />
+          <DatePicker.RangePicker
+  style={{ marginLeft: 16 }}
+  format="DD/MM/YYYY"
+  placeholder={["Date début", "Date fin"]}
+  value={dateRangeFilter}
+  onChange={(dates) => setDateRangeFilter(dates)}
+/>
           {selectedClientFilter && (
             <Button
               type="link"

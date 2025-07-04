@@ -3,12 +3,18 @@ import "./InstallmentDetails.css";
 
 const InstallmentDetails = ({ installment, onBack, onUpdateInstallment }) => {
   const mappedInstallmentDetails = useMemo(() => {
-    return installment.traites.map((traite) => ({
-      id: traite.id,
-      amount: traite.montant,
-      dueDate: traite.date_echeance,
-      status: (traite.status || "NON_PAYEE").toUpperCase(),
-    }));
+    const today = new Date();
+    return installment.traites.map((traite) => {
+      const baseStatus = (traite.status || "NON_PAYEE").toUpperCase();
+      const dueDate = new Date(traite.date_echeance);
+      const isOverdue = baseStatus === "NON_PAYEE" && dueDate < today;
+      return {
+        id: traite.id,
+        amount: traite.montant,
+        dueDate: traite.date_echeance,
+        status: isOverdue ? "EN_RETARD" : baseStatus,
+      };
+    });
   }, [installment.traites]);
 
   const [installmentStatuses, setInstallmentStatuses] = useState(() => {
@@ -77,6 +83,19 @@ const InstallmentDetails = ({ installment, onBack, onUpdateInstallment }) => {
   const paidInstallments = Object.values(installmentStatuses).filter((s) => s === "PAYEE").length;
   const unpaidInstallments = Object.values(installmentStatuses).filter((s) => s === "NON_PAYEE").length;
 
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case "PAYEE":
+        return "Payée";
+      case "NON_PAYEE":
+        return "Non payée";
+      case "EN_RETARD":
+        return "En retard";
+      default:
+        return status;
+    }
+  };
+
   return (
     <div className="installment-details-page">
       <div className="details-header">
@@ -115,22 +134,30 @@ const InstallmentDetails = ({ installment, onBack, onUpdateInstallment }) => {
             </thead>
             <tbody>
               {mappedInstallmentDetails.map((detail, i) => {
-                const isPaid = installmentStatuses[i] === "PAYEE";
+                const currentStatus = installmentStatuses[i];
+                const isPaid = currentStatus === "PAYEE";
+                const isOverdue = currentStatus === "EN_RETARD";
 
                 return (
-                  <tr key={i} className={isPaid ? "paid-row" : "unpaid-row"}>
+                  <tr key={i} className={isPaid ? "paid-row" : isOverdue ? "overdue-row" : "unpaid-row"}>
                     <td className="installment-number">#{i + 1}</td>
                     <td className="amount">{detail.amount} DT</td>
                     <td className="due-date">{new Date(detail.dueDate).toLocaleDateString("fr-FR")}</td>
                     <td className="status-cell">
-                      <span className={`status-label ${isPaid ? "paid" : "unpaid"}`}>
-                        {isPaid ? "Payée" : "Non payée"}
+                      <span
+                        className={`status-label ${
+                          isPaid ? "paid" : isOverdue ? "overdue" : "unpaid"
+                        }`}
+                      >
+                        {getStatusLabel(currentStatus)}
                       </span>
                     </td>
                     <td>
                       <button
                         className={`toggle-status-btn ${isPaid ? "mark-unpaid" : "mark-paid"}`}
-                        onClick={() => handleInstallmentStatusChange(i, isPaid ? "NON_PAYEE" : "PAYEE")}
+                        onClick={() =>
+                          handleInstallmentStatusChange(i, isPaid ? "NON_PAYEE" : "PAYEE")
+                        }
                       >
                         {isPaid ? "Marquer Non Payée" : "Marquer Payée"}
                       </button>

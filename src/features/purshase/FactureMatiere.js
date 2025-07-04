@@ -17,9 +17,11 @@ import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import FactureAchatMatiereService from "./Services/FactureAchatMatiereService";
+import FournisseurService from "./Services/FournisseurService";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -27,32 +29,53 @@ const { Option } = Select;
 export default function FactureMatiere() {
   const [form] = Form.useForm();
   const [factures, setFactures] = useState([]);
+  const [fournisseurs, setFournisseurs] = useState([]);
   const [visible, setVisible] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [achats, setAchats] = useState([]);
   const [editingAchatIndex, setEditingAchatIndex] = useState(null);
 
+  // Filtres
   const [filterNumero, setFilterNumero] = useState("");
   const [filterFournisseur, setFilterFournisseur] = useState("");
   const [filterType, setFilterType] = useState("");
 
   const typeOptions = ["matière première", "consommable", "autres"];
 
+  // Charger factures
   const fetchFactures = async () => {
     setLoading(true);
     try {
       const data = await FactureAchatMatiereService.getAll();
       setFactures(data);
-    } catch (error) {
+    } catch {
       message.error("Erreur lors du chargement des factures");
     } finally {
       setLoading(false);
     }
   };
 
+  // Charger fournisseurs
+  const fetchFournisseurs = async () => {
+    try {
+      const data = await FournisseurService.getAll();
+      let list = [];
+      if (data && Array.isArray(data.results)) {
+        list = data.results;
+      } else if (Array.isArray(data)) {
+        list = data;
+      }
+      setFournisseurs(list);
+    } catch {
+      message.error("Erreur lors du chargement des fournisseurs");
+      setFournisseurs([]);
+    }
+  };
+
   useEffect(() => {
     fetchFactures();
+    fetchFournisseurs();
   }, []);
 
   const filteredFactures = factures.filter((f) => {
@@ -82,6 +105,8 @@ export default function FactureMatiere() {
         achats,
       };
 
+      setLoading(true);
+
       if (currentId) {
         await FactureAchatMatiereService.update(currentId, payload);
         message.success("Facture mise à jour avec succès");
@@ -94,19 +119,24 @@ export default function FactureMatiere() {
       form.resetFields();
       setAchats([]);
       setEditingAchatIndex(null);
-      fetchFactures();
-    } catch (error) {
+      await fetchFactures();
+    } catch {
       message.error("Erreur lors de l'enregistrement");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
+    setLoading(true);
     try {
       await FactureAchatMatiereService.delete(id);
       message.success("Facture supprimée avec succès");
-      fetchFactures();
-    } catch (error) {
+      await fetchFactures();
+    } catch {
       message.error("Erreur lors de la suppression");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -116,14 +146,18 @@ export default function FactureMatiere() {
       "achat_prix",
       "achat_quantite",
     ]);
-    if (!achat.achat_nom || !achat.achat_prix || !achat.achat_quantite) {
+    if (
+      !achat.achat_nom ||
+      !achat.achat_prix ||
+      !achat.achat_quantite
+    ) {
       return message.warning("Veuillez remplir tous les champs de l'achat");
     }
 
     if (editingAchatIndex !== null) {
       setAchats((prev) =>
-        prev.map((item, index) =>
-          index === editingAchatIndex
+        prev.map((item, idx) =>
+          idx === editingAchatIndex
             ? {
                 nom: achat.achat_nom,
                 prix: achat.achat_prix,
@@ -170,24 +204,28 @@ export default function FactureMatiere() {
       title: "Numéro",
       dataIndex: "numero",
       key: "numero",
-      width: 120,
+      width: 100,
+      ellipsis: true,
     },
     {
       title: "Fournisseur",
       dataIndex: "fournisseur",
       key: "fournisseur",
-      width: 180,
+      width: 140,
+      ellipsis: true,
     },
     {
       title: "Type d'achat",
       dataIndex: "type_achat",
       key: "type_achat",
-      width: 150,
+      width: 120,
+      ellipsis: true,
     },
     {
       title: "Nom",
       key: "achat_nom",
-      width: 150,
+      width: 130,
+      ellipsis: true,
       render: (_, record) =>
         record.achats && record.achats.length > 0 ? (
           <>
@@ -196,7 +234,9 @@ export default function FactureMatiere() {
                 key={i}
                 style={{
                   borderBottom:
-                    i !== record.achats.length - 1 ? "1px solid black" : "none",
+                    i !== record.achats.length - 1
+                      ? "1px solid black"
+                      : "none",
                   padding: "4px 0",
                 }}
               >
@@ -211,7 +251,8 @@ export default function FactureMatiere() {
     {
       title: "Prix",
       key: "achat_prix",
-      width: 100,
+      width: 90,
+      ellipsis: true,
       render: (_, record) =>
         record.achats && record.achats.length > 0 ? (
           <>
@@ -220,7 +261,9 @@ export default function FactureMatiere() {
                 key={i}
                 style={{
                   borderBottom:
-                    i !== record.achats.length - 1 ? "1px solid black" : "none",
+                    i !== record.achats.length - 1
+                      ? "1px solid black"
+                      : "none",
                   padding: "4px 0",
                 }}
               >
@@ -235,7 +278,8 @@ export default function FactureMatiere() {
     {
       title: "Quantité",
       key: "achat_quantite",
-      width: 100,
+      width: 90,
+      ellipsis: true,
       render: (_, record) =>
         record.achats && record.achats.length > 0 ? (
           <>
@@ -244,7 +288,9 @@ export default function FactureMatiere() {
                 key={i}
                 style={{
                   borderBottom:
-                    i !== record.achats.length - 1 ? "1px solid black" : "none",
+                    i !== record.achats.length - 1
+                      ? "1px solid black"
+                      : "none",
                   padding: "4px 0",
                 }}
               >
@@ -260,19 +306,22 @@ export default function FactureMatiere() {
       title: "Date",
       dataIndex: "date_facture",
       key: "date_facture",
-      width: 130,
+      width: 110,
+      ellipsis: true,
+      render: (val) => (val ? moment(val).format("DD/MM/YYYY") : "-"),
     },
     {
       title: "Prix Total",
       dataIndex: "prix_total",
       key: "prix_total",
-      width: 120,
-      render: (val) => (val ? `${val}` : ""),
+      width: 110,
+      ellipsis: true,
     },
     {
       title: "Actions",
       key: "actions",
-      width: 110,
+      width: 120,
+      fixed: "right",
       render: (_, record) => (
         <Space>
           <Button
@@ -305,20 +354,16 @@ export default function FactureMatiere() {
   ];
 
   const achatColumns = [
-    { title: "Nom", dataIndex: "nom", key: "nom", width: 150 },
-    { title: "Prix", dataIndex: "prix", key: "prix", width: 100 },
-    { title: "Quantité", dataIndex: "quantite", key: "quantite", width: 100 },
+    { title: "Nom", dataIndex: "nom", key: "nom", width: 150, ellipsis: true },
+    { title: "Prix", dataIndex: "prix", key: "prix", width: 100, ellipsis: true },
+    { title: "Quantité", dataIndex: "quantite", key: "quantite", width: 100, ellipsis: true },
     {
       title: "Action",
       key: "action",
       width: 140,
       render: (_, __, index) => (
         <Space>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => editAchat(index)}
-          >
+          <Button size="small" onClick={() => editAchat(index)} icon={<EditOutlined />}>
             Modifier
           </Button>
           <Button danger size="small" onClick={() => removeAchat(index)}>
@@ -332,57 +377,107 @@ export default function FactureMatiere() {
   return (
     <>
       <style>{`
-        .facture-table .ant-table-cell {
-          border-color: black !important;
+        /* Suppression des bordures par défaut du tableau */
+        .custom-table .ant-table-container {
+          border: none !important;
         }
-        .facture-table .ant-table-container,
-        .facture-table .ant-table {
-          border-color: black !important;
+        /* Lignes horizontales noires */
+        .custom-table .ant-table-tbody > tr > td {
+          border-bottom: 0.5px solid #e0e0e0 !important;
+        }
+        /* Bordures verticales grises claires */
+        .custom-table .ant-table-cell {
+          border-left: 0.2px solid #d9d9d9 !important;
+          border-right: 0px solid #d9d9d9 !important;
+        }
+        /* Pas de double bordure à gauche du tableau */
+        .custom-table .ant-table-tbody > tr > td:first-child {
+          border-left: none !important;
+        }
+        /* Pas de double bordure à droite du tableau */
+        .custom-table .ant-table-tbody > tr > td:last-child {
+          border-right: none !important;
+        }
+        /* Même pour l'en-tête */
+        .custom-table .ant-table-thead > tr > th {
+          border-left: 0.2px solid #d9d9d9 !important;
+          border-right: 0px solid #d9d9d9 !important;
+          border-bottom: 0.2px solid #e0e0e0 !important;
+        }
+        .custom-table .ant-table-thead > tr > th:first-child {
+          border-left: none !important;
+        }
+        .custom-table .ant-table-thead > tr > th:last-child {
+          border-right: none !important;
         }
       `}</style>
 
-      <Card>
-        {/* Titre ajouté */}
-        <Title level={3} style={{ marginBottom: 24 }}>
-          Factures
-        </Title>
-
+      <Card
+        title={
+          <Space>
+            <FileTextOutlined style={{ fontSize: 24 }} />
+            <Title level={4} style={{ margin: 0 }}>
+              Factures
+            </Title>
+          </Space>
+        }
+      >
+        {/* FILTRES + BOUTON AJOUT */}
         <div
           style={{
             marginBottom: 32,
             display: "flex",
             gap: 16,
             flexWrap: "wrap",
-            alignItems: "center",
+            alignItems: "flex-start",
           }}
         >
-          <Input
-            placeholder="Filtrer par numéro"
-            value={filterNumero}
-            onChange={(e) => setFilterNumero(e.target.value)}
-            style={{ width: 200 }}
-            allowClear
-          />
-          <Input
-            placeholder="Filtrer par fournisseur"
-            value={filterFournisseur}
-            onChange={(e) => setFilterFournisseur(e.target.value)}
-            style={{ width: 200 }}
-            allowClear
-          />
-          <Select
-            placeholder="Filtrer par type d'achat"
-            value={filterType}
-            onChange={(value) => setFilterType(value)}
-            allowClear
-            style={{ width: 180 }}
-          >
-            {typeOptions.map((type) => (
-              <Option key={type} value={type}>
-                {type}
-              </Option>
-            ))}
-          </Select>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <Input
+              placeholder="Numéro"
+              value={filterNumero}
+              onChange={(e) => setFilterNumero(e.target.value)}
+              style={{ width: 200 }}
+              allowClear
+            />
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <Select
+              placeholder="Sélectionner un fournisseur"
+              value={filterFournisseur || undefined}
+              onChange={(value) => setFilterFournisseur(value)}
+              allowClear
+              style={{ width: 200 }}
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                option.children.toLowerCase().includes(input.toLowerCase())
+              }
+            >
+              {fournisseurs.map((f) => (
+                <Option key={f.id} value={f.nom}>
+                  {f.nom}
+                </Option>
+              ))}
+            </Select>
+          </div>
+
+          <Form.Item style={{ marginBottom: 0, minWidth: 180 }}>
+            <Select
+              placeholder="Sélectionner un type"
+              value={filterType || undefined}
+              onChange={(value) => setFilterType(value)}
+              allowClear
+              style={{ width: 180 }}
+            >
+              {typeOptions.map((type) => (
+                <Option key={type} value={type}>
+                  {type}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
 
           <Button
             type="primary"
@@ -394,21 +489,26 @@ export default function FactureMatiere() {
               setEditingAchatIndex(null);
               setVisible(true);
             }}
-            style={{ marginLeft: "auto" }}
+            style={{ marginLeft: "auto", height: 32, alignSelf: "center" }}
           >
             Ajouter une facture
           </Button>
         </div>
 
+        {/* TABLEAU PRINCIPAL */}
         <Table
-          className="facture-table"
+          className="custom-table"
           columns={columns}
           dataSource={filteredFactures}
           rowKey="id"
           loading={loading}
-          bordered
+          bordered={false}
+          scroll={{ x: 900 }}
+          pagination={{ pageSize: 5 }}
+          style={{ width: "100%" }}
         />
 
+        {/* MODAL FORM */}
         <Modal
           title={currentId ? "Modifier la facture" : "Nouvelle facture"}
           open={visible}
@@ -419,20 +519,48 @@ export default function FactureMatiere() {
             setAchats([]);
             setEditingAchatIndex(null);
           }}
-          width={700}
+          width={800}
           okText="Enregistrer"
           cancelText="Annuler"
+          confirmLoading={loading}
+          destroyOnClose
         >
           <Form form={form} layout="vertical">
-            <Form.Item name="numero" label="Numéro de facture">
+            <Form.Item
+              name="numero"
+              label="Numéro de facture"
+              rules={[{ required: false, message: "Veuillez entrer un numéro" }]}
+            >
               <Input placeholder="Ex: FAC-2024-001" />
             </Form.Item>
 
-            <Form.Item name="fournisseur" label="Fournisseur">
-              <Input placeholder="Nom du fournisseur" />
+            <Form.Item
+              name="fournisseur"
+              label="Fournisseur"
+              rules={[{ required: false, message: "Veuillez sélectionner un fournisseur" }]}
+            >
+              <Select
+                placeholder="Sélectionner un fournisseur"
+                showSearch
+                optionFilterProp="children"
+                allowClear
+                filterOption={(input, option) =>
+                  option.children.toLowerCase().includes(input.toLowerCase())
+                }
+              >
+                {fournisseurs.map((f) => (
+                  <Option key={f.id} value={f.nom}>
+                    {f.nom}
+                  </Option>
+                ))}
+              </Select>
             </Form.Item>
 
-            <Form.Item name="type_achat" label="Type d'achat">
+            <Form.Item
+              name="type_achat"
+              label="Type d'achat"
+              rules={[{ required: false, message: "Veuillez sélectionner un type" }]}
+            >
               <Select placeholder="Sélectionner un type">
                 {typeOptions.map((type) => (
                   <Option key={type} value={type}>
@@ -443,10 +571,10 @@ export default function FactureMatiere() {
             </Form.Item>
 
             <Form.Item name="prix_total" label="Prix total">
-              <Input type="number" />
+              <Input type="number" min={0} placeholder="Prix total (optionnel)" />
             </Form.Item>
 
-            <Form.Item name="date_facture" label="Date de facturation">
+            <Form.Item name="date_facture" label="Date de facture">
               <DatePicker style={{ width: "100%" }} />
             </Form.Item>
 
@@ -456,10 +584,10 @@ export default function FactureMatiere() {
                 <Input placeholder="Nom" style={{ width: 150 }} />
               </Form.Item>
               <Form.Item name="achat_prix" noStyle>
-                <Input type="number" placeholder="Prix" style={{ width: 120 }} />
+                <Input type="number" min={0} placeholder="Prix" style={{ width: 120 }} />
               </Form.Item>
               <Form.Item name="achat_quantite" noStyle>
-                <Input type="number" placeholder="Quantité" style={{ width: 120 }} />
+                <Input type="number" min={1} placeholder="Quantité" style={{ width: 120 }} />
               </Form.Item>
               <Button onClick={addAchat} icon={<PlusOutlined />}>
                 {editingAchatIndex !== null ? "Modifier" : "Ajouter"}

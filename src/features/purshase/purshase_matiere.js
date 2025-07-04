@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Table,
   Button,
-  Select,
   Input,
   Modal,
   Form,
@@ -12,36 +11,42 @@ import {
   Spin,
   message,
   Popconfirm,
-  DatePicker
+  DatePicker,
 } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
-  DeleteOutlined
+  DeleteOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
-import moment from "moment"; // ✅ Import moment
+import moment from "moment";
 
-const { Option } = Select;
-const { TextArea } = Input;
 const { Title } = Typography;
+const { TextArea } = Input;
+const { RangePicker } = DatePicker;
 
 export default function PurchaseMatiere() {
   const [matieres, setMatieres] = useState([]);
+  const [filteredMatieres, setFilteredMatieres] = useState([]);
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(false);
   const [form] = Form.useForm();
+  const [filterForm] = Form.useForm();
   const [currentId, setCurrentId] = useState(null);
 
-  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
+  const API_BASE_URL =
+    process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
 
   const fetchMatieres = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/matiere-purchase/`);
-      setMatieres(response.data.results || response.data); // ✅ sécurise .results ou non
+      const data = response.data.results || response.data;
+      setMatieres(data);
+      setFilteredMatieres(data);
     } catch (error) {
       message.error("Erreur lors du chargement des matières");
       setMatieres([]);
+      setFilteredMatieres([]);
     } finally {
       setLoading(false);
     }
@@ -51,13 +56,68 @@ export default function PurchaseMatiere() {
     fetchMatieres();
   }, []);
 
+  // Filtrage automatique à chaque changement de filtre
+  useEffect(() => {
+    const values = filterForm.getFieldsValue();
+    let filtered = [...matieres];
+
+    // Filtrer par nom (contient, insensible)
+    if (values.nom && values.nom.trim() !== "") {
+      filtered = filtered.filter((m) =>
+        m.nom.toLowerCase().includes(values.nom.trim().toLowerCase())
+      );
+    }
+
+    // Filtrer par date range
+    if (values.dateRange && values.dateRange.length === 2) {
+      const [start, end] = values.dateRange;
+      filtered = filtered.filter((m) => {
+        if (!m.purshase_date) return false;
+        const d = moment(m.purshase_date, "YYYY-MM-DD");
+        return d.isSameOrAfter(start, "day") && d.isSameOrBefore(end, "day");
+      });
+    }
+
+    setFilteredMatieres(filtered);
+  }, [matieres, filterForm]);
+
+  const handleFilterChange = () => {
+    // Juste déclenche la mise à jour car useEffect écoute filterForm
+    // Comme filterForm n'a pas de hook d'écoute direct, on force un update avec un useState, ou on applique le filtre manuellement ici
+    const values = filterForm.getFieldsValue();
+    let filtered = [...matieres];
+
+    if (values.nom && values.nom.trim() !== "") {
+      filtered = filtered.filter((m) =>
+        m.nom.toLowerCase().includes(values.nom.trim().toLowerCase())
+      );
+    }
+    if (values.dateRange && values.dateRange.length === 2) {
+      const [start, end] = values.dateRange;
+      filtered = filtered.filter((m) => {
+        if (!m.purshase_date) return false;
+        const d = moment(m.purshase_date, "YYYY-MM-DD");
+        return d.isSameOrAfter(start, "day") && d.isSameOrBefore(end, "day");
+      });
+    }
+
+    setFilteredMatieres(filtered);
+  };
+
+  const handleResetFilters = () => {
+    filterForm.resetFields();
+    setFilteredMatieres(matieres);
+  };
+
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
 
       const payload = {
         ...values,
-        prix_unitaire: values.prix_unitaire ? parseFloat(values.prix_unitaire) : null,
+        prix_unitaire: values.prix_unitaire
+          ? parseFloat(values.prix_unitaire)
+          : null,
         quantite: parseInt(values.quantite),
         purshase_date: values.purshase_date
           ? values.purshase_date.format("YYYY-MM-DD")
@@ -65,9 +125,13 @@ export default function PurchaseMatiere() {
       };
 
       if (currentId) {
-        await axios.put(`${API_BASE_URL}/matiere-purchase/${currentId}/`, payload, {
-          headers: { "Content-Type": "application/json" }
-        });
+        await axios.put(
+          `${API_BASE_URL}/matiere-purchase/${currentId}/`,
+          payload,
+          {
+            headers: { "Content-Type": "application/json" },
+          }
+        );
         message.success("Matière mise à jour avec succès");
       } else {
         await axios.post(`${API_BASE_URL}/matiere-purchase/`, payload);
@@ -98,30 +162,29 @@ export default function PurchaseMatiere() {
     {
       title: "Nom",
       dataIndex: "nom",
-      key: "nom"
+      key: "nom",
     },
     {
       title: "Prix unitaire",
       dataIndex: "prix_unitaire",
       key: "price",
-      render: value => `${value}`
+      render: (value) => `${value}`,
     },
     {
       title: "Quantité",
       dataIndex: "quantite",
-      key: "quantity"
+      key: "quantity",
     },
-  {
-  title: "Date d'Achat",
-  dataIndex: "purshase_date",
-  key: "purshase_date",
-  render: (value) => value ? moment(value).format("D-M-YYYY") : "-"
-},
-
+    {
+      title: "Date d'Achat",
+      dataIndex: "purshase_date",
+      key: "purshase_date",
+      render: (value) => (value ? moment(value).format("D-M-YYYY") : "-"),
+    },
     {
       title: "Description",
       dataIndex: "description",
-      key: "description"
+      key: "description",
     },
     {
       title: "Actions",
@@ -133,7 +196,9 @@ export default function PurchaseMatiere() {
             onClick={() => {
               form.setFieldsValue({
                 ...record,
-                purshase_date: record.purshase_date ? moment(record.purshase_date) : null
+                purshase_date: record.purshase_date
+                  ? moment(record.purshase_date)
+                  : null,
               });
               setCurrentId(record.id);
               setVisible(true);
@@ -146,13 +211,19 @@ export default function PurchaseMatiere() {
             <Button danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
-      )
-    }
+      ),
+    },
   ];
 
   return (
     <Card>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: 16,
+        }}
+      >
         <Title level={4}>Achats</Title>
         <Button
           type="primary"
@@ -167,13 +238,28 @@ export default function PurchaseMatiere() {
         </Button>
       </div>
 
+      {/* Formulaire de filtre sans bouton filtrer */}
+      <Form
+        form={filterForm}
+        layout="inline"
+        style={{ marginBottom: 16, gap: 16 }}
+        onValuesChange={handleFilterChange} // Filtre à chaque changement
+      >
+        <Form.Item name="nom" >
+          <Input placeholder="Filtrer par nom" allowClear />
+        </Form.Item>
+
+        <Form.Item name="dateRange" >
+          <RangePicker format="DD/MM/YYYY" />
+        </Form.Item>
+
+        <Form.Item>
+          <Button onClick={handleResetFilters}>Effacer les filtres</Button>
+        </Form.Item>
+      </Form>
+
       <Spin spinning={loading}>
-        <Table
-          columns={columns}
-          dataSource={matieres}
-          rowKey="id"
-          bordered
-        />
+        <Table columns={columns} dataSource={filteredMatieres} rowKey="id" bordered />
       </Spin>
 
       <Modal
@@ -224,10 +310,7 @@ export default function PurchaseMatiere() {
               label="Date d'achat"
               rules={[{ required: true, message: "Date requise" }]}
             >
-              <DatePicker
-                format="DD/MM/YYYY"
-                style={{ width: "100%" }}
-              />
+              <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
             </Form.Item>
           </Space>
         </Form>

@@ -40,6 +40,17 @@ import BonRetourService from "../../features/bonRetour/services/BonRetourService
 import ClientService from "../../features/manifeste/services/ClientService";
 import BonRetourPdfService from "../../services/BonRetourPdfService"; // Import the new service
 import "./BonRetour.css";
+import { useMemo } from "react";
+import { Statistic } from "antd"
+
+import {
+  FileDoneOutlined,
+  FileTextOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+} from "@ant-design/icons";
+
+
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -74,6 +85,22 @@ const BonRetour = () => {
     { label: "Terminé", value: "completed", color: "success" },
     { label: "Annulé", value: "cancelled", color: "error" },
   ];
+    // Comptage total et par statut
+  const stats = useMemo(() => {
+    const result = {
+      total: bonsRetour.length,
+      draft: 0,
+      sent: 0,
+      completed: 0,
+      cancelled: 0,
+    };
+    bonsRetour.forEach((bon) => {
+      if (bon.status && result[bon.status] !== undefined) {
+        result[bon.status]++;
+      }
+    });
+    return result;
+  }, [bonsRetour]);
 
   useEffect(() => {
     fetchBonsRetour();
@@ -578,18 +605,120 @@ const BonRetour = () => {
   return (
     <Content style={{ padding: "24px", minHeight: "calc(100vh - 64px)" }}>
       <div style={{ background: "#fff", padding: "24px", borderRadius: "2px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "20px",
-          }}
-        >
-          <Title level={2}>Gestion des Bons de Retour</Title>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            Nouveau Bon de Retour
-          </Button>
-        </div>
+      <div
+>
+
+
+ <Title level={2}><FileDoneOutlined /> Bon de Retour</Title>
+<Card style={{ marginBottom: 24, overflowX: "auto" }}>
+  <Row
+  gutter={16}
+  style={{ marginBottom: 16, flexWrap: "nowrap", overflowX: "auto" }}
+>
+  <Col flex="1 1 0" style={{ minWidth: 140 }}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+        Total
+      </Title>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "700",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <FileDoneOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+        {stats.total}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col flex="1 1 0" style={{ minWidth: 140 }}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+        Brouillon
+      </Title>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "700",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <FileTextOutlined style={{ marginRight: 8, color: "gray" }} />
+        {stats.draft}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col flex="1 1 0" style={{ minWidth: 140 }}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+        Envoyé
+      </Title>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "700",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <SendOutlined style={{ marginRight: 8, color: "#096dd9" }} />
+        {stats.sent}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col flex="1 1 0" style={{ minWidth: 140 }}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+        Terminé
+      </Title>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "700",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <CheckCircleOutlined style={{ marginRight: 8, color: "#389e0d" }} />
+        {stats.completed}
+      </Text>
+    </Card>
+  </Col>
+
+  <Col flex="1 1 0" style={{ minWidth: 140 }}>
+    <Card bordered={false}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+        Annulé
+      </Title>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "700",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <CloseCircleOutlined style={{ marginRight: 8, color: "#cf1322" }} />
+        {stats.cancelled}
+      </Text>
+    </Card>
+  </Col>
+</Row>
+
+</Card>
+
+
+
+
+
+</div>
+
 
         {/* Filters */}
         <Card style={{ marginBottom: 16 }}>
@@ -640,34 +769,42 @@ const BonRetour = () => {
               />
             </Col>
           </Row>
-          <div style={{ marginTop: 12 }}>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={fetchBonsRetour}
-              style={{ marginRight: 8 }}
-            >
-              Actualiser
-            </Button>
-            <Button
-              type="primary"
-              icon={<PrinterOutlined />}
-              onClick={handlePrintSelected}
-              disabled={selectedRowKeys.length === 0}
-              style={{ marginRight: 8 }}
-            >
-              Imprimer la sélection ({selectedRowKeys.length})
-            </Button>
-            <Button
-              onClick={() => {
-                setSearchText("");
-                setStatusFilter("");
-                setClientFilter("");
-                setDateFilter("");
-              }}
-            >
-              Réinitialiser les filtres
-            </Button>
-          </div>
+<div
+  style={{
+    marginTop: 12,
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 8, // espace horizontal entre les boutons
+    flexWrap: "wrap", // au cas où la fenêtre est petite
+  }}
+>
+  <Button
+    icon={<ReloadOutlined />}
+    onClick={fetchBonsRetour}
+  >
+    Actualiser
+  </Button>
+
+  <Button
+    onClick={() => {
+      setSearchText("");
+      setStatusFilter("");
+      setClientFilter("");
+      setDateFilter("");
+    }}
+  >
+    Effacer les filtres
+  </Button>
+
+  <Button
+    type="primary"
+    icon={<PlusOutlined />}
+    onClick={handleAdd}
+  >
+    Nouveau Bon de Retour
+  </Button>
+</div>
+
         </Card>
 
         <Table
