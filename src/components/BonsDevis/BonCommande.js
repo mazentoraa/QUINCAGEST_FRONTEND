@@ -34,6 +34,9 @@ import {
   ReloadOutlined,
   FileDoneOutlined,
   SearchOutlined,
+  DollarCircleOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 
  // <-- Ajoute cette ligne
@@ -1137,52 +1140,91 @@ export default function BonCommande() {
           {/* Statistics */}
 
 
+
 <Row gutter={16} style={{ marginBottom: 16 }}>
+  {/* Total commandes */}
   <Col span={6}>
     <Card bordered={false}>
-      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
         Total Commandes
       </Title>
-      <Text style={{ fontSize: 20, fontWeight: '700', display: 'flex', alignItems: 'center' }}>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "700",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
         <FileDoneOutlined style={{ marginRight: 8, color: "#1890ff" }} />
         {filteredOrders.length}
       </Text>
     </Card>
   </Col>
 
+  {/* Montant total TTC */}
   <Col span={6}>
     <Card bordered={false}>
-      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
         Montant Total TTC
       </Title>
-      <Text style={{ fontSize: 20, fontWeight: '700'}}>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "700",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <DollarCircleOutlined style={{ marginRight: 8, color: "#13c2c2" }} />
         {formatCurrency(totalAmount)}
       </Text>
     </Card>
   </Col>
 
+  {/* En attente */}
   <Col span={6}>
     <Card bordered={false}>
-      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
         En Attente
       </Title>
-      <Text style={{ fontSize: 20, fontWeight: '700', color: "#fa8c16" }}>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "700",
+          display: "flex",
+          alignItems: "center",
+          color: "#fa8c16",
+        }}
+      >
+        <ClockCircleOutlined style={{ marginRight: 8 }} />
         {filteredOrders.filter((o) => o.statut === "pending").length}
       </Text>
     </Card>
   </Col>
 
+  {/* Terminées */}
   <Col span={6}>
     <Card bordered={false}>
-      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
         Terminées
       </Title>
-      <Text style={{ fontSize: 20, fontWeight: '700', color: "#52c41a" }}>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "700",
+          display: "flex",
+          alignItems: "center",
+          color: "#52c41a",
+        }}
+      >
+        <CheckCircleOutlined style={{ marginRight: 8 }} />
         {filteredOrders.filter((o) => o.statut === "completed").length}
       </Text>
     </Card>
   </Col>
 </Row>
+
 
 
 
@@ -1255,15 +1297,7 @@ export default function BonCommande() {
       Nouvelle Commande
     </Button>
   </Col>
-  <Col>
-    <Button
-      icon={<ReloadOutlined />}
-      onClick={fetchOrders}
-      loading={loading}
-    >
-      Actualiser
-    </Button>
-  </Col>
+
 </Row>
 
 {/* Ligne des boutons sélection, en position normale (gauche) */}

@@ -4,7 +4,11 @@ import "./InstallmentDetails.css";
 const InstallmentDetails = ({ installment, onBack, onUpdateInstallment }) => {
   const mappedInstallmentDetails = useMemo(() => {
     const today = new Date();
-    return installment.traites.map((traite) => {
+
+    // Trier les traites par date d'échéance croissante (plus proche en premier)
+    const sortedTraites = [...installment.traites].sort((a, b) => new Date(a.date_echeance) - new Date(b.date_echeance));
+
+    return sortedTraites.map((traite) => {
       const baseStatus = (traite.status || "NON_PAYEE").toUpperCase();
       const dueDate = new Date(traite.date_echeance);
       const isOverdue = baseStatus === "NON_PAYEE" && dueDate < today;

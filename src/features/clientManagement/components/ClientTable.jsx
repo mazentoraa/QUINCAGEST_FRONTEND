@@ -113,7 +113,7 @@ const ClientTable = ({ clients, on_edit, on_delete, loading }) => {
             icon={<InboxOutlined />}
             onClick={() => view_client_materials(record)}
           >
-            Matières Premières
+            Matières
           </Button>
           <Popconfirm
             title="Êtes-vous sûr de vouloir supprimer ce client?"
