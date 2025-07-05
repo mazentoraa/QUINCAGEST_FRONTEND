@@ -229,26 +229,29 @@ class BonLivraisonDecoupePdfService {
           return rows;
         })
         .join("") || "";
+const totalBrut = invoice.items.reduce((acc, item) => {
+  const prixUnitaire = item.billable.prix_unitaire || 0;
+  const quantite = item.billable.quantite || 0;
+  return acc + prixUnitaire * quantite;
+}, 0);
 
-    const totals = {
-      totalHT: invoice.total_ht || 0,
-      totalTVA: invoice.total_tax || 0,
-      totalTTC: invoice.total_ttc || 0,
-    };
-    const totalRemise = invoice.items.reduce((acc, item) => {
-      console.log(item.billable.total_remise)
-      return acc + item.billable.total_remise;
-    }, 0);
-    const totalBrut = invoice.items.reduce((acc, item) => {
-      const prixUnitaire = item.billable.prix_unitaire || 0;
-      const quantite = item.billable.quantite || 0;
-      return acc + prixUnitaire * quantite;
-    } , 0 )
-    const totalHTVA = invoice.total_ht || 0;
-    const fodec = totalHTVA * 0.01;
-    const totalTVA = (totalHTVA + fodec) * ((invoice.tax_rate || 0) / 100);
-    const timbreFiscal = Number(invoice.timbre_fiscal) || 0;
-    const netAPayer = totalHTVA + fodec + totalTVA + timbreFiscal;
+const totalRemise = invoice.items.reduce((acc, item) => {
+  return acc + (item.billable.total_remise || 0);
+}, 0);
+
+const netCommercial = totalBrut - totalRemise;
+const fodec = netCommercial * 0.01;
+const totalHTVA = netCommercial + fodec;
+const totalTVA = totalHTVA * ((invoice.tax_rate || 0) / 100);
+const timbreFiscal = Number(invoice.timbre_fiscal) || 0;
+const netAPayer = totalHTVA + totalTVA + timbreFiscal;
+
+const totals = {
+  totalHT: netCommercial,
+  totalTVA,
+  totalTTC: netAPayer,
+};
+
 
     return `
       <!DOCTYPE html>
@@ -361,7 +364,7 @@ class BonLivraisonDecoupePdfService {
     </thead>
     <tbody>
       <tr style="height: 80px;">
-        <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(totals.totalHT)}</td>
+        <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalHTVA)}</td>
         <td style="border: 1px solid black; padding: 8px;">${invoice.tax_rate || 20}%</td>
         <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(totalTVA)}</td>
       </tr>
@@ -381,31 +384,31 @@ class BonLivraisonDecoupePdfService {
   <table style=" width:32% ; border-collapse: collapse; font-family: Arial, sans-serif; margin-left: 10px; font-size: 12px;">
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Totale Brut</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency((totalBrut|| 0) )}</td>
+     <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalBrut)}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalRemise)}</td>
+<td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalRemise)}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Fodec (1%)</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(fodec || 0)}</td>
+     <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(fodec)}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalHTVA || 0)}</td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalHTVA)}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalTVA|| 0)}</td>
+<td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalTVA)}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(timbreFiscal || 0)}</td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(timbreFiscal)}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(netAPayer)}</td>
+      <td style="border: 1px solid black; padding: 2px;"><strong>${this.formatCurrency(netAPayer)}</strong></td>
     </tr>
   </table> 
 </div>
@@ -415,7 +418,7 @@ class BonLivraisonDecoupePdfService {
   <div style="flex: 1; border: 1px solid black; padding: 12px;">
     <p style="margin: 0;">
       <strong>Arrêtée la présente bon de livraison à la somme de:</strong><br>
-      ${this.formatMontantEnLettres(netAPayer)}
+     ${this.formatMontantEnLettres(netAPayer)}
 
     </p>
   </div>
