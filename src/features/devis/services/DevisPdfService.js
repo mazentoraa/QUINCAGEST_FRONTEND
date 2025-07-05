@@ -234,21 +234,40 @@ class DevisPdfService {
       `;
       })
       .join("");
-       const totalRemise = data.produit_devis.reduce((acc, item) => {
-        const prixUnitaire = item.prix_unitaire || 0;
-        const quantite = item.quantite || 0;
-        const remisePourcentage = item.remise_pourcentage || 0;
-  
-        const remise = prixUnitaire * quantite * (remisePourcentage / 100);
-        return acc + remise;
-      }, 0);
-      const totalBrut = data.produit_devis.reduce((acc,item) => {
-        const prixUnitaire = item.prix_unitaire || 0;
-        const quantite = item.quantite || 0;
-        return acc + prixUnitaire * quantite;
-      },0)
-      const totalHTVA = totalBrut - totalRemise;
-      const fodec = totalHTVA * 0.01;
+      const totalBrut = data.produit_devis.reduce((acc, item) => {
+  const prixUnitaire = item.prix_unitaire || 0;
+  const quantite = item.quantite || 0;
+  return acc + prixUnitaire * quantite;
+}, 0);
+
+// Total remise ligne par ligne (remise individuelle par produit)
+const totalRemise = data.produit_devis.reduce((acc, item) => {
+  const prixUnitaire = item.prix_unitaire || 0;
+  const quantite = item.quantite || 0;
+  const remisePourcentage = item.remise_pourcentage || 0;
+  const remise = prixUnitaire * quantite * (remisePourcentage / 100);
+  return acc + remise;
+}, 0);
+
+// Net commercial = Brut - Remise
+const netCommercial = totalBrut - totalRemise;
+
+// FODEC = 1% du net commercial
+const fodec = netCommercial * 0.01;
+
+// Total HTVA = net commercial + fodec
+const totalHTVA = netCommercial + fodec;
+
+// TVA
+const tauxTVA = data.tax_rate || 0;
+const totalTVA = totalHTVA * (tauxTVA / 100);
+
+// Timbre fiscal = 1.000 ou dynamique
+const timbreFiscal = data.timbre_fiscal ?? 1.000;
+
+// Net à payer
+const netAPayer = totalHTVA + totalTVA + timbreFiscal;
+
     return `
       <!DOCTYPE html>
       <html lang="fr">
@@ -356,7 +375,7 @@ class DevisPdfService {
     </thead>
     <tbody>
       <tr style="height: 80px;">
-        <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(data.montant_ht)}</td>
+        <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(totalHTVA)}</td>
         <td style="border: 1px solid black; padding: 8px;">${data.tax_rate} %</td>
         <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(data.montant_tva)}</td>
       </tr>
@@ -386,10 +405,10 @@ class DevisPdfService {
       <td style="border: 1px solid black; padding: 2px;"><strong>Fodec (1%)</strong></td>
       <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(fodec || 0)}</td>
     </tr>
-    <tr>
-      <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(data.montant_ht || 0)}</td>
-    </tr>
+  <tr>
+  <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
+  <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalHTVA)}</td>
+</tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
       <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(data.montant_tva || 0)}</td>

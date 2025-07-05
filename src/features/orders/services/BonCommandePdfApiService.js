@@ -146,7 +146,8 @@ const fodec = totalBrut * 0.01;
 const totalHTVA = totalBrut + fodec;
 
 // ✅ TVA = total HTVA * taux
-const totalTVA = (totalHTVA + fodec) * ((orderData.tax_rate || 0) / 100);
+const totalTVA = totalHTVA * ((orderData.tax_rate || 0) / 100);
+
 
 // ✅ net à payer = total HTVA + TVA + timbre fiscal
 const netAPayer = totalHTVA + totalTVA + (orderData.timbre_fiscal || 0);
