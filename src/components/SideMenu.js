@@ -1,15 +1,26 @@
 import React from 'react';
 import { Menu } from 'antd';
 import {
-  ShoppingOutlined,
-  FileTextOutlined,
-  AccountBookOutlined,
   UserOutlined,
+  AppstoreAddOutlined,
+  GiftOutlined,
+  GoldOutlined,
+  FileTextOutlined,
   ToolOutlined,
-  FileOutlined,
+  FileDoneOutlined,
+  FileAddOutlined,
+  RollbackOutlined,
+  FileSearchOutlined,
+  FileProtectOutlined,
+  AccountBookOutlined,
+  // FileInvoiceOutlined,  <-- supprimé comme demandé
   BankOutlined,
+  TeamOutlined,
+  ShoppingCartOutlined,
+  AppstoreOutlined,
+  InboxOutlined,
   BarChartOutlined,
-  InboxOutlined
+  DollarCircleOutlined 
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -44,15 +55,16 @@ function SideMenu() {
         selectedKeys={[location.pathname]}
         style={{ height: '100%', borderRight: 0 }}
       >
-        <Menu.Item key="/clients" icon={<UserOutlined />} onClick={() => handleMenuClick('/clients')}>
+        {/* --- CYCLE VENTES --- */}
+        <Menu.Item key="/clients" icon={<TeamOutlined />} onClick={() => handleMenuClick('/clients')}>
           Clients
         </Menu.Item>
 
-        <SubMenu key="stock" icon={<ShoppingOutlined />} title="Gestion de Stock">
-          <Menu.Item key="/stock/produits" onClick={() => handleMenuClick('/stock/produits')}>
+        <SubMenu key="stock" icon={<AppstoreAddOutlined />} title="Gestion de Stock">
+          <Menu.Item key="/stock/produits" icon={<ShoppingCartOutlined />} onClick={() => handleMenuClick('/stock/produits')}>
             Produits Finis
           </Menu.Item>
-          <Menu.Item key="/stock/matieres" onClick={() => handleMenuClick('/stock/matieres')}>
+          <Menu.Item key="/stock/matieres" icon={<GoldOutlined />} onClick={() => handleMenuClick('/stock/matieres')}>
             Matières Premières Client
           </Menu.Item>
         </SubMenu>
@@ -61,27 +73,28 @@ function SideMenu() {
           <Menu.Item key="/manifeste/travaux" icon={<ToolOutlined />} onClick={() => handleMenuClick('/manifeste/travaux')}>
             Travaux
           </Menu.Item>
-          <SubMenu key="bons_devis" icon={<FileTextOutlined />} title="Bons et Devis">
-            <Menu.Item key="/bons/livraison-reception" onClick={() => handleMenuClick('/bons/livraison-reception')}>
+
+          <SubMenu key="bons_devis" icon={<FileSearchOutlined />} title="Bons et Devis">
+            <Menu.Item key="/bons/livraison-reception" icon={<FileDoneOutlined />} onClick={() => handleMenuClick('/bons/livraison-reception')}>
               Bons de Livraison (Réception)
             </Menu.Item>
-            <Menu.Item key="/bons/livraison-decoupe" onClick={() => handleMenuClick('/bons/livraison-decoupe')}>
+            <Menu.Item key="/bons/livraison-decoupe" icon={<FileDoneOutlined />} onClick={() => handleMenuClick('/bons/livraison-decoupe')}>
               Bons de Livraison (Découpe)
             </Menu.Item>
-            <Menu.Item key="/bons/devis" onClick={() => handleMenuClick('/bons/devis')}>
+            <Menu.Item key="/bons/devis" icon={<FileAddOutlined />} onClick={() => handleMenuClick('/bons/devis')}>
               Devis
             </Menu.Item>
-            <Menu.Item key="/bons/commande" onClick={() => handleMenuClick('/bons/commande')}>
+            <Menu.Item key="/bons/commande" icon={<FileProtectOutlined />} onClick={() => handleMenuClick('/bons/commande')}>
               Bons de Commande
             </Menu.Item>
-            <Menu.Item key="/bons/retour" onClick={() => handleMenuClick('/bons/retour')}>
+            <Menu.Item key="/bons/retour" icon={<RollbackOutlined />} onClick={() => handleMenuClick('/bons/retour')}>
               Bons de Retour
             </Menu.Item>
           </SubMenu>
         </SubMenu>
 
         <SubMenu key="reglements" icon={<AccountBookOutlined />} title="Règlements">
-          <Menu.Item key="/reglements/factures" icon={<FileOutlined />} onClick={() => handleMenuClick('/reglements/factures')}>
+          <Menu.Item key="/reglements/factures" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/reglements/factures')}>
             Factures
           </Menu.Item>
           <Menu.Item key="/reglements/traites" icon={<BankOutlined />} onClick={() => handleMenuClick('/reglements/traites')}>
@@ -89,36 +102,38 @@ function SideMenu() {
           </Menu.Item>
         </SubMenu>
 
-        {/* Fournisseurs */}
+        {/* --- CYCLE ACHATS --- */}
         <Menu.Item key="/fournisseurs" icon={<InboxOutlined />} onClick={() => handleMenuClick('/fournisseurs')}>
           Fournisseurs
         </Menu.Item>
 
-        {/* Gestion des Achats */}
-        <SubMenu key="achats" icon={<ShoppingOutlined />} title="Gestion des Achats">
-          <Menu.Item key="/achats/matieres" onClick={() => handleMenuClick('/achats/matieres')}>
+        <SubMenu key="achats" icon={<ShoppingCartOutlined />} title="Gestion des Achats">
+          <Menu.Item key="/achats/matieres" icon={<GoldOutlined />} onClick={() => handleMenuClick('/achats/matieres')}>
             Matières Premières
           </Menu.Item>
-          <Menu.Item key="/achats/consommables" onClick={() => handleMenuClick('/achats/consommables')}>
+          <Menu.Item key="/achats/consommables" icon={<AppstoreOutlined />} onClick={() => handleMenuClick('/achats/consommables')}>
             Consommables
           </Menu.Item>
-          <Menu.Item key="/achats" onClick={() => handleMenuClick('/achats')}>
+          <Menu.Item key="/achats" icon={<ShoppingCartOutlined />} onClick={() => handleMenuClick('/achats')}>
             Autres Achats
           </Menu.Item>
         </SubMenu>
 
-        {/* Bons de Livraison */}
-        <Menu.Item key="/achats/bon-livraison" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/achats/bon-livraison')}>
+        <Menu.Item key="/achats/bon-livraison" icon={<FileDoneOutlined />} onClick={() => handleMenuClick('/achats/bon-livraison')}>
           Bons de Livraison
         </Menu.Item>
 
-        {/* Factures */}
-        <Menu.Item key="/achats/factures-matieres" icon={<FileOutlined />} onClick={() => handleMenuClick('/achats/factures-matieres')}>
+        <Menu.Item key="/achats/factures-matieres" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/achats/factures-matieres')}>
           Factures
         </Menu.Item>
 
+        {/* --- GESTION GLOBALE --- */}
         <Menu.Item key="/reglements/rapport" icon={<BarChartOutlined />} onClick={() => handleMenuClick('/reglements/rapport')}>
           Rapport
+        </Menu.Item>
+
+        <Menu.Item key="/tresorerie" icon={<DollarCircleOutlined  />} onClick={() => handleMenuClick('/tresorerie')}>
+          Trésorerie
         </Menu.Item>
       </Menu>
     </div>

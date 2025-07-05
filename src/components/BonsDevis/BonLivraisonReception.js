@@ -585,20 +585,22 @@ const getMaterialTypeColor = (type) => {
     }}
   />
 
-  {(filters.clientId || (filters.dateRange && filters.dateRange.length) || filters.numeroSearch) && (
-    <Button danger onClick={() => {
-      setFilters({
-        clientId: null,
-        dateRange: null,
-        numeroSearch: "",
-        status: null,
-      });
-      setPagination(prev => ({ ...prev, current: 1 }));
-      fetchDeliveryNotes();
-    }}>
-      Réinitialiser les filtres
-    </Button>
-  )}
+<Button
+
+  onClick={() => {
+    setFilters({
+      clientId: null,
+      dateRange: null,
+      numeroSearch: "",
+      status: null,
+    });
+    setPagination(prev => ({ ...prev, current: 1 }));
+    fetchDeliveryNotes();
+  }}
+>
+Effacer les filtres
+</Button>
+
 </div>
 
         {/* Active filters display */}

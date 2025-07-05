@@ -778,12 +778,7 @@ const BonRetour = () => {
     flexWrap: "wrap", // au cas où la fenêtre est petite
   }}
 >
-  <Button
-    icon={<ReloadOutlined />}
-    onClick={fetchBonsRetour}
-  >
-    Actualiser
-  </Button>
+ 
 
   <Button
     onClick={() => {

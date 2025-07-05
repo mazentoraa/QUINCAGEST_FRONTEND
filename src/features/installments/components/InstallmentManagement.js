@@ -277,6 +277,7 @@ const InstallmentManagement = () => {
                         <th>Numéro de Facture</th>
                         <th>Montant Total</th>
                         <th>Nombre de Traites</th>
+                        <th>Banque</th> {/* Colonne banque ajoutée */}
                         <th>Status</th>
                         <th>Actions</th>
                       </tr>
@@ -292,6 +293,7 @@ const InstallmentManagement = () => {
                           <td>{installment.numero_commande || installment.invoiceNumber || "N/A"}</td>
                           <td>{installment.montant_total ? parseFloat(installment.montant_total).toFixed(3) : "N/A"}</td>
                           <td>{installment.nombre_traite || installment.numberOfInstallments || "N/A"}</td>
+                          <td>{installment.bankName || "N/A"}</td> {/* Affichage banque */}
                           <td>
                             <span
                               className={`status-badge ${installment.status?.toLowerCase() || "unknown"}`}

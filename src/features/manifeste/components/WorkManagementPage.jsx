@@ -1238,15 +1238,19 @@ const fetchWorks = async () => {
   value={dateRangeFilter}
   onChange={(dates) => setDateRangeFilter(dates)}
 />
-          {selectedClientFilter && (
-            <Button
-              type="link"
-              onClick={() => setSelectedClientFilter(null)}
-              style={{ marginLeft: 8 }}
-            >
-              Réinitialiser le filtre
-            </Button>
-          )}
+       
+          {/* Bouton pour effacer tous les filtres */}
+<div style={{ marginLeft: 8 }}>
+  <Button
+
+    onClick={() => {
+      setSelectedClientFilter(null);
+      setDateRangeFilter(null);
+    }}
+  >
+    Effacer les filtres
+  </Button>
+</div>
         </div>
 
         {selectedClientFilter && (

@@ -184,15 +184,16 @@ const totalRemise = items.reduce((acc, item) => {
   const remise = prixUnitaire * quantite * (remisePourcentage / 100);
   return acc + remise;
 }, 0);
-
+const netCommercial = totalBrut - totalRemise;
 // FODEC = 1% du total brut
-const fodec = totalBrut * 0.01;
+const fodec = netCommercial * 0.01;
 
 // Total HTVA = total brut + FODEC
-const totalHTVA = totalBrut + fodec;
+const totalHTVA = netCommercial + fodec;
 
 // TVA = total HTVA * taux TVA (%)
-const totalTVA = (totalHTVA + fodec) * ((orderData.tax_rate || 0) / 100);
+const tvaPourcentage = orderData.tax_rate || 0;
+const totalTVA = totalHTVA * (tvaPourcentage / 100);
 
 // Timbre fiscal
 const timbreFiscal = orderData.timbre_fiscal || 0;

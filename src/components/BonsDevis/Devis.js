@@ -47,6 +47,9 @@ import dayjs from "dayjs";
 import DevisPdfService from "../../features/devis/services/DevisPdfService";
 import {
   FileDoneOutlined,
+   DollarCircleOutlined,
+  ClockCircleOutlined,
+
 } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
@@ -1025,25 +1028,50 @@ const handleConvertToOrder = async (devisToConvert = null) => {
             )}
         {/* Statistics Row */}
 
+
 <>
 
   <Title level={2} style={{ marginBottom: 24 }}><FileDoneOutlined /> Devis</Title>
 
-  <Row gutter={16} style={{ marginBottom: 16 }}>
+
+
+<Row gutter={16} style={{ marginBottom: 16 }}>
+  {/* Total devis */}
   <Col xs={24} sm={12} md={6} lg={6}>
     <Card bordered={false}>
-      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>Total devis</Title>
-      <Text style={{ fontSize: 20, fontWeight: '700'}} >
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+        Total devis
+      </Title>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "700",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
         <FileDoneOutlined style={{ marginRight: 8, color: "#1890ff" }} />
-        {Array.isArray(filteredDevisList) ? filteredDevisList.length : 0} / {Array.isArray(devisList) ? devisList.length : 0}
+        {Array.isArray(filteredDevisList) ? filteredDevisList.length : 0} /{" "}
+        {Array.isArray(devisList) ? devisList.length : 0}
       </Text>
     </Card>
   </Col>
 
+  {/* Montant total TTC */}
   <Col xs={24} sm={12} md={6} lg={6}>
     <Card bordered={false}>
-      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>Montant total TTC</Title>
-      <Text style={{ fontSize: 20, fontWeight: '700' }}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+        Montant total TTC
+      </Title>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "700",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <DollarCircleOutlined style={{ marginRight: 8, color: "#13c2c2" }} />
         {formatCurrency(
           (Array.isArray(filteredDevisList) ? filteredDevisList : []).reduce(
             (sum, devis) => sum + (Number(devis.montant_ttc) || 0),
@@ -1054,28 +1082,54 @@ const handleConvertToOrder = async (devisToConvert = null) => {
     </Card>
   </Col>
 
+  {/* En attente */}
   <Col xs={24} sm={12} md={6} lg={6}>
     <Card bordered={false}>
-      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>En attente</Title>
-      <Text style={{ fontSize: 20, fontWeight: '700', color: "#1890ff" }}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+        En attente
+      </Title>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "700",
+          color: "#fa8c16",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <ClockCircleOutlined style={{ marginRight: 8 }} />
         {Array.isArray(filteredDevisList)
-          ? filteredDevisList.filter(devis => devis.statut === "sent").length
+          ? filteredDevisList.filter((devis) => devis.statut === "sent").length
           : 0}
       </Text>
     </Card>
   </Col>
 
+  {/* Acceptés */}
   <Col xs={24} sm={12} md={6} lg={6}>
     <Card bordered={false}>
-      <Title level={4} style={{ color: "#555", fontWeight: '600' }}>Acceptés</Title>
-      <Text style={{ fontSize: 20, fontWeight: '700', color: "#52c41a" }}>
+      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
+        Acceptés
+      </Title>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "700",
+          color: "#52c41a",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <CheckCircleOutlined style={{ marginRight: 8 }} />
         {Array.isArray(filteredDevisList)
-          ? filteredDevisList.filter(devis => devis.statut === "accepted").length
+          ? filteredDevisList.filter((devis) => devis.statut === "accepted")
+              .length
           : 0}
       </Text>
     </Card>
   </Col>
 </Row>
+
 
 </>
 
@@ -1128,6 +1182,7 @@ const handleConvertToOrder = async (devisToConvert = null) => {
               <Option value="converted">Converti</Option>
             </Select>
           </Col>
+          
           <Col xs={24} sm={12} md={8} lg={6}>
             <DatePicker.RangePicker
               style={{ width: "100%" }}
@@ -1164,45 +1219,30 @@ const handleConvertToOrder = async (devisToConvert = null) => {
               </Input.Group>
             </Form.Item>
           </Col>
-          <Col flex="auto" style={{ textAlign: "right" }}>
-            <Space>
-              {(searchText ||
-                selectedClientFilter ||
-                selectedStatus ||
-                dateRange ||
-                priceRange[0] !== null ||
-                priceRange[1] !== null) && (
-                <Button
-                  onClick={() => {
-                    setSearchText("");
-                    setSelectedClientFilter(null);
-                    setSelectedStatus(null);
-                    setDateRange(null);
-                    setPriceRange([null, null]);
-                  }}
-                >
-                  Effacer les filtres
-                </Button>
-              )}
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={handleCreateDevis}
-              >
-                Nouveau Devis
-              </Button>
-              {/* <Button
-                icon={<FilePdfOutlined />}
-                // onClick={() => handleBatchAction("pdf")}
-                // disabled={selectedRowKeys.length === 0}
-              >
-                Exporter PDFs
-              </Button> */}
-              <Button icon={<ReloadOutlined />} onClick={fetchDevisList}>
-                Actualiser
-              </Button>
-            </Space>
-          </Col>
+         <Col flex="auto" style={{ textAlign: "right" }}>
+  <Space>
+    <Button
+      onClick={() => {
+        setSearchText("");
+        setSelectedClientFilter(null);
+        setSelectedStatus(null);
+        setDateRange(null);
+        setPriceRange([null, null]);
+      }}
+    >
+      Effacer les filtres
+    </Button>
+    <Button
+      type="primary"
+      icon={<PlusOutlined />}
+      onClick={handleCreateDevis}
+    >
+      Nouveau Devis
+    </Button>
+  </Space>
+</Col>
+
+          
         </Row>
 
         {/* Data Table */}

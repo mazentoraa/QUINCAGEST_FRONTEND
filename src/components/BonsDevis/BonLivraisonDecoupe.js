@@ -27,11 +27,15 @@ import {
 } from "antd";
 import {
   FilterOutlined,
-  ReloadOutlined,
+
   FileSearchOutlined,
   PrinterOutlined,
   EyeOutlined,
   DeleteOutlined,
+  FileDoneOutlined,
+  AppstoreOutlined,
+  DollarOutlined,
+  ShoppingCartOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import { debounce } from "lodash";
@@ -41,7 +45,7 @@ import InvoiceService from "../../features/manifeste/services/InvoiceService";
 import ClientService from "../../features/clientManagement/services/ClientService";
 // Import new PDF service
 import BonLivraisonDecoupePdfService from "../../services/BonLivraisonDecoupePdfService";
-import { FileDoneOutlined } from "@ant-design/icons";
+
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -529,18 +533,13 @@ if (currentFilters.montantRange) {
           }}
         >
           <Title level={2}><FileDoneOutlined /> Bon de Livraison Découpe</Title>
-          <Space size="middle">
-            <Tooltip title="Rafraîchir">
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => fetchInvoices()}
-              />
-            </Tooltip>
-          </Space>
+          
         </div>
 {/* Résumé global des bons de livraison */}
+
 <Card style={{ marginBottom: 24 }}>
   <Row gutter={16}>
+    {/* Total Bons */}
     <Col span={6}>
       <Card bordered={false}>
         <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
@@ -560,40 +559,70 @@ if (currentFilters.montantRange) {
       </Card>
     </Col>
 
+    {/* Total Articles */}
     <Col span={6}>
       <Card bordered={false}>
         <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
           Total Articles
         </Title>
-        <Text style={{ fontSize: 20, fontWeight: "700" }}>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: "700",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <AppstoreOutlined style={{ marginRight: 8, color: "#722ed1" }} />
           {computeGlobalStats().totalArticles}
         </Text>
       </Card>
     </Col>
 
+    {/* Montant HT */}
     <Col span={6}>
       <Card bordered={false}>
         <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
           Montant HT
         </Title>
-        <Text style={{ fontSize: 20, fontWeight: "700" }}>
-          {computeGlobalStats().totalHT.toFixed(3)} 
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: "700",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <DollarOutlined style={{ marginRight: 8, color: "#faad14" }} />
+          {computeGlobalStats().totalHT.toFixed(3)}
         </Text>
       </Card>
     </Col>
 
+    {/* Montant TTC */}
     <Col span={6}>
       <Card bordered={false}>
         <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
           Montant TTC
         </Title>
-        <Text style={{ fontSize: 20, fontWeight: "700" }}>
-          {computeGlobalStats().totalTTC.toFixed(3)} 
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: "700",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <DollarOutlined style={{ marginRight: 8, color: "#52c41a" }} />
+          
+          
+          {computeGlobalStats().totalTTC.toFixed(3)}
         </Text>
       </Card>
     </Col>
   </Row>
 </Card>
+
 
 {/* Filtres simples visibles */}
 <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 16 }}>
@@ -663,19 +692,18 @@ if (currentFilters.montantRange) {
   />
 </Input.Group>
 
+
+  </Col>
+  <Col>
+    {/* Bouton reset */}
+ <Button onClick={resetFilters}>
+    Effacer les filtres
+  </Button>
   </Col>
 </Row>
 
 
-  {/* Bouton reset */}
-  {(filters.clientId ||
-    filters.dateRange?.length ||
-    filters.numeroSearch ||
-    (filters.montantRange && (filters.montantRange[0] != null || filters.montantRange[1] != null))) && (
-    <Button danger onClick={resetFilters}>
-      Réinitialiser
-    </Button>
-  )}
+
 </div>
 
 
