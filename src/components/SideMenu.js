@@ -20,7 +20,9 @@ import {
   AppstoreOutlined,
   InboxOutlined,
   BarChartOutlined,
-  DollarCircleOutlined 
+  DollarCircleOutlined ,
+  InboxOutlined,
+  RollbackOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -96,6 +98,9 @@ function SideMenu() {
         <SubMenu key="reglements" icon={<AccountBookOutlined />} title="Règlements">
           <Menu.Item key="/reglements/factures" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/reglements/factures')}>
             Factures
+          </Menu.Item>
+          <Menu.Item key="/reglements/avoir" icon={<RollbackOutlined />} onClick={() => handleMenuClick('/reglements/avoir')}>
+            Avoir
           </Menu.Item>
           <Menu.Item key="/reglements/traites" icon={<BankOutlined />} onClick={() => handleMenuClick('/reglements/traites')}>
             Traites

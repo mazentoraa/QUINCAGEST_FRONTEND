@@ -96,7 +96,9 @@ const translatePaymentMethod = (method) => {
   return methodMap[method] || method || "N/A";
 };
 
-export default function BonCommande() {
+
+// This is used for facture and avoir (props contains a nature field which precises facture or avoir)
+export default function Facture(props) {
   const [selectedBonDetails, setSelectedBonDetails] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   
@@ -206,7 +208,9 @@ export default function BonCommande() {
     setLoading(true);
     setError(null);
     try {
-      const data = await cdsService.getOrders();
+      // Choose if facture or avoir, each one calls a function
+      const data = await cdsService.getOrders(props.nature)
+      console.log(data)
       setOrders(data);
       setFilteredOrders(data); // Initialize filteredOrders with all orders
     } catch (err) {
@@ -216,7 +220,7 @@ export default function BonCommande() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [props.nature]);
 
   // Function to filter orders based on search criteria
   const filterOrders = useCallback(() => {
@@ -364,10 +368,10 @@ export default function BonCommande() {
     fetchAvailableClients();
     fetchAvailableBons();
   }, [
-    fetchOrders,
     fetchAvailableProducts,
     fetchAvailableClients,
     fetchAvailableBons,
+    props.nature
   ]);
 
   const handleEditOrder = async (order) => {
@@ -542,7 +546,7 @@ export default function BonCommande() {
       setLoading(true);
 
       const taxRate = parseFloat(values.tax_rate) || 0;
-      const timbreFiscal = parseFloat(values.timbre_fiscal) || 1;
+      const timbreFiscal =  (props.nature == 'facture'? parseFloat(values.timbre_fiscal) || 1 : 0);
 
       if (isCreating) {
         if (!selectedClientId) {
@@ -571,9 +575,9 @@ export default function BonCommande() {
         setInvoiceType(values.type_facture)
         console.log("values: ", values)
         const orderPayload = {
+          nature: props.nature, // Facture ou avoir
           client_id: selectedClientId,
           client: selectedClientId,
-          // numero_commande: randomOrderNumber, // Remove this line - backend will generate
           date_commande: toISO(values.date_commande),
           date_livraison_prevue: toISO(values.date_livraison_prevue),
           type_facture: values.type_facture || "",
@@ -617,9 +621,9 @@ export default function BonCommande() {
         console.log("orderPayload ", orderPayload)
         const createdOrder = await cdsService.createOrder(orderPayload);
         message.success(
-          `Commande ${
+          `${props.nature == 'facture'? 'Facture' : 'Avoir'} ${
             createdOrder.numero_commande || formatInvoiceNumber(createdOrder)
-          } créée avec succès!`
+          } créé${props.nature == 'facture'? 'e' : ''} avec succès!`
         );
       } else {
         // Updating an existing order
@@ -670,8 +674,6 @@ export default function BonCommande() {
           ],
           mode_paiement: values.mode_paiement,
         };
-        console.log(newOrderBon)
-        console.log(currentBonInDrawer)
         // If client_id is in `values` (meaning it could have been changed in the form for an existing order)
         if (values.client_id) {
           orderPayload.client_id = values.client_id;
@@ -694,9 +696,8 @@ export default function BonCommande() {
         // but good for consistency if drawer remained open.
         // setEditingOrder(updatedOrder);
         // recalculateTotalsInDrawer(updatedOrder.produit_commande || currentProductsInDrawer, updatedOrder.tax_rate || taxRate);
-        message.success("Commande mise à jour avec succès!");
+        message.success(`${props.nature == 'facture'? 'Facture mise' : 'Avoir mis'} à jour avec succès!`);
       }
-
       handleDrawerClose();
       fetchOrders();
     } catch (errorInfo) {
@@ -759,7 +760,6 @@ export default function BonCommande() {
         if (bonAlreadyAdded) {
           continue;
         }
-        console.log(bon)
         bon.items.forEach((item)=> {
           item.bonId = bon.id
           item.bon_numero = bon.numero_facture
@@ -1413,7 +1413,7 @@ export default function BonCommande() {
           <table>
             <thead>
       <tr>
-        <th>N° Facture</th>
+        <th>N° ${props.nature == 'facture' ? 'Facture' : 'Avoir'}</th>
         <th>Client</th>
         <th>Date</th>
         <!-- Removed Statut column as per user request -->
@@ -1444,12 +1444,14 @@ export default function BonCommande() {
                 .join("")}
             </tbody>
           </table>
+          ${props.nature == 'facture'?
           <tr>
             <td colspan="4" style="text-align: right; font-weight: bold;">Timbre Fiscal:</td>
             <td style="text-align: right; font-weight: bold;">${formatCurrency(
               summaryData.timbreFiscal || 0
             )}</td>
           </tr>
+          : ''}
         </body>
       </html>
     `;
@@ -1514,7 +1516,7 @@ export default function BonCommande() {
 
   const columns = [
     {
-      title: "N° Facture",
+      title: `N° ${props.nature == 'facture' ? 'Facture' : 'Avoir'}`,
       dataIndex: "id",
       key: "id",
       defaultSortOrder: "descend",
@@ -1535,7 +1537,7 @@ export default function BonCommande() {
         (a.code_client || "").localeCompare(b.code_client || ""),
     },
     {
-      title: "Date Facture",
+      title: `Date ${props.nature == 'facture' ? 'Facture' : 'Avoir'}`,
       dataIndex: "date_commande",
       key: "date_commande",
       render: (date) => (date ? moment(date).format("DD/MM/YYYY") : ""),
@@ -1576,8 +1578,7 @@ export default function BonCommande() {
       dataIndex: "montant_ttc",
       key: "montant_ttc",
       render: (amount, record) => {
-        // Add timbre (1  ) to montant_ttc
-        const total = (Number(amount) || 0) + 1;
+        const total = (Number(amount) || 0);
         return formatCurrency(total);
       },
       sorter: (a, b) =>
@@ -1605,7 +1606,7 @@ export default function BonCommande() {
           </Tooltip>
           <Tooltip title="Supprimer">
             <Popconfirm
-              title="Êtes-vous sûr de vouloir supprimer cette facture ?"
+              title={`Êtes-vous sûr de vouloir supprimer ${props.nature == 'facture' ? 'cette facture' : 'cet avoir'} ?`}
               onConfirm={() => handleDeleteOrder(record.id)}
               okText="Oui"
               cancelText="Non"
@@ -1666,103 +1667,46 @@ export default function BonCommande() {
           <Row gutter={[16, 16]} align="middle">
             <Col span={24}>
               <Title level={2}>
-                <FileDoneOutlined /> Factures
+                <FileDoneOutlined /> {props.nature == 'facture' ? 'Factures' : 'Avoirs'}
               </Title>
             </Col>
           </Row>
 
           {/* Statistics */}
-
-<Row gutter={16} style={{ marginBottom: 16 }}>
-  {/* Total Factures */}
-  <Col span={6}>
-    <Card bordered={false}>
-      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
-        Total Factures
-      </Title>
-      <Text
-        style={{
-          fontSize: 20,
-          fontWeight: "700",
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <FileDoneOutlined style={{ marginRight: 8, color: "#1890ff" }} />
-        {filteredOrders.length}
-      </Text>
-    </Card>
-  </Col>
-
-  {/* Montant Total TTC */}
-  <Col span={6}>
-    <Card bordered={false}>
-      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
-        Montant Total TTC
-      </Title>
-      <Text
-        style={{
-          fontSize: 20,
-          fontWeight: "700",
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <DollarCircleOutlined style={{ marginRight: 8, color: "#faad14" }} />
-        {formatCurrency(totalAmount)}
-      </Text>
-    </Card>
-  </Col>
-
-  {/* En Attente */}
-  <Col span={6}>
-    <Card bordered={false}>
-      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
-        En Attente
-      </Title>
-      <Text
-        style={{
-          fontSize: 20,
-          fontWeight: "700",
-          color: "#fa8c16",
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <ClockCircleOutlined style={{ marginRight: 8 }} />
-        {
-          filteredOrders.filter((o) => o.statut === "pending").length
-        }
-      </Text>
-    </Card>
-  </Col>
-
-  {/* Terminées */}
-  <Col span={6}>
-    <Card bordered={false}>
-      <Title level={4} style={{ color: "#555", fontWeight: "600" }}>
-        Terminées
-      </Title>
-      <Text
-        style={{
-          fontSize: 20,
-          fontWeight: "700",
-          color: "#52c41a",
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <CheckCircleOutlined style={{ marginRight: 8 }} />
-        {
-          filteredOrders.filter((o) => o.statut === "completed").length
-        }
-      </Text>
-    </Card>
-  </Col>
-</Row>
-
-
-
+          <Row gutter={16} style={{ marginBottom: 16 }}>
+            <Col span={6}>
+              <Statistic
+                title= {`Total ${props.nature == 'facture' ? 'Factures' : 'Avoirs'}`}
+                value={filteredOrders.length}
+                prefix={<FileDoneOutlined />}
+              />
+            </Col>
+            <Col span={6}>
+              <Statistic
+                title="Montant Total TTC"
+                value={totalAmount}
+                formatter={(value) => formatCurrency(value)}
+              />
+            </Col>
+            <Col span={6}>
+              <Statistic
+                title="En Attente"
+                value={
+                  filteredOrders.filter((o) => o.statut === "pending").length
+                }
+                valueStyle={{ color: "#fa8c16" }}
+              />
+            </Col>
+            <Col span={6}>
+              <Statistic
+                title="Terminées"
+                value={
+                  filteredOrders.filter((o) => o.statut === "completed").length
+                }
+                valueStyle={{ color: "#52c41a" }}
+              />
+            </Col>
+          </Row>
           <Divider />
 
           {/* Filters */}
@@ -1839,45 +1783,52 @@ export default function BonCommande() {
           </Row>
 
           {/* Action buttons */}
-    <Row gutter={16} justify="end" style={{ marginBottom: 16 }}>
-  <Col>
-    <Button
-      type="primary"
-      icon={<PlusOutlined />}
-      onClick={handleCreateOrder}
-    >
-      Nouvelle Facture
-    </Button>
-  </Col>
-
-  {selectedRowKeys.length > 0 && (
-    <>
-      <Col>
-        <Badge count={selectedRowKeys.length}>
-          <Button
-            icon={<PrinterOutlined />}
-            onClick={handlePrintSelectedOrdersSummary}
-          >
-            Imprimer Sélection
-          </Button>
-        </Badge>
-      </Col>
-      <Col>
-        <Popconfirm
-          title="Supprimer les Facture sélectionnées ?"
-          onConfirm={handleDeleteSelected}
-          okText="Oui"
-          cancelText="Non"
-        >
-          <Button danger icon={<DeleteOutlined />}>
-            Supprimer Sélection
-          </Button>
-        </Popconfirm>
-      </Col>
-    </>
-  )}
-</Row>
-
+          <Row gutter={16} style={{ marginBottom: 16 }}>
+            <Col>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleCreateOrder}
+              >
+                {props.nature == 'facture' ? 'Nouvelle Facture' : 'Nouveau Avoir'}
+              </Button>
+            </Col>
+            <Col>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={fetchOrders}
+                loading={loading}
+              >
+                Actualiser
+              </Button>
+            </Col>
+            {selectedRowKeys.length > 0 && (
+              <>
+                <Col>
+                  <Badge count={selectedRowKeys.length}>
+                    <Button
+                      icon={<PrinterOutlined />}
+                      onClick={handlePrintSelectedOrdersSummary}
+                    >
+                      Imprimer Sélection
+                    </Button>
+                  </Badge>
+                </Col>
+                <Col>
+                  <Popconfirm
+                    title={`Supprimer les ${props.nature == 'facture' ? 'factures' : 'avoirs'} sélectionnées ?`}
+                    onConfirm={handleDeleteSelected}
+                    okText="Oui"
+                    cancelText="Non"
+                  >
+                    <Button danger icon={<DeleteOutlined />}>
+                      Supprimer Sélection
+                    </Button>
+                  </Popconfirm>
+                </Col>
+              </>
+            )}
+          </Row>
         </div>
         <Spin spinning={loading}>
           <Table
@@ -1902,8 +1853,8 @@ export default function BonCommande() {
       <Drawer
         title={
           isCreating
-            ? "Nouvelle Facture"
-            : `Modifier Facture ${editingOrder?.numero_commande || ""}`
+            ? `${props.nature == 'facture' ? 'Nouvelle Facture' : 'Nouveau Avoir'}`
+            : `Modifier ${props.nature == 'facture' ? 'Facture' : 'Avoir'} ${editingOrder?.numero_commande || ""}`
         }
         width={800}
         onClose={handleDrawerClose}
@@ -1964,7 +1915,7 @@ export default function BonCommande() {
             <Col span={12}>
               <Form.Item
                 name="date_commande"
-                label="Date Facture"
+                label={`Date ${props.nature == 'facture' ? 'Facture' : 'Avoir'}`}
                 rules={[
                   { required: true, message: "Veuillez entrer une date" },
                 ]}
@@ -2027,32 +1978,34 @@ export default function BonCommande() {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item name="timbre_fiscal" label="Timbre Fiscal">
-                <InputNumber
-                  min={0}
-                  style={{ width: "100%" }}
-                  step={0.01}
-                  onChange={(value) => {
-                    const currentTaxRate =
-                      drawerForm.getFieldValue("tax_rate") || 0;
-                    recalculateTotalsInDrawer(
-                      currentProductsInDrawer,
-                      currentTaxRate,
-                      currentBonInDrawer
-                    );
-                  }}
-                  />
-              </Form.Item>
-            </Col>
+            {props.nature == 'facture'?
+              <Col span={12}>
+                <Form.Item name="timbre_fiscal" label="Timbre Fiscal">
+                  <InputNumber
+                    min={0}
+                    style={{ width: "100%" }}
+                    step={0.01}
+                    onChange={(value) => {
+                      const currentTaxRate =
+                        drawerForm.getFieldValue("tax_rate") || 0;
+                      recalculateTotalsInDrawer(
+                        currentProductsInDrawer,
+                        currentTaxRate,
+                        currentBonInDrawer
+                      );
+                    }}
+                    />
+                </Form.Item>
+              </Col> 
+            : ''}
             <Col span={12}>
               <Form.Item
-                label="Type de facture"
+                label={`Type ${props.nature == 'facture' ? 'de facture' : 'd\'avoir'}`}
                 name="type_facture"
                 rules={[
                   {
                     required: true,
-                    message: "Veuillez sélectionner un type de facture",
+                    message: `Veuillez sélectionner un type ${props.nature == 'facture' ? 'de facture' : 'd\'avoir'}`,
                   },
                 ]}
               >
@@ -2258,15 +2211,17 @@ export default function BonCommande() {
                 />
               </Form.Item>
             </Col>
-            <Col span={8}>
-              <Form.Item name="timbre_fiscal" label="Timbre Fiscal">
-                <InputNumber
-                  style={{ width: "100%" }}
-                  formatter={(value) => formatCurrency(value)}
-                  disabled
-                />
-              </Form.Item>
-            </Col>
+            {props.nature == 'facture'?
+              <Col span={8}>
+                <Form.Item name="timbre_fiscal" label="Timbre Fiscal">
+                  <InputNumber
+                    style={{ width: "100%" }}
+                    formatter={(value) => formatCurrency(value)}
+                    disabled
+                  />
+                </Form.Item>
+              </Col>
+            : ''}
             <Col span={8}>
               <Form.Item name="montant_ttc_display" label="Montant TTC">
                 <InputNumber
