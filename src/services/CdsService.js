@@ -5,9 +5,11 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:800
 const API_URL = `${API_BASE_URL}/cds`;
 
 class CdsService {
-  async getOrders() {
+  async getOrders(nature=null) {
     try {
-      const response = await axios.get(`${API_URL}/`);
+      const response = await axios.get(`${API_URL}/`,{
+        params: nature ? { nature } : {}, // only add param if nature (facture ou avoir) is passed
+      });
       // Handle both array and paginated response formats
       if (response.data && response.data.results !== undefined) {
         return response.data.results;
@@ -18,7 +20,7 @@ class CdsService {
       throw error;
     }
   }
-
+  
   async getPlansTraite() {
     try {
       const response = await axios.get(`${API_BASE_URL}/plans-traite/`);

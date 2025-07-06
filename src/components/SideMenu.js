@@ -10,7 +10,8 @@ import {
   BankOutlined,
   BarChartOutlined,
   CarOutlined,
-  InboxOutlined
+  InboxOutlined,
+  RollbackOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -85,6 +86,9 @@ function SideMenu() {
         <SubMenu key="reglements" icon={<AccountBookOutlined />} title="Règlements">
           <Menu.Item key="/reglements/factures" icon={<FileOutlined />} onClick={() => handleMenuClick('/reglements/factures')}>
             Facture
+          </Menu.Item>
+          <Menu.Item key="/reglements/avoir" icon={<RollbackOutlined />} onClick={() => handleMenuClick('/reglements/avoir')}>
+            Avoir
           </Menu.Item>
           <Menu.Item key="/reglements/traites" icon={<BankOutlined />} onClick={() => handleMenuClick('/reglements/traites')}>
             Traites

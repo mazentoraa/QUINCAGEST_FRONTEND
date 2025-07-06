@@ -183,9 +183,9 @@ class FacturePdfApiService {
       return acc + remise;
     }, 0);
     const totalHTVA = orderData.montant_ht || 0;
-    const fodec = totalHTVA * 0.01;
+    const fodec = (orderData.nature == 'facture'? totalHTVA * 0.01 : 0);
     const totalTVA = (totalHTVA + fodec) * ((orderData.tax_rate || 0) / 100);
-    const timbreFiscal = orderData.timbre_fiscal || 0;
+    const timbreFiscal = (orderData.nature == 'facture'? orderData.timbre_fiscal || 0 : 0);
     const netAPayer = totalHTVA + fodec + totalTVA + timbreFiscal;
 
 
@@ -194,7 +194,7 @@ class FacturePdfApiService {
     <html lang="fr">
     <head>
         <meta charset="UTF-8">
-        <title>Facture RM METALASER</title>
+        <title>${orderData.nature == 'facture'? 'Facture' : 'Avoir'} RM METALASER</title>
         <script src="https://cdn.jsdelivr.net/npm/n2words/dist/n2words.umd.min.js"></script>
         <style>
             body {
@@ -335,11 +335,11 @@ class FacturePdfApiService {
       <!-- Facture Section -->
       <div style="width: 50%;">
         <div class="order-header" style="margin-bottom: 10px;">
-          <h2 style="text-align:center">Facture</h2>
+          <h2 style="text-align:center">${orderData.nature == 'facture'?'Facture': 'Avoir Client'}</h2>
         </div>
     <div style="display: flex; flex-direction: row;gap: 10px; width:100%">
           <div  style="flex: 1;" class="order-header">
-            <p><strong>Facture N°:</strong> <br> ${formatInvoiceNumber(orderData)}</p>
+            <p><strong>${orderData.nature == 'facture'? 'Facture' : 'Avoir'} N°:</strong> <br> ${formatInvoiceNumber(orderData)}</p>
           </div>
           
             <div  style="flex: 1;" class="order-header">
@@ -435,33 +435,35 @@ class FacturePdfApiService {
       <!-- Totals Table -->
       <table style=" width:32% ; border-collapse: collapse; font-family: Arial, sans-serif; margin-left: 10px; font-size: 12px;">
         <tr>
-          <td style="border: 1px solid black; padding: 2px;"><strong>Totale Brut</strong></td>
+          <td style="border: 1px solid black; padding: 2px;"><strong>Total Brut</strong></td>
           <td style="border: 1px solid black; padding: 2px;">${(totalBrut || 0).toFixed(3) }</td>
         </tr>
         <tr>
           <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
           <td style="border: 1px solid black; padding: 2px;">${ totalRemise.toFixed(3)}</td>
         </tr>
+        ${orderData.nature == 'facture'?
         <tr>
-      <td style="border: 1px solid black; padding: 2px;"><strong>Fodec (1%)</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${fodec.toFixed(3)}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${totalHTVA.toFixed(3)}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${totalTVA.toFixed(3)}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${timbreFiscal.toFixed(3)}</td>
-    </tr>
-    <tr>
-      <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${netAPayer.toFixed(3)}</td>
-    </tr>
+          <td style="border: 1px solid black; padding: 2px;"><strong>Fodec (1%)</strong></td>
+          <td style="border: 1px solid black; padding: 2px;">${fodec.toFixed(3)}</td>
+        </tr> : '' }
+        <tr>
+          <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
+          <td style="border: 1px solid black; padding: 2px;">${totalHTVA.toFixed(3)}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
+          <td style="border: 1px solid black; padding: 2px;">${totalTVA.toFixed(3)}</td>
+        </tr>
+        ${orderData.nature == 'facture'?
+        <tr>
+          <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
+          <td style="border: 1px solid black; padding: 2px;">${timbreFiscal.toFixed(3)}</td>
+        </tr> : '' }
+        <tr>
+          <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
+          <td style="border: 1px solid black; padding: 2px;">${netAPayer.toFixed(3)}</td>
+        </tr>
 
       </table>
     </div>
@@ -469,7 +471,7 @@ class FacturePdfApiService {
       <div style="display: flex; justify-content: space-between; gap: 0px; height: 120px;">
         <div style="flex: 1; border: 1px solid black; padding: 12px;">
           <p style="margin: 0;">
-            <strong>Arrêtée la présente facture à la somme de:</strong><br>
+            <strong>${orderData.nature == 'facture'? 'Arrêtée la présente facture': 'Arrêté le présent avoir'} à la somme de:</strong><br>
             ${this.formatMontantEnLettres(netAPayer)}
 
           </p>
