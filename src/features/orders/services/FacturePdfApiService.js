@@ -181,13 +181,12 @@ const totalRemise = items.reduce((acc, item) => {
   const quantite = item.quantite || 0;
   const remisePourcentage = item.remise_pourcentage || 0;
 
-<<<<<<< HEAD
   const remise = prixUnitaire * quantite * (remisePourcentage / 100);
   return acc + remise;
 }, 0);
 const netCommercial = totalBrut - totalRemise;
 // FODEC = 1% du total brut
-const fodec = netCommercial * 0.01;
+const fodec = (orderData.nature == 'facture'? netCommercial * 0.01 : 0);
 
 // Total HTVA = total brut + FODEC
 const totalHTVA = netCommercial + fodec;
@@ -197,20 +196,19 @@ const tvaPourcentage = orderData.tax_rate || 0;
 const totalTVA = totalHTVA * (tvaPourcentage / 100);
 
 // Timbre fiscal
-const timbreFiscal = orderData.timbre_fiscal || 0;
+const timbreFiscal = (orderData.nature == 'facture'? orderData.timbre_fiscal || 0 : 0);
 
 // Net à payer = HTVA + TVA + timbre
 const netAPayer = totalHTVA + totalTVA + timbreFiscal;
-=======
-      const remise = prixUnitaire * quantite * (remisePourcentage / 100);
-      return acc + remise;
-    }, 0);
-    const totalHTVA = orderData.montant_ht || 0;
-    const fodec = (orderData.nature == 'facture'? totalHTVA * 0.01 : 0);
-    const totalTVA = (totalHTVA + fodec) * ((orderData.tax_rate || 0) / 100);
-    const timbreFiscal = (orderData.nature == 'facture'? orderData.timbre_fiscal || 0 : 0);
-    const netAPayer = totalHTVA + fodec + totalTVA + timbreFiscal;
->>>>>>> mazen
+
+    // const remise = prixUnitaire * quantite * (remisePourcentage / 100);
+    //   return acc + remise;
+    // }, 0);
+    // const totalHTVA = orderData.montant_ht || 0;
+    // const fodec = (orderData.nature == 'facture'? totalHTVA * 0.01 : 0);
+    // const totalTVA = (totalHTVA + fodec) * ((orderData.tax_rate || 0) / 100);
+    // const timbreFiscal = (orderData.nature == 'facture'? orderData.timbre_fiscal || 0 : 0);
+    // const netAPayer = totalHTVA + fodec + totalTVA + timbreFiscal;
 
 
     return `
