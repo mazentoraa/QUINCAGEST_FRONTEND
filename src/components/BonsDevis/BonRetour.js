@@ -80,7 +80,7 @@ const BonRetour = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   const statusOptions = [
-    { label: "Brouillon", value: "draft", color: "default" },
+    { label: "Brouillé", value: "draft", color: "default" },
     { label: "Envoyé", value: "sent", color: "processing" },
     { label: "Terminé", value: "completed", color: "success" },
     { label: "Annulé", value: "cancelled", color: "error" },
@@ -207,33 +207,69 @@ const BonRetour = () => {
     setIsModalVisible(true);
   };
 
-  const handleEdit = async (record) => {
-    setEditingBonRetour(record);
-    form.setFieldsValue({
-      numero_bon: record.numero_bon,
-      client: record.client?.id || record.client,
-      date_reception: moment(record.date_reception),
-      date_retour: moment(record.date_retour),
-      status: record.status,
-      notes: record.notes,
-    });
+const handleEdit = async (record) => {
+  // Toujours récupérer les données complètes du bon de retour, y compris les matières
+  let recordWithDetails = record;
 
-    // Load available materials for this client
-    if (record.client?.id || record.client) {
-      await handleClientChange(record.client?.id || record.client);
+  try {
+    const fullRecord = await BonRetourService.getBonRetourWithMaterialDetails(record.id);
+    if (fullRecord) {
+      recordWithDetails = fullRecord;
     }
+  } catch (error) {
+    console.warn("Erreur lors du chargement complet du bon de retour :", error);
+  }
 
-    // Pre-populate selected materials
-    if (record.matiere_retours && record.matiere_retours.length > 0) {
-      const initialSelectedMaterials = record.matiere_retours.map((retour) => ({
-        materialId: retour.matiere?.id || retour.matiere,
-        quantite_retournee: retour.quantite_retournee,
-      }));
-      setSelectedMaterials(initialSelectedMaterials);
-    }
+  console.log("Détails matiere_retours lors de l'édition :", recordWithDetails.matiere_retours);
 
-    setIsModalVisible(true);
-  };
+  setEditingBonRetour(recordWithDetails);
+  console.log("Dates reçues pour l'édition:", {
+  date_reception: recordWithDetails.date_reception,
+  date_retour: recordWithDetails.date_retour,
+});
+console.log("Dates transformées en moment:", {
+  date_reception: recordWithDetails.date_reception ? moment(recordWithDetails.date_reception, "YYYY-MM-DD") : null,
+  date_retour: recordWithDetails.date_retour ? moment(recordWithDetails.date_retour, "YYYY-MM-DD") : null,
+});
+
+
+  // Remplissage des champs du formulaire avec parsing sécurisé des dates
+  form.setFieldsValue({
+    numero_bon: recordWithDetails.numero_bon,
+    client: recordWithDetails.client?.id || recordWithDetails.client,
+    date_reception: recordWithDetails.date_reception
+      ? moment(recordWithDetails.date_reception, "YYYY-MM-DD")
+      : null,
+    date_retour: recordWithDetails.date_retour
+      ? moment(recordWithDetails.date_retour, "YYYY-MM-DD")
+      : null,
+    status: recordWithDetails.status,
+    notes: recordWithDetails.notes,
+  });
+
+  // Préparation des matières
+  if (recordWithDetails.matiere_retours && recordWithDetails.matiere_retours.length > 0) {
+    const customMats = recordWithDetails.matiere_retours.map((retour) => ({
+  name: retour.nom_matiere || "",
+  quantite: retour.quantite_retournee || 0,
+}));
+
+    setCustomMaterials(customMats);
+  } else {
+    setCustomMaterials([{ name: "", quantite: 0 }]);
+  }
+
+  // Chargement des matières disponibles du client
+  const clientId =
+    recordWithDetails.client?.id || recordWithDetails.client;
+  if (clientId) {
+    await handleClientChange(clientId);
+  }
+
+  setIsModalVisible(true);
+};
+
+
 
   const handleDelete = async (id) => {
     try {
@@ -362,15 +398,17 @@ const BonRetour = () => {
     }
   };
 
-  const handleStatusChange = async (record, newStatus) => {
-    try {
-      await BonRetourService.updateBonRetourStatus(record.id, newStatus);
-      message.success("Statut mis à jour avec succès");
-      fetchBonsRetour();
-    } catch (error) {
-      message.error("Erreur lors de la mise à jour du statut");
-    }
-  };
+const handleStatusChange = async (record, newStatus) => {
+  try {
+    await BonRetourService.updateBonRetourStatus(record.id, newStatus);
+    message.success("Statut mis à jour avec succès");
+    // Recharge la liste seulement, pas le formulaire
+    fetchBonsRetour();
+  } catch (error) {
+    message.error("Erreur lors de la mise à jour du statut");
+  }
+};
+
 
   const generateBonRetourPDF = async (recordFromList) => {
     console.log(recordFromList);
@@ -521,35 +559,52 @@ const BonRetour = () => {
       render: (date) => moment(date).format("DD/MM/YYYY"),
       sorter: true,
     },
-    {
-      title: "Date Réception",
-      dataIndex: "date_reception",
-      key: "date_reception",
-      render: (date) => moment(date).format("DD/MM/YYYY"),
-      sorter: true,
-    },
-    {
-      title: "Statut",
-      dataIndex: "status",
-      key: "status",
-      render: (status, record) => {
-        const statusConfig = statusOptions.find((s) => s.value === status);
-        return (
-          <Select
-            value={status}
-            style={{ width: 120 }}
-            onChange={(newStatus) => handleStatusChange(record, newStatus)}
-            size="small"
-          >
-            {statusOptions.map((option) => (
-              <Select.Option key={option.value} value={option.value}>
-                <Tag color={option.color}>{option.label}</Tag>
-              </Select.Option>
-            ))}
-          </Select>
-        );
-      },
-    },
+   
+{
+  title: "Statut",
+  dataIndex: "status",
+  key: "status",
+  render: (status, record) => {
+    const statusConfig = statusOptions.find((s) => s.value === status);
+
+    const gradients = {
+      draft: "linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%)",
+      sent: "linear-gradient(135deg, #91d5ff 0%, #1890ff 100%)",
+      completed: "linear-gradient(135deg, #b7eb8f 0%, #52c41a 100%)",
+      cancelled: "linear-gradient(135deg, #ffa39e 0%, #ff4d4f 100%)",
+    };
+
+    const icons = {
+      draft: <FileTextOutlined style={{ marginRight: 6 }} />,
+      sent: <SendOutlined style={{ marginRight: 6 }} />,
+      completed: <CheckCircleOutlined style={{ marginRight: 6 }} />,
+      cancelled: <CloseCircleOutlined style={{ marginRight: 6 }} />,
+    };
+
+    return (
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "4px 12px",
+          borderRadius: 20,
+          fontWeight: "600",
+          color: status === "draft" ? "#000" : "#fff",
+          background: gradients[status] || "#eee",
+          userSelect: "none",
+          boxShadow: "0 2px 8px rgb(0 0 0 / 0.1)",
+          cursor: "default",
+          whiteSpace: "nowrap",
+        }}
+        title={statusConfig?.label || status}
+      >
+        {icons[status]}
+        <span>{statusConfig?.label || status}</span>
+      </div>
+    );
+  },
+},
     {
       title: "Matières",
       key: "materials_count",
@@ -896,35 +951,33 @@ const BonRetour = () => {
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
-                  name="date_retour"
-                  label="Date de Retour"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Veuillez sélectionner la date de retour",
-                    },
-                  ]}
-                >
-                  <div>
-                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
-                  </div>
-                </Form.Item>
+  name="date_retour"
+  label="Date de Retour"
+  rules={[
+    {
+      required: true,
+      message: "Veuillez sélectionner la date de retour",
+    },
+  ]}
+>
+  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+</Form.Item>
+
               </Col>
               <Col span={12}>
-                <Form.Item
-                  name="date_reception"
-                  label="Date de Réception"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Veuillez sélectionner la date de réception",
-                    },
-                  ]}
-                >
-                  <div>
-                  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY"/>
-                  </div>
-                </Form.Item>
+               <Form.Item
+  name="date_reception"
+  label="Date de Réception"
+  rules={[
+    {
+      required: true,
+      message: "Veuillez sélectionner la date de réception",
+    },
+  ]}
+>
+  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+</Form.Item>
+
               </Col>
             </Row>
 
