@@ -369,7 +369,7 @@ const totals = {
         <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(totalTVA)}</td>
       </tr>
       <tr style="height: 20px;">
-        <td colspan="2" style="border: 1px solid black; padding: 8px;">${this.formatCurrency(totals.totalHT)}</td>
+        <td colspan="2" style="border: 1px solid black; padding: 8px;">${this.formatCurrency(totalHTVA)}</td>
         <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(totalTVA)}</td>
       </tr>
     </tbody>

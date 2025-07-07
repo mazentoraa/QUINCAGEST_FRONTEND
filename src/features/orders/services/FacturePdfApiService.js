@@ -443,8 +443,8 @@ const netAPayer = totalHTVA + totalTVA + timbreFiscal;
             <td style="border: 1px solid black; padding: 8px;">${totalTVA.toFixed(3)}</td>
           </tr>
           <tr style="height: 20px;">
-            <td colspan="2" style="border: 1px solid black; padding: 8px;">${(orderData.montant_ht || 0).toFixed(3)}</td>
-            <td style="border: 1px solid black; padding: 8px;">${(orderData.montant_tva || 0).toFixed(3)}</td>
+            <td colspan="2" style="border: 1px solid black; padding: 8px;">${totalHTVA.toFixed(3)}</td>
+            <td style="border: 1px solid black; padding: 8px;">${totalTVA.toFixed(3)}</td>
           </tr>
         </tbody>
       </table>
