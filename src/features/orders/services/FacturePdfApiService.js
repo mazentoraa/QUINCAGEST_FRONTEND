@@ -464,11 +464,11 @@ const netAPayer = totalHTVA + totalTVA + timbreFiscal;
           <td style="border: 1px solid black; padding: 2px;"><strong>Total Remise</strong></td>
           <td style="border: 1px solid black; padding: 2px;">${ totalRemise.toFixed(3)}</td>
         </tr>
-        ${orderData.nature == 'facture'?
+        ${orderData.nature == 'facture'? `
         <tr>
           <td style="border: 1px solid black; padding: 2px;"><strong>Fodec (1%)</strong></td>
           <td style="border: 1px solid black; padding: 2px;">${fodec.toFixed(3)}</td>
-        </tr> : '' }
+        </tr>` : '' }
         <tr>
           <td style="border: 1px solid black; padding: 2px;"><strong>Total HTVA</strong></td>
           <td style="border: 1px solid black; padding: 2px;">${totalHTVA.toFixed(3)}</td>
@@ -478,10 +478,10 @@ const netAPayer = totalHTVA + totalTVA + timbreFiscal;
           <td style="border: 1px solid black; padding: 2px;">${totalTVA.toFixed(3)}</td>
         </tr>
         ${orderData.nature == 'facture'?
-        <tr>
+        `<tr>
           <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
           <td style="border: 1px solid black; padding: 2px;">${timbreFiscal.toFixed(3)}</td>
-        </tr> : '' }
+        </tr>` : '' }
         <tr>
           <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
           <td style="border: 1px solid black; padding: 2px;">${netAPayer.toFixed(3)}</td>
