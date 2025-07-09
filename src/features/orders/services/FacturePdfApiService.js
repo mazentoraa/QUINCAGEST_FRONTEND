@@ -143,7 +143,7 @@ class FacturePdfApiService {
                 ${totalHT.toFixed(3)}
               </td>
               <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-                ${fodecVal.toFixed(3)}
+                1 %
               </td>
               <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
                 ${totalHTVA.toFixed(3)}
@@ -192,7 +192,7 @@ class FacturePdfApiService {
             ${totalHT.toFixed(3)}
           </td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-            ${fodecVal.toFixed(3)}
+            1 %
           </td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
             ${totalHTVA.toFixed(3)}
@@ -432,14 +432,14 @@ const netAPayer = totalHTVA + totalTVA + timbreFiscal;
         :''}
         <th style="width: 8%; text-align: center; vertical-align: middle; border: 1px solid #000;">Code</th>
         <th style="width: 18%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
-        <th style="width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
-        <th style="width: 16%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
-        <th style=" width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
-        <th style="width: 18%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
-        <th style="width: 8%;text-align: center; vertical-align: middle; border: 1px solid #000;">Fodec</th>
-        <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HTVA</th>
-        <th style="width: 7%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
-        <th style="width: 22%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
+        <th style="width: 6%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
+        <th style="width: 13%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
+        <th style="width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
+        <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
+        <th style="width: 6%; text-align: center; vertical-align: middle; border: 1px solid #000;">Fodec</th>
+        <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HTVA</th>
+        <th style="width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
+        <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
       </tr>
     </thead>
                 <tbody>
