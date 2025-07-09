@@ -438,8 +438,8 @@ const netAPayer = totalHTVA + totalTVA + timbreFiscal;
         <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
         <th style="width: 6%; text-align: center; vertical-align: middle; border: 1px solid #000;">Fodec</th>
         <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HTVA</th>
-        <th style="width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
-        <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
+        <th style="width: 5%; text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
+        <th style="width: 18%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
       </tr>
     </thead>
                 <tbody>
