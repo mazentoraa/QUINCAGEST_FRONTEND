@@ -59,7 +59,6 @@ const { cdsService } = getApiService();
 const { Option } = Select;
 const { Title } = Typography;
 
-// Fix the formatCurrency function
 const formatCurrency = (amount, currency = " ") => {
   return new Intl.NumberFormat("fr-TN", {
     style: "decimal",
@@ -639,6 +638,7 @@ export default function Facture(props) {
         const { produit_commande, produits, ...restOfEditingOrder } =
           editingOrder;
         setInvoiceType(values.type_facture)
+        console.log(currentProductsInDrawer)
         const orderPayload = {
           ...restOfEditingOrder, // Base with existing data (excluding old product lists)
           ...values, // Override with form values (like notes, dates, status, client_id if changed)
@@ -654,8 +654,8 @@ export default function Facture(props) {
           produit_commande: [
             ...currentProductsInDrawer.map((p) => ({
               id: p.id,
-              bon_id: p.bonId,
-              bon_numero: p.bon_numero,
+              // bon_id: p.bonId,
+              // bon_numero: p.bon_numero,
               produit: p.produit_id || p.produit,
               quantite: p.quantite,
               prix_unitaire: p.prix_unitaire,
@@ -691,6 +691,8 @@ export default function Facture(props) {
           editingOrder.id,
           orderPayload
         );
+        console.log("updatedOrder", updatedOrder)
+        console.log("orderPayload", orderPayload)
         setCheckedBons([])
         // The setEditingOrder and recalculateTotalsInDrawer might be redundant here if closing drawer
         // but good for consistency if drawer remained open.
@@ -947,23 +949,27 @@ export default function Facture(props) {
         } else {
           // Call API to add product if it doesn't exist already
           // The backend should return the full product line item, including its own ID
-          const addedProductFromApi = await cdsService.addProductToOrder(
-            editingOrder.id,
-            newProductData // Send newProductData, backend assigns ID to the line item
-          );
+
+
+          // const addedProductFromApi = await cdsService.addProductToOrder(
+          //   editingOrder.id,
+          //   newProductData // Send newProductData, backend assigns ID to the line item
+          // );
+
+
           // Ensure addedProductFromApi has prix_total or calculate it
-          if (
-            addedProductFromApi &&
-            typeof addedProductFromApi.prix_total === "undefined"
-          ) {
-            addedProductFromApi.prix_total =
-              (addedProductFromApi.quantite || 0) *
-              (addedProductFromApi.prix_unitaire || 0) *
-              (1 - (addedProductFromApi.remise_pourcentage || 0) / 100);
-          }
+          // if (
+          //   addedProductFromApi &&
+          //   typeof addedProductFromApi.prix_total === "undefined"
+          // ) {
+          //   addedProductFromApi.prix_total =
+          //     (addedProductFromApi.quantite || 0) *
+          //     (addedProductFromApi.prix_unitaire || 0) *
+          //     (1 - (addedProductFromApi.remise_pourcentage || 0) / 100);
+          // }
           const newProductsList = [
             ...currentProductsInDrawer,
-            addedProductFromApi,
+            // addedProductFromApi,
           ];
           setCurrentProductsInDrawer(newProductsList);
           recalculateTotalsInDrawer(
@@ -2299,6 +2305,7 @@ export default function Facture(props) {
           </Form.Item>
         </Form>
       </Modal>
+
       {/* Bon Modal */}
       <Modal
         title="Ajouter un Bon"
