@@ -110,15 +110,18 @@ const WorkService = {
   updateWork: async (id, workData) => {
     try {
       // Format material usage data if present
-      if (workData.materialsUsed && workData.materialsUsed.length > 0) {
-        workData.matiere_usages = workData.materialsUsed.map(material => ({
-          matiere_id: material.materialId,
-          quantite_utilisee: material.quantite
+      console.log(workData)
+      if (workData.matiere_usages && workData.matiere_usages.length > 0) {
+        workData.matiere_usages = workData.matiere_usages.map(material => ({
+          matiere_id: material.matiere_id,
+          quantite_utilisee: material.quantite_utilisee,
+          source: material.source
         }));
-        delete workData.materialsUsed;
+        // delete workData.matiere_usages;
       }
       
       // Data is already in snake_case format
+      console.log(workData)
       const response = await axios.put(`${API_URL}/${id}/`, workData);
       return new WorkModel(response.data);
     } catch (error) {
