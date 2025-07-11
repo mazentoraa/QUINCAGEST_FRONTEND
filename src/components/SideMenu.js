@@ -59,9 +59,7 @@ function SideMenu() {
         <Menu.Item key="/clients" icon={<TeamOutlined />} onClick={() => handleMenuClick('/clients')}>
           Clients
         </Menu.Item>
-        <Menu.Item key="/employes" icon={<UserOutlined />} onClick={() => handleMenuClick('/employes')}>
-  Employés
-</Menu.Item>
+      
 
 
         <SubMenu key="stock" icon={<AppstoreAddOutlined />} title="Gestion de Stock">
@@ -108,6 +106,15 @@ function SideMenu() {
             Traites
           </Menu.Item>
         </SubMenu>
+          <Menu.Item key="/employes" icon={<UserOutlined />} onClick={() => handleMenuClick('/employes')}>
+  Employés
+</Menu.Item>
+<Menu.Item key="/employes/fiche-paie" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/employes/fiche-paie')}>
+  Fiche de Paie
+</Menu.Item>
+<Menu.Item key="/employes/avance" icon={<DollarCircleOutlined />} onClick={() => handleMenuClick('/employes/avance')}>
+  Avance
+</Menu.Item>
 
         {/* --- CYCLE ACHATS --- */}
       <Menu.Item key="/fournisseurs" icon={<InboxOutlined />} onClick={() => handleMenuClick('/fournisseurs')}>

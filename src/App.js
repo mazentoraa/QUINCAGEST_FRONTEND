@@ -51,8 +51,7 @@ import SupplierInstallmentPage from './features/purshase/SupplierInstallmentPage
 import SupplierInstallmentManagementPage from './features/purshase/SupplierInstallmentManagementPage';
 import Tresorerie from "./features/Tresorerie/Tresorerie"; // ✅ le bon chemin
 import EmployeeManagement from './features/employee/employee';
-
-
+import AvancePage from './features/employee/avance';
 
 
 const { Header, Content, Sider } = Layout;
@@ -214,7 +213,7 @@ function App() {
              <Route path="/achats/gestion-traites-fournisseur" element={<SupplierInstallmentManagementPage />} />
              <Route path="/tresorerie" element={<Tresorerie />} />
 <Route path="/employes" element={<EmployeeManagement />} />
-
+<Route path="/employes/avance" element={<AvancePage />} />
 
 
 
