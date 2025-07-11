@@ -191,13 +191,19 @@ class BonLivraisonDecoupePdfService {
           ${this.formatCurrency(productTotal)}
         </td>
         <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+          1%
+        </td>
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+          ${this.formatCurrency(productTotal - (productTotal * (item.billable?.remise_percent || item.remise_percent || 0) / 100) + (productTotal * 0.01))}
+        </td>
+        <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
           ${invoice.tax_rate || 20}%
         </td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">${this.formatCurrency(
-            productTotal * (1 + (invoice.tax_rate || 0) / 100)
+            (productTotal - (productTotal * (item.billable?.remise_percent || item.remise_percent || 0) / 100) + (productTotal * 0.01)) * (1 + (invoice.tax_rate || 0) / 100)
           )}</td>
         </tr>
-        `;
+        `
 
           // Add material lines if they exist
           // if (item.matiere_usages && item.matiere_usages.length > 0) {
@@ -333,16 +339,19 @@ const totals = {
           <div style="margin-top: 20px;" class="order-details">
         <table>
             <thead>
-  <tr>
+ <tr>
     <th style="width: 8%; text-align: center; vertical-align: middle; border: 1px solid #000;">Code</th>
-    <th style="width: 25%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
-    <th style="width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
-    <th style="width: 16%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
+    <th style="width: 18%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
+    <th style="width: 6%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
+    <th style="width: 13%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
     <th style=" width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
-    <th style="width: 18%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
-    <th style="width: 7%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
-    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
-  </tr>
+    
+            <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
+        <th style="width: 6%; text-align: center; vertical-align: middle; border: 1px solid #000;">Fodec</th>
+        <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HTVA</th>
+        <th style="width: 5%; text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
+        <th style="width: 18%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
+          </tr>
 </thead>
 
             <tbody>

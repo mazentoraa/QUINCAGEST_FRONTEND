@@ -70,6 +70,12 @@ const ClientTable = ({ clients, on_edit, on_delete, loading }) => {
 
   const columns = [
     {
+      title: 'Code client',
+      dataIndex: 'code_client',
+      key: 'code_client',
+      ...get_column_search_props('code_client'),
+    },
+    {
       title: 'Nom du client',
       dataIndex: 'nom_client',
       key: 'nom_client',

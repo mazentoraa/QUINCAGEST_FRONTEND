@@ -42,6 +42,14 @@ export default function FactureMatiere() {
   const [filterType, setFilterType] = useState("");
 
   const typeOptions = ["matière première", "consommable", "autres"];
+  const modePaiementOptions = [
+  { value: "cash", label: "Comptant" },
+  { value: "cheque", label: "Chèque" },
+  { value: "virement", label: "Virement Bancaire" },
+  { value: "carte", label: "Carte de crédit" },
+  { value: "traite", label: "Traite" },
+];
+
 
   // Charger factures
   const fetchFactures = async () => {
@@ -335,6 +343,7 @@ export default function FactureMatiere() {
                 achat_nom: "",
                 achat_prix: null,
                 achat_quantite: null,
+                mode_paiement: record.mode_paiement || "cash",
               });
               setAchats(record.achats || []);
               setCurrentId(record.id);
@@ -569,6 +578,20 @@ export default function FactureMatiere() {
                 ))}
               </Select>
             </Form.Item>
+            <Form.Item
+  name="mode_paiement"
+  label="Mode de paiement"
+  rules={[{ required: false, message: "Veuillez sélectionner un mode de paiement" }]}
+>
+  <Select placeholder="Sélectionner un mode de paiement">
+    {modePaiementOptions.map((option) => (
+      <Option key={option.value} value={option.value}>
+        {option.label}
+      </Option>
+    ))}
+  </Select>
+</Form.Item>
+
 
             <Form.Item name="prix_total" label="Prix total">
               <Input type="number" min={0} placeholder="Prix total (optionnel)" />

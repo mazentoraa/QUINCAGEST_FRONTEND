@@ -93,7 +93,15 @@ class BonCommandePdfApiService {
 
     const itemsHTML = items
       .map(
-        (item) => `
+        (item) => {
+          const totalPHT = (item.quantite || 0) * (item.prix_unitaire || 0);
+          const fodec = totalPHT * 0.01; // 1%
+          const remise = item.remise_pourcentage || 0;
+          const totalPHTVA = totalPHT - (totalPHT * remise / 100) + fodec;
+          const tva = orderData.tax_rate || 20;
+          const totalPTTC = totalPHTVA + (totalPHTVA * tva / 100);
+
+          return `
       <tr>
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
           item.code_produit || ""
@@ -108,19 +116,24 @@ class BonCommandePdfApiService {
           this.formatFloat(item.prix_unitaire || 0)
         }</td>
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
-          item.remise_pourcentage || 0
+          remise
         }%</td>
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
-          this.formatFloat( item.prix_total || 0)
+          this.formatFloat(totalPHT)
+        }</td>
+        <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">1%</td>
+        <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
+          this.formatFloat(totalPHTVA)
         }</td>
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
-          orderData.tax_rate || 20
+          tva
         }%</td>
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
-          this.formatFloat((item.prix_total || 0) * (1 + (orderData.tax_rate || 20) / 100))
+          this.formatFloat(totalPTTC)
         }</td>
       </tr>
     `
+        }
       )
       .join("");
       const totalRemise = orderData.produit_commande.reduce((acc, item) => {
@@ -227,16 +240,19 @@ const netAPayer = totalHTVA + totalTVA + (orderData.timbre_fiscal || 0);
 <div style="margin-top: 20px;" class="order-details">
         <table>
             <thead>
-  <tr>
+ <tr>
     <th style="width: 8%; text-align: center; vertical-align: middle; border: 1px solid #000;">Code</th>
-    <th style="width: 25%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
-    <th style="width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
-    <th style="width: 16%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
+    <th style="width: 18%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
+    <th style="width: 6%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
+    <th style="width: 13%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
     <th style=" width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
-    <th style="width: 18%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
-    <th style="width: 7%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
-    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
-  </tr>
+    
+            <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
+        <th style="width: 6%; text-align: center; vertical-align: middle; border: 1px solid #000;">Fodec</th>
+        <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HTVA</th>
+        <th style="width: 5%; text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
+        <th style="width: 18%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
+          </tr>
 </thead>
 
             <tbody>

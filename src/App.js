@@ -46,6 +46,13 @@ import FactureMatiere from './features/purshase/FactureMatiere';
 import BonLivraison from './features/purshase/BonLivraison';
 import Fournisseur from "./features/purshase/Fournisseur";
 import Consommable from './features/purshase/Consommable';
+import BonRetourFornisseur from "./features/purshase/BonRetourFornisseur";
+import SupplierInstallmentPage from './features/purshase/SupplierInstallmentPage';
+import SupplierInstallmentManagementPage from './features/purshase/SupplierInstallmentManagementPage';
+import Tresorerie from "./features/Tresorerie/Tresorerie"; // ✅ le bon chemin
+import EmployeeManagement from './features/employee/employee';
+
+
 
 
 const { Header, Content, Sider } = Layout;
@@ -202,6 +209,12 @@ function App() {
                                 <Route path="/achats/bon-livraison" element={<BonLivraison />} />
                        <Route path="/fournisseurs" element={<Fournisseur />} />
               <Route path="/achats/consommables" element={<Consommable />} />
+             <Route path="/achats/bon-retour-fournisseur" element={<BonRetourFornisseur />} />
+             <Route path="/achats/traite-fournisseur" element={<SupplierInstallmentPage />} />
+             <Route path="/achats/gestion-traites-fournisseur" element={<SupplierInstallmentManagementPage />} />
+             <Route path="/tresorerie" element={<Tresorerie />} />
+<Route path="/employes" element={<EmployeeManagement />} />
+
 
 
 
