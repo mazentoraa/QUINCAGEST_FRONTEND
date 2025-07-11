@@ -263,7 +263,7 @@ const netAPayer = totalHTVA + totalTVA + (orderData.timbre_fiscal || 0);
         <td style="border: 1px solid black; padding: 8px;">${this.formatFloat(totalTVA)}</td>
       </tr>
       <tr style="height: 20px;">
-        <td colspan="2" style="border: 1px solid black; padding: 8px;">${this.formatFloat(orderData.montant_ht)}</td>
+        <td colspan="2" style="border: 1px solid black; padding: 8px;">${this.formatFloat(totalHTVA)}</td>
         <td style="border: 1px solid black; padding: 8px;">${this.formatFloat(totalTVA)}</td>
       </tr>
     </tbody>

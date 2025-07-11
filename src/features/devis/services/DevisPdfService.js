@@ -380,8 +380,8 @@ const netAPayer = totalHTVA + totalTVA + timbreFiscal;
         <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(data.montant_tva)}</td>
       </tr>
       <tr style="height: 20px;">
-        <td colspan="2" style="border: 1px solid black; padding: 8px;">${this.formatCurrency(data.montant_ht)}</td>
-        <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(data.montant_tva)}</td>
+        <td colspan="2" style="border: 1px solid black; padding: 8px;">${this.formatCurrency(totalHTVA)}</td>
+        <td style="border: 1px solid black; padding: 8px;">${this.formatCurrency(totalTVA)}</td>
       </tr>
     </tbody>
   </table>
@@ -411,7 +411,7 @@ const netAPayer = totalHTVA + totalTVA + timbreFiscal;
 </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(data.montant_tva || 0)}</td>
+      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalTVA)}</td>
     </tr>
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>

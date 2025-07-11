@@ -12,6 +12,7 @@ import {
   message,
   Popconfirm,
   DatePicker,
+  ConfigProvider,
 } from "antd";
 import {
   PlusOutlined,
@@ -20,6 +21,10 @@ import {
 } from "@ant-design/icons";
 import axios from "axios";
 import moment from "moment";
+import "moment/locale/fr";
+import frFR from "antd/es/locale/fr_FR";
+
+moment.locale("fr");
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -56,19 +61,16 @@ export default function PurchaseMatiere() {
     fetchMatieres();
   }, []);
 
-  // Filtrage automatique à chaque changement de filtre
   useEffect(() => {
     const values = filterForm.getFieldsValue();
     let filtered = [...matieres];
 
-    // Filtrer par nom (contient, insensible)
     if (values.nom && values.nom.trim() !== "") {
       filtered = filtered.filter((m) =>
         m.nom.toLowerCase().includes(values.nom.trim().toLowerCase())
       );
     }
 
-    // Filtrer par date range
     if (values.dateRange && values.dateRange.length === 2) {
       const [start, end] = values.dateRange;
       filtered = filtered.filter((m) => {
@@ -82,8 +84,6 @@ export default function PurchaseMatiere() {
   }, [matieres, filterForm]);
 
   const handleFilterChange = () => {
-    // Juste déclenche la mise à jour car useEffect écoute filterForm
-    // Comme filterForm n'a pas de hook d'écoute direct, on force un update avec un useState, ou on applique le filtre manuellement ici
     const values = filterForm.getFieldsValue();
     let filtered = [...matieres];
 
@@ -92,6 +92,7 @@ export default function PurchaseMatiere() {
         m.nom.toLowerCase().includes(values.nom.trim().toLowerCase())
       );
     }
+
     if (values.dateRange && values.dateRange.length === 2) {
       const [start, end] = values.dateRange;
       filtered = filtered.filter((m) => {
@@ -127,10 +128,7 @@ export default function PurchaseMatiere() {
       if (currentId) {
         await axios.put(
           `${API_BASE_URL}/matiere-purchase/${currentId}/`,
-          payload,
-          {
-            headers: { "Content-Type": "application/json" },
-          }
+          payload
         );
         message.success("Matière mise à jour avec succès");
       } else {
@@ -167,24 +165,25 @@ export default function PurchaseMatiere() {
     {
       title: "Prix unitaire",
       dataIndex: "prix_unitaire",
-      key: "price",
-      render: (value) => `${value}`,
+      key: "prix_unitaire",
+      render: (value) => `${value?.toFixed(2) ?? "-"}`,
     },
     {
       title: "Quantité",
       dataIndex: "quantite",
-      key: "quantity",
+      key: "quantite",
     },
     {
       title: "Date d'Achat",
       dataIndex: "purshase_date",
       key: "purshase_date",
-      render: (value) => (value ? moment(value).format("D-M-YYYY") : "-"),
+      render: (value) => (value ? moment(value).format("DD/MM/YYYY") : "-"),
     },
     {
       title: "Description",
       dataIndex: "description",
       key: "description",
+      ellipsis: true,
     },
     {
       title: "Actions",
@@ -207,6 +206,8 @@ export default function PurchaseMatiere() {
           <Popconfirm
             title="Êtes-vous sûr de vouloir supprimer cet Achat ?"
             onConfirm={() => handleDelete(record.id)}
+            okText="Oui"
+            cancelText="Non"
           >
             <Button danger icon={<DeleteOutlined />} />
           </Popconfirm>
@@ -216,105 +217,116 @@ export default function PurchaseMatiere() {
   ];
 
   return (
-    <Card>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: 16,
-        }}
-      >
-        <Title level={4}>Achats</Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            form.resetFields();
-            setCurrentId(null);
-            setVisible(true);
+    <ConfigProvider locale={frFR}>
+      <Card>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: 16,
           }}
         >
-          Ajouter
-        </Button>
-      </div>
-
-      {/* Formulaire de filtre sans bouton filtrer */}
-      <Form
-        form={filterForm}
-        layout="inline"
-        style={{ marginBottom: 16, gap: 16 }}
-        onValuesChange={handleFilterChange} // Filtre à chaque changement
-      >
-        <Form.Item name="nom" >
-          <Input placeholder="Filtrer par nom" allowClear />
-        </Form.Item>
-
-        <Form.Item name="dateRange" >
-          <RangePicker format="DD/MM/YYYY" />
-        </Form.Item>
-
-        <Form.Item>
-          <Button onClick={handleResetFilters}>Effacer les filtres</Button>
-        </Form.Item>
-      </Form>
-
-      <Spin spinning={loading}>
-        <Table columns={columns} dataSource={filteredMatieres} rowKey="id" bordered />
-      </Spin>
-
-      <Modal
-        title={currentId ? "Modifier la matière" : "Nouveau Achat"}
-        open={visible}
-        onOk={handleSubmit}
-        onCancel={() => {
-          setVisible(false);
-          form.resetFields();
-          setCurrentId(null);
-        }}
-        width={800}
-        okText="Enregistrer"
-        cancelText="Annuler"
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="nom"
-            label="Nom"
-            rules={[{ required: true, message: "Ce champ est requis" }]}
+          <Title level={4}>Achats</Title>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              form.resetFields();
+              setCurrentId(null);
+              setVisible(true);
+            }}
           >
-            <Input placeholder="Nom de la matière" />
+            Ajouter
+          </Button>
+        </div>
+
+        <Form
+          form={filterForm}
+          layout="inline"
+          style={{ marginBottom: 16, gap: 16 }}
+          onValuesChange={handleFilterChange}
+        >
+          <Form.Item name="nom">
+            <Input placeholder="Filtrer par nom" allowClear />
           </Form.Item>
 
-          <Form.Item name="description" label="Description">
-            <TextArea rows={2} />
+          <Form.Item name="dateRange">
+            <RangePicker
+              format="DD/MM/YYYY"
+              placeholder={["Date début", "Date fin"]}
+              style={{ width: 280 }}
+            />
           </Form.Item>
 
-          <Space size="large" style={{ width: "100%" }}>
-            <Form.Item
-              name="prix_unitaire"
-              label="Prix unitaire"
-              rules={[{ required: true, message: "Prix unitaire requis" }]}
-            >
-              <Input type="number" min={0} />
-            </Form.Item>
-
-            <Form.Item
-              name="quantite"
-              label="Quantité"
-              rules={[{ required: true, message: "Quantité requise" }]}
-            >
-              <Input type="number" min={0} />
-            </Form.Item>
-
-            <Form.Item
-              name="purshase_date"
-              label="Date d'achat"
-              rules={[{ required: true, message: "Date requise" }]}
-            >
-              <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
-            </Form.Item>
-          </Space>
+          <Form.Item>
+            <Button onClick={handleResetFilters}>Effacer les filtres</Button>
+          </Form.Item>
         </Form>
-      </Modal>
-    </Card>
+
+        <Spin spinning={loading}>
+          <Table
+            columns={columns}
+            dataSource={filteredMatieres}
+            rowKey="id"
+            bordered
+            pagination={{ pageSize: 6 }}
+          />
+        </Spin>
+
+        <Modal
+          title={currentId ? "Modifier la matière" : "Nouvel achat"}
+          open={visible}
+          onOk={handleSubmit}
+          onCancel={() => {
+            setVisible(false);
+            form.resetFields();
+            setCurrentId(null);
+          }}
+          width={800}
+          okText="Enregistrer"
+          cancelText="Annuler"
+        >
+          <Form form={form} layout="vertical">
+            <Form.Item
+              name="nom"
+              label="Nom"
+              rules={[{ required: true, message: "Ce champ est requis" }]}
+            >
+              <Input placeholder="Nom de la matière" />
+            </Form.Item>
+
+            <Form.Item name="description" label="Description">
+              <TextArea rows={2} />
+            </Form.Item>
+
+            <Space size="large" style={{ width: "100%" }}>
+              <Form.Item
+                name="prix_unitaire"
+                label="Prix unitaire"
+                rules={[{ required: true, message: "Prix unitaire requis" }]}
+              >
+                <Input type="number" min={0} />
+              </Form.Item>
+
+              <Form.Item
+                name="quantite"
+                label="Quantité"
+                rules={[{ required: true, message: "Quantité requise" }]}
+              >
+                <Input type="number" min={0} />
+              </Form.Item>
+
+              <Form.Item
+                name="purshase_date"
+                label="Date d'achat"
+                rules={[{ required: true, message: "Date requise" }]}
+              >
+                <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
+              </Form.Item>
+            </Space>
+          </Form>
+        </Modal>
+      </Card>
+    </ConfigProvider>
   );
 }

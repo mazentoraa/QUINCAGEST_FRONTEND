@@ -12,10 +12,15 @@ import {
   message,
   Popconfirm,
   DatePicker,
+  ConfigProvider,
 } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import axios from "axios";
 import moment from "moment";
+import "moment/locale/fr";
+import frFR from "antd/es/locale/fr_FR";
+
+moment.locale("fr");
 
 const { TextArea } = Input;
 const { Title } = Typography;
@@ -55,19 +60,16 @@ export default function Consommables() {
     fetchConsommables();
   }, []);
 
-  // Filtrer automatiquement à chaque changement de filtre ou des données
   useEffect(() => {
     const values = filterForm.getFieldsValue();
     let filtered = [...consommables];
 
-    // Filtre par nom (contient, insensible)
     if (values.nom && values.nom.trim() !== "") {
       filtered = filtered.filter((item) =>
         item.nom.toLowerCase().includes(values.nom.trim().toLowerCase())
       );
     }
 
-    // Filtre par intervalle de dates
     if (values.dateRange && values.dateRange.length === 2) {
       const [start, end] = values.dateRange;
       filtered = filtered.filter((item) => {
@@ -80,7 +82,6 @@ export default function Consommables() {
     setFilteredConsommables(filtered);
   }, [consommables, filterForm]);
 
-  // Déclenché à chaque changement dans le formulaire de filtre (nom/date)
   const handleFilterChange = () => {
     const values = filterForm.getFieldsValue();
     let filtered = [...consommables];
@@ -242,130 +243,134 @@ export default function Consommables() {
   ];
 
   return (
-    <Card>
-      <div
-        style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}
-      >
-        <Title level={4}>Gestion des consommables</Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
+    <ConfigProvider locale={frFR}>
+      <Card>
+        <div
+          style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}
+        >
+          <Title level={4}>Gestion des consommables</Title>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              form.resetFields();
+              setCurrentId(null);
+              setVisible(true);
+            }}
+          >
+            Ajouter
+          </Button>
+        </div>
+
+        <Form
+          form={filterForm}
+          layout="inline"
+          style={{ marginBottom: 16, gap: 16 }}
+          onValuesChange={handleFilterChange}
+        >
+          <Form.Item name="nom">
+            <Input placeholder="Filtrer par nom" allowClear />
+          </Form.Item>
+
+          <Form.Item name="dateRange">
+            <RangePicker
+              format="DD/MM/YYYY"
+              placeholder={["Date de début", "Date de fin"]}
+            />
+          </Form.Item>
+
+          <Form.Item>
+            <Button onClick={handleResetFilters}>Effacer les filtres</Button>
+          </Form.Item>
+        </Form>
+
+        <Spin spinning={loading}>
+          <Table
+            columns={columns}
+            dataSource={filteredConsommables}
+            rowKey="id"
+            bordered
+            pagination={{ pageSize: 5 }}
+          />
+        </Spin>
+
+        <Modal
+          title={currentId ? "Modifier le consommable" : "Nouveau consommable"}
+          open={visible}
+          onOk={handleSubmit}
+          onCancel={() => {
+            setVisible(false);
             form.resetFields();
             setCurrentId(null);
-            setVisible(true);
           }}
+          width={800}
+          okText="Enregistrer"
+          cancelText="Annuler"
+          confirmLoading={loading}
         >
-          Ajouter
-        </Button>
-      </div>
-
-      {/* Formulaire de filtre sans bouton filtrer */}
-      <Form
-        form={filterForm}
-        layout="inline"
-        style={{ marginBottom: 16, gap: 16 }}
-        onValuesChange={handleFilterChange}
-      >
-        <Form.Item name="nom" >
-          <Input placeholder="Filtrer par nom" allowClear />
-        </Form.Item>
-
-        <Form.Item name="dateRange" >
-          <RangePicker format="DD/MM/YYYY" />
-        </Form.Item>
-
-        <Form.Item>
-          <Button onClick={handleResetFilters}>Effacer les filtres</Button>
-        </Form.Item>
-      </Form>
-
-      <Spin spinning={loading}>
-        <Table
-          columns={columns}
-          dataSource={filteredConsommables}
-          rowKey="id"
-          bordered
-          pagination={{ pageSize: 5 }}
-        />
-      </Spin>
-
-      <Modal
-        title={currentId ? "Modifier le consommable" : "Nouveau consommable"}
-        open={visible}
-        onOk={handleSubmit}
-        onCancel={() => {
-          setVisible(false);
-          form.resetFields();
-          setCurrentId(null);
-        }}
-        width={800}
-        okText="Enregistrer"
-        cancelText="Annuler"
-        confirmLoading={loading}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="nom"
-            label="Nom"
-            rules={[{ required: true, message: "Ce champ est requis" }]}
-          >
-            <Input placeholder="Nom du consommable" />
-          </Form.Item>
-
-          <Form.Item name="description" label="Description">
-            <TextArea rows={2} />
-          </Form.Item>
-
-          <Space style={{ display: "flex", justifyContent: "space-between" }}>
+          <Form form={form} layout="vertical">
             <Form.Item
-              name="prix_unitaire"
-              label="Prix unitaire"
-              style={{ flex: 1 }}
-              rules={[
-                {
-                  validator: (_, value) => {
-                    if (value === undefined || value === null || value === "")
-                      return Promise.resolve();
-                    const num = Number(value);
-                    if (isNaN(num) || num < 0) {
-                      return Promise.reject(new Error("Doit être un nombre positif"));
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}
+              name="nom"
+              label="Nom"
+              rules={[{ required: true, message: "Ce champ est requis" }]}
             >
-              <Input type="number" min={0} step="0.01" />
+              <Input placeholder="Nom du consommable" />
             </Form.Item>
 
-            <Form.Item
-              name="quantite"
-              label="Quantité"
-              style={{ flex: 1 }}
-              rules={[
-                {
-                  validator: (_, value) => {
-                    if (value === undefined || value === null || value === "")
-                      return Promise.resolve();
-                    const num = Number(value);
-                    if (isNaN(num) || num < 0) {
-                      return Promise.reject(new Error("Doit être un nombre positif"));
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}
-            >
-              <Input type="number" min={0} />
+            <Form.Item name="description" label="Description">
+              <TextArea rows={2} />
             </Form.Item>
 
-            <Form.Item name="date_achat" label="Date" style={{ flex: 1 }}>
-              <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
-            </Form.Item>
-          </Space>
-        </Form>
-      </Modal>
-    </Card>
+            <Space style={{ display: "flex", justifyContent: "space-between" }}>
+              <Form.Item
+                name="prix_unitaire"
+                label="Prix unitaire"
+                style={{ flex: 1 }}
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (value === undefined || value === null || value === "")
+                        return Promise.resolve();
+                      const num = Number(value);
+                      if (isNaN(num) || num < 0) {
+                        return Promise.reject(new Error("Doit être un nombre positif"));
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
+              >
+                <Input type="number" min={0} step="0.01" />
+              </Form.Item>
+
+              <Form.Item
+                name="quantite"
+                label="Quantité"
+                style={{ flex: 1 }}
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (value === undefined || value === null || value === "")
+                        return Promise.resolve();
+                      const num = Number(value);
+                      if (isNaN(num) || num < 0) {
+                        return Promise.reject(new Error("Doit être un nombre positif"));
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
+              >
+                <Input type="number" min={0} />
+              </Form.Item>
+
+              <Form.Item name="date_achat" label="Date" style={{ flex: 1 }}>
+                <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
+              </Form.Item>
+            </Space>
+          </Form>
+        </Modal>
+      </Card>
+    </ConfigProvider>
   );
 }

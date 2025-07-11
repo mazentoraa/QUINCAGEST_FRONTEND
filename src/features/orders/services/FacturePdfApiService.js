@@ -106,6 +106,18 @@ class FacturePdfApiService {
 
       for (const [bon_numero, group] of Object.entries(grouped)) {
         group.forEach((item, index) => {
+          // Calculs ligne
+          const qte = item.quantite || 0;
+          const puht = item.prix_unitaire || 0;
+          const remise = item.remise_pourcentage || 0;
+          const fodecRate = orderData.fodec_rate || 1; // 1% par défaut
+          const tvaRate = orderData.tax_rate || 0;
+          const totalHT = qte * puht;
+          const remiseVal = totalHT * (remise / 100);
+          const fodecVal = totalHT * (fodecRate / 100);
+          const totalHTVA = totalHT - remiseVal + fodecVal;
+          const tvaVal = totalHTVA * (tvaRate / 100);
+          const totalTTC = totalHTVA + tvaVal;
           itemsHTML += `
             <tr>
               ${index === 0 ? `
@@ -119,29 +131,47 @@ class FacturePdfApiService {
                 ${item.nom_produit || "N/A"}
               </td>
               <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-                ${item.quantite || 0}
+                ${qte}
               </td>
               <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-                ${(item.prix_unitaire || 0).toFixed(3)}
+                ${puht.toFixed(3)}
               </td>
               <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-                ${item.remise_pourcentage || 0}%
+                ${remise}%
               </td>
               <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-                ${(item.prix_total || 0).toFixed(3)}
+                ${totalHT.toFixed(3)}
               </td>
               <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-                ${(orderData.tax_rate || 0)}%
+                1 %
               </td>
               <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-                ${((item.prix_total || 0) * (1 + (orderData.tax_rate || 0) / 100)).toFixed(3)}
+                ${totalHTVA.toFixed(3)}
+              </td>
+              <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+                ${(tvaRate)}%
+              </td>
+              <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+                ${totalTTC.toFixed(3)}
               </td>
             </tr>`;
         });
       }
     } else {
       // Default rendering if not grouped by bon
-      itemsHTML = items.map((item) => `
+      itemsHTML = items.map((item) => {
+        const qte = item.quantite || 0;
+        const puht = item.prix_unitaire || 0;
+        const remise = item.remise_pourcentage || 0;
+        const fodecRate = orderData.fodec_rate || 1; // 1% par défaut
+        const tvaRate = orderData.tax_rate || 0;
+        const totalHT = qte * puht;
+        const remiseVal = totalHT * (remise / 100);
+        const fodecVal = totalHT * (fodecRate / 100);
+        const totalHTVA = totalHT - remiseVal + fodecVal;
+        const tvaVal = totalHTVA * (tvaRate / 100);
+        const totalTTC = totalHTVA + tvaVal;
+        return `
         <tr>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
             ${item.code_produit || "N/A"}
@@ -150,24 +180,31 @@ class FacturePdfApiService {
             ${item.nom_produit || "N/A"}
           </td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-            ${item.quantite || 0}
+            ${qte}
           </td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-            ${(item.prix_unitaire || 0).toFixed(3)}
+            ${puht.toFixed(3)}
           </td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-            ${item.remise_pourcentage || 0}%
+            ${remise}%
           </td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-            ${(item.prix_total || 0).toFixed(3)}
+            ${totalHT.toFixed(3)}
           </td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-            ${(orderData.tax_rate || 0)}%
+            1 %
           </td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-            ${((item.prix_total || 0) * (1 + (orderData.tax_rate || 0) / 100)).toFixed(3)}
+            ${totalHTVA.toFixed(3)}
           </td>
-        </tr>`).join('');
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+            ${(tvaRate)}%
+          </td>
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+            ${totalTTC.toFixed(3)}
+          </td>
+        </tr>`;
+      }).join('');
     }
 
   // Total brut = somme des prix unitaires * quantités
@@ -394,13 +431,15 @@ const netAPayer = totalHTVA + totalTVA + timbreFiscal;
         `<th style="width: 8%; text-align: center; vertical-align: middle; border: 1px solid #000;">Bon N°:</th>`
         :''}
         <th style="width: 8%; text-align: center; vertical-align: middle; border: 1px solid #000;">Code</th>
-        <th style="width: 25%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
-        <th style="width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
-        <th style="width: 16%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
-        <th style=" width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
-        <th style="width: 18%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
-        <th style="width: 7%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
-        <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
+        <th style="width: 18%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
+        <th style="width: 6%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
+        <th style="width: 13%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
+        <th style="width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
+        <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
+        <th style="width: 6%; text-align: center; vertical-align: middle; border: 1px solid #000;">Fodec</th>
+        <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HTVA</th>
+        <th style="width: 5%; text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
+        <th style="width: 18%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
       </tr>
     </thead>
                 <tbody>
@@ -443,8 +482,8 @@ const netAPayer = totalHTVA + totalTVA + timbreFiscal;
             <td style="border: 1px solid black; padding: 8px;">${totalTVA.toFixed(3)}</td>
           </tr>
           <tr style="height: 20px;">
-            <td colspan="2" style="border: 1px solid black; padding: 8px;">${(orderData.montant_ht || 0).toFixed(3)}</td>
-            <td style="border: 1px solid black; padding: 8px;">${(orderData.montant_tva || 0).toFixed(3)}</td>
+            <td colspan="2" style="border: 1px solid black; padding: 8px;">${totalHTVA.toFixed(3)}</td>
+            <td style="border: 1px solid black; padding: 8px;">${totalTVA.toFixed(3)}</td>
           </tr>
         </tbody>
       </table>
