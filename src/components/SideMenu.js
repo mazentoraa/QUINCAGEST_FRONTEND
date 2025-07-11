@@ -59,6 +59,10 @@ function SideMenu() {
         <Menu.Item key="/clients" icon={<TeamOutlined />} onClick={() => handleMenuClick('/clients')}>
           Clients
         </Menu.Item>
+        <Menu.Item key="/employes" icon={<UserOutlined />} onClick={() => handleMenuClick('/employes')}>
+  Employés
+</Menu.Item>
+
 
         <SubMenu key="stock" icon={<AppstoreAddOutlined />} title="Gestion de Stock">
           <Menu.Item key="/stock/produits" icon={<ShoppingCartOutlined />} onClick={() => handleMenuClick('/stock/produits')}>
@@ -106,38 +110,56 @@ function SideMenu() {
         </SubMenu>
 
         {/* --- CYCLE ACHATS --- */}
-        <Menu.Item key="/fournisseurs" icon={<InboxOutlined />} onClick={() => handleMenuClick('/fournisseurs')}>
-          Fournisseurs
-        </Menu.Item>
+      <Menu.Item key="/fournisseurs" icon={<InboxOutlined />} onClick={() => handleMenuClick('/fournisseurs')}>
+  Fournisseurs
+</Menu.Item>
 
-        <SubMenu key="achats" icon={<ShoppingCartOutlined />} title="Gestion des Achats">
-          <Menu.Item key="/achats/matieres" icon={<GoldOutlined />} onClick={() => handleMenuClick('/achats/matieres')}>
-            Matières Premières
-          </Menu.Item>
-          <Menu.Item key="/achats/consommables" icon={<AppstoreOutlined />} onClick={() => handleMenuClick('/achats/consommables')}>
-            Consommables
-          </Menu.Item>
-          <Menu.Item key="/achats" icon={<ShoppingCartOutlined />} onClick={() => handleMenuClick('/achats')}>
-            Autres Achats
-          </Menu.Item>
-        </SubMenu>
+<SubMenu key="achats" icon={<ShoppingCartOutlined />} title="Gestion des Achats">
+  <Menu.Item key="/achats/matieres" icon={<GoldOutlined />} onClick={() => handleMenuClick('/achats/matieres')}>
+    Matières Premières
+  </Menu.Item>
+  <Menu.Item key="/achats/consommables" icon={<AppstoreOutlined />} onClick={() => handleMenuClick('/achats/consommables')}>
+    Consommables
+  </Menu.Item>
+  <Menu.Item key="/achats" icon={<ShoppingCartOutlined />} onClick={() => handleMenuClick('/achats')}>
+    Autres Achats
+  </Menu.Item>
+</SubMenu>
 
-        <Menu.Item key="/achats/bon-livraison" icon={<FileDoneOutlined />} onClick={() => handleMenuClick('/achats/bon-livraison')}>
-          Bons de Livraison
-        </Menu.Item>
+<SubMenu key="bons" icon={<FileDoneOutlined />} title="Bons">
+  <Menu.Item key="/achats/bon-livraison" icon={<FileDoneOutlined />} onClick={() => handleMenuClick('/achats/bon-livraison')}>
+    Bons de Livraison
+  </Menu.Item>
+  <Menu.Item key="/achats/bon-retour-fournisseur" icon={<FileDoneOutlined />} onClick={() => handleMenuClick('/achats/bon-retour-fournisseur')}>
+  Bons de Retour Fournisseur
+</Menu.Item>
 
-        <Menu.Item key="/achats/factures-matieres" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/achats/factures-matieres')}>
-          Factures
-        </Menu.Item>
+</SubMenu>
+
+<SubMenu key="reglement" icon={<FileTextOutlined />} title="Règlements">
+  <Menu.Item key="/achats/factures-matieres" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/achats/factures-matieres')}>
+    Factures
+  </Menu.Item>
+    <Menu.Item
+    key="/achats/gestion-traites-fournisseur"
+    icon={<FileTextOutlined />}
+    onClick={() => handleMenuClick('/achats/gestion-traites-fournisseur')}
+  >
+    Traites Fournisseur
+  </Menu.Item>
+
+</SubMenu>
+
 
         {/* --- GESTION GLOBALE --- */}
+          <Menu.Item key="/tresorerie" icon={<DollarCircleOutlined  />} onClick={() => handleMenuClick('/tresorerie')}>
+          Trésorerie
+        </Menu.Item>
         <Menu.Item key="/reglements/rapport" icon={<BarChartOutlined />} onClick={() => handleMenuClick('/reglements/rapport')}>
           Rapport
         </Menu.Item>
 
-        <Menu.Item key="/tresorerie" icon={<DollarCircleOutlined  />} onClick={() => handleMenuClick('/tresorerie')}>
-          Trésorerie
-        </Menu.Item>
+      
       </Menu>
     </div>
   );
