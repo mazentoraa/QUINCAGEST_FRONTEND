@@ -51,6 +51,9 @@ import SupplierInstallmentPage from './features/purshase/SupplierInstallmentPage
 import SupplierInstallmentManagementPage from './features/purshase/SupplierInstallmentManagementPage';
 import Tresorerie from "./features/Tresorerie/Tresorerie"; // ✅ le bon chemin
 import EmployeeManagement from './features/employee/employee';
+import ParPeriode from "./features/Tresorerie/ParPeriode";
+import Simulation from "./features/Tresorerie/Simulation";
+import TresorerieTraite from "./features/Tresorerie/TresorerieTraite";
 
 
 
@@ -204,20 +207,19 @@ function App() {
                                     element={<Devis />}
                                   />
                                   <Route path="/achats" element={<PurshaseMatiere />} />
-                                 <Route path="/achats/matieres" element={<MaterialAchatManagement />} />
-                                <Route path="/achats/factures-matieres" element={<FactureMatiere />} />
-                                <Route path="/achats/bon-livraison" element={<BonLivraison />} />
-                       <Route path="/fournisseurs" element={<Fournisseur />} />
-              <Route path="/achats/consommables" element={<Consommable />} />
-             <Route path="/achats/bon-retour-fournisseur" element={<BonRetourFornisseur />} />
-             <Route path="/achats/traite-fournisseur" element={<SupplierInstallmentPage />} />
-             <Route path="/achats/gestion-traites-fournisseur" element={<SupplierInstallmentManagementPage />} />
-             <Route path="/tresorerie" element={<Tresorerie />} />
-<Route path="/employes" element={<EmployeeManagement />} />
-
-
-
-
+                                  <Route path="/achats/matieres" element={<MaterialAchatManagement />} />
+                                  <Route path="/achats/factures-matieres" element={<FactureMatiere />} />
+                                  <Route path="/achats/bon-livraison" element={<BonLivraison />} />
+                                  <Route path="/fournisseurs" element={<Fournisseur />} />
+                                  <Route path="/achats/consommables" element={<Consommable />} />
+                                  <Route path="/achats/bon-retour-fournisseur" element={<BonRetourFornisseur />} />
+                                  <Route path="/achats/traite-fournisseur" element={<SupplierInstallmentPage />} />
+                                  <Route path="/achats/gestion-traites-fournisseur" element={<SupplierInstallmentManagementPage />} />
+                                  <Route path="/tresorerie" element={<Tresorerie />} />
+                                  <Route path="/tresorerie/traite" element={<TresorerieTraite />} />
+                                  <Route path="/tresorerie/par-periode" element={<ParPeriode />} />
+                                  <Route path="/tresorerie/simulation" element={<Simulation />} />
+                                  <Route path="/employes" element={<EmployeeManagement />} />
                                 </Routes>
                               </Content>
                             </Layout>
