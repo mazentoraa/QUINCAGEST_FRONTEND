@@ -109,12 +109,16 @@ function SideMenu() {
           <Menu.Item key="/employes" icon={<UserOutlined />} onClick={() => handleMenuClick('/employes')}>
   Employés
 </Menu.Item>
-<Menu.Item key="/employes/fiche-paie" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/employes/fiche-paie')}>
-  Fiche de Paie
-</Menu.Item>
-<Menu.Item key="/employes/avance" icon={<DollarCircleOutlined />} onClick={() => handleMenuClick('/employes/avance')}>
-  Avance
-</Menu.Item>
+<SubMenu key="gestion-employes" icon={<TeamOutlined />} title="Gestion des Employés">
+ 
+  <Menu.Item key="/employes/fiche-paie" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/employes/fiche-paie')}>
+    Fiches de Paie
+  </Menu.Item>
+  <Menu.Item key="/employes/avance" icon={<DollarCircleOutlined />} onClick={() => handleMenuClick('/employes/avance')}>
+    Avances
+  </Menu.Item>
+</SubMenu>
+
 
         {/* --- CYCLE ACHATS --- */}
       <Menu.Item key="/fournisseurs" icon={<InboxOutlined />} onClick={() => handleMenuClick('/fournisseurs')}>
@@ -138,7 +142,7 @@ function SideMenu() {
     Bons de Livraison
   </Menu.Item>
   <Menu.Item key="/achats/bon-retour-fournisseur" icon={<FileDoneOutlined />} onClick={() => handleMenuClick('/achats/bon-retour-fournisseur')}>
-  Bons de Retour Fournisseur
+  Bons de Retour
 </Menu.Item>
 
 </SubMenu>
@@ -152,7 +156,7 @@ function SideMenu() {
     icon={<FileTextOutlined />}
     onClick={() => handleMenuClick('/achats/gestion-traites-fournisseur')}
   >
-    Traites Fournisseur
+    Traites
   </Menu.Item>
 
 </SubMenu>

@@ -266,25 +266,26 @@ class ClientMaterialPdfService {
                   color: #1890ff;
                   text-decoration: none;
               }
-                     .client-info {
-            margin-top: 40px;
-            border: 1px solid #000;
-            padding: 10px;
-            text-align: left; 
-            width:300px ; 
-            line-height : 1.2 ; 
-        }
+              .client-info {
+                  border: 1px solid #000;
+                  padding: 10px;
+                  text-align: left; 
+                  width: 300px; 
+                  line-height: 1.2;
+              }
               .delivery-details {
                   border: 1px solid #000;
-    padding: 2px 10px;
-    margin-top: 18px;
-    display: flex;
-    flex-direction:column; 
-    justify-content: center;
-    width: fit-content;
-   line-height: 1.5 ;
+                  padding: 10px;
+                  text-align: left;
+                  width: 300px;
+                  line-height: 1.2;
               }
-             
+              .info-container {
+                  display: flex;
+                  justify-content: space-between;
+                  margin-top: 20px;
+                  margin-bottom: 20px;
+              }
               .materials-table {
                   width: 100%;
                   border-collapse: collapse;
@@ -320,55 +321,57 @@ class ClientMaterialPdfService {
                   border: 1px solid #000;
               }
               .signature {
-            margin-top: 40px;
-            display : flex ;
-            justify-content : space-between ; 
-           
-        }
+                  margin-top: 40px;
+                  display: flex;
+                  justify-content: space-between;
+              }
               .remarks {
                   margin-top: 20px;
                   font-size: 10px;
                   font-style: italic;
               }
-                   .rectangle {
-      width: 300px;
-      height: 100px;
-      border: 2px dashed grey;
-      background-color: #fff;
-      
-    }
+              .rectangle {
+                  width: 300px;
+                  height: 100px;
+                  border: 2px dashed grey;
+                  background-color: #fff;
+              }
           </style>
       </head>
       <body>
-        <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-        <div class="company-info" style="text-align: left;">
-            <h2 style="margin-buttom: 1px;">RM METALASER</h2>
-            <p style="margin: 0; line-height: 1.5;"> <span style="color:grey; font-weight: bold;  ">Découpes Métaux </span><br>
-            Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
-            MF: 191 1419B/A/M/000<br>
-            Tél. : +216 20 366 150<br>
-            Email: contact@rmmetalaser.tn<br>
-            Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a></p>
-             <div class="delivery-details">
-              <p><strong>Bon de Livraison N°:</strong> ${
-                data.deliveryNumber || "N/A"
-              } <br>
-              <strong>Date:</strong> ${data.deliveryDate || "N/A"}<br>
-              <strong>Code Client:</strong> ${data.code_client || "N/A"}</p>
+          <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+              <div class="company-info" style="text-align: left;">
+                  <h2 style="margin-bottom: 1px;">RM METALASER</h2>
+                  <p style="margin: 0; line-height: 1.5;">
+                      <span style="color:grey; font-weight: bold;">Découpes Métaux</span><br>
+                      Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
+                      MF: 191 1419B/A/M/000<br>
+                      Tél. : +216 20 366 150<br>
+                      Email: contact@rmmetalaser.tn<br>
+                      Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
+                  </p>
+              </div>
+              <div class="logo" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
+                  <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER" style="width: 300px;">
+              </div>
+          </header>
+
+          <!-- Section avec les deux boîtes alignées horizontalement -->
+          <div class="info-container">
+              <div class="delivery-details">
+                  <p><strong>Bon de Livraison N°:</strong> ${data.deliveryNumber || "N/A"}</p>
+                  <p><strong>Date:</strong> ${data.deliveryDate || "N/A"}</p>
+                  <p><strong>Code Client:</strong> ${data.code_client || "N/A"}</p>
+              </div>
+              
+              <div class="client-info">
+                  <p><strong>Nom Client :</strong> ${data.clientName || ""}</p>
+                  <p><strong>Adresse :</strong> ${data.clientAddress || ""}</p>
+                  <p><strong>M.F :</strong> ${data.clientTaxId || ""}</p>
+                  <p><strong>Tél. :</strong> ${data.clientPhone || ""}</p>
+              </div>
           </div>
-        </div>
-       <div class="logo" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
-      <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER" style="width: 300px;">
 
-  <div class="client-info">
-    <strong>Nom Client :</strong> ${data.clientName || ""}<br>
-    <strong>Adresse :</strong> ${data.clientAddress || ""}<br>
-    <strong>M.F :</strong> ${data.clientTaxId || ""}<br>
-    <strong>Tél. :</strong> ${data.clientPhone || ""}
-  </div>
-</div>
-
-    </header>
           <table class="materials-table">
               <thead>
                   <tr>
@@ -391,15 +394,11 @@ class ClientMaterialPdfService {
               <table class="summary-table">
                   <tr>
                       <td style="text-align: left;"><strong>Total quantité</strong></td>
-                      <td style="text-align: center;"><strong>${
-                        data.totalQuantity || "0"
-                      }</strong></td>
+                      <td style="text-align: center;"><strong>${data.totalQuantity || "0"}</strong></td>
                   </tr>
                   <tr>
                       <td style="text-align: left;"><strong>Nombre de matières</strong></td>
-                      <td style="text-align: center;"><strong>${
-                        data.materials ? data.materials.length : "0"
-                      }</strong></td>
+                      <td style="text-align: center;"><strong>${data.materials ? data.materials.length : "0"}</strong></td>
                   </tr>
               </table>
           </div>
@@ -414,17 +413,15 @@ class ClientMaterialPdfService {
           </div>
 
           <div class="signature">
-    <div>
-            <p><strong>Cachet et Signature Responsable </strong></p>
-              <div class="rectangle"></div>
-     </div>
-         <div>
-            <p><strong>Cachet et Signature du RM METALASER</strong></p>
-              <div class="rectangle"></div>
-     </div>
-       
-    </div>
-  
+              <div>
+                  <p><strong>Cachet et Signature Responsable</strong></p>
+                  <div class="rectangle"></div>
+              </div>
+              <div>
+                  <p><strong>Cachet et Signature du RM METALASER</strong></p>
+                  <div class="rectangle"></div>
+              </div>
+          </div>
       </body>
       </html>
     `;
