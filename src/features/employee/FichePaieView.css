@@ -1,0 +1,59 @@
+.fiche-paie-container {
+  background-color: #f5f7fa;
+  padding: 40px;
+  font-family: 'Segoe UI', sans-serif;
+  min-height: 100vh;
+}
+
+.fiche-card {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header img {
+  width: 100px;
+  margin-right: 20px;
+}
+
+.header-info h1 {
+  margin: 0;
+  color: #1890ff;
+}
+
+.header-info h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #555;
+}
+
+.employee-info, .fiche-info {
+  margin-top: 30px;
+}
+
+.fiche-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.fiche-table td {
+  border: 1px solid #e0e0e0;
+  padding: 10px 15px;
+  font-size: 15px;
+}
+
+.fiche-table .highlight {
+  background-color: #f6ffed;
+  font-weight: bold;
+  color: #389e0d;
+}

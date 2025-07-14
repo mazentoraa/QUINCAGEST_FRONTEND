@@ -1,0 +1,119 @@
+.fiche-paie-print {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #000;
+  padding-bottom: 10px;
+}
+
+.logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.logo-section img {
+  max-width: 120px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.entreprise-infos {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.titre-section {
+  flex-grow: 1;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.periode-section {
+  text-align: right;
+  font-size: 14px;
+}
+
+.admin-infos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 15px;
+  font-size: 13px;
+}
+
+.conges-banque {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.conges,
+.banque {
+  width: 30%;
+  font-size: 13px;
+}
+
+.employee-side {
+  width: 30%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.carte-bleue {
+  background-color: #005baa;
+  color: white;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.designation-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 25px;
+  font-size: 14px;
+}
+
+.designation-table th,
+.designation-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.designation-table .highlight {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+.no-print {
+  margin-top: 20px;
+  text-align: center;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #printable, #printable * {
+    visibility: visible;
+  }
+
+  #printable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

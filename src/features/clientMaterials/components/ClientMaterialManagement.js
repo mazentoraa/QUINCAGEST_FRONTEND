@@ -154,14 +154,13 @@ const [endDateFilter, setEndDateFilter] = useState(null);
   // Create a debounced search function with longer delay to reduce requests
   const debouncedSearch = debounce(handleSearch, 800);
   // Handle client selection
-  const handleClientSelect = (value, option) => {
-    // If we switch to showing specific client materials, disable "view all" mode
-    // if (viewAllMaterials) {
-    //   setViewAllMaterials(false);
-    // }
-    setSelectedClient(option.client);
-    fetchClientMaterials(option.value);
-  };
+const handleClientSelect = (value, option) => {
+  // Définissez d'abord selectedClient
+  setSelectedClient(option.client);
+  // Puis récupérez les matériaux
+  fetchClientMaterials(option.value);
+};
+
 
   // Function to get readable material type label
   const getMaterialTypeLabel = (type) => {
@@ -243,38 +242,41 @@ const [endDateFilter, setEndDateFilter] = useState(null);
     }
   };
   // Fetch client materials when a client is selected
-  const fetchClientMaterials = async (clientId) => {
-    setLoading(true);
-    try {
-      const response = await RawMaterialService.get_materials_by_client_id(
-        clientId
-      );
-      // Transform the data to display formatted material types
-      const formattedMaterials = response.map((material) => ({
-        ...material,
-        display_type: getMaterialTypeLabel(material.type_matiere),
-      }));
-      setMaterials(formattedMaterials);
-    } catch (err) {
-      console.error("Error fetching materials:", err);
-      notification.error({
-        message: "Erreur",
-        description: "Impossible de récupérer la liste des matières premières.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }; // Enhanced columns with client information for "view all" mode
+const fetchClientMaterials = async (clientId) => {
+  setLoading(true);
+  try {
+    const response = await RawMaterialService.get_materials_by_client_id(clientId);
+    
+    const formattedMaterials = response.map((material) => ({
+      ...material,
+      display_type: getMaterialTypeLabel(material.type_matiere),
+      // Correction ici - vérifiez si selectedClient existe
+      client_name: selectedClient?.nom_client || selectedClient?.name || selectedClient?.client_name || "Client inconnu",
+      client_id: clientId
+    }));
+    
+    setMaterials(formattedMaterials);
+  } catch (err) {
+    console.error("Error fetching materials:", err);
+    notification.error({
+      message: "Erreur",
+      description: "Impossible de récupérer la liste des matières premières.",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
   const getColumns = () => {
     // Client column to always show
     const clientColumn = [
-      {
-        title: "Client",
-        dataIndex: "client_name",
-        key: "client_name",
-        render: (text, record) =>
-          record.client_name || `Client ID: ${record.client_id}` || "-",
-      },
+       {
+      title: "Client",
+      dataIndex: "client_name",
+      key: "client_name",
+      render: (text, record) =>
+        record.client_name || `Client ID: ${record.client_id}` || "-",
+    },
     ];
 
     return [
@@ -465,57 +467,14 @@ const getFilteredMaterials = () => {
   return filtered;
 };
   // Edit handler
-  const handleEdit = (material) => {
-    // If we're in "view all materials" mode and the selected client doesn't match
-    // the material's client, we need to fetch the client first
-    if (
-      viewAllMaterials &&
-      (!selectedClient || selectedClient.id !== material.client_id)
-    ) {
-      // Fetch client information before editing
-      ClientService.get_client_by_id(material.client_id)
-        .then((client) => {
-          setSelectedClient(client);
-          setEditingMaterial(material);
-
-          // Ensure the reception_date is properly formatted for the DatePicker
-          const formattedMaterial = {
-            ...material,
-            // Convert string date to moment object for DatePicker
-            reception_date: material.reception_date
-              ? moment(material.reception_date)
-              : null,
-          };
-
-          console.log("Setting form values:", formattedMaterial);
-          form.setFieldsValue(formattedMaterial);
-          setIsModalVisible(true);
-        })
-        .catch((err) => {
-          console.error("Error fetching client:", err);
-          notification.error({
-            message: "Erreur",
-            description:
-              "Impossible de récupérer les informations du client pour cette matière.",
-          });
-        });
-    } else {
-      setEditingMaterial(material);
-
-      // Ensure the reception_date is properly formatted for the DatePicker
-      const formattedMaterial = {
-        ...material,
-        // Convert string date to moment object for DatePicker
-        reception_date: material.reception_date
-          ? moment(material.reception_date)
-          : null,
-      };
-
-      console.log("Setting form values:", formattedMaterial);
-      form.setFieldsValue(formattedMaterial);
-      setIsModalVisible(true);
-    }
-  };
+const handleEdit = (material) => {
+  setEditingMaterial(material);
+  form.setFieldsValue({
+    ...material,
+    reception_date: material.reception_date ? moment(material.reception_date) : null,
+  });
+  setIsModalVisible(true);
+};
   // Delete handler
   const handleDelete = async (id) => {
     try {
@@ -771,17 +730,18 @@ const getFilteredMaterials = () => {
   };
 
 // Form submission handler
+// Form submission handler
 const handleSubmit = async (values) => {
   try {
-    if (!selectedClient) {
+    const clientId = selectedClient?.id || editingMaterial?.client_id;
+
+    if (!clientId) {
       notification.error({
         message: "Erreur",
-        description: "Aucun client sélectionné.",
+        description: "Aucun client sélectionné pour cette matière.",
       });
       return;
     }
-
-    const clientId = selectedClient.id;
 
     const formattedValues = {
       ...values,
@@ -789,72 +749,65 @@ const handleSubmit = async (values) => {
       client_id: clientId,
     };
 
-    console.log("Submitting values:", formattedValues);
-
+    let response;
     if (editingMaterial) {
-      // Update material
-      try {
-        const response = await RawMaterialService.update_material(
-          editingMaterial.id,
-          formattedValues
-        );
-        console.log("Update response:", response);
+      // Mise à jour
+      response = await RawMaterialService.update_material(editingMaterial.id, formattedValues);
 
-        notification.success({
-          message: "Succès",
-          description: "Matière première modifiée avec succès.",
-        });
+      notification.success({
+        message: "Succès",
+        description: "Matière première modifiée avec succès.",
+      });
+      
+      // Fermer le modal et réinitialiser le formulaire
+      form.resetFields();
+      setEditingMaterial(null);
+      setIsModalVisible(false);
 
-        // Refresh materials list after update
-        await fetchClientMaterials(clientId);
-
-        // Close modal and reset form after refresh
-        form.resetFields();
-        setEditingMaterial(null);
-        setIsModalVisible(false);
-      } catch (updateError) {
-        console.error("Error updating material:", updateError);
-        notification.error({
-          message: "Erreur",
-          description:
-            updateError?.message || "Impossible de modifier la matière première.",
-        });
+      // **REFRESH AUTOMATIQUE APRÈS MISE À JOUR**
+      // Option 1: Refresh complet de la page
+      window.location.reload();
+      
+      // Option 2: Ou si vous préférez juste recharger les données sans refresh complet
+      // Décommentez les lignes suivantes et commentez window.location.reload()
+      /*
+      if (viewAllMaterials) {
+        await fetchAllMaterials();
+      } else if (selectedClient) {
+        await fetchClientMaterials(selectedClient.id);
       }
+      */
+
     } else {
-      // Add new material
-      const response = await RawMaterialService.add_material_to_client(
-        clientId,
-        formattedValues
-      );
+      // Création
+      response = await RawMaterialService.add_material_to_client(clientId, formattedValues);
+
+      const clientName = selectedClient?.nom_client || selectedClient?.name || selectedClient?.client_name || `Client ID: ${clientId}`;
 
       const newMaterial = {
         ...response,
         display_type: getMaterialTypeLabel(response.type_matiere),
-        client_name:
-          selectedClient.nom_client ||
-          selectedClient.name ||
-          selectedClient.client_name ||
-          `Client ID: ${selectedClient.id}`,
+        client_name: clientName,
       };
 
-      setMaterials((prevMaterials) => [...prevMaterials, newMaterial]);
+      setMaterials((prev) => [...prev, newMaterial]);
 
       notification.success({
         message: "Succès",
         description: "Matière première ajoutée avec succès.",
       });
 
-      // Close modal and reset form after successful add
+      // Fermer le modal et réinitialiser le formulaire
       form.resetFields();
       setEditingMaterial(null);
       setIsModalVisible(false);
     }
-  } catch (err) {
-    console.error("Error saving material:", err);
+
+  } catch (error) {
+    console.error("Erreur lors de la sauvegarde :", error);
     notification.error({
       message: "Erreur",
-      description:
-        err?.message || "Impossible de sauvegarder la matière première.",
+      description: error.message || "Impossible de sauvegarder les modifications.",
     });
   }
 };
@@ -1135,27 +1088,26 @@ const handleSubmit = async (values) => {
         width={800}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          {selectedClient && (
-            <div style={{ marginBottom: 16 }}>
-              <Title level={4}>Informations client</Title>
-              <div style={{ display: "flex", gap: 16 }}>
-                <Form.Item label="Nom du client" style={{ flex: 1 }}>
-                  <Input
-                    value={
-                      selectedClient.nom_client ||
-                      selectedClient.name ||
-                      selectedClient.client_name ||
-                      "N/A"
-                    }
-                    disabled
-                  />
-                </Form.Item>
-                <Form.Item label="ID Client" style={{ flex: 1 }}>
-                  <Input value={selectedClient.id} disabled />
-                </Form.Item>
-              </div>
-            </div>
-          )}
+       {selectedClient && (
+  <div style={{ marginBottom: 16 }}>
+    <Title level={4}>Informations client</Title>
+    <div style={{ display: "flex", gap: 16 }}>
+      <Form.Item label="Nom du client" style={{ flex: 1 }}>
+        <Input
+          value={selectedClient?.nom_client || selectedClient?.name || selectedClient?.client_name || "N/A"}
+          disabled
+        />
+      </Form.Item>
+
+      <Form.Item label="Code client (ID)" style={{ flex: 1 }}>
+        <Input
+          value={selectedClient?.id || "N/A"}
+          disabled
+        />
+      </Form.Item>
+    </div>
+  </div>
+)}
 
           <div style={{ marginBottom: 16 }}>
             <Title level={4}>Informations livraison</Title>
@@ -1186,12 +1138,28 @@ const handleSubmit = async (values) => {
               >
                 <DatePicker style={{ width: "100%" }} format="YYYY-MM-DD" />
               </Form.Item>
+              <Form.Item
+  name="type_matiere"
+  label="Type de matériau"
+  rules={[
+    { required: true, message: "Veuillez sélectionner un type de matériau" }
+  ]}
+>
+  <Select placeholder="Sélectionnez un type">
+    {material_types.map((type) => (
+      <Option key={type.value} value={type.value}>
+        {type.label}
+      </Option>
+    ))}
+  </Select>
+</Form.Item>
             </div>
           </div>
 
           <div style={{ marginBottom: 16 }}>
             <Title level={4}>Caractéristiques du matériau</Title>
             <div style={{ display: "flex", gap: 16 }}>
+              
               <Form.Item
                 name="thickness"
                 label="Épaisseur (mm)"

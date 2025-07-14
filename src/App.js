@@ -54,10 +54,11 @@ import EmployeeManagement from './features/employee/employee';
 import ParPeriode from "./features/tresorerie/pages/ParPeriode";
 import Simulation from "./features/tresorerie/pages/Simulation";
 import TresorerieTraite from "./features/tresorerie/pages/TresorerieTraite";
-
-
-
-
+import AvancePage from './features/employee/avance';
+import EmployeePayrollList from "./features/employee/EmployeePayrollList";
+import EmployeePayrollDetails from "./features/employee/EmployeePayrollDetails";
+import FichePaiePrint from "./features/employee/FichePaiePrint";
+import FichePaieView from "./features/employee/FichePaieView";
 const { Header, Content, Sider } = Layout;
 
 const PrivateRoute = ({ children }) => {
@@ -215,11 +216,16 @@ function App() {
                                   <Route path="/achats/bon-retour-fournisseur" element={<BonRetourFornisseur />} />
                                   <Route path="/achats/traite-fournisseur" element={<SupplierInstallmentPage />} />
                                   <Route path="/achats/gestion-traites-fournisseur" element={<SupplierInstallmentManagementPage />} />
+                                  <Route path="/employes" element={<EmployeeManagement />} />
+                                  <Route path="/employes/avance" element={<AvancePage />} />
+                                  <Route path="/employes/fiche-paie" element={<EmployeePayrollList />} />
+                                  <Route path="/employes/:id/fiches-paie" element={<EmployeePayrollDetails />} />
+                                  <Route path="/fiches-paie/:id/print" element={<FichePaiePrint />} />
+                                  <Route path="/fiche-paie/:id/view" element={<FichePaieView />} />
                                   <Route path="/tresorerie" element={<Tresorerie />} />
                                   <Route path="/tresorerie/traite" element={<TresorerieTraite />} />
                                   <Route path="/tresorerie/par-periode" element={<ParPeriode />} />
                                   <Route path="/tresorerie/simulation" element={<Simulation />} />
-                                  <Route path="/employes" element={<EmployeeManagement />} />
                                 </Routes>
                               </Content>
                             </Layout>
