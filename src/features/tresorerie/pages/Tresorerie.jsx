@@ -23,6 +23,7 @@ import {
 } from 'chart.js'
 import { Line, Bar } from 'react-chartjs-2'
 import './treasury-styles.css'
+import { fetchKPIs, fetchSchedule } from '../services/tresorerieApi'
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -37,23 +38,30 @@ ChartJS.register(
 function TresorerieMetalGest() {
   const [activeTab, setActiveTab] = useState('global')
   const [chartPeriod, setChartPeriod] = useState('30d')
+  const [kpiData, setKpiData] = useState(null);
+  const [scheduleData, setScheduleData] = useState(null);
+
+  useEffect(() => {
+    fetchKPIs().then(res => setKpiData(res.data));
+    fetchSchedule().then(res => setScheduleData(res.data));
+  }, []);
   
-  const kpiData = {
-    balance: { value: 45680, trend: 5.2, positive: true },
-    income: { value: 28450, trend: 12, positive: true },
-    expense: { value: -18200, trend: -8, positive: false },
-    forecast: { value: 55930, trend: 22, positive: true }
-  }
-  const scheduleData = [
-    { date: "Aujourd'hui - 02/07", description: "Encaissement client ABC", amount: 9300, type: "positive" },
-    { date: "Aujourd'hui - 02/07", description: "Traite fournisseur TECH", amount: -3200, type: "supplier" },
-    { date: "Demain - 03/07", description: "Virement bancaire", amount: 2700, type: "positive" },
-    { date: "Jeudi 04/07", description: "Salaires + charges", amount: -4400, type: "negative" },
-    { date: "Jeudi 04/07", description: "Traite fournisseur MAT", amount: -4800, type: "supplier" },
-    { date: "Vendredi 05/07", description: "Facture client XYZ", amount: 15000, type: "positive" },
-    { date: "Samedi 06/07", description: "Fournisseur DEF", amount: -8200, type: "negative" },
-    { date: "Samedi 06/07", description: "Traite fournisseur LOG", amount: -4800, type: "supplier" }
-  ]
+  // const kpiData = {
+  //   balance: { value: 45680, trend: 5.2, positive: true },
+  //   income: { value: 28450, trend: 12, positive: true },
+  //   expense: { value: -18200, trend: -8, positive: false },
+  //   forecast: { value: 55930, trend: 22, positive: true }
+  // }
+  // const scheduleData = [
+  //   { date: "Aujourd'hui - 02/07", description: "Encaissement client ABC", amount: 9300, type: "positive" },
+  //   { date: "Aujourd'hui - 02/07", description: "Traite fournisseur TECH", amount: -3200, type: "supplier" },
+  //   { date: "Demain - 03/07", description: "Virement bancaire", amount: 2700, type: "positive" },
+  //   { date: "Jeudi 04/07", description: "Salaires + charges", amount: -4400, type: "negative" },
+  //   { date: "Jeudi 04/07", description: "Traite fournisseur MAT", amount: -4800, type: "supplier" },
+  //   { date: "Vendredi 05/07", description: "Facture client XYZ", amount: 15000, type: "positive" },
+  //   { date: "Samedi 06/07", description: "Fournisseur DEF", amount: -8200, type: "negative" },
+  //   { date: "Samedi 06/07", description: "Traite fournisseur LOG", amount: -4800, type: "supplier" }
+  // ]
 
   const alertsData = [
     { type: 'critical', title: 'Solde critique prévu', description: 'Le 08/07 - Solde prévu: 2,300 DT (seuil min: 5,000 DT)' },
@@ -95,7 +103,7 @@ function TresorerieMetalGest() {
         },
         ticks: {
           callback: function(value) {
-            return value.toLocaleString() + ' DT'
+            return value?.toLocaleString() + ' DT'
           }
         }
       },
@@ -110,7 +118,7 @@ function TresorerieMetalGest() {
   const formatAmount = (amount) => {
     if (amount === 0) return '0 DT'
     const sign = amount >= 0 ? '+' : ''
-    return `${sign}${amount.toLocaleString('fr-FR')} DT`
+    return `${sign}${amount?.toLocaleString('fr-FR')} DT`
   }
 
   const getAmountColor = (amount, type = 'default') => {
@@ -168,13 +176,13 @@ function TresorerieMetalGest() {
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <CreditCard className="h-6 w-6 text-green-600" />
                 </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(kpiData.balance.positive)}`}>
-                  {getTrendIcon(kpiData.balance.trend, kpiData.balance.positive)}
-                  {kpiData.balance.trend}%
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(kpiData?.balance.positive)}`}>
+                  {getTrendIcon(kpiData?.balance.trend, kpiData?.balance.positive)}
+                  {kpiData?.balance.trend}%
                 </div>
               </div>
               <div className="text-sm text-gray-600 mb-1">Solde Actuel</div>
-              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData.balance.value)}</div>
+              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.balance.value)}</div>
               <div className="text-xs text-gray-500 mt-1">Tous comptes confondus</div>
             </div>
             <div 
@@ -185,13 +193,13 @@ function TresorerieMetalGest() {
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <TrendingUp className="h-6 w-6 text-blue-600" />
                 </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(kpiData.income.positive)}`}>
-                  {getTrendIcon(kpiData.income.trend, kpiData.income.positive)}
-                  {kpiData.income.trend}%
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(kpiData?.income.positive)}`}>
+                  {getTrendIcon(kpiData?.income.trend, kpiData?.income.positive)}
+                  {kpiData?.income.trend}%
                 </div>
               </div>
               <div className="text-sm text-gray-600 mb-1">Encaissements Prévus</div>
-              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData.income.value)}</div>
+              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.income.value)}</div>
               <div className="text-xs text-gray-500 mt-1">7 prochains jours</div>
             </div>
             <div 
@@ -202,13 +210,13 @@ function TresorerieMetalGest() {
                 <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                   <TrendingDown className="h-6 w-6 text-red-600" />
                 </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(!kpiData.expense.positive)}`}>
-                  {getTrendIcon(kpiData.expense.trend, !kpiData.expense.positive)}
-                  {Math.abs(kpiData.expense.trend)}%
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(!kpiData?.expense.positive)}`}>
+                  {getTrendIcon(kpiData?.expense.trend, !kpiData?.expense.positive)}
+                  {Math.abs(kpiData?.expense.trend)}%
                 </div>
               </div>
               <div className="text-sm text-gray-600 mb-1">Décaissements Prévus</div>
-              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData.expense.value)}</div>
+              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.expense.value)}</div>
               <div className="text-xs text-gray-500 mt-1">7 prochains jours</div>
             </div>
             <div 
@@ -219,13 +227,13 @@ function TresorerieMetalGest() {
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                   <BarChart3 className="h-6 w-6 text-purple-600" />
                 </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(kpiData.forecast.positive)}`}>
-                  {getTrendIcon(kpiData.forecast.trend, kpiData.forecast.positive)}
-                  {kpiData.forecast.trend}%
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(kpiData?.forecast.positive)}`}>
+                  {getTrendIcon(kpiData?.forecast.trend, kpiData?.forecast.positive)}
+                  {kpiData?.forecast.trend}%
                 </div>
               </div>
               <div className="text-sm text-gray-600 mb-1">Solde Prévisionnel</div>
-              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData.forecast.value)}</div>
+              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.forecast.value)}</div>
               <div className="text-xs text-gray-500 mt-1">Dans 7 jours</div>
             </div>
           </div>
@@ -262,7 +270,7 @@ function TresorerieMetalGest() {
                 <p className="text-sm text-gray-600">7 prochains jours</p>
               </div>
               <div className="space-y-3 max-h-80 overflow-y-auto">
-                {scheduleData.map((item, index) => (
+                {scheduleData?.map((item, index) => (
                   <div
                     key={index}
                     className={`p-4 rounded-lg border-l-4 cursor-pointer hover:shadow-sm transition-shadow ${

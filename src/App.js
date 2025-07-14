@@ -40,7 +40,7 @@ import Facture from "./components/BonsDevis/Facture";
 import Devis from "./components/BonsDevis/Devis";
 import PurshaseMatiere from "./features/purshase/purshase_matiere";
 
-import { Spin } from "antd"; // Import Spin
+import { Spin } from "antd"; 
 import MaterialAchatManagement from './features/purshase/MaterialManagement';
 import FactureMatiere from './features/purshase/FactureMatiere';
 import BonLivraison from './features/purshase/BonLivraison';
@@ -49,11 +49,11 @@ import Consommable from './features/purshase/Consommable';
 import BonRetourFornisseur from "./features/purshase/BonRetourFornisseur";
 import SupplierInstallmentPage from './features/purshase/SupplierInstallmentPage';
 import SupplierInstallmentManagementPage from './features/purshase/SupplierInstallmentManagementPage';
-import Tresorerie from "./features/Tresorerie/Tresorerie"; // ✅ le bon chemin
+import Tresorerie from "./features/tresorerie/pages/Tresorerie"; 
 import EmployeeManagement from './features/employee/employee';
-import ParPeriode from "./features/Tresorerie/ParPeriode";
-import Simulation from "./features/Tresorerie/Simulation";
-import TresorerieTraite from "./features/Tresorerie/TresorerieTraite";
+import ParPeriode from "./features/tresorerie/pages/ParPeriode";
+import Simulation from "./features/tresorerie/pages/Simulation";
+import TresorerieTraite from "./features/tresorerie/pages/TresorerieTraite";
 
 
 

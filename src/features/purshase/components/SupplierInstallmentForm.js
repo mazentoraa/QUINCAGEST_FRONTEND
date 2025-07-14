@@ -101,6 +101,8 @@ const SupplierInstallmentForm = () => {
         .filter(
           (invoice) =>
             invoice.nom_fournisseur &&
+            invoice.numero_commande.charAt(0) == 'F' && // pour choisir seulement FAC pas avoirs (AV)
+            invoice.mode_paiement == ('traite' || 'mixte') &&
             formData.supplierName &&
             invoice.nom_fournisseur.trim().toLowerCase() === formData.supplierName.trim().toLowerCase()
         )

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -20,6 +20,7 @@ import {
   Filler
 } from 'chart.js'
 import './treasury-styles.css'
+import { fetchTraites } from '../services/tresorerieApi'
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -34,28 +35,40 @@ ChartJS.register(
 
 export default function TresorerieTraite() {
 
-    const traitesClients = [
-        { id: 'TC-2024-001', client: 'Client ABC SARL', echeance: '05/07/2024', montant: 15000, status: 'en-cours' },
-        { id: 'TC-2024-002', client: 'Client XYZ Ltd', echeance: '08/07/2024', montant: 12500, status: 'en-cours' },
-        { id: 'TC-2024-003', client: 'Client DEF Corp', echeance: '10/07/2024', montant: 8700, status: 'en-cours' },
-        { id: 'TC-2024-004', client: 'Client GHI SARL', echeance: '28/06/2024', montant: 4200, status: 'echu' },
-        { id: 'TC-2024-005', client: 'Client JKL Ltd', echeance: '01/07/2024', montant: 4800, status: 'paye' }
-    ]
+    const [traitesData, setTraitesData] = useState(null);
+    const [traitesClients, setTraitesClients] = useState(null);
+    const [traitesFournisseurs, setTraitesFournisseurs] = useState(null);
 
-    const traitesFournisseurs = [
-        { id: 'TF-2024-001', fournisseur: 'Fournisseur TECH Solutions', echeance: '05/07/2024', montant: 8500, status: 'en-cours' },
-        { id: 'TF-2024-002', fournisseur: 'Fournisseur MAT Industries', echeance: '07/07/2024', montant: 6200, status: 'en-cours' },
-        { id: 'TF-2024-003', fournisseur: 'Fournisseur LOG Transport', echeance: '09/07/2024', montant: 4800, status: 'en-cours' },
-        { id: 'TF-2024-004', fournisseur: 'Fournisseur ELEC Power', echeance: '30/06/2024', montant: 2600, status: 'echu' },
-        { id: 'TF-2024-005', fournisseur: 'Fournisseur SERV Maintenance', echeance: '02/07/2024', montant: 6500, status: 'paye' }
-    ]
+    useEffect(() => {
+        fetchTraites().then(res => {
+            setTraitesData(res.data.stats);
+            setTraitesClients(res.data.traites.filter((traite)=> traite.type==='client'));
+            setTraitesFournisseurs(res.data.traites.filter((traite)=> traite.type==='fournisseur'));
+        })
+    }, []);
 
-    const traitesData = {
-        clients: { value: 45200, trend: 8, count: 12 },
-        fournisseurs: { value: -28600, trend: -5, count: 8 },
-        echues: { value: 6800, trend: 15, count: 3 },
-        net: { value: 16600, trend: 12 }
-    }
+    // const traitesClients = [
+    //     { id: 'TC-2024-001', client: 'Client ABC SARL', echeance: '05/07/2024', montant: 15000, status: 'en-cours' },
+    //     { id: 'TC-2024-002', client: 'Client XYZ Ltd', echeance: '08/07/2024', montant: 12500, status: 'en-cours' },
+    //     { id: 'TC-2024-003', client: 'Client DEF Corp', echeance: '10/07/2024', montant: 8700, status: 'en-cours' },
+    //     { id: 'TC-2024-004', client: 'Client GHI SARL', echeance: '28/06/2024', montant: 4200, status: 'echu' },
+    //     { id: 'TC-2024-005', client: 'Client JKL Ltd', echeance: '01/07/2024', montant: 4800, status: 'paye' }
+    // ]
+
+    // const traitesFournisseurs = [
+    //     { id: 'TF-2024-001', fournisseur: 'Fournisseur TECH Solutions', echeance: '05/07/2024', montant: 8500, status: 'en-cours' },
+    //     { id: 'TF-2024-002', fournisseur: 'Fournisseur MAT Industries', echeance: '07/07/2024', montant: 6200, status: 'en-cours' },
+    //     { id: 'TF-2024-003', fournisseur: 'Fournisseur LOG Transport', echeance: '09/07/2024', montant: 4800, status: 'en-cours' },
+    //     { id: 'TF-2024-004', fournisseur: 'Fournisseur ELEC Power', echeance: '30/06/2024', montant: 2600, status: 'echu' },
+    //     { id: 'TF-2024-005', fournisseur: 'Fournisseur SERV Maintenance', echeance: '02/07/2024', montant: 6500, status: 'paye' }
+    // ]
+
+    // const traitesData = {
+    //     clients: { value: 45200, trend: 8, count: 12 },
+    //     fournisseurs: { value: -28600, trend: -5, count: 8 },
+    //     echues: { value: 6800, trend: 15, count: 3 },
+    //     net: { value: 16600, trend: 12 }
+    // }
 
     const handleTraiteClick = (traite) => {
         const type = traite.id.startsWith('TC') ? 'Client' : 'Fournisseur'
@@ -89,7 +102,7 @@ export default function TresorerieTraite() {
     const formatAmount = (amount) => {
         if (amount === 0) return '0 DT'
         const sign = amount >= 0 ? '+' : ''
-        return `${sign}${amount.toLocaleString('fr-FR')} DT`
+        return `${sign}${amount?.toLocaleString('fr-FR')} DT`
     }
 
   return (
@@ -107,12 +120,12 @@ export default function TresorerieTraite() {
                 </div>
                 <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium text-green-600 bg-green-50">
                     <TrendingUp className="h-4 w-4" />
-                    8%
+                    {traitesData?.clients.trend}%
                 </div>
                 </div>
                 <div className="text-sm text-gray-600 mb-1">Traites Clients</div>
-                <div className="text-2xl font-bold text-gray-900">{formatAmount(traitesData.clients.value)}</div>
-                <div className="text-xs text-gray-500 mt-1">{traitesData.clients.count} traites en cours</div>
+                <div className="text-2xl font-bold text-gray-900">{formatAmount(traitesData?.clients.value)}</div>
+                <div className="text-xs text-gray-500 mt-1">{traitesData?.clients.count} traites en cours</div>
             </div>
             <div className="bg-white rounded-lg p-6 shadow-sm border">
                 <div className="flex items-center justify-between mb-4">
@@ -121,12 +134,12 @@ export default function TresorerieTraite() {
                 </div>
                 <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium text-red-600 bg-red-50">
                     <TrendingDown className="h-4 w-4" />
-                    5%
+                    {traitesData?.fournisseurs.trend}%
                 </div>
                 </div>
                 <div className="text-sm text-gray-600 mb-1">Traites Fournisseurs</div>
-                <div className="text-2xl font-bold text-gray-900">{formatAmount(traitesData.fournisseurs.value)}</div>
-                <div className="text-xs text-gray-500 mt-1">{traitesData.fournisseurs.count} traites à payer</div>
+                <div className="text-2xl font-bold text-gray-900">{formatAmount(traitesData?.fournisseurs.value)}</div>
+                <div className="text-xs text-gray-500 mt-1">{traitesData?.fournisseurs.count} traites à payer</div>
             </div>
             <div className="bg-white rounded-lg p-6 shadow-sm border">
                 <div className="flex items-center justify-between mb-4">
@@ -135,12 +148,12 @@ export default function TresorerieTraite() {
                 </div>
                 <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium text-green-600 bg-green-50">
                     <TrendingUp className="h-4 w-4" />
-                    15%
+                    {traitesData?.echues.trend}%
                 </div>
                 </div>
                 <div className="text-sm text-gray-600 mb-1">Traites Échues</div>
-                <div className="text-2xl font-bold text-gray-900">{formatAmount(traitesData.echues.value)}</div>
-                <div className="text-xs text-gray-500 mt-1">{traitesData.echues.count} traites en retard</div>
+                <div className="text-2xl font-bold text-gray-900">{formatAmount(traitesData?.echues.value)}</div>
+                <div className="text-xs text-gray-500 mt-1">{traitesData?.echues.count} traites en retard</div>
             </div>
             <div className="bg-white rounded-lg p-6 shadow-sm border">
                 <div className="flex items-center justify-between mb-4">
@@ -149,11 +162,11 @@ export default function TresorerieTraite() {
                 </div>
                 <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium text-green-600 bg-green-50">
                     <TrendingUp className="h-4 w-4" />
-                    12%
+                    {traitesData?.net.trend}%
                 </div>
                 </div>
                 <div className="text-sm text-gray-600 mb-1">Solde Net Traites</div>
-                <div className="text-2xl font-bold text-gray-900">{formatAmount(traitesData.net.value)}</div>
+                <div className="text-2xl font-bold text-gray-900">{formatAmount(traitesData?.net.value)}</div>
                 <div className="text-xs text-gray-500 mt-1">Différence clients/fournisseurs</div>
             </div>
             </div>
@@ -165,7 +178,7 @@ export default function TresorerieTraite() {
                 <p className="text-sm text-gray-600">À encaisser</p>
                 </div>
                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                {traitesClients.map((traite) => (
+                {traitesClients?.map((traite) => (
                     <div
                     key={traite.id}
                     className={`p-4 rounded-lg border-l-4 cursor-pointer hover:shadow-sm transition-shadow ${
@@ -202,7 +215,7 @@ export default function TresorerieTraite() {
                 <p className="text-sm text-gray-600">À payer</p>
                 </div>
                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                {traitesFournisseurs.map((traite) => (
+                {traitesFournisseurs?.map((traite) => (
                     <div
                     key={traite.id}
                     className={`p-4 rounded-lg border-l-4 cursor-pointer hover:shadow-sm transition-shadow ${

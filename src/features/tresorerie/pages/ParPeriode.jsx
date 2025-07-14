@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { 
   TrendingDown, 
   DollarSign, 
@@ -20,6 +20,7 @@ import {
 } from 'chart.js'
 import { Line, Bar } from 'react-chartjs-2'
 import './treasury-styles.css'
+import { fetchPeriodData } from '../services/tresorerieApi'
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -35,11 +36,18 @@ ChartJS.register(
 export default function ParPeriode() {
 
     const [activePeriod, setActivePeriod] = useState('week')
+    const [periodData, setPeriodData] = useState(null);
+
+    useEffect(() => {
+      fetchPeriodData(activePeriod)
+        .then(res => setPeriodData(res.data))
+        .catch(err => console.error("Failed to fetch period data:", err));
+    }, [activePeriod]);
 
       const formatAmount = (amount) => {
         if (amount === 0) return '0 DT'
         const sign = amount >= 0 ? '+' : ''
-        return `${sign}${amount.toLocaleString('fr-FR')} DT`
+        return `${sign}${amount?.toLocaleString('fr-FR')} DT`
       }
     
       const getTrendIcon = (trend, positive) => {
@@ -124,41 +132,59 @@ export default function ParPeriode() {
         return chartData[period] || chartData.week
     }
 
-    const getPeriodData = (period) => {
-        const periodData = {
-        week: {
-            encaissements: { value: 125680, trend: 15.3, positive: true },
-            decaissements: { value: -89450, trend: -5.2, positive: false },
-            traitesFournisseurs: { value: -31200, trend: -8.1, positive: false },
-            resultatNet: { value: 5030, trend: 28.7, positive: true },
-            label: 'Cette semaine'
+    // const getPeriodData = (period) => {
+    //     const periodData = {
+    //     week: {
+    //         encaissements: { value: 125680, trend: 15.3, positive: true },
+    //         decaissements: { value: -89450, trend: -5.2, positive: false },
+    //         traitesFournisseurs: { value: -31200, trend: -8.1, positive: false },
+    //         resultatNet: { value: 5030, trend: 28.7, positive: true },
+    //         label: 'Cette semaine'
+    //     },
+    //     month: {
+    //         encaissements: { value: 485200, trend: 12.8, positive: true },
+    //         decaissements: { value: -342800, trend: -3.5, positive: false },
+    //         traitesFournisseurs: { value: -125600, trend: -6.2, positive: false },
+    //         resultatNet: { value: 16800, trend: 22.1, positive: true },
+    //         label: 'Ce mois'
+    //     },
+    //     quarter: {
+    //         encaissements: { value: 1456800, trend: 18.5, positive: true },
+    //         decaissements: { value: -1028400, trend: -2.8, positive: false },
+    //         traitesFournisseurs: { value: -378200, trend: -4.9, positive: false },
+    //         resultatNet: { value: 50200, trend: 35.2, positive: true },
+    //         label: 'Ce trimestre'
+    //     },
+    //     year: {
+    //         encaissements: { value: 5824600, trend: 14.2, positive: true },
+    //         decaissements: { value: -4112800, trend: -1.8, positive: false },
+    //         traitesFournisseurs: { value: -1512400, trend: -3.1, positive: false },
+    //         resultatNet: { value: 199400, trend: 28.9, positive: true },
+    //         label: 'Cette année'
+    //     }
+    //     }
+    //     return periodData[period] || periodData.week
+    // }
+    // const currentPeriodData = getPeriodData(activePeriod)
+    // const currentPeriodChartData = getPeriodChartData(activePeriod)
+
+    const currentPeriodChartData = {
+      labels: periodData?.chart_data.labels,
+      datasets: [
+        {
+          label: 'Encaissements',
+          data: periodData?.chart_data.encaissements,
+          backgroundColor: '#3b82f6',
+          borderRadius: 8
         },
-        month: {
-            encaissements: { value: 485200, trend: 12.8, positive: true },
-            decaissements: { value: -342800, trend: -3.5, positive: false },
-            traitesFournisseurs: { value: -125600, trend: -6.2, positive: false },
-            resultatNet: { value: 16800, trend: 22.1, positive: true },
-            label: 'Ce mois'
-        },
-        quarter: {
-            encaissements: { value: 1456800, trend: 18.5, positive: true },
-            decaissements: { value: -1028400, trend: -2.8, positive: false },
-            traitesFournisseurs: { value: -378200, trend: -4.9, positive: false },
-            resultatNet: { value: 50200, trend: 35.2, positive: true },
-            label: 'Ce trimestre'
-        },
-        year: {
-            encaissements: { value: 5824600, trend: 14.2, positive: true },
-            decaissements: { value: -4112800, trend: -1.8, positive: false },
-            traitesFournisseurs: { value: -1512400, trend: -3.1, positive: false },
-            resultatNet: { value: 199400, trend: 28.9, positive: true },
-            label: 'Cette année'
+        {
+          label: 'Décaissements',
+          data: periodData?.chart_data.decaissements,
+          backgroundColor: '#ef4444',
+          borderRadius: 8
         }
-        }
-        return periodData[period] || periodData.week
+      ]
     }
-    const currentPeriodData = getPeriodData(activePeriod)
-    const currentPeriodChartData = getPeriodChartData(activePeriod)
 
     const barChartOptions = {
         responsive: true,
@@ -175,7 +201,7 @@ export default function ParPeriode() {
             },
             ticks: {
               callback: function(value) {
-                return Math.abs(value).toLocaleString() + ' DT'
+                return Math.abs(value)?.toLocaleString() + ' DT'
               }
             }
           },
@@ -223,56 +249,56 @@ export default function ParPeriode() {
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <BarChart3 className="h-6 w-6 text-green-600" />
                 </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(currentPeriodData.encaissements.positive)}`}>
-                    {getTrendIcon(currentPeriodData.encaissements.trend, currentPeriodData.encaissements.positive)}
-                    {currentPeriodData.encaissements.trend}%
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(periodData?.encaissements.positive)}`}>
+                    {getTrendIcon(periodData?.encaissements.trend, periodData?.encaissements.positive)}
+                    {periodData?.encaissements.trend}%
                 </div>
                 </div>
                 <div className="text-sm text-gray-600 mb-1">Encaissements Période</div>
-                <div className="text-2xl font-bold text-gray-900">{formatAmount(currentPeriodData.encaissements.value)}</div>
-                <div className="text-xs text-gray-500 mt-1">{currentPeriodData.label}</div>
+                <div className="text-2xl font-bold text-gray-900">{formatAmount(periodData?.encaissements.value)}</div>
+                <div className="text-xs text-gray-500 mt-1">{periodData?.label}</div>
             </div>
             <div className="bg-white rounded-lg p-6 shadow-sm border">
                 <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                     <TrendingDown className="h-6 w-6 text-red-600" />
                 </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(!currentPeriodData.decaissements.positive)}`}>
-                    {getTrendIcon(currentPeriodData.decaissements.trend, !currentPeriodData.decaissements.positive)}
-                    {Math.abs(currentPeriodData.decaissements.trend)}%
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(!periodData?.decaissements.positive)}`}>
+                    {getTrendIcon(periodData?.decaissements.trend, !periodData?.decaissements.positive)}
+                    {Math.abs(periodData?.decaissements.trend)}%
                 </div>
                 </div>
                 <div className="text-sm text-gray-600 mb-1">Décaissements Période</div>
-                <div className="text-2xl font-bold text-gray-900">{formatAmount(currentPeriodData.decaissements.value)}</div>
-                <div className="text-xs text-gray-500 mt-1">{currentPeriodData.label}</div>
+                <div className="text-2xl font-bold text-gray-900">{formatAmount(periodData?.decaissements.value)}</div>
+                <div className="text-xs text-gray-500 mt-1">{periodData?.label}</div>
             </div>
             <div className="bg-white rounded-lg p-6 shadow-sm border">
                 <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                     <Building2 className="h-6 w-6 text-orange-600" />
                 </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(!currentPeriodData.traitesFournisseurs.positive)}`}>
-                    {getTrendIcon(currentPeriodData.traitesFournisseurs.trend, !currentPeriodData.traitesFournisseurs.positive)}
-                    {Math.abs(currentPeriodData.traitesFournisseurs.trend)}%
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(!periodData?.traitesFournisseurs.positive)}`}>
+                    {getTrendIcon(periodData?.traitesFournisseurs.trend, !periodData?.traitesFournisseurs.positive)}
+                    {Math.abs(periodData?.traitesFournisseurs.trend)}%
                 </div>
                 </div>
                 <div className="text-sm text-gray-600 mb-1">Traites Fournisseurs</div>
-                <div className="text-2xl font-bold text-gray-900">{formatAmount(currentPeriodData.traitesFournisseurs.value)}</div>
-                <div className="text-xs text-gray-500 mt-1">{currentPeriodData.label}</div>
+                <div className="text-2xl font-bold text-gray-900">{formatAmount(periodData?.traitesFournisseurs.value)}</div>
+                <div className="text-xs text-gray-500 mt-1">{periodData?.label}</div>
             </div>
             <div className="bg-white rounded-lg p-6 shadow-sm border">
                 <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <DollarSign className="h-6 w-6 text-blue-600" />
                 </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(currentPeriodData.resultatNet.positive)}`}>
-                    {getTrendIcon(currentPeriodData.resultatNet.trend, currentPeriodData.resultatNet.positive)}
-                    {currentPeriodData.resultatNet.trend}%
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(periodData?.resultatNet.positive)}`}>
+                    {getTrendIcon(periodData?.resultatNet.trend, periodData?.resultatNet.positive)}
+                    {periodData?.resultatNet.trend}%
                 </div>
                 </div>
                 <div className="text-sm text-gray-600 mb-1">Résultat Net</div>
-                <div className="text-2xl font-bold text-gray-900">{formatAmount(currentPeriodData.resultatNet.value)}</div>
-                <div className="text-xs text-gray-500 mt-1">{currentPeriodData.label}</div>
+                <div className="text-2xl font-bold text-gray-900">{formatAmount(periodData?.resultatNet.value)}</div>
+                <div className="text-xs text-gray-500 mt-1">{periodData?.label}</div>
             </div>
             </div>
             <div className="bg-white rounded-lg p-6 shadow-sm border">
