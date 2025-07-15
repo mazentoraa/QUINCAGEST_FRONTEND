@@ -40,7 +40,7 @@ import Facture from "./components/BonsDevis/Facture";
 import Devis from "./components/BonsDevis/Devis";
 import PurshaseMatiere from "./features/purshase/purshase_matiere";
 
-import { Spin } from "antd"; // Import Spin
+import { Spin } from "antd"; 
 import MaterialAchatManagement from './features/purshase/MaterialManagement';
 import FactureMatiere from './features/purshase/FactureMatiere';
 import BonLivraison from './features/purshase/BonLivraison';
@@ -49,8 +49,11 @@ import Consommable from './features/purshase/Consommable';
 import BonRetourFornisseur from "./features/purshase/BonRetourFornisseur";
 import SupplierInstallmentPage from './features/purshase/SupplierInstallmentPage';
 import SupplierInstallmentManagementPage from './features/purshase/SupplierInstallmentManagementPage';
-import Tresorerie from "./features/Tresorerie/Tresorerie"; // ✅ le bon chemin
+import Tresorerie from "./features/tresorerie/pages/Tresorerie"; 
 import EmployeeManagement from './features/employee/employee';
+import ParPeriode from "./features/tresorerie/pages/ParPeriode";
+import Simulation from "./features/tresorerie/pages/Simulation";
+import TresorerieTraite from "./features/tresorerie/pages/TresorerieTraite";
 import AvancePage from './features/employee/avance';
 import EmployeePayrollList from "./features/employee/EmployeePayrollList";
 import EmployeePayrollDetails from "./features/employee/EmployeePayrollDetails";
@@ -205,24 +208,24 @@ function App() {
                                     element={<Devis />}
                                   />
                                   <Route path="/achats" element={<PurshaseMatiere />} />
-                                 <Route path="/achats/matieres" element={<MaterialAchatManagement />} />
-                                <Route path="/achats/factures-matieres" element={<FactureMatiere />} />
-                                <Route path="/achats/bon-livraison" element={<BonLivraison />} />
-                       <Route path="/fournisseurs" element={<Fournisseur />} />
-              <Route path="/achats/consommables" element={<Consommable />} />
-             <Route path="/achats/bon-retour-fournisseur" element={<BonRetourFornisseur />} />
-             <Route path="/achats/traite-fournisseur" element={<SupplierInstallmentPage />} />
-             <Route path="/achats/gestion-traites-fournisseur" element={<SupplierInstallmentManagementPage />} />
-             <Route path="/tresorerie" element={<Tresorerie />} />
-<Route path="/employes" element={<EmployeeManagement />} />
-<Route path="/employes/avance" element={<AvancePage />} />
-<Route path="/employes/fiche-paie" element={<EmployeePayrollList />} />
-<Route path="/employes/:id/fiches-paie" element={<EmployeePayrollDetails />} />
-
-<Route path="/fiches-paie/:id/print" element={<FichePaiePrint />} />
-<Route path="/fiche-paie/:id/view" element={<FichePaieView />} />
-
-
+                                  <Route path="/achats/matieres" element={<MaterialAchatManagement />} />
+                                  <Route path="/achats/factures-matieres" element={<FactureMatiere />} />
+                                  <Route path="/achats/bon-livraison" element={<BonLivraison />} />
+                                  <Route path="/fournisseurs" element={<Fournisseur />} />
+                                  <Route path="/achats/consommables" element={<Consommable />} />
+                                  <Route path="/achats/bon-retour-fournisseur" element={<BonRetourFornisseur />} />
+                                  <Route path="/achats/traite-fournisseur" element={<SupplierInstallmentPage />} />
+                                  <Route path="/achats/gestion-traites-fournisseur" element={<SupplierInstallmentManagementPage />} />
+                                  <Route path="/employes" element={<EmployeeManagement />} />
+                                  <Route path="/employes/avance" element={<AvancePage />} />
+                                  <Route path="/employes/fiche-paie" element={<EmployeePayrollList />} />
+                                  <Route path="/employes/:id/fiches-paie" element={<EmployeePayrollDetails />} />
+                                  <Route path="/fiches-paie/:id/print" element={<FichePaiePrint />} />
+                                  <Route path="/fiche-paie/:id/view" element={<FichePaieView />} />
+                                  <Route path="/tresorerie" element={<Tresorerie />} />
+                                  <Route path="/tresorerie/traite" element={<TresorerieTraite />} />
+                                  <Route path="/tresorerie/par-periode" element={<ParPeriode />} />
+                                  <Route path="/tresorerie/simulation" element={<Simulation />} />
                                 </Routes>
                               </Content>
                             </Layout>
