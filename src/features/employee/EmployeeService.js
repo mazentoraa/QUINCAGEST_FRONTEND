@@ -55,7 +55,9 @@ const EmployeeService = {
       throw error;
     });
   },
-
+getAllFichesPaie: () => {
+  return axios.get(`${API_BASE_URL}/fiches-paie/`);
+},
   updateFichePaie: (id, data) =>
     axios.put(`${API_BASE_URL}/fiches-paie/${id}/`, data, {
       headers: { "Content-Type": "application/json" },
@@ -113,6 +115,7 @@ deleteFichePaie(id) {
       throw error;
     });
 }
+
 };
 
 export default EmployeeService;

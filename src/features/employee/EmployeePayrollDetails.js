@@ -220,7 +220,7 @@ const refreshFiches = useCallback(async () => {
   }
 }, [id]);
   // Fonction de calcul du résumé (optimisée)
-  const calculateResume = useCallback((values) => {
+const calculateResume = useCallback((values) => {
     const {
       salaire_base = 0,
       prime_anciennete = 0,
@@ -234,44 +234,48 @@ const refreshFiches = useCallback(async () => {
       avantage_assurance = 0,
     } = values;
 
-    // Calcul du salaire brut
+    // 1. Calcul du salaire brut
     const totalBrut = salaire_base + prime_anciennete + indemnite_presence + 
                      indemnite_transport + prime_langue + jours_feries_payes + 
                      prime_ramadan + prime_teletravail + avantage_assurance - absences_non_remunerees;
 
-    // Salaire imposable
-    const salaireImposable = totalBrut - avantage_assurance;
+    // 2. Base CNSS = Salaire Brut - Avantages en Nature
+    const plafondCNSS = 6000; // Plafond CNSS tunisien
+    const baseCNSS = Math.min(totalBrut - avantage_assurance, plafondCNSS);
 
-    // CNSS ()
-    const plafondCNSS = 6000;
-    const baseCNSS = Math.min(totalBrut, plafondCNSS);
+    // 3. Cotisations CNSS
     const cnssSalarie = baseCNSS * 0.0918; // 9.18%
+    const cnssPatronal = baseCNSS * 0.1607; // 16.07%
+    const accidentTravail = baseCNSS * 0.005; // 0.5%
 
-    // IRPP (barème progressif marocain)
-    const baseIRPP = Math.max(0, salaireImposable - cnssSalarie);
-    let irpp = 0;
-    if (baseIRPP > 30000) {
-      irpp = (baseIRPP - 30000) * 0.30 + 2500;
-    } else if (baseIRPP > 20000) {
-      irpp = (baseIRPP - 20000) * 0.20 + 1500;
-    } else if (baseIRPP > 5000) {
-      irpp = (baseIRPP - 5000) * 0.10 + 500;
-    } else if (baseIRPP > 2500) {
-      irpp = (baseIRPP - 2500) * 0.10;
+    // 4. Salaire imposable = Salaire Brut - Cotisations Sociales Salarié - Avantages en Nature
+    const salaireImposable = totalBrut - cnssSalarie - avantage_assurance;
+
+    // 5. Calcul de l'IRPP annuel puis mensuel
+    const salaireAnnuel = salaireImposable * 12;
+    let irppAnnuel = 0;
+    
+    // Barème IRPP tunisien progressif annuel
+    if (salaireAnnuel > 30000) {
+      irppAnnuel = (salaireAnnuel - 30000) * 0.35 + 7500;
+    } else if (salaireAnnuel > 20000) {
+      irppAnnuel = (salaireAnnuel - 20000) * 0.25 + 2500;
+    } else if (salaireAnnuel > 5000) {
+      irppAnnuel = (salaireAnnuel - 5000) * 0.15;
     }
+    
+    const irpp = irppAnnuel / 12; // IRPP mensuel
 
-    // CSS (Contribution Sociale de Solidarité) - 1% sur la tranche > 30000
-    const css = salaireImposable > 30000 ? (salaireImposable - 30000) * 0.01 : 0;
+    // 6. CSS = Salaire Imposable × 0.5%
+    const css = salaireImposable * 0.005;
 
-    // Total cotisations salariales
+    // 7. Total cotisations salariales
     const totalCotisations = cnssSalarie + irpp + css;
 
-    // Charges patronales
-    const cnssPatronal = baseCNSS * 0.1607; // 16.07%
-    const accidentTravail = totalBrut * 0.005; // 0.5%
+    // 8. Charges patronales
     const chargesPatronales = cnssPatronal + accidentTravail;
 
-    // Salaire net
+    // 9. Salaire net = Salaire Brut - Cotisations Sociales - IRPP - CSS
     const salaireNet = totalBrut - totalCotisations;
 
     return {
@@ -285,9 +289,10 @@ const refreshFiches = useCallback(async () => {
       accidentTravail: Math.round(accidentTravail * 100) / 100,
       chargesPatronales: Math.round(chargesPatronales * 100) / 100,
       salaireNet: Math.round(salaireNet * 100) / 100,
+      salaireAnnuel: Math.round(salaireAnnuel * 100) / 100,
+      irppAnnuel: Math.round(irppAnnuel * 100) / 100,
     };
   }, []);
-
   // Gestionnaires d'événements
 
 
@@ -534,10 +539,10 @@ const onFinish = useCallback(async (values) => {
     },
     {
       title: 'Cotisations',
-      dataIndex: 'cotisations',
+      dataIndex: 'deduction_totale',
       align: 'right',
       render: (val) => (
-        <div style={{ fontWeight: 600, color: '#fa541c' }}>
+        <div style={{ fontWeight: 600 }}>
           {val?.toLocaleString('fr-MA')} 
         </div>
       ),
@@ -547,7 +552,7 @@ const onFinish = useCallback(async (values) => {
       dataIndex: 'net_a_payer',
       align: 'right',
       render: (val) => (
-        <div style={{ fontWeight: 600, color: '#52c41a' }}>
+        <div style={{ fontWeight: 600 }}>
           {val?.toLocaleString('fr-MA')} 
         </div>
       ),
