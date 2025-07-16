@@ -140,6 +140,19 @@ const EmployeePayrollList = () => {
       render: (val) => moment(val).format('DD/MM/YYYY'),
     },
     {
+  title: 'Avance',
+  key: 'avance',
+  render: (_, record) => {
+    const avancesAcceptees = record.avances?.filter(a => a.statut === 'Acceptée') || [];
+    if (avancesAcceptees.length > 0) {
+      const total = avancesAcceptees.reduce((sum, a) => sum + (a.montant || 0), 0);
+      return <Tag color="blue">Oui ({total.toLocaleString()})</Tag>;
+    }
+    return <Tag color="default">Non</Tag>;
+  }
+},
+
+    {
       title: 'Statut',
       key: 'statut',
       render: (_, record) => {

@@ -357,7 +357,7 @@ const handleSubmit = async (values) => {
 <Divider orientation="left">👨‍👩‍👧 Informations complémentaires</Divider>
 <Row gutter={16}>
   <Col span={12}>
-    <Form.Item name="ncnssumero_" label="N° CNSS">
+    <Form.Item name="numero_cnss" label="N° CNSS">
       <Input />
     </Form.Item>
   </Col>

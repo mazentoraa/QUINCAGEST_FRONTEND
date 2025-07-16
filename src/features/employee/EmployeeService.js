@@ -116,6 +116,8 @@ deleteFichePaie(id) {
     });
 }
 
+
+
 };
 
 export default EmployeeService;
