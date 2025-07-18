@@ -28,6 +28,7 @@ import {
   RadarChartOutlined,
   BulbOutlined,
   DeploymentUnitOutlined,
+  UndoOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -97,15 +98,15 @@ function SideMenu() {
             <Menu.Item key="/bons/retour" icon={<RollbackOutlined />} onClick={() => handleMenuClick('/bons/retour')}>
               Bons de Retour
             </Menu.Item>
+            <Menu.Item key="/reglements/avoir" icon={<UndoOutlined />} onClick={() => handleMenuClick('/reglements/avoir')}>
+              Avoirs
+            </Menu.Item>
           </SubMenu>
         </SubMenu>
 
         <SubMenu key="reglements" icon={<AccountBookOutlined />} title="Règlements">
           <Menu.Item key="/reglements/factures" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/reglements/factures')}>
             Factures
-          </Menu.Item>
-          <Menu.Item key="/reglements/avoir" icon={<RollbackOutlined />} onClick={() => handleMenuClick('/reglements/avoir')}>
-            Avoirs
           </Menu.Item>
           <Menu.Item key="/reglements/traites" icon={<BankOutlined />} onClick={() => handleMenuClick('/reglements/traites')}>
             Traites

@@ -385,78 +385,95 @@ export default function Facture(props) {
       console.log("fullOrderDetails", fullOrderDetails)
       setInvoiceType(fullOrderDetails.type_facture)
       const formattedBonsList = [
-        ...currentBonInDrawer,
+        // ...currentBonInDrawer,
         ...bons_list.map(bon => ({
           ...bon,
           nom_client: bon.client_name,
           bon_numero: bon.numero_facture,
         }))
       ]
+      console.log(formattedBonsList)
       setCurrentBonInDrawer(formattedBonsList)
       if (fullOrderDetails) {
         setEditingOrder(fullOrderDetails);
-
         // Map products from produits_details or produit_commande
         let mappedProducts = [];
+        if(fullOrderDetails.type_facture==='produit'){
+          if (
+            fullOrderDetails.produit_commande &&
+            fullOrderDetails.produit_commande.length > 0
+          ) {
+            mappedProducts = fullOrderDetails.produit_commande.map((product) => ({
+              id: product.id,
+              produit_id: product.produit_id || product.produit,
+              bon_id: product.bonId,
+              bon_numero: product.bon_numero,
+              nom_produit: product.nom_produit,
+              quantite: Number(product.quantite) || 1,
+              prix_unitaire: Number(product.prix_unitaire) || 0,
+              remise_pourcentage: Number(product.remise_pourcentage) || 0,
+              prix_total: Number(product.prix_total) || 0,
+            }));
+            console.log(mappedProducts)
+          } else if (
+            fullOrderDetails.produits_details &&
+            fullOrderDetails.produits_details.length > 0
+          ) {
+            // Fallback to produits_details and calculate missing fields
+            const totalAmount = Number(fullOrderDetails.montant_ht) || 0;
+            const productsCount = fullOrderDetails.produits_details.length;
 
-        if (
-          fullOrderDetails.produit_commande &&
-          fullOrderDetails.produit_commande.length > 0
-        ) {
-          mappedProducts = fullOrderDetails.produit_commande.map((product) => ({
-            id: product.id,
-            produit_id: product.produit_id || product.produit,
-            bon_id: product.bonId,
-            bon_numero: product.bon_numero,
-            nom_produit: product.nom_produit,
-            quantite: Number(product.quantite) || 1,
-            prix_unitaire: Number(product.prix_unitaire) || 0,
-            remise_pourcentage: Number(product.remise_pourcentage) || 0,
-            prix_total: Number(product.prix_total) || 0,
-          }));
-        } else if (
-          fullOrderDetails.produits_details &&
-          fullOrderDetails.produits_details.length > 0
-        ) {
-          // Fallback to produits_details and calculate missing fields
-          const totalAmount = Number(fullOrderDetails.montant_ht) || 0;
-          const productsCount = fullOrderDetails.produits_details.length;
+            mappedProducts = fullOrderDetails.produits_details.map(
+              (product, index) => {
+                // Calculate quantity based on total amount and product price
+                const unitPrice = Number(product.prix) || 0;
+                let calculatedQuantity = 1;
+                let calculatedTotal = unitPrice;
 
-          mappedProducts = fullOrderDetails.produits_details.map(
-            (product, index) => {
-              // Calculate quantity based on total amount and product price
-              const unitPrice = Number(product.prix) || 0;
-              let calculatedQuantity = 1;
-              let calculatedTotal = unitPrice;
-
-              // If we have total amount and this is the only product, calculate quantity
-              if (productsCount === 1 && totalAmount > 0 && unitPrice > 0) {
-                calculatedQuantity = Math.round(totalAmount / unitPrice);
-                calculatedTotal = totalAmount;
-              } else if (productsCount > 1) {
-                // For multiple products, distribute the total amount proportionally
-                const productPortion = totalAmount / productsCount;
-                if (unitPrice > 0) {
-                  calculatedQuantity = Math.round(productPortion / unitPrice);
+                // If we have total amount and this is the only product, calculate quantity
+                if (productsCount === 1 && totalAmount > 0 && unitPrice > 0) {
+                  calculatedQuantity = Math.round(totalAmount / unitPrice);
+                  calculatedTotal = totalAmount;
+                } else if (productsCount > 1) {
+                  // For multiple products, distribute the total amount proportionally
+                  const productPortion = totalAmount / productsCount;
+                  if (unitPrice > 0) {
+                    calculatedQuantity = Math.round(productPortion / unitPrice);
+                  }
+                  calculatedTotal = calculatedQuantity * unitPrice;
                 }
-                calculatedTotal = calculatedQuantity * unitPrice;
+
+                return {
+                  id: `${product.id}`,
+                  produit_id: product.id,
+                  nom_produit: product.nom_produit,
+                  quantite: calculatedQuantity,
+                  prix_unitaire: unitPrice,
+                  remise_pourcentage: 0, // No discount info available
+                  prix_total: calculatedTotal,
+                };
               }
+            );
+          }
 
-              return {
-                id: `${product.id}`,
-                produit_id: product.id,
+        }else{ // Type facture == bon
+          mappedProducts = formattedBonsList.map((bon) => 
+              bon.items.map((product)=>({
+                id: product.produit_id,
+                produit_id: product.produit_id || product.produit,
+                bon_id: bon.id,
+                bon_numero: bon.bon_numero,
                 nom_produit: product.nom_produit,
-                quantite: calculatedQuantity,
-                prix_unitaire: unitPrice,
-                remise_pourcentage: 0, // No discount info available
-                prix_total: calculatedTotal,
-              };
-            }
-          );
-        }
-
+                quantite: Number(product.billable.quantite) || 1,
+                prix_unitaire: Number(product.billable.prix_unitaire) || 0,
+                remise_pourcentage: Number(product.remise_percent_produit) || 0,
+                remise: Number(product.remise_produit) || 0,
+                prix_total: product.billable.prix_unitaire*product.billable.quantite-product.remise_produit,
+              }))
+            );
+            console.log(mappedProducts)
+          }
         setCurrentProductsInDrawer(mappedProducts);
-
         // Extract client ID from various possible locations
         const clientId =
           fullOrderDetails.client_id ||
@@ -600,14 +617,14 @@ export default function Facture(props) {
               remise_pourcentage: p.remise_pourcentage || 0,
             })),
             // Bon products
-            ...newOrderBon
+            ...currentBonInDrawer.flatMap(bon => bon.items) 
               .filter(
                 (item) =>
                   item.billable?.quantite > 0 &&
                   item.billable?.prix_unitaire > 0
               )
               .map((item) => ({
-                bonId: item.bonId,
+                bon_id: item.bonId || item.bon_id,
                 bon_numero: item.bon_numero,
                 produit: item.produit_id || item.produit || item.id,
                 quantite: item.billable.quantite,
@@ -616,6 +633,7 @@ export default function Facture(props) {
           ], 
           bons: currentBonInDrawer.map((bon)=> bon.bon_id || bon.id),
         };
+        
         
         console.log("newOrderBon ", newOrderBon)
         console.log("currentBonInDrawer ", currentBonInDrawer)
@@ -653,8 +671,8 @@ export default function Facture(props) {
               bon_numero: fullBon.numero_facture,
               produit: p.produit || p.produit_id,
               produit_nom: p.nom_produit,
-              quantite: p.quantite,
-              prix_unitaire: p.prix_unitaire,
+              quantite: p.billable.quantite,
+              prix_unitaire: p.billable.prix_unitaire,
             }));
           })
         );
@@ -671,23 +689,25 @@ export default function Facture(props) {
           montant_tva: finalMontantTva,
           montant_ttc: finalMontantTtc,
           // Use 'produit_commande' as the key for line items
-          produit_commande: [
-            ...currentProductsInDrawer.map((p) => ({
+          produit_commande: values.type_facture === "produit"
+            ?
+            currentProductsInDrawer.map((p) => ({
               id: p.id,
-              // bon_id: p.bonId,
+              // bon_id: p.bon_id || p.bonId,
               // bon_numero: p.bon_numero,
               produit: p.produit_id || p.produit,
               quantite: p.quantite,
               prix_unitaire: p.prix_unitaire,
               remise_pourcentage: p.remise_pourcentage || 0,
-            })),
-
+            }))
+            :
             // 2. Products from bons
-            ...flatBonProducts
-          ],
+            flatBonProducts
+          ,
           mode_paiement: values.mode_paiement,
           bons: currentBonInDrawer.map((bon)=> bon.bon_id || bon.id)
         };
+        console.log("currentProductsInDrawer", currentProductsInDrawer)
         // If client_id is in `values` (meaning it could have been changed in the form for an existing order)
         if (values.client_id) {
           orderPayload.client_id = values.client_id;
@@ -705,8 +725,8 @@ export default function Facture(props) {
           editingOrder.id,
           orderPayload
         );
-        console.log("updatedOrder", updatedOrder)
         console.log("orderPayload", orderPayload)
+        console.log("updatedOrder", updatedOrder)
         setCheckedBons([])
         // The setEditingOrder and recalculateTotalsInDrawer might be redundant here if closing drawer
         // but good for consistency if drawer remained open.
@@ -814,9 +834,35 @@ export default function Facture(props) {
       setNewOrderBon(allNewItems);
       console.log("updatedBonList", updatedBonList  )
       console.log("allNewItems", allNewItems)
+      // Update products
+      const bonProducts = updatedBonList.flatMap((bon)=>bon.items.flat()) // Extract products from bon
+      // // If a product is already included, sum the quantity
+      // const productMap = new Map();
+      // bonProducts.forEach((product) => {
+      //   const existing = productMap.get(product.produit_id);
+      //   if (existing) {
+      //     existing.billable.quantite += product.billable.quantite;
+      //   } else {
+      //     // on le clone pour éviter les effets de bord
+      //     productMap.set(product.produit_id, { ...product });
+      //   }
+      // });
+      // const mergedProducts = Array.from(productMap.values());
+      // Format to fit
+      const formattedProducts = bonProducts.map((p)=>{
+        return{
+          ...p,
+          quantite: p.billable.quantite,
+          prix_unitaire: p.billable.prix_unitaire,
+          remise_pourcentage: p.remise_percent_produit,
+          remise: p.remise_produit,
+          prix_total: p.billable.quantite * p.billable.prix_unitaire - p.remise_produit
+        }
+      })
+      console.log(formattedProducts)
+      setCurrentProductsInDrawer(formattedProducts)
       const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
-      recalculateTotalsInDrawer(newOrderProducts, currentTaxRate, updatedBonList);
-
+      recalculateTotalsInDrawer(newOrderProducts, currentTaxRate, updatedBonList);    
       message.success(`${addedCount} bon(s) ajouté(s) avec succès !`);
       setIsBonModalVisible(false);
     } catch (err) {
@@ -1119,6 +1165,7 @@ export default function Facture(props) {
         hideLoading();
         return;
       }
+      console.log(detailedOrder)
       setCurrentBonInDrawer(detailedOrder.bons)
       setInvoiceType(detailedOrder.type_facture)
       // Find the client in availableClients list
@@ -1182,7 +1229,7 @@ export default function Facture(props) {
           return {
             id: orderProduct.id,
             produit_id: orderProduct.produit_id || orderProduct.produit,
-            bon_id: orderProduct.bonId,
+            bon_id: orderProduct.bon_id,
             bon_numero: orderProduct.bon_numero,
             code_produit:
               orderProduct.code_produit ||
