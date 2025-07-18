@@ -59,7 +59,6 @@ const { cdsService } = getApiService();
 const { Option } = Select;
 const { Title } = Typography;
 
-// Fix the formatCurrency function
 const formatCurrency = (amount, currency = " ") => {
   return new Intl.NumberFormat("fr-TN", {
     style: "decimal",
@@ -383,6 +382,7 @@ export default function Facture(props) {
         fullOrderDetails.bons.map(async(bonId) => {
         return await InvoiceService.getInvoiceById(bonId)
       }))
+      console.log("fullOrderDetails", fullOrderDetails)
       setInvoiceType(fullOrderDetails.type_facture)
       const formattedBonsList = [
         ...currentBonInDrawer,
@@ -486,6 +486,7 @@ export default function Facture(props) {
           montant_ht_display: fullOrderDetails.montant_ht || 0,
           montant_tva_display: fullOrderDetails.montant_tva || 0,
           montant_ttc_display: fullOrderDetails.montant_ttc || 0,
+
         });
 
         setIsDrawerVisible(true);
@@ -613,7 +614,7 @@ export default function Facture(props) {
                 prix_unitaire: item.billable.prix_unitaire,
               })),
           ], 
-          bons: currentBonInDrawer.map((bon)=> bon.bon_id),
+          bons: currentBonInDrawer.map((bon)=> bon.bon_id || bon.id),
         };
         
         console.log("newOrderBon ", newOrderBon)
@@ -632,6 +633,8 @@ export default function Facture(props) {
           (sum, p) => sum + (p.prix_total || 0),
           0
         );
+        
+        console.log(currentProductsInDrawer)
         const finalMontantTva = finalMontantHt * (taxRate / 100);
         const finalMontantTtc = finalMontantHt + finalMontantTva + timbreFiscal;
 
@@ -639,6 +642,23 @@ export default function Facture(props) {
         const { produit_commande, produits, ...restOfEditingOrder } =
           editingOrder;
         setInvoiceType(values.type_facture)
+        console.log(currentProductsInDrawer)
+        //  Extract products from bons 
+        const bonsProducts = await Promise.all(
+          currentBonInDrawer.map(async (bon) => {
+            const fullBon = await InvoiceService.getInvoiceById(bon.bon_id || bon.id);
+            console.log(fullBon)
+            return fullBon.items.map(p => ({
+              bonId: fullBon.id,
+              bon_numero: fullBon.numero_facture,
+              produit: p.produit || p.produit_id,
+              produit_nom: p.nom_produit,
+              quantite: p.quantite,
+              prix_unitaire: p.prix_unitaire,
+            }));
+          })
+        );
+        const flatBonProducts = bonsProducts.flat();
         const orderPayload = {
           ...restOfEditingOrder, // Base with existing data (excluding old product lists)
           ...values, // Override with form values (like notes, dates, status, client_id if changed)
@@ -654,8 +674,8 @@ export default function Facture(props) {
           produit_commande: [
             ...currentProductsInDrawer.map((p) => ({
               id: p.id,
-              bon_id: p.bonId,
-              bon_numero: p.bon_numero,
+              // bon_id: p.bonId,
+              // bon_numero: p.bon_numero,
               produit: p.produit_id || p.produit,
               quantite: p.quantite,
               prix_unitaire: p.prix_unitaire,
@@ -663,16 +683,10 @@ export default function Facture(props) {
             })),
 
             // 2. Products from bons
-            ...currentBonInDrawer.map((item) => ({
-              bonId: item.bonId,
-              bon_numero: item.bon_numero,
-              produit_nom: item.produit_name, 
-              quantite: item.billable?.quantite || 0,
-              prix_unitaire: item.billable?.prix_unitaire || 0,
-              //  remise_pourcentage: 0,
-            })),
+            ...flatBonProducts
           ],
           mode_paiement: values.mode_paiement,
+          bons: currentBonInDrawer.map((bon)=> bon.bon_id || bon.id)
         };
         // If client_id is in `values` (meaning it could have been changed in the form for an existing order)
         if (values.client_id) {
@@ -691,11 +705,14 @@ export default function Facture(props) {
           editingOrder.id,
           orderPayload
         );
+        console.log("updatedOrder", updatedOrder)
+        console.log("orderPayload", orderPayload)
         setCheckedBons([])
         // The setEditingOrder and recalculateTotalsInDrawer might be redundant here if closing drawer
         // but good for consistency if drawer remained open.
         // setEditingOrder(updatedOrder);
-        // recalculateTotalsInDrawer(updatedOrder.produit_commande || currentProductsInDrawer, updatedOrder.tax_rate || taxRate);
+        console.log(currentBonInDrawer)
+        recalculateTotalsInDrawer(updatedOrder.produit_commande, updatedOrder.tax_rate || taxRate, currentBonInDrawer);
         message.success(`${props.nature == 'facture'? 'Facture mise' : 'Avoir mis'} à jour avec succès!`);
       }
       handleDrawerClose();
@@ -795,7 +812,8 @@ export default function Facture(props) {
 
       setCurrentBonInDrawer(updatedBonList);
       setNewOrderBon(allNewItems);
-
+      console.log("updatedBonList", updatedBonList  )
+      console.log("allNewItems", allNewItems)
       const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
       recalculateTotalsInDrawer(newOrderProducts, currentTaxRate, updatedBonList);
 
@@ -947,10 +965,14 @@ export default function Facture(props) {
         } else {
           // Call API to add product if it doesn't exist already
           // The backend should return the full product line item, including its own ID
+
+
           const addedProductFromApi = await cdsService.addProductToOrder(
             editingOrder.id,
             newProductData // Send newProductData, backend assigns ID to the line item
           );
+
+
           // Ensure addedProductFromApi has prix_total or calculate it
           if (
             addedProductFromApi &&
@@ -986,7 +1008,7 @@ export default function Facture(props) {
   const handleRemoveBonFromDrawer = async (bonId) => {
     console.log(
       "Current bon IDs:",
-      currentBonInDrawer.map((b) => b.bon_id)
+      currentBonInDrawer.map((b) => b.bon_id || b.id)
     );
 
     try {
@@ -1269,6 +1291,7 @@ export default function Facture(props) {
         montant_tva: detailedOrder.montant_tva || 0,
         montant_ttc: detailedOrder.montant_ttc || 0,
         tax_rate: detailedOrder.tax_rate || 0,
+        type_facture: detailedOrder.type_facture || '.'
       };
 
       console.log("Order data for PDF:", orderDataForPDF); // Debug log
@@ -2078,7 +2101,7 @@ export default function Facture(props) {
                     key: "actions",
                     render: (_, record) => (
                       <Space>
-                      <Button
+                      {/* <Button
                         icon={<EditOutlined />}
                         size="small"
                         // onClick={() => {
@@ -2091,7 +2114,7 @@ export default function Facture(props) {
                         //   setEditingProduct(record); // set the product being edited
                         //   setIsBonModalVisible(true);
                         // }}
-                      />
+                      /> */}
                       <Button
                         danger
                         size="small"
@@ -2299,6 +2322,7 @@ export default function Facture(props) {
           </Form.Item>
         </Form>
       </Modal>
+
       {/* Bon Modal */}
       <Modal
         title="Ajouter un Bon"
@@ -2324,53 +2348,53 @@ export default function Facture(props) {
               />
             ) : (
               <Checkbox.Group
-  value={checkedBons}
-  onChange={(checkedValues) => {
-    setCheckedBons(checkedValues);
-    // Optional: update BonForm or other logic
-    BonForm.setFieldsValue({ numero_facture: checkedValues });
+        value={checkedBons}
+        onChange={(checkedValues) => {
+          setCheckedBons(checkedValues);
+          // Optional: update BonForm or other logic
+          BonForm.setFieldsValue({ numero_facture: checkedValues });
 
-    console.log("✅ Checked bons:", checkedValues);
-  }}
->
-  {availableBon.map((bon) => (
-    <Checkbox key={bon.numero_facture} value={bon.numero_facture}>
-      {bon.numero_facture} - {bon.client_details?.nom_client}
-    </Checkbox>
-  ))}
-</Checkbox.Group>
-            )}
-{checkedBons.length > 0 && (
-  <div
-    style={{
-      border: "1px solid #e5e5e5",
-      borderRadius: "8px",
-      padding: "12px",
-      marginTop: "16px",
-      backgroundColor: "#f9f9f9",
-    }}
-  >
-    <p><strong>Articles inclus:</strong></p>
-    <ul style={{ paddingLeft: 20 }}>
-      {availableBon
-        .filter(bon => checkedBons.includes(bon.numero_facture))
-        .map((bon, bonIndex) => (
-          <li key={bonIndex}>
-            <strong>
-              Bon N° {bon.bon_numero || bon.numero_facture || bon.id} – Total TTC: {bon.total_ttc}
-            </strong>
-            <ul style={{ paddingLeft: 20 }}>
-              {(bon.items || []).map((item, itemIndex) => (
-                <li key={itemIndex}>
-                  {item.nom_produit || "Produit"} – Qté: {item.billable?.quantite ?? "?"}
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))}
-    </ul>
-  </div>
-)}
+          console.log("✅ Checked bons:", checkedValues);
+        }}
+        >
+        {availableBon.map((bon) => (
+          <Checkbox key={bon.numero_facture} value={bon.numero_facture}>
+            {bon.numero_facture} - {bon.client_details?.nom_client}
+          </Checkbox>
+            ))}
+          </Checkbox.Group>
+                      )}
+          {checkedBons.length > 0 && (
+            <div
+              style={{
+                border: "1px solid #e5e5e5",
+                borderRadius: "8px",
+                padding: "12px",
+                marginTop: "16px",
+                backgroundColor: "#f9f9f9",
+              }}
+            >
+              <p><strong>Articles inclus:</strong></p>
+              <ul style={{ paddingLeft: 20 }}>
+                {availableBon
+                  .filter(bon => checkedBons.includes(bon.numero_facture))
+                  .map((bon, bonIndex) => (
+                    <li key={bonIndex}>
+                      <strong>
+                        Bon N° {bon.bon_numero || bon.numero_facture || bon.id} – Total TTC: {bon.total_ttc}
+                      </strong>
+                      <ul style={{ paddingLeft: 20 }}>
+                        {(bon.items || []).map((item, itemIndex) => (
+                          <li key={itemIndex}>
+                            {item.nom_produit || "Produit"} – Qté: {item.billable?.quantite ?? "?"}
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          )}
           </Form.Item>
         </Form>
       </Modal>

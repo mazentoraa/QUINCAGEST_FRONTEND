@@ -1,0 +1,154 @@
+.bon-retour-container {
+  .ant-card {
+    margin-bottom: 16px;
+  }
+  
+  .ant-list-item {
+    padding: 8px 16px;
+  }
+  
+  .material-selection-card {
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    
+    &:hover {
+      border-color: #40a9ff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+    }
+  }
+  
+  .selected-material {
+    background-color: #f6ffed;
+    border-color: #52c41a;
+  }
+  
+  .status-tag {
+    margin: 0;
+  }
+  
+  .filters-card {
+    .ant-row {
+      align-items: center;
+    }
+  }
+  
+  .summary-info {
+    background: #fafafa;
+    padding: 16px;
+    border-radius: 6px;
+    margin-top: 16px;
+    
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      
+      &:last-child {
+        margin-bottom: 0;
+        font-weight: bold;
+        border-top: 1px solid #d9d9d9;
+        padding-top: 8px;
+      }
+    }
+  }
+  
+  .material-dimensions {
+    font-size: 12px;
+    color: #666;
+  }
+  
+  .available-quantity {
+    color: #52c41a;
+    font-weight: 500;
+  }
+  
+  .return-quantity-input {
+    .ant-input-number {
+      width: 100%;
+    }
+  }
+}
+
+.print-preview {
+  .client-info {
+    background: #f5f5f5;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+  }
+  
+  .materials-table {
+    margin-top: 16px;
+    
+    .ant-table-thead > tr > th {
+      background: #fafafa;
+      font-weight: 600;
+    }
+  }
+  
+  .bon-header {
+    text-align: center;
+    margin-bottom: 24px;
+    
+    h2 {
+      margin-bottom: 8px;
+    }
+    
+    .bon-number {
+      font-size: 18px;
+      color: #1890ff;
+      font-weight: 600;
+    }
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .bon-retour-container {
+    .ant-table-wrapper {
+      overflow-x: auto;
+    }
+    
+    .filters-card .ant-row {
+      flex-direction: column;
+      
+      .ant-col {
+        width: 100%;
+        margin-bottom: 8px;
+      }
+    }
+    
+    .material-selection-card {
+      .material-info-row {
+        flex-direction: column;
+        
+        .material-actions {
+          margin-top: 12px;
+          justify-content: center;
+        }
+      }
+    }
+  }
+}
+
+/* Status colors */
+.status-draft { color: #666; }
+.status-sent { color: #1890ff; }
+.status-completed { color: #52c41a; }
+.status-cancelled { color: #ff4d4f; }
+
+/* Animation for material selection */
+.material-select-animation {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.quantity-input-highlighted {
+  .ant-input-number {
+    border-color: #52c41a;
+    box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.2);
+  }
+}

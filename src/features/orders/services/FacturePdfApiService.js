@@ -98,6 +98,7 @@ class FacturePdfApiService {
     let itemsHTML = '';
     if (type_facture === 'bon') {
       const grouped = {};
+      
       items.forEach(item => {
         const bon = item.bon_numero || 'N/A';
         if (!grouped[bon]) grouped[bon] = [];

@@ -118,10 +118,13 @@ const InstallmentForm = () => {
     console.log("Selected clientName:", formData.clientName);
     if (formData.clientName && formData.clientName !== "nouveau") {
       // Filter invoices from context by matching clientName or clientTaxId (case-insensitive)
+      console.log(invoices)
       const availableInvoices = invoices
         .filter(
           (invoice) =>
             invoice.nom_client &&
+            invoice.numero_commande.charAt(0) == 'F' && // pour choisir seulement FAC pas avoirs (AV)
+            invoice.mode_paiement == ('traite' || 'mixte') &&
             formData.clientName &&
             invoice.nom_client.trim().toLowerCase() === formData.clientName.trim().toLowerCase()
         )

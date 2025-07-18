@@ -199,11 +199,13 @@ class DevisPdfService {
   static generateDevisHTML(data) {
     const tableRows = (data.produit_devis || [])
       .map((item) => {
-        const total =
-          item.prix_total ||
-          item.quantite *
-            item.prix_unitaire *
-            (1 - (item.remise_pourcentage || 0) / 100);
+        const totalPHT = item.quantite * item.prix_unitaire;
+        const fodec = totalPHT * 0.01; // 1%
+        const remise = item.remise_pourcentage || 0;
+        const totalPHTVA = totalPHT - (totalPHT * remise / 100) + fodec;
+        const tva = item.tax_rate || data.tax_rate || 0;
+        const totalPTTC = totalPHTVA + (totalPHTVA * tva / 100);
+
         return `
         <tr>
            <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
@@ -219,17 +221,23 @@ class DevisPdfService {
             item.prix_unitaire
           )}</td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-            ${item.remise_pourcentage || 0}%
+            ${remise}%
           </td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-            ${total}
+            ${this.formatCurrency(totalPHT)}
           </td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-              ${data.tax_rate || 19}%
+            1 %
           </td>
-          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">${this.formatCurrency(
-            total * (1 + (item.tax_rate || 0 )/100)
-          )}</td>
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+            ${this.formatCurrency(totalPHTVA)}
+          </td>
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+            ${tva}%
+          </td>
+          <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
+            ${this.formatCurrency(totalPTTC)}
+          </td>
         </tr>
       `;
       })
@@ -346,15 +354,18 @@ const netAPayer = totalHTVA + totalTVA + timbreFiscal;
             <thead>
   <tr>
     <th style="width: 8%; text-align: center; vertical-align: middle; border: 1px solid #000;">Code</th>
-    <th style="width: 25%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
-    <th style="width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
-    <th style="width: 16%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
+    <th style="width: 18%; text-align: center; vertical-align: middle;border: 1px solid #000;">DESIGNATION</th>
+    <th style="width: 6%; text-align: center; vertical-align: middle; border: 1px solid #000;">QTE</th>
+    <th style="width: 13%;text-align: center; vertical-align: middle; border: 1px solid #000;">P.U. HT</th>
     <th style=" width: 7%; text-align: center; vertical-align: middle; border: 1px solid #000;">REMISE</th>
-    <th style="width: 18%;text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
-    <th style="width: 7%;text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
-    <th style="width: 12%;text-align: center; vertical-align: middle; border: 1px solid #000;">total P. TTC</th>
-  </tr>
-</thead>
+    
+            <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HT</th>
+        <th style="width: 6%; text-align: center; vertical-align: middle; border: 1px solid #000;">Fodec</th>
+        <th style="width: 13%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. HTVA</th>
+        <th style="width: 5%; text-align: center; vertical-align: middle; border: 1px solid #000;">TVA</th>
+        <th style="width: 18%; text-align: center; vertical-align: middle; border: 1px solid #000;">Total P. TTC</th>
+          </tr>
+        </thead>
 
             <tbody>
                     ${tableRows}

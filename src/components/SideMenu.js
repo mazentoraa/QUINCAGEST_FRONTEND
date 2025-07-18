@@ -21,6 +21,13 @@ import {
   BarChartOutlined,
   DollarCircleOutlined ,
   InboxOutlined,
+  FundOutlined,
+  ClockCircleOutlined,
+  ExperimentOutlined,
+  SlidersOutlined,
+  RadarChartOutlined,
+  BulbOutlined,
+  DeploymentUnitOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -59,7 +66,7 @@ function SideMenu() {
         <Menu.Item key="/clients" icon={<TeamOutlined />} onClick={() => handleMenuClick('/clients')}>
           Clients
         </Menu.Item>
-
+      
         <SubMenu key="stock" icon={<AppstoreAddOutlined />} title="Gestion de Stock">
           <Menu.Item key="/stock/produits" icon={<ShoppingCartOutlined />} onClick={() => handleMenuClick('/stock/produits')}>
             Produits Finis
@@ -98,12 +105,25 @@ function SideMenu() {
             Factures
           </Menu.Item>
           <Menu.Item key="/reglements/avoir" icon={<RollbackOutlined />} onClick={() => handleMenuClick('/reglements/avoir')}>
-            Avoir
+            Avoirs
           </Menu.Item>
           <Menu.Item key="/reglements/traites" icon={<BankOutlined />} onClick={() => handleMenuClick('/reglements/traites')}>
             Traites
           </Menu.Item>
         </SubMenu>
+          <Menu.Item key="/employes" icon={<UserOutlined />} onClick={() => handleMenuClick('/employes')}>
+          Employés
+        </Menu.Item>
+        <SubMenu key="gestion-employes" icon={<TeamOutlined />} title="Gestion des Employés">
+        
+          <Menu.Item key="/employes/fiche-paie" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/employes/fiche-paie')}>
+            Fiches de Paie
+          </Menu.Item>
+          <Menu.Item key="/employes/avance" icon={<DollarCircleOutlined />} onClick={() => handleMenuClick('/employes/avance')}>
+            Avances
+          </Menu.Item>
+        </SubMenu>
+
 
         {/* --- CYCLE ACHATS --- */}
         <Menu.Item key="/fournisseurs" icon={<InboxOutlined />} onClick={() => handleMenuClick('/fournisseurs')}>
@@ -122,22 +142,50 @@ function SideMenu() {
           </Menu.Item>
         </SubMenu>
 
-        <Menu.Item key="/achats/bon-livraison" icon={<FileDoneOutlined />} onClick={() => handleMenuClick('/achats/bon-livraison')}>
-          Bons de Livraison
-        </Menu.Item>
+        <SubMenu key="bons" icon={<FileDoneOutlined />} title="Bons">
+          <Menu.Item key="/achats/bon-livraison" icon={<FileDoneOutlined />} onClick={() => handleMenuClick('/achats/bon-livraison')}>
+            Bons de Livraison
+          </Menu.Item>
+          <Menu.Item key="/achats/bon-retour-fournisseur" icon={<FileDoneOutlined />} onClick={() => handleMenuClick('/achats/bon-retour-fournisseur')}>
+          Bons de Retour
+          </Menu.Item>
+        </SubMenu>
 
-        <Menu.Item key="/achats/factures-matieres" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/achats/factures-matieres')}>
-          Factures
-        </Menu.Item>
+        <SubMenu key="reglement" icon={<FileTextOutlined />} title="Règlements">
+          <Menu.Item key="/achats/factures-matieres" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/achats/factures-matieres')}>
+            Factures
+          </Menu.Item>
+            <Menu.Item
+            key="/achats/gestion-traites-fournisseur"
+            icon={<FileTextOutlined />}
+            onClick={() => handleMenuClick('/achats/gestion-traites-fournisseur')}
+          >
+            Traites
+          </Menu.Item>
+        </SubMenu>
+
 
         {/* --- GESTION GLOBALE --- */}
+        <SubMenu key="/tresorerie" icon={<DollarCircleOutlined />} title="Trésorerie">
+          <Menu.Item key="/tresorerie" icon={<FundOutlined />} onClick={() => handleMenuClick('/tresorerie')}>
+            Vue Globale
+          </Menu.Item>
+          <Menu.Item key="/tresorerie/traite" icon={<BankOutlined />} onClick={() => handleMenuClick('/tresorerie/traite')}>
+            Traites
+          </Menu.Item>
+          <Menu.Item key="/tresorerie/par-periode" icon={<ClockCircleOutlined />} onClick={() => handleMenuClick('/tresorerie/par-periode')}>
+            Par Période
+          </Menu.Item>
+          <Menu.Item key="/tresorerie/simulation" icon={<DeploymentUnitOutlined />} onClick={() => handleMenuClick('/tresorerie/simulation')}>
+            Simulation
+          </Menu.Item>
+        </SubMenu>
+
         <Menu.Item key="/reglements/rapport" icon={<BarChartOutlined />} onClick={() => handleMenuClick('/reglements/rapport')}>
           Rapport
         </Menu.Item>
 
-        <Menu.Item key="/tresorerie" icon={<DollarCircleOutlined  />} onClick={() => handleMenuClick('/tresorerie')}>
-          Trésorerie
-        </Menu.Item>
+      
       </Menu>
     </div>
   );

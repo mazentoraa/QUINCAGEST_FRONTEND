@@ -37,6 +37,14 @@ import ClientService from "../../features/clientManagement/services/ClientServic
 import ClientMaterialPdfService from "../../features/clientMaterials/services/ClientMaterialPdfService";
 import { Statistic } from "antd";
 import { FileDoneOutlined } from "@ant-design/icons";
+import { 
+  FileTextOutlined, 
+  NumberOutlined, 
+  CalendarOutlined, 
+  UserOutlined, 
+  InboxOutlined, 
+  EditOutlined 
+} from '@ant-design/icons';
 
 
 const { Title, Text } = Typography;
@@ -683,145 +691,356 @@ Effacer les filtres
 
 
       {/* Detail drawer */}
-      <Drawer
-        title={`Détails du bon de livraison ${selectedDeliveryNote?.numero_bon}`}
-        width={700}
-        onClose={() => setDetailDrawerVisible(false)}
-        open={detailDrawerVisible}
-        extra={
-          <Button
-            type="primary"
-            icon={<PrinterOutlined />}
-            onClick={() =>
-              selectedDeliveryNote && printDeliveryNote(selectedDeliveryNote)
-            }
-          >
-            Imprimer
-          </Button>
-        }
+  <Drawer
+  title={
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <FileTextOutlined style={{ color: '#1890ff' }} />
+      <span>Détails du bon de livraison {selectedDeliveryNote?.numero_bon}</span>
+    </div>
+  }
+  width={800}
+  onClose={() => setDetailDrawerVisible(false)}
+  open={detailDrawerVisible}
+  extra={
+    <Button
+      type="primary"
+      icon={<PrinterOutlined />}
+      onClick={() =>
+        selectedDeliveryNote && printDeliveryNote(selectedDeliveryNote)
+      }
+      style={{
+        borderRadius: '6px',
+        boxShadow: '0 2px 4px rgba(24, 144, 255, 0.2)'
+      }}
+    >
+      Imprimer
+    </Button>
+  }
+  bodyStyle={{ padding: '24px' }}
+>
+  {selectedDeliveryNote ? (
+    <div className="delivery-note-details">
+      {/* En-tête avec informations principales */}
+      <Card
+        size="small"
+        style={{
+          marginBottom: 24,
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+          border: '1px solid #f0f0f0'
+        }}
       >
-        {selectedDeliveryNote ? (
-          <>
-            <div className="detail-header" style={{ marginBottom: 24 }}>
-              <Row gutter={16}>
-                <Col span={12}>
-                  <div className="detail-item">
-                    <Text type="secondary">N° Bon</Text>
-                    <Title level={4}>{selectedDeliveryNote.numero_bon}</Title>
-                  </div>
-                </Col>
-                <Col span={12}>
-                  <div className="detail-item">
-                    <Text type="secondary">Date de réception</Text>
-                    <Title level={4}>
-                      {selectedDeliveryNote.date_reception}
-                    </Title>
-                  </div>
-                </Col>
-              </Row>
-            </div>
-
-            <Divider orientation="left">Informations client</Divider>
-            {selectedDeliveryNote.client_details ? (
-              <div className="client-details" style={{ marginBottom: 24 }}>
-                <Row gutter={[16, 16]}>
-                  <Col span={24}>
-                    <Text strong>Nom: </Text>
-                    <Text>
-                      {selectedDeliveryNote.client_details.nom_client}
-                    </Text>
-                  </Col>
-                  <Col span={12}>
-                    <Text strong>Téléphone: </Text>
-                    <Text>
-                      {selectedDeliveryNote.client_details.telephone || "-"}
-                    </Text>
-                  </Col>
-                  <Col span={12}>
-                    <Text strong>Email: </Text>
-                    <Text>
-                      {selectedDeliveryNote.client_details.email || "-"}
-                    </Text>
-                  </Col>
-                  <Col span={24}>
-                    <Text strong>Adresse: </Text>
-                    <Text>
-                      {selectedDeliveryNote.client_details.adresse || "-"}
-                    </Text>
-                  </Col>
-                </Row>
+        <Row gutter={[24, 16]}>
+          <Col span={12}>
+            <div className="info-item">
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px',
+                marginBottom: '4px' 
+              }}>
+                <NumberOutlined style={{ color: '#1890ff', fontSize: '16px' }} />
+                <Text type="secondary" style={{ fontSize: '12px', fontWeight: 500 }}>
+                  NUMÉRO DE BON
+                </Text>
               </div>
-            ) : (
-              <Empty description="Aucune information client disponible" />
-            )}
+              <Title level={4} style={{ margin: 0, color: '#262626' }}>
+                {selectedDeliveryNote.numero_bon}
+              </Title>
+            </div>
+          </Col>
+          <Col span={12}>
+            <div className="info-item">
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px',
+                marginBottom: '4px' 
+              }}>
+                <CalendarOutlined style={{ color: '#52c41a', fontSize: '16px' }} />
+                <Text type="secondary" style={{ fontSize: '12px', fontWeight: 500 }}>
+                  DATE DE RÉCEPTION
+                </Text>
+              </div>
+              <Title level={4} style={{ margin: 0, color: '#262626' }}>
+                {selectedDeliveryNote.date_reception}
+              </Title>
+            </div>
+          </Col>
+        </Row>
+      </Card>
 
-            <Divider orientation="left">Matières reçues</Divider>
-            {selectedDeliveryNote.matieres_details?.length > 0 ? (
-              <Table
-                dataSource={selectedDeliveryNote.matieres_details}
-                rowKey="id"
-                pagination={false}
-                size="small"
-                columns={[
-                  {
-                    title: "Type",
-                    dataIndex: "type_matiere",
-                    key: "type_matiere",
-                    render: (type) => (
-                      <Tag color={getMaterialTypeColor(type)}>
-                        {renderMaterialType(type)}
-                      </Tag>
-                    ),
-                  },
-                  {
-                    title: "Description",
-                    dataIndex: "description",
-                    key: "description",
-                    render: (text) => text || "-",
-                  },
-                  {
-                    title: "Quantité",
-                    dataIndex: "quantite",
-                    key: "quantite",
-                  },
-                  {
-                    title: "Surface",
-                    dataIndex: "surface",
-                    key: "surface",
-                    render: (val) => (val ? `${val} m²` : "-"),
-                  },
-                ]}
-                summary={() => (
-                  <Table.Summary.Row>
-                    <Table.Summary.Cell index={0} colSpan={2}>
-                      Total
-                    </Table.Summary.Cell>
-                    <Table.Summary.Cell index={2}>
-                      {calculateTotalQuantity(
-                        selectedDeliveryNote.matieres_details
-                      )}
-                    </Table.Summary.Cell>
-                    <Table.Summary.Cell index={3}></Table.Summary.Cell>
-                  </Table.Summary.Row>
-                )}
-              />
-            ) : (
-              <Empty description="Aucune matière première dans ce bon de livraison" />
-            )}
-
-            {selectedDeliveryNote.notes && (
-              <>
-                <Divider orientation="left">Notes</Divider>
-                <div className="notes-section" style={{ marginBottom: 24 }}>
-                  <Text>{selectedDeliveryNote.notes}</Text>
+      {/* Section Client */}
+      <Card
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <UserOutlined style={{ color: '#722ed1' }} />
+            <span>Informations client</span>
+          </div>
+        }
+        size="small"
+        style={{
+          marginBottom: 24,
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+          border: '1px solid #f0f0f0'
+        }}
+        headStyle={{
+          backgroundColor: '#fafafa',
+          borderBottom: '1px solid #f0f0f0'
+        }}
+      >
+        {selectedDeliveryNote.client_details ? (
+          <div className="client-details">
+            <Row gutter={[16, 16]}>
+              <Col span={24}>
+                <div className="client-info-item">
+                  <Text strong style={{ color: '#595959', fontSize: '13px' }}>
+                    Nom du client:
+                  </Text>
+                  <Text style={{ marginLeft: '8px', fontSize: '14px' }}>
+                    {selectedDeliveryNote.client_details.nom_client}
+                  </Text>
                 </div>
-              </>
-            )}
-          </>
+              </Col>
+              <Col span={12}>
+                <div className="client-info-item">
+                  <Text strong style={{ color: '#595959', fontSize: '13px' }}>
+                    Téléphone:
+                  </Text>
+                  <Text style={{ marginLeft: '8px', fontSize: '14px' }}>
+                    {selectedDeliveryNote.client_details.telephone || "-"}
+                  </Text>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="client-info-item">
+                  <Text strong style={{ color: '#595959', fontSize: '13px' }}>
+                    Email:
+                  </Text>
+                  <Text style={{ marginLeft: '8px', fontSize: '14px' }}>
+                    {selectedDeliveryNote.client_details.email || "-"}
+                  </Text>
+                </div>
+              </Col>
+              <Col span={24}>
+                <div className="client-info-item">
+                  <Text strong style={{ color: '#595959', fontSize: '13px' }}>
+                    Adresse:
+                  </Text>
+                  <Text style={{ marginLeft: '8px', fontSize: '14px' }}>
+                    {selectedDeliveryNote.client_details.adresse || "-"}
+                  </Text>
+                </div>
+              </Col>
+            </Row>
+          </div>
         ) : (
-          <Spin />
+          <Empty 
+            description="Aucune information client disponible" 
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            style={{ margin: '20px 0' }}
+          />
         )}
-      </Drawer>
+      </Card>
+
+      {/* Section Matières */}
+      <Card
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <InboxOutlined style={{ color: '#fa8c16' }} />
+            <span>Matières reçues</span>
+          </div>
+        }
+        size="small"
+        style={{
+          marginBottom: 24,
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+          border: '1px solid #f0f0f0'
+        }}
+        headStyle={{
+          backgroundColor: '#fafafa',
+          borderBottom: '1px solid #f0f0f0'
+        }}
+      >
+        {selectedDeliveryNote.matieres_details?.length > 0 ? (
+          <Table
+            dataSource={selectedDeliveryNote.matieres_details}
+            rowKey="id"
+            pagination={false}
+            size="small"
+            style={{
+              borderRadius: '6px',
+              overflow: 'hidden'
+            }}
+            columns={[
+              {
+                title: "Type",
+                dataIndex: "type_matiere",
+                key: "type_matiere",
+                width: '25%',
+                render: (type) => (
+                  <Tag 
+                    color={getMaterialTypeColor(type)}
+                    style={{ 
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: 500
+                    }}
+                  >
+                    {renderMaterialType(type)}
+                  </Tag>
+                ),
+              },
+              {
+                title: "Description",
+                dataIndex: "description",
+                key: "description",
+                width: '35%',
+                render: (text) => (
+                  <Text style={{ fontSize: '13px' }}>
+                    {text || "-"}
+                  </Text>
+                ),
+              },
+              {
+                title: "Quantité",
+                dataIndex: "quantite",
+                key: "quantite",
+                width: '20%',
+                align: 'center',
+                render: (val) => (
+                  <Text strong style={{ fontSize: '13px', color: '#1890ff' }}>
+                    {val}
+                  </Text>
+                ),
+              },
+              {
+                title: "Surface",
+                dataIndex: "surface",
+                key: "surface",
+                width: '20%',
+                align: 'center',
+                render: (val) => (
+                  <Text style={{ fontSize: '13px' }}>
+                    {val ? `${val} m²` : "-"}
+                  </Text>
+                ),
+              },
+            ]}
+            summary={() => (
+              <Table.Summary.Row style={{ backgroundColor: '#fafafa' }}>
+                <Table.Summary.Cell index={0} colSpan={2}>
+                  <Text strong style={{ fontSize: '13px' }}>Total</Text>
+                </Table.Summary.Cell>
+                <Table.Summary.Cell index={2} align="center">
+                  <Text strong style={{ fontSize: '13px', color: '#1890ff' }}>
+                    {calculateTotalQuantity(selectedDeliveryNote.matieres_details)}
+                  </Text>
+                </Table.Summary.Cell>
+                <Table.Summary.Cell index={3}></Table.Summary.Cell>
+              </Table.Summary.Row>
+            )}
+          />
+        ) : (
+          <Empty 
+            description="Aucune matière première dans ce bon de livraison" 
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            style={{ margin: '20px 0' }}
+          />
+        )}
+      </Card>
+
+      {/* Section Notes */}
+      {selectedDeliveryNote.notes && (
+        <Card
+          title={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <EditOutlined style={{ color: '#13c2c2' }} />
+              <span>Notes</span>
+            </div>
+          }
+          size="small"
+          style={{
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+            border: '1px solid #f0f0f0'
+          }}
+          headStyle={{
+            backgroundColor: '#fafafa',
+            borderBottom: '1px solid #f0f0f0'
+          }}
+        >
+          <div 
+            className="notes-section"
+            style={{ 
+              padding: '12px 16px',
+              backgroundColor: '#fafafa',
+              borderRadius: '6px',
+              border: '1px solid #f0f0f0'
+            }}
+          >
+            <Text style={{ fontSize: '14px', lineHeight: '1.6' }}>
+              {selectedDeliveryNote.notes}
+            </Text>
+          </div>
+        </Card>
+      )}
+    </div>
+  ) : (
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '400px' 
+    }}>
+      <Spin size="large" />
+    </div>
+  )}
+</Drawer>
+
+<style jsx>{`
+  .delivery-note-details .info-item {
+    padding: 8px 0;
+  }
+  
+  .delivery-note-details .client-info-item {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  .delivery-note-details .ant-card {
+    transition: all 0.3s ease;
+  }
+  
+  .delivery-note-details .ant-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .delivery-note-details .ant-table-thead > tr > th {
+    background-color: #fafafa;
+    font-weight: 600;
+    font-size: 12px;
+    color: #595959;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .delivery-note-details .ant-table-tbody > tr {
+    transition: all 0.2s ease;
+  }
+  
+  .delivery-note-details .ant-table-tbody > tr:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .delivery-note-details .ant-empty {
+    color: #8c8c8c;
+  }
+`}</style>
     </div>
   );
 };

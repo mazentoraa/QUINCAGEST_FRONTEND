@@ -7,6 +7,7 @@ const API_URL = `${API_BASE_URL}/matieres`;
 
 const RawMaterialService = {
   get_all_materials: async () => {
+    
     try {
       const response = await axios.get(`${API_URL}/`);
       
@@ -82,35 +83,42 @@ const RawMaterialService = {
     }
   },
 
-  update_material: async (id, material_data) => {
-    try {
-      // Ensure client_id is included and converted to integer
-      if (material_data.client_id) {
-        material_data.client_id = parseInt(material_data.client_id, 10);
-      }
-      
-      // Ensure quantite is sent as an integer
-      if (material_data.quantite !== undefined) {
-        material_data.quantite = parseInt(material_data.quantite, 10);
-      }
-      
-      // Only send fields expected by the Django serializer
-      const formatted_data = new RawMaterialModel(material_data).to_api_format();
-      
-      // Log the data being sent to API for debugging
-      console.log('Sending to API:', formatted_data);
-      
-      const response = await axios.put(`${API_URL}/${id}/`, formatted_data);
-      return new RawMaterialModel(response.data);
-    } catch (error) {
-      console.error(`Error updating material with id ${id}:`, error);
-      // Log the full error response for debugging
-      if (error.response) {
-        console.error('Error response data:', error.response.data);
-      }
-      throw error;
+update_material: async (id, material_data) => {
+  try {
+    // Ensure client_id is included and converted to integer
+    if (material_data.client_id) {
+      material_data.client_id = parseInt(material_data.client_id, 10);
     }
-  },
+    
+    // Ensure quantite is sent as an integer
+    if (material_data.quantite !== undefined) {
+      material_data.quantite = parseInt(material_data.quantite, 10);
+    }
+    
+    // Only send fields expected by the Django serializer
+    const formatted_data = new RawMaterialModel(material_data).to_api_format();
+    
+    // Log the data being sent to API for debugging
+    console.log('Sending to API:', formatted_data);
+    
+    // Appel API
+    const response = await axios.put(`${API_URL}/${id}/`, formatted_data);
+
+    // ✅ Maintenant, response est définie
+    console.log("Réponse API update:", response);
+    console.log('Données envoyées au serveur:', formatted_data);
+
+    return new RawMaterialModel(response.data);
+  } catch (error) {
+    console.error(`Error updating material with id ${id}:`, error);
+    
+    // Log the full error response for debugging
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+    }
+    throw error;
+  }
+},
 
   delete_material: async (id) => {
     try {

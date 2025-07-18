@@ -1,16 +1,21 @@
 import React, { useEffect } from 'react';
 import { Form, Input, Button, Typography, Card } from 'antd';
-import ClientModel from '../models/ClientModel';
 
 const { TextArea } = Input;
 
 const ClientForm = ({ initial_values, on_finish, on_cancel, loading, is_edit }) => {
   const [form] = Form.useForm();
-  
-  // Reset form with initial values when they change
+
+  // Générer un code client unique local (exemple simple)
+  const generateCodeClient = () => {
+    return `CLT-${Math.floor(100000 + Math.random() * 900000)}`;
+  };
+
+  // Remplir automatiquement le code client lors de l'ouverture du formulaire
   useEffect(() => {
     if (initial_values) {
       form.setFieldsValue({
+        code_client: initial_values.code_client || '',
         nom_client: initial_values.nom_client || '',
         numero_fiscal: initial_values.numero_fiscal || '',
         adresse: initial_values.adresse || '',
@@ -23,11 +28,13 @@ const ClientForm = ({ initial_values, on_finish, on_cancel, loading, is_edit }) 
         informations_complementaires: initial_values.informations_complementaires || '',
       });
     } else {
-      form.resetFields();
+      // Si ajout, générer automatiquement le code client
+      form.setFieldsValue({
+        code_client: generateCodeClient()
+      });
     }
   }, [initial_values, form]);
 
-  // Validate if input is numeric
   const validate_numeric = (_, value) => {
     if (value && !/^\d+$/.test(value)) {
       return Promise.reject(new Error('Veuillez entrer uniquement des chiffres'));
@@ -35,24 +42,24 @@ const ClientForm = ({ initial_values, on_finish, on_cancel, loading, is_edit }) 
     return Promise.resolve();
   };
 
-  // Validate email format
   const validate_email = (_, value) => {
     if (value && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)) {
       return Promise.reject(new Error('Format d\'email invalide'));
     }
     return Promise.resolve();
   };
+
   const validate_matricule_fiscal = (_, value) => {
-  const regex = /^\d{3}\s\d{4}[A-Z]\/[A-Z]\/[A-Z]\/\d{3}$/;
-  if (value && !regex.test(value)) {
-    return Promise.reject(new Error("Format attendu : 000 0000X/X/X/000"));
-  }
-  return Promise.resolve();
-};
+    const regex = /^\d{3}\s\d{4}[A-Z]\/[A-Z]\/[A-Z]\/\d{3}$/;
+    if (value && !regex.test(value)) {
+      return Promise.reject(new Error("Format attendu : 000 0000X/X/X/000"));
+    }
+    return Promise.resolve();
+  };
 
   const handle_finish = (values) => {
-    // Convert the form values directly to the format expected by the API
     const client_data = {
+      code_client: values.code_client,
       nom_client: values.nom_client,
       numero_fiscal: values.numero_fiscal,
       adresse: values.adresse,
@@ -64,12 +71,11 @@ const ClientForm = ({ initial_values, on_finish, on_cancel, loading, is_edit }) 
       autre_numero: values.autre_numero,
       informations_complementaires: values.informations_complementaires
     };
-    
-    // If we're editing, include the ID
+
     if (initial_values && initial_values.id) {
       client_data.id = initial_values.id;
     }
-    
+
     on_finish(client_data);
   };
 
@@ -78,11 +84,11 @@ const ClientForm = ({ initial_values, on_finish, on_cancel, loading, is_edit }) 
       <Typography.Title level={4}>
         {is_edit ? 'Modifier un client' : 'Ajouter un nouveau client'}
       </Typography.Title>
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handle_finish}
-      >
+      <Form form={form} layout="vertical" onFinish={handle_finish}>
+        <Form.Item name="code_client" label="Code client">
+          <Input readOnly disabled placeholder="Généré automatiquement" />
+        </Form.Item>
+
         <Form.Item
           name="nom_client"
           label="Nom du client"
@@ -94,18 +100,15 @@ const ClientForm = ({ initial_values, on_finish, on_cancel, loading, is_edit }) 
         <Form.Item
           name="numero_fiscal"
           label="Numéro d'enregistrement fiscal"
-         rules={[
+          rules={[
             { required: true, message: 'Le numéro d\'enregistrement fiscal est obligatoire' },
             { validator: validate_matricule_fiscal }
           ]}
         >
-        <Input placeholder="000 0000X/X/X/000" />
+          <Input placeholder="000 0000X/X/X/000" />
         </Form.Item>
 
-        <Form.Item
-          name="adresse"
-          label="Adresse"
-        >
+        <Form.Item name="adresse" label="Adresse">
           <Input placeholder="Entrez l'adresse du client" />
         </Form.Item>
 
@@ -117,10 +120,7 @@ const ClientForm = ({ initial_values, on_finish, on_cancel, loading, is_edit }) 
           <Input placeholder="Entrez le numéro de téléphone" />
         </Form.Item>
 
-        <Form.Item
-          name="nom_responsable"
-          label="Nom du responsable"
-        >
+        <Form.Item name="nom_responsable" label="Nom du responsable">
           <Input placeholder="Entrez le nom du responsable ou gérant" />
         </Form.Item>
 
@@ -156,10 +156,7 @@ const ClientForm = ({ initial_values, on_finish, on_cancel, loading, is_edit }) 
           <Input placeholder="Entrez un autre numéro (optionnel)" />
         </Form.Item>
 
-        <Form.Item
-          name="informations_complementaires"
-          label="Informations complémentaires"
-        >
+        <Form.Item name="informations_complementaires" label="Informations complémentaires">
           <TextArea rows={4} placeholder="Entrez des informations complémentaires" />
         </Form.Item>
 
@@ -167,9 +164,7 @@ const ClientForm = ({ initial_values, on_finish, on_cancel, loading, is_edit }) 
           <Button type="primary" htmlType="submit" loading={loading} style={{ marginRight: '10px' }}>
             {is_edit ? 'Mettre à jour' : 'Ajouter'}
           </Button>
-          <Button onClick={on_cancel}>
-            Annuler
-          </Button>
+          <Button onClick={on_cancel}>Annuler</Button>
         </Form.Item>
       </Form>
     </Card>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Layout,
   Typography,
@@ -48,6 +48,7 @@ import "./WorkManagementPage.css";
 import { getApiService } from "../../../services/apiServiceFactory";
 import BonLivraisonDecoupePdfService from "../../../services/BonLivraisonDecoupePdfService"; // si pas déjà importé
 import { BuildOutlined } from "@ant-design/icons";
+import MaterialAchatService from "../../purshase/Services/MaterialAchatService";
 const { Option } = Select;
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -58,6 +59,7 @@ const WorkManagementPage = () => {
   const [works, setWorks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [billModalTarget, setBillModalTarget] = useState('');
   const [editingWork, setEditingWork] = useState(null);
   const [form] = Form.useForm();
   const [created, setCreated] = useState(false);
@@ -67,6 +69,17 @@ const WorkManagementPage = () => {
   const [productOptions, setProductOptions] = useState([]);
   const [clientSearchLoading, setClientSearchLoading] = useState(false);
   const [productSearchLoading, setProductSearchLoading] = useState(false);
+
+  const [materialSource, setMaterialSource] = useState('');
+  // For material selection (stock rmmetalaser)
+  const [materialForm] = Form.useForm();
+  const [availableMaterial, setAvailableMaterial] = useState([]);
+  const [isMaterialModalVisible, setIsMaterialModalVisible] = useState(false);
+  const [currentMaterialsInDrawer, setCurrentMaterialsInDrawer] = useState([]);
+  const [newOrderMaterials, setNewOrderMaterials] = useState([]);
+  const [editingMaterial, setEditingMaterial] = useState(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingOrder, setEditingOrder] = useState(null);
 
   // Add new state for client materials - RESTORED
   const [clientMaterials, setClientMaterials] = useState([]);
@@ -91,6 +104,14 @@ const WorkManagementPage = () => {
   // const [formError, setFormError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [TraiteMessage, setTraiteMessage] = useState(null);
+
+  const formatCurrency = (amount, currency = " ") => {
+    return new Intl.NumberFormat("fr-TN", {
+      style: "decimal",
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
+    }).format(amount || 0);
+  };
   
   useEffect(() => {
     if (created) {
@@ -214,14 +235,19 @@ const fetchWorks = async () => {
 
   const handleAdd = () => {
     form.resetFields();
+    setMaterialSource('')
+    setCurrentMaterialsInDrawer([])
     setEditingWork(null);
     setIsModalVisible(true);
   };
 
-  const handleEdit = (record) => {
+  const handleEdit = async (record) => {
     setEditingWork(record);
+    setMaterialSource(record.matiere_usages?.[0]?.source)
+    const source = record.matiere_usages?.[0]?.source
     form.setFieldsValue({
       client_id: record.client_id,
+      source: record.matiere_usages?.[0]?.source,
       produit_id: record.produit_id,
       duree: record.duree,
       quantite: record.quantite,
@@ -229,21 +255,49 @@ const fetchWorks = async () => {
     });
 
     // Fetch materials for this client - RESTORED
-    if (record.client_id) {
-      handleClientChange(record.client_id);
+    let materials = []
+      if (record.client_id) {
+        materials = await handleClientChange(record.client_id);
+      }
+    if(materialSource=='client'){
+      try {
+        materials = await RawMaterialService.get_materials_by_client_id(
+          record.client_id
+        );
+        setClientMaterials(materials);
+      } catch (error) {
+        console.error("Error fetching client materials:", error);
+      }
     }
-
+    
+    // A supprimer
     // Pre-populate selected materials if record has matiere_usages - RESTORED
     if (record.matiere_usages && record.matiere_usages.length > 0) {
       const initialSelectedMaterials = record.matiere_usages.map((usage) => ({
-        materialId: usage.matiere_id,
+        materialId: usage.material_id,
         quantite: usage.quantite_utilisee,
       }));
-      setSelectedMaterials(initialSelectedMaterials);
+
+      const enrichedMaterials = record.matiere_usages.map(usage => {
+        const mat = (source=='stock' ? availableMaterial : materials).find(m => (m.id || m.materialId) === (usage.material_id || usage.matiere_id));
+        return {
+          matiere_id: usage.material_id || mat.materialId,
+          nom_matiere: mat?.nom_matiere || mat?.type_matiere || "Unknown",
+          quantite: usage.quantite_utilisee,
+          source: materialSource,
+          ...(source=='stock' ? 
+            {
+              prix_unitaire: mat?.prix_unitaire || 0,
+              prix_total: mat?.prix_unitaire * usage.quantite_utilisee || 0,
+            } : {})
+        };
+      });
+
+      setCurrentMaterialsInDrawer(enrichedMaterials || [])
+      setSelectedMaterials(enrichedMaterials || []);
     } else {
       setSelectedMaterials([]);
     }
-
     setIsModalVisible(true);
   };
 
@@ -274,15 +328,138 @@ const fetchWorks = async () => {
       console.log("Retrieved materials:", materials);
       setClientMaterials(materials);
       setSelectedMaterials([]); // Reset selected materials when client changes
+      return materials;
     } catch (error) {
       console.error("Error fetching client materials:", error);
       message.error(
         "Erreur lors du chargement des matières premières du client."
       );
+      return []
     } finally {
       setLoadingMaterials(false);
     }
   };
+
+  // Matière première du stock RM Metalaser
+  useEffect(()=>{
+    fetchAvailableMaterial()
+  }, [isMaterialModalVisible])
+
+  const fetchAvailableMaterial = useCallback(async () => {
+    try {
+      const response = await MaterialAchatService.getAllMaterial();
+      // Check if response has a results property (paginated response)
+      const material = response.results ? response.results : response;
+      setAvailableMaterial(material);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+      message.error("Failed to fetch available products: " + err.message);
+    }
+  }, []);
+  
+  const handleAddMaterialToDrawerOrder = () => {
+    materialForm.resetFields();
+    setIsMaterialModalVisible(true);
+  };
+
+  const handleMaterialModalSave = async () => {
+    try{
+      const values = await materialForm.validateFields();
+      const materialDetails = (materialSource == 'stock' ? availableMaterial : clientMaterials).find(
+        (m) => m.id === values.matiere_id 
+      );
+      if (!materialDetails) {
+      message.error("Selected material not found.");
+      return;
+      }
+      if(editingMaterial){
+        const updatedMaterials = currentMaterialsInDrawer.map((m) =>
+            m.matiere_id === editingMaterial.matiere_id
+              ? {
+                  ...m,
+                  quantite: values.quantite,
+                  prix_unitaire: m.prix_unitaire,
+                  source : materialSource,
+                  prix_total:
+                    values.quantite *
+                    m.prix_unitaire
+                  }
+                  : m
+          );
+        setCurrentMaterialsInDrawer(updatedMaterials);
+        setEditingMaterial(null);
+        setIsMaterialModalVisible(false);
+        message.success("Matière modifiée avec succès");
+      }else{
+        const newMaterialData = {
+            matiere_id: values.matiere_id,
+            nom_matiere: materialDetails.nom_matiere || materialDetails.type_matiere,
+            quantite: values.quantite,
+            source: materialSource,
+            ...(materialSource === "stock"
+              ? {
+                  prix_unitaire: materialDetails.prix_unitaire,
+                  prix_total: materialDetails.prix_unitaire * values.quantite,
+                }
+              : {}),
+        };
+        let updatedNewOrderMaterials = [...currentMaterialsInDrawer, newMaterialData];
+        setIsMaterialModalVisible(false);
+        message.success("Matière ajoutée à la commande");
+        setSelectedMaterials(updatedNewOrderMaterials)
+        setNewOrderMaterials(updatedNewOrderMaterials);
+        setCurrentMaterialsInDrawer(updatedNewOrderMaterials);
+      }
+    }catch(e){
+      console.error("Failed to save order : ", e)
+      message.error("Échec de la sauvegarde. " + (e.message || "Check console for details."));
+    }
+  }
+
+  const handleRemoveMaterialFromDrawerOrder = async (materialIdToRemove) => {
+      try {
+        // if (isCreating) {
+          const updatedMaterials = currentMaterialsInDrawer.filter(
+            (m) => m.matiere_id !== materialIdToRemove 
+          );
+          setNewOrderMaterials(updatedMaterials);
+          setCurrentMaterialsInDrawer(updatedMaterials);
+        // } else {
+        //   // For existing order, find the product to get the correct produit_id
+        //   const productToRemove = currentProductsInDrawer.find(
+        //     (p) => p.id === produitIdToRemove
+        //   );
+  
+        //   if (!productToRemove) {
+        //     message.error("Produit non trouvé");
+        //     return;
+        //   }
+  
+        //   // Use produit_id instead of the PdC id for removal
+        //   const actualProductId =
+        //     productToRemove.produit_id || productToRemove.produit;
+  
+        //   await cdsService.removeProductFromOrder(
+        //     editingOrder.id,
+        //     actualProductId // Send the actual product ID, not the PdC ID
+        //   );
+        //   const updatedProducts = currentProductsInDrawer.filter(
+        //     (p) => p.id !== produitIdToRemove
+        //   );
+        //   setCurrentProductsInDrawer(updatedProducts);
+        //   recalculateTotalsInDrawer(
+        //     updatedProducts,
+        //     currentTaxRate,
+        //     currentBonInDrawer
+        //   );
+        // }
+        message.success("Material removed.");
+      } catch (error) {
+        console.error("Failed to remove material:", error);
+        message.error("Failed to remove material: " + error.message);
+      }
+    };
+
 
   // handleMaterialSelect - RESTORED
   const handleMaterialSelect = (materialId, quantite) => {
@@ -320,14 +497,14 @@ const fetchWorks = async () => {
     try {
       // setFormError(null);
       setSuccessMessage(null);
-
-      const adjustedMaterials = selectedMaterials
+      const adjustedMaterials = (currentMaterialsInDrawer)
         .filter((m) => m.quantite && m.quantite > 0)
         .map((m) => ({
-          matiere_id: m.materialId,
+          matiere_id: m.materialId || m.matiere_id || m.material_id || m.id,
+          nom_matiere: m.nom_matiere,
           quantite_utilisee: m.quantite,
-        }));
-
+          source: materialSource,
+        }))
       // if (adjustedMaterials.length === 0) {
       //   setFormError(
       //     "Veuillez sélectionner au moins une matière première avec une quantité valide."
@@ -385,7 +562,6 @@ const fetchWorks = async () => {
         content: "Récupération des détails...",
         key: "materialsLoading",
       });
-      console.log("selected", selectedRowsData);
       // Process each work to add client and material details
       const enrichedWorksData = await Promise.all(
         selectedRowsData.map(async (work) => {
@@ -480,16 +656,16 @@ const fetchWorks = async () => {
                 try {
                   // Get material details
                   const materialDetail =
-                    await RawMaterialService.getMaterialById(usage.matiere_id);
+                    await (usage.source=='client'?RawMaterialService:MaterialAchatService).getMaterialById(usage.material_id);
                   return {
                     ...usage,
                     nom_matiere:
                       materialDetail.nom_matiere || materialDetail.designation,
-                    type_matiere: materialDetail.type_matiere,
+                    type_matiere: materialDetail.type_matiere || materialDetail.categorie,
                     prix_unitaire: materialDetail.prix_unitaire || 0,
-                    thickness: materialDetail.thickness,
-                    length: materialDetail.length,
-                    width: materialDetail.width,
+                    thickness: materialDetail.thickness ||  materialDetail.epaisseur,
+                    length: materialDetail.length || materialDetail.longueur,
+                    width: materialDetail.width ||  materialDetail.largeur,
                   };
                 } catch (error) {
                   console.error(
@@ -500,8 +676,8 @@ const fetchWorks = async () => {
                 }
               })
             );
-
             enrichedWork.matiere_usages = enrichedMaterialUsages;
+
           }
 
           // Add billable data fields with default values
@@ -552,6 +728,7 @@ const fetchWorks = async () => {
   const sendDataToFacture = async () => {
     try {
       // Fallback: if billableData is empty, process selectedRowsData on the fly
+      console.log(billableData)
       let workingData = billableData;
       if (!billableData || billableData.length === 0) {
         if (!selectedRowsData || selectedRowsData.length === 0) {
@@ -567,7 +744,7 @@ const fetchWorks = async () => {
         workingData = await Promise.all(
           selectedRowsData.map(async (work) => {
             const enrichedWork = { ...work };
-
+            console.log(work)
             if (!work.client_id && work.client?.id) {
               enrichedWork.client_id = work.client.id;
             }
@@ -698,31 +875,40 @@ const fetchWorks = async () => {
               remise_pourcentage: 0,
             };
           }) || [];
-
-        return [...productLine, ...materialLines];
+          // return [...productLine, ...materialLines];
+          return [...productLine];
       });
-
       const finalMontantTva = finalMontantHt * (taxRate / 100);
       const finalMontantTtc = finalMontantHt + finalMontantTva;
-
+      // adjust products to match backend
+      let formattedProducts = billableData.map((item)=>({
+        ...item.produit,
+        produit: item.produit.id, 
+        quantite: item.billable.quantite_produit,
+        prix_unitaire: item.billable.prix_unitaire_produit,
+        remise_pourcentage: item.billable.remise_pourcentage,
+        remise: item.billable.remise,
+      }))
       const orderPayload = {
         client_id: selectedClientId,
         client: selectedClientId,
         date_commande: moment(billDate).format("YYYY-MM-DD"),
-        date_livraison_prevue: null,
-        statut: "pending",
+        date_livraison_prevue: billableData[0].billable.date_livraison, // All items have it
+        statut: billableData[0].billable.statut,
         notes: "",
         conditions_paiement: "",
-        mode_paiement: "cash",
-        tax_rate: taxRate,
-        timbre_fiscal: timbreFiscal,
+        mode_paiement:  billableData[0].billable.mode_paiement,
+        tax_rate: billableData[0].billable.taxe,
+        timbre_fiscal: billableData[0].billable.timbre_fiscal,
         montant_ht: finalMontantHt,
         montant_tva: finalMontantTva,
         montant_ttc: finalMontantTtc,
-        produits,
+        type_facture:'produit',
+        produits: formattedProducts,
+        billableData,
       };
 
-      console.log(" Payload prêt à envoyer :", orderPayload);
+      console.log("Payload prêt à envoyer :", orderPayload);
 
       const response = await cdsService.createOrder(orderPayload);
       message.success("Facture créée avec succès !");
@@ -751,9 +937,16 @@ const fetchWorks = async () => {
           workData.matiere_usages.map(async (usage) => {
             try {
               // Get material details
-              const materialDetail = await RawMaterialService.getMaterialById(
-                usage.matiere_id
-              );
+              let materialDetail;
+              if(usage.stock==='client'){
+                materialDetail = await RawMaterialService.getMaterialById(
+                  usage.material_id
+                );
+              }else{
+                materialDetail = await MaterialAchatService.getMaterialById(
+                  usage.material_id
+                );
+              }
               return { ...usage, ...materialDetail };
             } catch (error) {
               return usage; // Return original usage if fetching details fails
@@ -778,9 +971,9 @@ const fetchWorks = async () => {
       setSelectedRowKeys(keys);
 
       // If you need to fetch additional material details when selecting rows:
-      /*
+      
       const enrichedRows = await Promise.all(selectedRows.map(async (row) => {
-        if (row.matiere_usages && row.matiere_usages.some(m => !m.material_name)) {
+        if (row.matiere_usages && row.matiere_usages.some(m => !m.nom_matiere)) {
           // If any material is missing details, fetch them
           const workWithDetails = await fetchWorkWithMaterialDetails(row.id);
           return workWithDetails || row;
@@ -788,8 +981,7 @@ const fetchWorks = async () => {
         return row;
       }));
       setSelectedRowsData(enrichedRows);
-      */
-
+      
       // Otherwise just use the rows as they are
       setSelectedRowsData(selectedRows);
       console.log(
@@ -868,6 +1060,20 @@ const fetchWorks = async () => {
         ),
     },
     {
+      title: "Source",
+      key: "source",
+      render: (_, record) =>{
+        const source = record.matiere_usages?.[0]?.source
+         return source ? (
+            <Tag color={source === 'client' ? 'green' : 'blue'}>
+              {source.charAt(0).toUpperCase() + source.slice(1)}
+            </Tag>
+          ) : (
+            <Tag color="default">Aucun</Tag>
+          );
+      },
+    },
+    {
       title: "Date de création",
       dataIndex: "date_creation",
       key: "date_creation",
@@ -919,7 +1125,6 @@ const fetchWorks = async () => {
 
     const invoiceItems = [];
     const lineItems = [];
-    console.log(billableData)
     billableData.forEach((item) => {
       const remisePourcentage = item.billable?.remise_pourcentage || 0;
       const remise = (remisePourcentage / 100) * (item.billable.quantite_produit * item.billable.prix_unitaire_produit);
@@ -1155,25 +1360,33 @@ const fetchWorks = async () => {
                 <Button
                   type="primary"
                   icon={<CheckOutlined />}
-                  onClick={handleProcessSelectedWorks}
+                  onClick={()=>{
+                      handleProcessSelectedWorks()
+                      setBillModalTarget('bon')
+                    }
+                  }
                   style={{ marginRight: 10 }}
-                >
+                  >
                   Traiter {selectedRowKeys.length} travail(s) sélectionné(s)
                 </Button>
                 <Button
                   type="primary"
                   icon={<CheckOutlined />}
                   onClick={async () => {
-                    const success = await sendDataToFacture();
-                    if (success) {
-                      setCreated(true);
+                    handleProcessSelectedWorks()
+                    setBillModalTarget('facture')
+                    // const success = await sendDataToFacture();
+                    // if (success) {
+                    //   setCreated(true);
 
-                      return true;
-                    }
+                    //   return true;
+                    // }
                   }}
                 >
                   Créer une facture
                 </Button>
+
+                
                 {created && (
                   <div
                     style={{
@@ -1295,13 +1508,14 @@ const fetchWorks = async () => {
         <Modal
           title={editingWork ? "Modifier un travail" : "Ajouter un travail"}
           open={isModalVisible}
-          onCancel={() => setIsModalVisible(false)}
+          onCancel={() => {
+            setIsModalVisible(false)
+            setCurrentMaterialsInDrawer([])
+          }}
           footer={null}
           width={800}
         >
           <Form form={form} layout="vertical" onFinish={handleSubmit}>
-           
-
             <Form.Item
               name="client_id"
               label="Client"
@@ -1325,9 +1539,176 @@ const fetchWorks = async () => {
                 options={clientOptions}
               />
             </Form.Item>
+            <Form.Item
+              name="source"
+              label="Source de la matière première"
+              rules={[
+                { required: true, message: "Veuillez sélectionner une source" },
+              ]}
+            >
+              <Select
+                placeholder="Choisir la source"
+                onChange={(value) => {
+                  setMaterialSource(value);
+                }}
+              >
+                <Option
+                  value={'client'}
+                  >Matières premières client</Option>
+                <Option
+                  value={'stock'}
+                >Stock RM Metalaser</Option>
+              </Select>
+            </Form.Item>
 
-            {/* RESTORED clientMaterials and selectedMaterials sections */}
-            {clientMaterials.length > 0 && (
+            {materialSource && (
+            <>
+              <Divider>Matières Premières{materialSource=='client'?' Client':''}</Divider>
+
+              <Button
+                type="dashed"
+                onClick={handleAddMaterialToDrawerOrder}
+                style={{ width: "100%", marginBottom: 16 }}
+                icon={<PlusOutlined />}
+              >
+                Ajouter une matière première
+              </Button>
+
+              <Table
+                dataSource={currentMaterialsInDrawer}
+                rowKey="matiere_id"
+                pagination={false}
+                size="small"
+                columns={[
+                  {
+                    title: "Matière",
+                    dataIndex: "nom_matiere",
+                    key: "nom_matiere",
+                  },
+                  {
+                    title: "Quantité",
+                    dataIndex: "quantite",
+                    key: "quantite",
+                  },
+                  ...(materialSource === "stock"
+                    ? [
+                        {
+                          title: "Prix Unitaire",
+                          dataIndex: "prix_unitaire",
+                          key: "prix_unitaire",
+                          render: (prix) => (prix != null ? formatCurrency(prix) : "-"),
+                        },
+                        {
+                          title: "Prix Total",
+                          dataIndex: "prix_total",
+                          key: "prix_total",
+                          render: (prix) => (prix != null ? formatCurrency(prix) : "-"),
+                        },
+                      ]
+                    : []),
+                  {
+                    title: "Actions",
+                    key: "actions",
+                    render: (_, record) => (
+                      <Space>
+                        <Button
+                          icon={<EditOutlined />}
+                          size="small"
+                          onClick={() => {
+                            materialForm.setFieldsValue({
+                              matiere_id: record.matiere_id,
+                              quantite: record.quantite,
+                            });
+                            setEditingMaterial(record);
+                            setIsMaterialModalVisible(true);
+                          }}
+                        />
+                        <Tooltip title="Supprimer">
+                          <Popconfirm
+                            title="Êtes-vous sûr de vouloir supprimer cette matière?"
+                            onConfirm={() =>
+                              handleRemoveMaterialFromDrawerOrder(record.matiere_id)
+                            }
+                            okText="Oui"
+                            cancelText="Non"
+                          >
+                            <Button danger icon={<DeleteOutlined />} size="small" />
+                          </Popconfirm>
+                        </Tooltip>
+                      </Space>
+                    ),
+                  },
+                ]}
+              />
+
+              <Divider />
+            </>
+          )}
+
+            {/* Material Modal */}
+            <Modal
+              title={`Ajouter une matière première ${materialSource === 'client' ? 'pour ce client' : ''}`}
+              open={isMaterialModalVisible}
+              onOk={handleMaterialModalSave}
+              onCancel={() => {
+                setEditingMaterial(null);
+                setIsMaterialModalVisible(false);
+              }}
+              okText={editingMaterial ? "Modifier" : "Ajouter"}
+              cancelText="Annuler"
+            >
+              <Form form={materialForm} layout="vertical">
+                <Form.Item
+                  name="matiere_id"
+                  label="Matière Première"
+                  rules={[
+                    { required: true, message: "Veuillez sélectionner une matière première" },
+                    {
+                      validator: (_, value) => {
+                        const exists = currentMaterialsInDrawer.find(m => m.matiere_id === value);
+                        if (!editingMaterial && exists) {
+                          return Promise.reject(new Error("Cette matière est déjà ajoutée."));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
+                  <Select
+                    placeholder="Sélectionner une matière première"
+                    disabled={!!editingMaterial}
+                    showSearch
+                    filterOption={(input, option) =>
+                      option.children.toLowerCase().includes(input.toLowerCase())
+                    }
+                  >
+                    {(materialSource === 'stock' ? availableMaterial : clientMaterials).map((material) => (
+                      <Option key={material.id} value={material.id}>
+                        {(material.nom_matiere || material.type_matiere)} (
+                          {(material.longueur || material.length || "-")}mm ×
+                          {(material.largeur || material.width || "-")}mm ×
+                          {(material.epaisseur || material.thickness || "-")}mm
+                        )
+                        {materialSource === 'stock' && ` - ${formatCurrency(material.prix_unitaire)} TND`}
+                        {" - Stock : " + material.remaining_quantity}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  name="quantite"
+                  label="Quantité"
+                  rules={[{ required: true, message: "Veuillez saisir une quantité" }]}
+                >
+                  <InputNumber min={1} style={{ width: "100%" }} />
+                </Form.Item>
+              </Form>
+            </Modal>
+
+
+            {/* RESTORED clientMaterials and selectedMaterials sections
+            {materialSource == 'client' && false && clientMaterials.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <Divider orientation="left">
                   Matières Premières Disponibles pour ce Client
@@ -1336,6 +1717,7 @@ const fetchWorks = async () => {
                   loading={loadingMaterials}
                   dataSource={clientMaterials}
                   renderItem={(material) => {
+                    console.log(material)
                     const currentSelection = selectedMaterials.find(
                       (sm) => sm.materialId === material.id
                     );
@@ -1354,7 +1736,7 @@ const fetchWorks = async () => {
                                 {material.type_matiere || material.materialType}
                               </Tag>
                               <span>
-                                {material?.designation || "N/A"} (
+                                {material?.description || material?.designation || ""} (
                                 {material?.thickness != null
                                   ? `${material.thickness}mm`
                                   : "-"}{" "}
@@ -1440,7 +1822,7 @@ const fetchWorks = async () => {
                   </div>
                 )}
               </div>
-            )}
+            )} */}
 
             <Form.Item
               name="produit_id"
@@ -1507,6 +1889,7 @@ const fetchWorks = async () => {
                     setIsModalVisible(false);
                     setSelectedMaterials([]);
                     setClientMaterials([]);
+                    setCurrentMaterialsInDrawer([])
                     form.resetFields();
                   }}
                 >
@@ -1522,7 +1905,7 @@ const fetchWorks = async () => {
 
         {/* Bill Modal */}
         <Modal
-          title="Préparation du bon de livraison"
+          title={`Préparation ${billModalTarget=='bon'? 'du bon de livraison' : 'de la facture'}`}
           open={isBillModalVisible}
           width={900}
           onCancel={() => setIsBillModalVisible(false)}
@@ -1532,9 +1915,10 @@ const fetchWorks = async () => {
             </Button>,
             <Button
               key="save"
+              type={billModalTarget=='facture'?'primary':''}
               icon={<SaveOutlined />}
               onClick={async () => {
-                const success = await saveBillableData(); // Await the promise
+                const success = await (billModalTarget=='bon'? saveBillableData():sendDataToFacture()); // Await the promise
                 if (success) {
                   message.success("Facture sauvegardée avec succès");
                   setIsBillModalVisible(false); // Close modal
@@ -1543,7 +1927,7 @@ const fetchWorks = async () => {
             >
               Sauvegarder
             </Button>,
-            <Button
+            (billModalTarget=='bon' && <Button
               key="print"
               type="primary"
               icon={<PrinterOutlined />}
@@ -1557,21 +1941,22 @@ const fetchWorks = async () => {
               }}
             >
               Imprimer bon
-            </Button>,
+            </Button>),
           ]}
-        >
+          >
           <div className="bill-form-container">
             {/* Invoice Number */}
-            <div style={{ textAlign: "right", marginBottom: "10px" }}>
-              <Text strong>BON N°: </Text>
-              <Text>{invoiceNumber}</Text>
-            </div>
-
+            {billModalTarget=='bon' && (
+              <div style={{ textAlign: "right", marginBottom: "10px" }}>
+                <Text strong>BON N°: </Text>
+                <Text>{invoiceNumber}</Text>
+              </div>
+            )}
             {/* Global bill settings */}
             <div className="client-info-header">
               <Row gutter={16}>
                 <Col span={8}>
-                  <Form.Item label="Date">
+                  <Form.Item label="Date Facture" layout="horizontal">
                     <DatePicker
                       style={{ width: "100%" }}
                       value={moment(billDate)}
@@ -1625,12 +2010,96 @@ const fetchWorks = async () => {
                       step={0.001}
                       onChange={(value) => {
                         setTimbreFiscal(value)                       
+                        const updatedItems = billableData.map((item) => ({
+                          ...item,
+                          billable: {
+                            ...item.billable,
+                            timbre_fiscal: value,
+                          },
+                        }));
+                        setBillableData(updatedItems);
                       }}
                     ></InputNumber>
                   </Form.Item>
                 </Col>
               </Row>
-
+              {billModalTarget=='facture' && (
+              <Row gutter={16}>
+                <Col span={8}>
+                  <Form.Item label="Date Livraison" layout="horizontal">
+                    <DatePicker
+                      style={{ width: "100%" }}
+                      onChange={(date) => {
+                        const formattedDate = date
+                          ? date.format("YYYY-MM-DD")
+                          : moment().format("YYYY-MM-DD");
+                        // Update all items with the new date
+                        const updatedItems = billableData.map((item) => ({
+                          ...item,
+                          billable: {
+                            ...item.billable,
+                            date_livraison: formattedDate,
+                          },
+                        }));
+                        console.log(updatedItems)
+                        setBillableData(updatedItems);
+                      }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={9}>
+                  <Form.Item
+                    layout="horizontal"
+                    label="Mode de Paiement"
+                    name="mode_paiement"
+                    >
+                    <Select
+                      onChange={(value) => {
+                        // Update all items with the new field
+                        const updatedItems = billableData.map((item) => ({
+                          ...item,
+                          billable: {
+                            ...item.billable,
+                            mode_paiement: value,
+                          },
+                        }));
+                        setBillableData(updatedItems);
+                      }}
+                    >
+                      <Option value="traite">Traite</Option>
+                      <Option value="cash">Comptant</Option>
+                      <Option value="cheque">Chèque</Option>
+                      <Option value="virement">Virement Bancaire</Option>
+                      <Option value="carte">Carte de crédit</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={6}>
+                  <Form.Item label="Statut">
+                    <Select
+                      style={{ width: "100%" }}
+                      onChange={(value) => {
+                        // Update all items with the new field
+                        const updatedItems = billableData.map((item) => ({
+                          ...item,
+                          billable: {
+                            ...item.billable,
+                            statut: value,
+                          },
+                        }));
+                        setBillableData(updatedItems);
+                      }}
+                    >
+                      <Option value="pending">En attente</Option>
+                      <Option value="processing">En cours</Option>
+                      <Option value="completed">Terminée</Option>
+                      <Option value="cancelled">Annulée</Option>
+                      <Option value="invoiced">Facturée</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+              )}
               <Divider style={{ margin: "10px 0" }} />
 
               {/* Client info from first item (assuming all items are for the same client) */}
@@ -1686,7 +2155,7 @@ const fetchWorks = async () => {
                         }}
                       >
                         <Col span={8}>
-                          <Form.Item label="Produit / Service">
+                          <Form.Item label="Produit">
                             <Input
                               value={
                                 item.produit_name +
@@ -1737,11 +2206,28 @@ const fetchWorks = async () => {
                               step={1}
                               value={item.billable.remise_pourcentage}
                               onChange={(value) => {
-                                const newData = [...billableData];
-                                newData[index].billable.remise_pourcentage =
-                                  value;
-                                setBillableData(newData);
-                              }}
+                                const updatedData = billableData.map((i) => {
+                                  if (i.id === item.id) {
+                                    const pourcentage = parseFloat(value) || 0;
+                                    const prix = parseFloat(item.billable?.prix_unitaire_produit) || 0;
+                                    const quantite = parseFloat(item.billable?.quantite_produit) || 0;
+
+                                    return {
+                                      ...i,
+                                      billable: {
+                                        ...i.billable,
+                                        remise_pourcentage: pourcentage,
+                                        remise: (prix * quantite * pourcentage) / 100,
+                                      },
+                                    };
+                                  }
+                                else{
+                                  return i;
+                                }})
+                                  console.log(updatedData)
+                                  setBillableData(updatedData)
+                                }
+                              }
                             />
                           </Form.Item>
                         </Col>
@@ -1753,7 +2239,7 @@ const fetchWorks = async () => {
                               step={0.001}
                               value={(
                                 (item.billable.prix_unitaire_produit || 0) *
-                                (item.billable.quantite_produit || 0)
+                                (item.billable.quantite_produit || 0) - (item.billable.remise || 0)
                               ).toFixed(3)}
                               disabled
                             />
@@ -1762,7 +2248,7 @@ const fetchWorks = async () => {
                       </Row>
 
                       {/* Materials section if available */}
-                      {item.matiere_usages &&
+                      {billModalTarget=='bon' && item.matiere_usages &&
                         item.matiere_usages.length > 0 && (
                           <div>
                             <Divider orientation="left">
@@ -1778,14 +2264,16 @@ const fetchWorks = async () => {
                                   title: "Matériau",
                                   dataIndex: "nom_matiere",
                                   key: "nom_matiere",
-                                  render: (text, record) => (
-                                    <Space>
-                                      <Tag color="blue">
-                                        {record.type_matiere}
-                                      </Tag>
-                                      <span>{text}</span>
-                                    </Space>
-                                  ),
+                                  render: (text, record) => {
+                                    console.log(record)
+                                    return (
+                                      <Space>
+                                        <Tag color={record.source==='stock'?'blue': 'green'}>
+                                          {text || record.type_matiere}
+                                        </Tag>
+                                      </Space>
+                                    )
+                                  },
                                 },
                                 {
                                   title: "Dimensions",
@@ -1809,72 +2297,73 @@ const fetchWorks = async () => {
                                   dataIndex: "quantite_utilisee",
                                   key: "quantite_utilisee",
                                 },
-                                {
-                                  title: "Prix unitaire",
-                                  dataIndex: "prix_unitaire",
-                                  key: "prix_unitaire",
-                                  render: (text, record, materialIndex) => (
-                                    <InputNumber
-                                      style={{ width: "100%" }}
-                                      min={0}
-                                      precision={3}
-                                      value={record.prix_unitaire}
-                                      onChange={(value) => {
-                                        // Ensure value is a number, default to 0 if invalid
-                                        const newPrice =
-                                          value === null || isNaN(value)
-                                            ? 0
-                                            : value;
+                                // ${ materialSource == 'stock' ?
+                                // `{
+                                //   title: "Prix unitaire",
+                                //   dataIndex: "prix_unitaire",
+                                //   key: "prix_unitaire",
+                                //   render: (text, record, materialIndex) => (
+                                //     <InputNumber
+                                //       style={{ width: "100%" }}
+                                //       min={0}
+                                //       precision={3}
+                                //       value={record.prix_unitaire}
+                                //       onChange={(value) => {
+                                //         // Ensure value is a number, default to 0 if invalid
+                                //         const newPrice =
+                                //           value === null || isNaN(value)
+                                //             ? 0
+                                //             : value;
 
-                                        setBillableData((prevBillableData) => {
-                                          return prevBillableData.map(
-                                            (item, i) => {
-                                              if (i === index) {
-                                                // `index` is from the outer List's renderItem
-                                                const updatedMatiereUsages =
-                                                  item.matiere_usages.map(
-                                                    (mat, mi) => {
-                                                      if (
-                                                        mi === materialIndex
-                                                      ) {
-                                                        // `materialIndex` is from the column's render
-                                                        return {
-                                                          ...mat,
-                                                          prix_unitaire:
-                                                            newPrice,
-                                                        };
-                                                      }
-                                                      return mat;
-                                                    }
-                                                  );
-                                                // Recalculate item's total_ht if necessary, though it's mostly for display here
-                                                // and final totals are calculated in the summary.
-                                                return {
-                                                  ...item,
-                                                  matiere_usages:
-                                                    updatedMatiereUsages,
-                                                };
-                                              }
-                                              return item;
-                                            }
-                                          );
-                                        });
-                                      }}
-                                    />
-                                  ),
-                                },
-                                {
-                                  title: "Total",
-                                  key: "total",
-                                  render: (_, record) => (
-                                    <span>
-                                      {(
-                                        record.prix_unitaire *
-                                        record.quantite_utilisee
-                                      ).toFixed(3)}{" "}
-                                    </span>
-                                  ),
-                                },
+                                //         setBillableData((prevBillableData) => {
+                                //           return prevBillableData.map(
+                                //             (item, i) => {
+                                //               if (i === index) {
+                                //                 // `index` is from the outer List's renderItem
+                                //                 const updatedMatiereUsages =
+                                //                   item.matiere_usages.map(
+                                //                     (mat, mi) => {
+                                //                       if (
+                                //                         mi === materialIndex
+                                //                       ) {
+                                //                         // `materialIndex` is from the column's render
+                                //                         return {
+                                //                           ...mat,
+                                //                           prix_unitaire:
+                                //                             newPrice,
+                                //                         };
+                                //                       }
+                                //                       return mat;
+                                //                     }
+                                //                   );
+                                //                 // Recalculate item's total_ht if necessary, though it's mostly for display here
+                                //                 // and final totals are calculated in the summary.
+                                //                 return {
+                                //                   ...item,
+                                //                   matiere_usages:
+                                //                     updatedMatiereUsages,
+                                //                 };
+                                //               }
+                                //               return item;
+                                //             }
+                                //           );
+                                //         });
+                                //       }}
+                                //     />
+                                //   ),
+                                // },
+                                // {
+                                //   title: "Total",
+                                //   key: "total",
+                                //   render: (_, record) => (
+                                //     <span>
+                                //       {(
+                                //         record.prix_unitaire *
+                                //         record.quantite_utilisee
+                                //       ).toFixed(3)}{" "}
+                                //     </span>
+                                //   ),
+                                // },` : ``}
                               ]}
                             />
                           </div>
@@ -1892,6 +2381,7 @@ const fetchWorks = async () => {
                   <div style={{ textAlign: "right" }}>
                     <p>
                       <strong>Total HT:</strong>{" "}
+                      {console.log(billableData)}
                       {billableData
                         .reduce((sum, item) => {
                           const productTotal =
