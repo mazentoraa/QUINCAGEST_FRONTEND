@@ -42,6 +42,7 @@ export default function TresorerieTraite() {
     useEffect(() => {
         fetchTraites().then(res => {
             setTraitesData(res.data.stats);
+            console.log(res.data)
             setTraitesClients(res.data.traites.filter((traite)=> traite.type==='client'));
             setTraitesFournisseurs(res.data.traites.filter((traite)=> traite.type==='fournisseur'));
         })
