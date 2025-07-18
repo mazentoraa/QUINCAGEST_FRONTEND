@@ -59,6 +59,7 @@ const WorkManagementPage = () => {
   const [works, setWorks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [billModalTarget, setBillModalTarget] = useState('');
   const [editingWork, setEditingWork] = useState(null);
   const [form] = Form.useForm();
   const [created, setCreated] = useState(false);
@@ -500,6 +501,7 @@ const fetchWorks = async () => {
         .filter((m) => m.quantite && m.quantite > 0)
         .map((m) => ({
           matiere_id: m.materialId || m.matiere_id || m.material_id || m.id,
+          nom_matiere: m.nom_matiere,
           quantite_utilisee: m.quantite,
           source: materialSource,
         }))
@@ -654,16 +656,16 @@ const fetchWorks = async () => {
                 try {
                   // Get material details
                   const materialDetail =
-                    await RawMaterialService.getMaterialById(usage.matiere_id);
+                    await (usage.source=='client'?RawMaterialService:MaterialAchatService).getMaterialById(usage.material_id);
                   return {
                     ...usage,
                     nom_matiere:
                       materialDetail.nom_matiere || materialDetail.designation,
-                    type_matiere: materialDetail.type_matiere,
+                    type_matiere: materialDetail.type_matiere || materialDetail.categorie,
                     prix_unitaire: materialDetail.prix_unitaire || 0,
-                    thickness: materialDetail.thickness,
-                    length: materialDetail.length,
-                    width: materialDetail.width,
+                    thickness: materialDetail.thickness ||  materialDetail.epaisseur,
+                    length: materialDetail.length || materialDetail.longueur,
+                    width: materialDetail.width ||  materialDetail.largeur,
                   };
                 } catch (error) {
                   console.error(
@@ -674,8 +676,8 @@ const fetchWorks = async () => {
                 }
               })
             );
-
             enrichedWork.matiere_usages = enrichedMaterialUsages;
+
           }
 
           // Add billable data fields with default values
@@ -726,6 +728,7 @@ const fetchWorks = async () => {
   const sendDataToFacture = async () => {
     try {
       // Fallback: if billableData is empty, process selectedRowsData on the fly
+      console.log(billableData)
       let workingData = billableData;
       if (!billableData || billableData.length === 0) {
         if (!selectedRowsData || selectedRowsData.length === 0) {
@@ -741,7 +744,7 @@ const fetchWorks = async () => {
         workingData = await Promise.all(
           selectedRowsData.map(async (work) => {
             const enrichedWork = { ...work };
-
+            console.log(work)
             if (!work.client_id && work.client?.id) {
               enrichedWork.client_id = work.client.id;
             }
@@ -872,31 +875,40 @@ const fetchWorks = async () => {
               remise_pourcentage: 0,
             };
           }) || [];
-
-        return [...productLine, ...materialLines];
+          // return [...productLine, ...materialLines];
+          return [...productLine];
       });
-
       const finalMontantTva = finalMontantHt * (taxRate / 100);
       const finalMontantTtc = finalMontantHt + finalMontantTva;
-
+      // adjust products to match backend
+      let formattedProducts = billableData.map((item)=>({
+        ...item.produit,
+        produit: item.produit.id, 
+        quantite: item.billable.quantite_produit,
+        prix_unitaire: item.billable.prix_unitaire_produit,
+        remise_pourcentage: item.billable.remise_pourcentage,
+        remise: item.billable.remise,
+      }))
       const orderPayload = {
         client_id: selectedClientId,
         client: selectedClientId,
         date_commande: moment(billDate).format("YYYY-MM-DD"),
-        date_livraison_prevue: null,
-        statut: "pending",
+        date_livraison_prevue: billableData[0].billable.date_livraison, // All items have it
+        statut: billableData[0].billable.statut,
         notes: "",
         conditions_paiement: "",
-        mode_paiement: "cash",
-        tax_rate: taxRate,
-        timbre_fiscal: timbreFiscal,
+        mode_paiement:  billableData[0].billable.mode_paiement,
+        tax_rate: billableData[0].billable.taxe,
+        timbre_fiscal: billableData[0].billable.timbre_fiscal,
         montant_ht: finalMontantHt,
         montant_tva: finalMontantTva,
         montant_ttc: finalMontantTtc,
-        produits,
+        type_facture:'produit',
+        produits: formattedProducts,
+        billableData,
       };
 
-      console.log(" Payload prêt à envoyer :", orderPayload);
+      console.log("Payload prêt à envoyer :", orderPayload);
 
       const response = await cdsService.createOrder(orderPayload);
       message.success("Facture créée avec succès !");
@@ -925,9 +937,16 @@ const fetchWorks = async () => {
           workData.matiere_usages.map(async (usage) => {
             try {
               // Get material details
-              const materialDetail = await RawMaterialService.getMaterialById(
-                usage.matiere_id
-              );
+              let materialDetail;
+              if(usage.stock==='client'){
+                materialDetail = await RawMaterialService.getMaterialById(
+                  usage.material_id
+                );
+              }else{
+                materialDetail = await MaterialAchatService.getMaterialById(
+                  usage.material_id
+                );
+              }
               return { ...usage, ...materialDetail };
             } catch (error) {
               return usage; // Return original usage if fetching details fails
@@ -952,9 +971,9 @@ const fetchWorks = async () => {
       setSelectedRowKeys(keys);
 
       // If you need to fetch additional material details when selecting rows:
-      /*
+      
       const enrichedRows = await Promise.all(selectedRows.map(async (row) => {
-        if (row.matiere_usages && row.matiere_usages.some(m => !m.material_name)) {
+        if (row.matiere_usages && row.matiere_usages.some(m => !m.nom_matiere)) {
           // If any material is missing details, fetch them
           const workWithDetails = await fetchWorkWithMaterialDetails(row.id);
           return workWithDetails || row;
@@ -962,8 +981,7 @@ const fetchWorks = async () => {
         return row;
       }));
       setSelectedRowsData(enrichedRows);
-      */
-
+      
       // Otherwise just use the rows as they are
       setSelectedRowsData(selectedRows);
       console.log(
@@ -1107,7 +1125,6 @@ const fetchWorks = async () => {
 
     const invoiceItems = [];
     const lineItems = [];
-    console.log(billableData)
     billableData.forEach((item) => {
       const remisePourcentage = item.billable?.remise_pourcentage || 0;
       const remise = (remisePourcentage / 100) * (item.billable.quantite_produit * item.billable.prix_unitaire_produit);
@@ -1343,25 +1360,33 @@ const fetchWorks = async () => {
                 <Button
                   type="primary"
                   icon={<CheckOutlined />}
-                  onClick={handleProcessSelectedWorks}
+                  onClick={()=>{
+                      handleProcessSelectedWorks()
+                      setBillModalTarget('bon')
+                    }
+                  }
                   style={{ marginRight: 10 }}
-                >
+                  >
                   Traiter {selectedRowKeys.length} travail(s) sélectionné(s)
                 </Button>
                 <Button
                   type="primary"
                   icon={<CheckOutlined />}
                   onClick={async () => {
-                    const success = await sendDataToFacture();
-                    if (success) {
-                      setCreated(true);
+                    handleProcessSelectedWorks()
+                    setBillModalTarget('facture')
+                    // const success = await sendDataToFacture();
+                    // if (success) {
+                    //   setCreated(true);
 
-                      return true;
-                    }
+                    //   return true;
+                    // }
                   }}
                 >
                   Créer une facture
                 </Button>
+
+                
                 {created && (
                   <div
                     style={{
@@ -1880,7 +1905,7 @@ const fetchWorks = async () => {
 
         {/* Bill Modal */}
         <Modal
-          title="Préparation du bon de livraison"
+          title={`Préparation ${billModalTarget=='bon'? 'du bon de livraison' : 'de la facture'}`}
           open={isBillModalVisible}
           width={900}
           onCancel={() => setIsBillModalVisible(false)}
@@ -1890,9 +1915,10 @@ const fetchWorks = async () => {
             </Button>,
             <Button
               key="save"
+              type={billModalTarget=='facture'?'primary':''}
               icon={<SaveOutlined />}
               onClick={async () => {
-                const success = await saveBillableData(); // Await the promise
+                const success = await (billModalTarget=='bon'? saveBillableData():sendDataToFacture()); // Await the promise
                 if (success) {
                   message.success("Facture sauvegardée avec succès");
                   setIsBillModalVisible(false); // Close modal
@@ -1901,7 +1927,7 @@ const fetchWorks = async () => {
             >
               Sauvegarder
             </Button>,
-            <Button
+            (billModalTarget=='bon' && <Button
               key="print"
               type="primary"
               icon={<PrinterOutlined />}
@@ -1915,21 +1941,22 @@ const fetchWorks = async () => {
               }}
             >
               Imprimer bon
-            </Button>,
+            </Button>),
           ]}
-        >
+          >
           <div className="bill-form-container">
             {/* Invoice Number */}
-            <div style={{ textAlign: "right", marginBottom: "10px" }}>
-              <Text strong>BON N°: </Text>
-              <Text>{invoiceNumber}</Text>
-            </div>
-
+            {billModalTarget=='bon' && (
+              <div style={{ textAlign: "right", marginBottom: "10px" }}>
+                <Text strong>BON N°: </Text>
+                <Text>{invoiceNumber}</Text>
+              </div>
+            )}
             {/* Global bill settings */}
             <div className="client-info-header">
               <Row gutter={16}>
                 <Col span={8}>
-                  <Form.Item label="Date">
+                  <Form.Item label="Date Facture" layout="horizontal">
                     <DatePicker
                       style={{ width: "100%" }}
                       value={moment(billDate)}
@@ -1983,12 +2010,96 @@ const fetchWorks = async () => {
                       step={0.001}
                       onChange={(value) => {
                         setTimbreFiscal(value)                       
+                        const updatedItems = billableData.map((item) => ({
+                          ...item,
+                          billable: {
+                            ...item.billable,
+                            timbre_fiscal: value,
+                          },
+                        }));
+                        setBillableData(updatedItems);
                       }}
                     ></InputNumber>
                   </Form.Item>
                 </Col>
               </Row>
-
+              {billModalTarget=='facture' && (
+              <Row gutter={16}>
+                <Col span={8}>
+                  <Form.Item label="Date Livraison" layout="horizontal">
+                    <DatePicker
+                      style={{ width: "100%" }}
+                      onChange={(date) => {
+                        const formattedDate = date
+                          ? date.format("YYYY-MM-DD")
+                          : moment().format("YYYY-MM-DD");
+                        // Update all items with the new date
+                        const updatedItems = billableData.map((item) => ({
+                          ...item,
+                          billable: {
+                            ...item.billable,
+                            date_livraison: formattedDate,
+                          },
+                        }));
+                        console.log(updatedItems)
+                        setBillableData(updatedItems);
+                      }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={9}>
+                  <Form.Item
+                    layout="horizontal"
+                    label="Mode de Paiement"
+                    name="mode_paiement"
+                    >
+                    <Select
+                      onChange={(value) => {
+                        // Update all items with the new field
+                        const updatedItems = billableData.map((item) => ({
+                          ...item,
+                          billable: {
+                            ...item.billable,
+                            mode_paiement: value,
+                          },
+                        }));
+                        setBillableData(updatedItems);
+                      }}
+                    >
+                      <Option value="traite">Traite</Option>
+                      <Option value="cash">Comptant</Option>
+                      <Option value="cheque">Chèque</Option>
+                      <Option value="virement">Virement Bancaire</Option>
+                      <Option value="carte">Carte de crédit</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={6}>
+                  <Form.Item label="Statut">
+                    <Select
+                      style={{ width: "100%" }}
+                      onChange={(value) => {
+                        // Update all items with the new field
+                        const updatedItems = billableData.map((item) => ({
+                          ...item,
+                          billable: {
+                            ...item.billable,
+                            statut: value,
+                          },
+                        }));
+                        setBillableData(updatedItems);
+                      }}
+                    >
+                      <Option value="pending">En attente</Option>
+                      <Option value="processing">En cours</Option>
+                      <Option value="completed">Terminée</Option>
+                      <Option value="cancelled">Annulée</Option>
+                      <Option value="invoiced">Facturée</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+              )}
               <Divider style={{ margin: "10px 0" }} />
 
               {/* Client info from first item (assuming all items are for the same client) */}
@@ -2044,7 +2155,7 @@ const fetchWorks = async () => {
                         }}
                       >
                         <Col span={8}>
-                          <Form.Item label="Produit / Service">
+                          <Form.Item label="Produit">
                             <Input
                               value={
                                 item.produit_name +
@@ -2095,11 +2206,28 @@ const fetchWorks = async () => {
                               step={1}
                               value={item.billable.remise_pourcentage}
                               onChange={(value) => {
-                                const newData = [...billableData];
-                                newData[index].billable.remise_pourcentage =
-                                  value;
-                                setBillableData(newData);
-                              }}
+                                const updatedData = billableData.map((i) => {
+                                  if (i.id === item.id) {
+                                    const pourcentage = parseFloat(value) || 0;
+                                    const prix = parseFloat(item.billable?.prix_unitaire_produit) || 0;
+                                    const quantite = parseFloat(item.billable?.quantite_produit) || 0;
+
+                                    return {
+                                      ...i,
+                                      billable: {
+                                        ...i.billable,
+                                        remise_pourcentage: pourcentage,
+                                        remise: (prix * quantite * pourcentage) / 100,
+                                      },
+                                    };
+                                  }
+                                else{
+                                  return i;
+                                }})
+                                  console.log(updatedData)
+                                  setBillableData(updatedData)
+                                }
+                              }
                             />
                           </Form.Item>
                         </Col>
@@ -2111,7 +2239,7 @@ const fetchWorks = async () => {
                               step={0.001}
                               value={(
                                 (item.billable.prix_unitaire_produit || 0) *
-                                (item.billable.quantite_produit || 0)
+                                (item.billable.quantite_produit || 0) - (item.billable.remise || 0)
                               ).toFixed(3)}
                               disabled
                             />
@@ -2120,7 +2248,7 @@ const fetchWorks = async () => {
                       </Row>
 
                       {/* Materials section if available */}
-                      {item.matiere_usages &&
+                      {billModalTarget=='bon' && item.matiere_usages &&
                         item.matiere_usages.length > 0 && (
                           <div>
                             <Divider orientation="left">
@@ -2136,14 +2264,16 @@ const fetchWorks = async () => {
                                   title: "Matériau",
                                   dataIndex: "nom_matiere",
                                   key: "nom_matiere",
-                                  render: (text, record) => (
-                                    <Space>
-                                      <Tag color="blue">
-                                        {record.type_matiere}
-                                      </Tag>
-                                      <span>{text}</span>
-                                    </Space>
-                                  ),
+                                  render: (text, record) => {
+                                    console.log(record)
+                                    return (
+                                      <Space>
+                                        <Tag color={record.source==='stock'?'blue': 'green'}>
+                                          {text || record.type_matiere}
+                                        </Tag>
+                                      </Space>
+                                    )
+                                  },
                                 },
                                 {
                                   title: "Dimensions",
@@ -2251,6 +2381,7 @@ const fetchWorks = async () => {
                   <div style={{ textAlign: "right" }}>
                     <p>
                       <strong>Total HT:</strong>{" "}
+                      {console.log(billableData)}
                       {billableData
                         .reduce((sum, item) => {
                           const productTotal =

@@ -216,7 +216,7 @@ const netAPayer = totalHTVA + totalTVA + (orderData.timbre_fiscal || 0);
       </div>
           <div style="display: flex; flex-direction: row; justify-content: space-between; gap: 10px;">
       <div class="order-header">
-        <p><strong>Bon N°:</strong> <br> ${orderData.numero_commande || "N/A"} </p>
+        <p><strong> :</strong> <br> ${orderData.numero_commande || "N/A"} </p>
       </div>
       <div class="order-header">
         <p><strong>Date:</strong> ${ orderData.date_commande || "N/A"}</p>
