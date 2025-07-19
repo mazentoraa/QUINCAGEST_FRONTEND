@@ -145,6 +145,231 @@
         montant_tva_display: montantTva,
         montant_ttc_display: montantTtc,
       });
+
+    }
+
+    // Filter by price range
+    if (priceRange[0] !== null || priceRange[1] !== null) {
+      result = result.filter((order) => {
+        const montantTtc = Number(order.montant_ttc) || 0;
+        const minOk = priceRange[0] === null || montantTtc >= priceRange[0];
+        const maxOk = priceRange[1] === null || montantTtc <= priceRange[1];
+        return minOk && maxOk;
+      });
+    }
+
+    setFilteredOrders(result);
+  }, [
+    orders,
+    searchText,
+    clientNameFilter,
+    clientCodeFilter,
+    selectedClientFilter,
+    selectedStatus,
+    dateRange,
+    priceRange,
+  ]);
+
+  // Apply filters whenever filter criteria change
+  useEffect(() => {
+    filterOrders();
+  }, [filterOrders]);
+
+  const fetchAvailableBons = useCallback(async () => {
+    try {
+      const response = await InvoiceService.getAllInvoices();
+
+      const Bons = Array.isArray(response.results) ? response.results : [];
+
+      const mappedBons = Bons.map((bon) => ({
+        ...bon,
+        numero_facture: bon.numero_facture, // redundant but okay
+      }));
+
+      const filteredBons = selectedClientId
+        ? mappedBons.filter(
+            (bon) => bon.client_details?.id === selectedClientId
+          )
+        : [];
+
+      setAvailableBon(filteredBons);
+    } catch (err) {
+      console.error("Error fetching bons:", err);
+      message.error("Failed to fetch available bons: " + err.message);
+    }
+  }, [selectedClientId]);
+
+  useEffect(() => {
+    fetchAvailableBons();
+  }, [fetchAvailableBons]);
+
+  const fetchAvailableProducts = useCallback(async () => {
+    try {
+      const response = await ProductService.getProducts();
+      // Check if response has a results property (paginated response)
+      const products = response.results ? response.results : response;
+
+      // Map API products to the expected structure with prix_unitaire
+      const mappedProducts = products.map((product) => ({
+        ...product,
+        prix_unitaire: product.prix, // Map the prix field to prix_unitaire for compatibility
+      }));
+      setAvailableProducts(mappedProducts);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+      message.error("Failed to fetch available products: " + err.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+    fetchAvailableProducts();
+    fetchAvailableClients();
+    fetchAvailableBons();
+  }, [
+    fetchAvailableProducts,
+    fetchAvailableClients,
+    fetchAvailableBons,
+    props.nature
+  ]);
+
+  const handleEditOrder = async (order) => {
+    setLoading(true);
+    setIsCreating(false)
+    try {
+      const fullOrderDetails = await cdsService.getOrderById(order.id);
+      const bons_list = await Promise.all(
+        fullOrderDetails.bons.map(async(bonId) => {
+        return await InvoiceService.getInvoiceById(bonId)
+      }))
+      console.log("fullOrderDetails", fullOrderDetails)
+      setInvoiceType(fullOrderDetails.type_facture)
+      const formattedBonsList = [
+        // ...currentBonInDrawer,
+        ...bons_list.map(bon => ({
+          ...bon,
+          nom_client: bon.client_name,
+          bon_numero: bon.numero_facture,
+        }))
+      ]
+      console.log(formattedBonsList)
+      setCurrentBonInDrawer(formattedBonsList)
+      if (fullOrderDetails) {
+        setEditingOrder(fullOrderDetails);
+        // Map products from produits_details or produit_commande
+        let mappedProducts = [];
+        if(fullOrderDetails.type_facture==='produit'){
+          if (
+            fullOrderDetails.produit_commande &&
+            fullOrderDetails.produit_commande.length > 0
+          ) {
+            mappedProducts = fullOrderDetails.produit_commande.map((product) => ({
+              id: product.id,
+              produit_id: product.produit_id || product.produit,
+              bon_id: product.bonId,
+              bon_numero: product.bon_numero,
+              nom_produit: product.nom_produit,
+              quantite: Number(product.quantite) || 1,
+              prix_unitaire: Number(product.prix_unitaire) || 0,
+              remise_pourcentage: Number(product.remise_pourcentage) || 0,
+              prix_total: Number(product.prix_total) || 0,
+            }));
+            console.log(mappedProducts)
+          } else if (
+            fullOrderDetails.produits_details &&
+            fullOrderDetails.produits_details.length > 0
+          ) {
+            // Fallback to produits_details and calculate missing fields
+            const totalAmount = Number(fullOrderDetails.montant_ht) || 0;
+            const productsCount = fullOrderDetails.produits_details.length;
+
+            mappedProducts = fullOrderDetails.produits_details.map(
+              (product, index) => {
+                // Calculate quantity based on total amount and product price
+                const unitPrice = Number(product.prix) || 0;
+                let calculatedQuantity = 1;
+                let calculatedTotal = unitPrice;
+
+                // If we have total amount and this is the only product, calculate quantity
+                if (productsCount === 1 && totalAmount > 0 && unitPrice > 0) {
+                  calculatedQuantity = Math.round(totalAmount / unitPrice);
+                  calculatedTotal = totalAmount;
+                } else if (productsCount > 1) {
+                  // For multiple products, distribute the total amount proportionally
+                  const productPortion = totalAmount / productsCount;
+                  if (unitPrice > 0) {
+                    calculatedQuantity = Math.round(productPortion / unitPrice);
+                  }
+                  calculatedTotal = calculatedQuantity * unitPrice;
+                }
+
+                return {
+                  id: `${product.id}`,
+                  produit_id: product.id,
+                  nom_produit: product.nom_produit,
+                  quantite: calculatedQuantity,
+                  prix_unitaire: unitPrice,
+                  remise_pourcentage: 0, // No discount info available
+                  prix_total: calculatedTotal,
+                };
+              }
+            );
+          }
+
+        }else{ // Type facture == bon
+          mappedProducts = formattedBonsList.map((bon) => 
+              bon.items.map((product)=>({
+                id: product.produit_id,
+                produit_id: product.produit_id || product.produit,
+                bon_id: bon.id,
+                bon_numero: bon.bon_numero,
+                nom_produit: product.nom_produit,
+                quantite: Number(product.billable.quantite) || 1,
+                prix_unitaire: Number(product.billable.prix_unitaire) || 0,
+                remise_pourcentage: Number(product.remise_percent_produit) || 0,
+                remise: Number(product.remise_produit) || 0,
+                prix_total: product.billable.prix_unitaire*product.billable.quantite-product.remise_produit,
+              }))
+            );
+            console.log(mappedProducts)
+          }
+        setCurrentProductsInDrawer(mappedProducts);
+        // Extract client ID from various possible locations
+        const clientId =
+          fullOrderDetails.client_id ||
+          (typeof fullOrderDetails.client === "number"
+            ? fullOrderDetails.client
+            : null) ||
+          fullOrderDetails.client?.id ||
+          null;
+
+        // Set the selected client ID for the dropdown
+        setSelectedClientId(clientId);
+
+        // Populate form with all order data
+        drawerForm.setFieldsValue({
+          ...fullOrderDetails,
+
+          client_id: clientId,
+          date_commande: moment(fullOrderDetails.date_commande).format("YYYY-MM-DD"),
+          date_livraison_prevue: moment(fullOrderDetails.date_livraison_prevue).format("YYYY-MM-DD"),
+          mode_paiement: fullOrderDetails.mode_paiement || "cash",
+          statut: fullOrderDetails.statut || "pending",
+          tax_rate: fullOrderDetails.tax_rate || 0,
+          timbre_fiscal: fullOrderDetails.timbre_fiscal || 1, // Add timbre fiscal
+          conditions_paiement: fullOrderDetails.conditions_paiement || "",
+          notes: fullOrderDetails.notes || "",
+          // Set display fields for totals
+          montant_ht_display: fullOrderDetails.montant_ht || 0,
+          montant_tva_display: fullOrderDetails.montant_tva || 0,
+          montant_ttc_display: fullOrderDetails.montant_ttc || 0,
+
+        });
+
+        setIsDrawerVisible(true);
+      } else {
+        message.error("Order details not found.");
+
       if (editingOrder) {
         setEditingOrder((prev) => ({
           ...prev,
@@ -153,6 +378,7 @@
           montant_ttc: montantTtc,
           timbre_fiscal: timbreFiscal,
         }));
+
       }
     };
     const fetchAvailableClients = useCallback(async () => {
@@ -192,6 +418,62 @@
               order.numero_commande.toLowerCase().includes(searchLower)) ||
             (order.notes && order.notes.toLowerCase().includes(searchLower))
         );
+        const finalMontantHt = ProdMontantHt + BonMontant;
+        const finalMontantTva = finalMontantHt * (taxRate / 100);
+        const finalMontantTtc = finalMontantHt + finalMontantTva + timbreFiscal;
+        setInvoiceType(values.type_facture)
+        console.log("values: ", values)
+        const orderPayload = {
+          nature: props.nature, // Facture ou avoir
+          client_id: selectedClientId,
+          client: selectedClientId,
+          date_commande: toISO(values.date_commande),
+          date_livraison_prevue: toISO(values.date_livraison_prevue),
+          type_facture: values.type_facture || "",
+          statut: values.statut || "pending",
+          notes: values.notes || "",
+          conditions_paiement: values.conditions_paiement || "",
+          mode_paiement: values.mode_paiement || "cash",
+          tax_rate: taxRate,
+          timbre_fiscal: timbreFiscal,
+          montant_ht: finalMontantHt,
+          montant_tva: finalMontantTva,
+          montant_ttc: finalMontantTtc,
+          produits: [
+            // Manual products
+            ...newOrderProducts.map((p) => ({
+              produit: p.produit_id || p.produit,
+              quantite: p.quantite,
+              prix_unitaire: p.prix_unitaire,
+              remise_pourcentage: p.remise_pourcentage || 0,
+            })),
+            // Bon products
+            ...currentBonInDrawer.flatMap(bon => bon.items) 
+              .filter(
+                (item) =>
+                  item.billable?.quantite > 0 &&
+                  item.billable?.prix_unitaire > 0
+              )
+              .map((item) => ({
+                bon_id: item.bonId || item.bon_id,
+                bon_numero: item.bon_numero,
+                produit: item.produit_id || item.produit || item.id,
+                quantite: item.billable.quantite,
+                prix_unitaire: item.billable.prix_unitaire,
+              })),
+          ], 
+          bons: currentBonInDrawer.map((bon)=> bon.bon_id || bon.id),
+        };
+        
+        
+        console.log("newOrderBon ", newOrderBon)
+        console.log("currentBonInDrawer ", currentBonInDrawer)
+        console.log("orderPayload ", orderPayload)
+        const createdOrder = await cdsService.createOrder(orderPayload);
+        message.success(
+          `${props.nature == 'facture'? 'Facture' : 'Avoir'} ${
+            createdOrder.numero_commande || formatInvoiceNumber(createdOrder)
+          } créé${props.nature == 'facture'? 'e' : ''} avec succès!`
       }
       if (clientNameFilter) {
         const clientNameLower = clientNameFilter.toLowerCase();
@@ -226,7 +508,84 @@
       if (dateRange && dateRange[0] && dateRange[1]) {
         const startDate = dateRange[0].startOf("day").valueOf();
         const endDate = dateRange[1].endOf("day").valueOf();
+        // Destructure to safely separate product lists from the rest of the order data
+        const { produit_commande, produits, ...restOfEditingOrder } =
+          editingOrder;
+        setInvoiceType(values.type_facture)
+        console.log(currentProductsInDrawer)
+        //  Extract products from bons 
+        const bonsProducts = await Promise.all(
+          currentBonInDrawer.map(async (bon) => {
+            const fullBon = await InvoiceService.getInvoiceById(bon.bon_id || bon.id);
+            console.log(fullBon)
+            return fullBon.items.map(p => ({
+              bonId: fullBon.id,
+              bon_numero: fullBon.numero_facture,
+              produit: p.produit || p.produit_id,
+              produit_nom: p.nom_produit,
+              quantite: p.billable.quantite,
+              prix_unitaire: p.billable.prix_unitaire,
+            }));
+          })
+        );
+        const flatBonProducts = bonsProducts.flat();
+        const orderPayload = {
+          ...restOfEditingOrder, // Base with existing data (excluding old product lists)
+          ...values, // Override with form values (like notes, dates, status, client_id if changed)
+          date_commande: toISO(values.date_commande),
+          date_livraison_prevue: toISO(values.date_livraison_prevue),
+          tax_rate: taxRate,
+          type_facture: values.type_facture,
+          timbre_fiscal: timbreFiscal, // Add timbre fiscal
+          montant_ht: finalMontantHt,
+          montant_tva: finalMontantTva,
+          montant_ttc: finalMontantTtc,
+          // Use 'produit_commande' as the key for line items
+          produit_commande: values.type_facture === "produit"
+            ?
+            currentProductsInDrawer.map((p) => ({
+              id: p.id,
+              // bon_id: p.bon_id || p.bonId,
+              // bon_numero: p.bon_numero,
+              produit: p.produit_id || p.produit,
+              quantite: p.quantite,
+              prix_unitaire: p.prix_unitaire,
+              remise_pourcentage: p.remise_pourcentage || 0,
+            }))
+            :
+            // 2. Products from bons
+            flatBonProducts
+          ,
+          mode_paiement: values.mode_paiement,
+          bons: currentBonInDrawer.map((bon)=> bon.bon_id || bon.id)
+        };
+        console.log("currentProductsInDrawer", currentProductsInDrawer)
+        // If client_id is in `values` (meaning it could have been changed in the form for an existing order)
+        if (values.client_id) {
+          orderPayload.client_id = values.client_id;
+          orderPayload.client = values.client_id; // Ensure backend compatibility
+        }
+        delete orderPayload.montant_ht_display; // These are UI only
+        delete orderPayload.montant_tva_display;
+        delete orderPayload.montant_ttc_display;
+        // Remove other client fields if client_id is the source of truth and `editingOrder` had expanded client object
+        if (orderPayload.client && typeof orderPayload.client === "object") {
+          orderPayload.client = orderPayload.client_id;
+        }
 
+        const updatedOrder = await cdsService.updateOrder(
+          editingOrder.id,
+          orderPayload
+        );
+        console.log("orderPayload", orderPayload)
+        console.log("updatedOrder", updatedOrder)
+        setCheckedBons([])
+        // The setEditingOrder and recalculateTotalsInDrawer might be redundant here if closing drawer
+        // but good for consistency if drawer remained open.
+        // setEditingOrder(updatedOrder);
+        console.log(currentBonInDrawer)
+        recalculateTotalsInDrawer(updatedOrder.produit_commande, updatedOrder.tax_rate || taxRate, currentBonInDrawer);
+        message.success(`${props.nature == 'facture'? 'Facture mise' : 'Avoir mis'} à jour avec succès!`);
         result = result.filter((order) => {
           const orderDate = moment(order.date_commande).valueOf();
           return orderDate >= startDate && orderDate <= endDate;
@@ -623,6 +982,73 @@
       try {
         const values = await BonForm.validateFields();
         const selectedBonNumbers = values.numero_facture || [];
+      setCurrentBonInDrawer(updatedBonList);
+      setNewOrderBon(allNewItems);
+      console.log("updatedBonList", updatedBonList  )
+      console.log("allNewItems", allNewItems)
+      // Update products
+      const bonProducts = updatedBonList.flatMap((bon)=>bon.items.flat()) // Extract products from bon
+      // // If a product is already included, sum the quantity
+      // const productMap = new Map();
+      // bonProducts.forEach((product) => {
+      //   const existing = productMap.get(product.produit_id);
+      //   if (existing) {
+      //     existing.billable.quantite += product.billable.quantite;
+      //   } else {
+      //     // on le clone pour éviter les effets de bord
+      //     productMap.set(product.produit_id, { ...product });
+      //   }
+      // });
+      // const mergedProducts = Array.from(productMap.values());
+      // Format to fit
+      const formattedProducts = bonProducts.map((p)=>{
+        return{
+          ...p,
+          quantite: p.billable.quantite,
+          prix_unitaire: p.billable.prix_unitaire,
+          remise_pourcentage: p.remise_percent_produit,
+          remise: p.remise_produit,
+          prix_total: p.billable.quantite * p.billable.prix_unitaire - p.remise_produit
+        }
+      })
+      console.log(formattedProducts)
+      setCurrentProductsInDrawer(formattedProducts)
+      const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
+      recalculateTotalsInDrawer(newOrderProducts, currentTaxRate, updatedBonList);    
+      message.success(`${addedCount} bon(s) ajouté(s) avec succès !`);
+      setIsBonModalVisible(false);
+    } catch (err) {
+      console.error("Erreur lors de la validation des bons:", err);
+      message.error("Échec de l'ajout des bons");
+    }
+  };
+
+
+  const handleProductModalSave = async () => {
+    try {
+      const values = await productForm.validateFields();
+      const productDetails = availableProducts.find(
+        (p) => p.id === values.produit_id
+      );
+      if (!productDetails) {
+        message.error("Selected product not found.");
+        return;
+      }
+      if (editingProduct) {
+        // We're editing
+        const updatedProducts = currentProductsInDrawer.map((p) =>
+          p.id === editingProduct.id
+            ? {
+                ...p,
+                quantite: values.quantite,
+                prix_unitaire: values.prix_unitaire,
+                remise_pourcentage: values.remise_pourcentage || 0,
+                prix_total:
+                  values.quantite *
+                  values.prix_unitaire *
+                  (1 - (values.remise_pourcentage || 0) / 100),
+              }
+            : p
 
         if (!Array.isArray(selectedBonNumbers) || selectedBonNumbers.length === 0) {
           message.error("Aucun bon sélectionné");
@@ -630,6 +1056,7 @@
         }
         const selectedBons = availableBon.filter(bon =>
           selectedBonNumbers.includes(bon.numero_facture)
+
         );
         if (selectedBons.length === 0) {
           message.error("Aucun bon valide trouvé");
@@ -877,6 +1304,52 @@
         console.error("Erreur lors de la suppression du bon:", error);
         message.error("Échec de la suppression du bon");
       }
+      message.success("Product removed.");
+    } catch (error) {
+      console.error("Failed to remove product:", error);
+      message.error("Failed to remove product: " + error.message);
+    }
+  };
+
+  const handlePrintOrderPDF = async (orderRecord) => {
+    const hideLoading = message.loading("Génération du PDF en cours...", 0);
+
+    try {
+      // Fetch complete order details
+      const detailedOrder = await cdsService.getOrderById(orderRecord.id);
+      if (!detailedOrder) {
+        message.error(
+          "Données de commande non trouvées pour la génération du PDF."
+        );
+        hideLoading();
+        return;
+      }
+      console.log(detailedOrder)
+      setCurrentBonInDrawer(detailedOrder.bons)
+      setInvoiceType(detailedOrder.type_facture)
+      // Find the client in availableClients list
+      let clientDetailsForPdf = null;
+      const clientIdToFind =
+        detailedOrder.client_id ||
+        (typeof detailedOrder.client === "number"
+          ? detailedOrder.client
+          : null);
+
+      if (clientIdToFind) {
+        clientDetailsForPdf = availableClients.find(
+          (client) => client.id === clientIdToFind
+        );
+      }
+
+      // Filter produit_commande to only include products with quantite > 0
+      let filteredProduitCommande = [];
+      if (
+        detailedOrder.produit_commande &&
+        detailedOrder.produit_commande.length > 0
+      ) {
+        filteredProduitCommande = detailedOrder.produit_commande.filter(
+          (product) => Number(product.quantite) > 0
+        );
     };
     const handleRemoveProductFromDrawerOrder = async (
       produitIdToRemove // This could be tempId for new orders, or actual DB ID for existing
@@ -922,6 +1395,7 @@
       } catch (error) {
         console.error("Failed to remove product:", error);
         message.error("Failed to remove product: " + error.message);
+
       }
     };
     const handlePrintOrderPDF = async (orderRecord) => {
@@ -932,6 +1406,55 @@
           message.error(
             "Données de commande non trouvées pour la génération du PDF."
           );
+
+          const nomProduit =
+            orderProduct.nom_produit ||
+            productDetailsFromCatalog?.nom_produit ||
+            `Produit ID ${
+              orderProduct.produit_id || orderProduct.produit || "N/A"
+            }`;
+
+          const prixUnitaire =
+            orderProduct.prix_unitaire ??
+            productDetailsFromCatalog?.prix_unitaire ??
+            0;
+
+          const quantite = Number(orderProduct.quantite) || 0;
+          const remisePourcentage =
+            Number(orderProduct.remise_pourcentage) || 0;
+
+          const calculatedLineTotal =
+            quantite * prixUnitaire * (1 - remisePourcentage / 100);
+
+          const prixTotal =
+            typeof orderProduct.prix_total === "number"
+              ? orderProduct.prix_total
+              : calculatedLineTotal;
+          return {
+            id: orderProduct.id,
+            produit_id: orderProduct.produit_id || orderProduct.produit,
+            bon_id: orderProduct.bon_id,
+            bon_numero: orderProduct.bon_numero,
+            code_produit:
+              orderProduct.code_produit ||
+              productDetailsFromCatalog?.code_produit ||
+              "XX",
+            nom_produit: nomProduit,
+            quantite: quantite,
+            prix_unitaire: prixUnitaire,
+            remise_pourcentage: remisePourcentage,
+            prix_total: prixTotal,
+          };
+        });
+      } else if (
+        detailedOrder.produits_details &&
+        detailedOrder.produits_details.length > 0
+      ) {
+        console.warn(
+          "BonCommande.js: `produit_commande` is empty. Using `produits_details` as a fallback for PDF generation. Quantities will be assumed as 1 and discounts as 0."
+        );
+        mappedProduitCommande = detailedOrder.produits_details.map(
+
           hideLoading();
           return;
         }
@@ -962,6 +1485,7 @@
           mappedProduitCommande = filteredProduitCommande.map((orderProduct) => {
             console.log(detailedOrder)
             console.log(orderProduct)
+
             const productDetailsFromCatalog = availableProducts.find(
               (p) => p.id === (orderProduct.produit_id || orderProduct.produit)
             );
