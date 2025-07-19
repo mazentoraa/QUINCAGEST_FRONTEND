@@ -41,6 +41,7 @@ import {
     DollarCircleOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
+  UndoOutlined,
 } from "@ant-design/icons";
 
 
@@ -374,7 +375,35 @@ export default function Facture(props) {
     fetchAvailableBons,
     props.nature
   ]);
-
+  const handleCreateAvoir = async (order) => {
+    try{
+      const facture = await cdsService.getOrderById(order.id)
+      const avoir = {
+        ...facture, 
+        nature:'avoir',
+        produits: facture.produit_commande.map((produit)=> ({
+          bon_id: produit.bon_id,
+          bon_numero: produit.bon_numero,
+          prix_unitaire: produit.prix_unitaire,
+          produit: produit.produit,
+          quantite: produit.quantite,
+          remise_pourcentage: produit.remise_pourcentage
+        }))
+      }
+      console.log("Facture", facture)
+      console.log("Avoir", avoir)
+      try{
+        const response = await cdsService.createOrder(avoir)
+        console.log('Response', response)
+        message.success("Avoir créé avec succés")
+      }catch(error){
+        console.error('Error creating avoir from facture: ', error)
+        message.error("Erreur de création d'avoir à partir de la facture")
+      }
+    }catch(error){
+      console.error('Error getting facture details: ', error)
+    }
+  }
   const handleEditOrder = async (order) => {
     setLoading(true);
     setIsCreating(false)
@@ -1650,6 +1679,13 @@ const handleDeleteSelected = async () => {
       key: "actions",
       render: (_, record) => (
         <Space>
+          {props.nature == 'facture' && (<Tooltip title="Convertir en Avoir">
+            <Button
+              icon={<UndoOutlined />}
+              size="small"
+              onClick={() => handleCreateAvoir(record)}
+            />
+          </Tooltip>)}
           <Tooltip title="Modifier">
             <Button
               type="primary"
