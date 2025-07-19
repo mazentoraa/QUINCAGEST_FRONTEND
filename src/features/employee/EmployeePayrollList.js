@@ -32,6 +32,7 @@ const { Option } = Select;
 
 const EmployeePayrollList = () => {
   const [employees, setEmployees] = useState([]);
+  const [fichesPaie, setFichesPaie] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [year, setYear] = useState(moment().year());
@@ -57,34 +58,54 @@ const EmployeePayrollList = () => {
     }
   };
 
-  useEffect(() => {
-    loadEmployees();
-  }, []);
-
-  const getFichesForDate = (fiches) =>
-    (fiches || []).filter(fp => {
-      const d = moment(fp.date);
-      return d.month() + 1 === parseInt(month) && d.year() === parseInt(year);
-    });
-
-  // Fonction pour calculer le statut d'un employé selon ses fiches sur la période
-  const getStatusForEmployee = (emp) => {
-    const hasFiches = getFichesForDate(emp.fiches_paie).length > 0;
-    return hasFiches ? 'Générée' : 'En attente';
+  const loadFichesPaie = async () => {
+    try {
+      // Supposons que vous avez un endpoint pour récupérer toutes les fiches de paie
+      const response = await EmployeeService.getAllFichesPaie();
+      if (response.data && Array.isArray(response.data.results)) {
+        setFichesPaie(response.data.results);
+      } else {
+        setFichesPaie([]);
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des fiches de paie:", error);
+      setFichesPaie([]);
+    }
   };
 
-  // Filtrage avec recherche, date d'embauche, et statut dynamique
+  useEffect(() => {
+    loadEmployees();
+    loadFichesPaie();
+  }, []);
+
+  const getFichesForEmployee = (employeeId) => {
+    return fichesPaie.filter(fp => 
+      fp.employe === employeeId && 
+      fp.mois === parseInt(month) && 
+      fp.annee === parseInt(year)
+    );
+  };
+
+  // Fonction pour calculer le statut d'un employé selon ses fiches sur la période SÉLECTIONNÉE
+  const getStatusForEmployee = (emp) => {
+    const fichesForPeriod = getFichesForEmployee(emp.id);
+    return fichesForPeriod.length > 0 ? 'Générée' : 'En attente';
+  };
+
+  // Filtrage avec recherche et statut dynamique
   const filteredEmployees = Array.isArray(employees)
     ? employees.filter(emp => {
-        const matchesSearch = `${emp.nom} ${emp.prenom}`.toLowerCase().includes(search.toLowerCase());
+        const matchesSearch = `${emp.nom} ${emp.prenom || ''}`.toLowerCase().includes(search.toLowerCase());
 
+        // Vérifier si l'employé était déjà embauché pendant la période sélectionnée
         const embaucheDate = moment(emp.date_embauche);
-        const matchesDate = embaucheDate.month() + 1 === parseInt(month) && embaucheDate.year() === parseInt(year);
+        const selectedPeriod = moment().year(year).month(month - 1).endOf('month');
+        const wasHiredByThen = embaucheDate.isSameOrBefore(selectedPeriod);
 
         const status = getStatusForEmployee(emp);
         const matchesStatus = statusFilter === 'Tous' || status === statusFilter;
 
-        return matchesSearch && matchesDate && matchesStatus;
+        return matchesSearch && wasHiredByThen && matchesStatus;
       })
     : [];
 
@@ -92,12 +113,14 @@ const EmployeePayrollList = () => {
   const totalFiches = filteredEmployees.length;
   const fichesGenerees = filteredEmployees.filter(emp => getStatusForEmployee(emp) === 'Générée');
   const fichesEnAttente = totalFiches - fichesGenerees.length;
+  
   const totalNet = fichesGenerees.reduce((acc, emp) => {
-    const fiches = getFichesForDate(emp.fiches_paie);
+    const fiches = getFichesForEmployee(emp.id);
     return acc + fiches.reduce((s, f) => s + (f.net_a_payer || 0), 0);
   }, 0);
+  
   const totalDeductions = fichesGenerees.reduce((acc, emp) => {
-    const fiches = getFichesForDate(emp.fiches_paie);
+    const fiches = getFichesForEmployee(emp.id);
     return acc + fiches.reduce((s, f) => s + (f.deduction_totale || 0), 0);
   }, 0);
 
@@ -109,7 +132,7 @@ const EmployeePayrollList = () => {
     {
       title: 'Salaire de Base',
       dataIndex: 'salaire',
-      render: (val) => `${val?.toLocaleString()}`,
+      render: (val) => `${val?.toLocaleString()} `,
     },
     {
       title: "Date d'Embauche",
@@ -117,16 +140,30 @@ const EmployeePayrollList = () => {
       render: (val) => moment(val).format('DD/MM/YYYY'),
     },
     {
+  title: 'Avance',
+  key: 'avance',
+  render: (_, record) => {
+    const avancesAcceptees = record.avances?.filter(a => a.statut === 'Acceptée') || [];
+    if (avancesAcceptees.length > 0) {
+      const total = avancesAcceptees.reduce((sum, a) => sum + (a.montant || 0), 0);
+      return <Tag color="blue">Oui ({total.toLocaleString()})</Tag>;
+    }
+    return <Tag color="default">Non</Tag>;
+  }
+},
+
+    {
       title: 'Statut',
       key: 'statut',
       render: (_, record) => {
         const status = getStatusForEmployee(record);
+        const fichesCount = getFichesForEmployee(record.id).length;
         return (
           <Tag
             color={status === 'Générée' ? 'green' : 'orange'}
             icon={status === 'Générée' ? <FileDoneOutlined /> : <FileExclamationOutlined />}
           >
-            {status}
+            {status} {fichesCount > 0 && `(${fichesCount})`}
           </Tag>
         );
       },
@@ -193,6 +230,7 @@ const EmployeePayrollList = () => {
               precision={2}
               valueStyle={{ color: '#1890ff' }}
               prefix={<DollarOutlined />}
+          
             />
           </Card>
         </Col>
@@ -204,6 +242,7 @@ const EmployeePayrollList = () => {
               precision={2}
               valueStyle={{ color: '#cf1322' }}
               prefix={<MinusCircleOutlined />}
+            
             />
           </Card>
         </Col>
@@ -247,7 +286,6 @@ const EmployeePayrollList = () => {
           </Col>
           <Col xs={12} sm={8} md={4}>
             <Button
-              icon={<ReloadOutlined />}
               onClick={resetFilters}
               style={{ width: '100%' }}
             >

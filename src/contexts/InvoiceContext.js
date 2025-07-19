@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { getApiService } from '../services/apiServiceFactory';
+import InvoiceService from '../features/manifeste/services/InvoiceService';
 
 const { cdsService } = getApiService();
 
@@ -13,17 +14,19 @@ export const InvoiceProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Chargement initial des factures (à remplacer par votre API)
+  // Chargement initial des factures
   useEffect(() => {
     fetchInvoices();
   }, []);
 
-  // Fonction pour récupérer les factures
-  const fetchInvoices = async () => {
+  // Fonction pour récupérer les factures (non supprimées)
+  const fetchInvoices = async (nature = 'facture') => {
     setLoading(true);
     try {
-      const data = await cdsService.getOrders();
+      // Utilise le paramètre nature pour filtrer factures ou avoirs
+      const data = await cdsService.getOrders({ nature, deleted: false });
       setInvoices(data);
+      setError(null);
     } catch (err) {
       setError('Erreur lors du chargement des factures');
       console.error(err);
@@ -34,7 +37,6 @@ export const InvoiceProvider = ({ children }) => {
 
   // Fonction pour ajouter une nouvelle facture
   const addInvoice = (newInvoice) => {
-    // Générer un ID unique pour la nouvelle facture
     const id = Date.now().toString();
     const invoiceNumber = `FACT-${new Date().getFullYear()}-${invoices.length + 1}`.padEnd(3, '0');
     
@@ -48,10 +50,6 @@ export const InvoiceProvider = ({ children }) => {
     };
     
     setInvoices([...invoices, invoiceToAdd]);
-    
-    // Appel API pour sauvegarder (à implémenter)
-    // saveInvoiceToAPI(invoiceToAdd);
-    
     return invoiceToAdd;
   };
 
@@ -60,9 +58,6 @@ export const InvoiceProvider = ({ children }) => {
     setInvoices(invoices.map(invoice => 
       invoice.id === updatedInvoice.id ? updatedInvoice : invoice
     ));
-    
-    // Appel API pour mettre à jour (à implémenter)
-    // updateInvoiceInAPI(updatedInvoice);
   };
 
   // Fonction pour ajouter un paiement à une facture
@@ -77,11 +72,8 @@ export const InvoiceProvider = ({ children }) => {
     };
     
     const updatedPayments = [...invoice.payments, newPayment];
-    
-    // Calculer le total des paiements
     const totalPaid = updatedPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
     
-    // Déterminer le nouveau statut
     let newStatus = 'pending';
     if (totalPaid >= invoice.totalAmount) {
       newStatus = 'paid';
@@ -107,24 +99,64 @@ export const InvoiceProvider = ({ children }) => {
       }
       return invoice;
     });
-    
     setInvoices(updatedInvoices);
-    
-    // Appel API pour mettre à jour (à implémenter)
-    // updateInvoiceStatusInAPI(invoiceId, 'cancelled');
   };
 
-  // Fonction pour supprimer une facture
+  // Fonction pour supprimer une facture (soft delete)
   const deleteInvoice = async (invoiceId) => {
     setLoading(true);
     try {
-      await cdsService.deleteOrder(invoiceId);
-      setInvoices(prevInvoices => prevInvoices.filter(invoice => invoice.id !== invoiceId));
-      setLoading(false);
+      // Utilise la méthode de soft delete du backend
+      await InvoiceService.softDeleteInvoice(invoiceId);
+      
+      // Retire la facture de la liste des factures actives
+      setInvoices(prevInvoices => 
+        prevInvoices.filter(invoice => invoice.id !== invoiceId)
+      );
+      
+      setError(null);
     } catch (error) {
       setError('Erreur lors de la suppression de la facture');
-      setLoading(false);
+      console.error('Error in deleteInvoice:', error);
       throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fonction pour récupérer les factures supprimées
+  const fetchDeletedInvoices = async (nature = 'facture') => {
+    setLoading(true);
+    try {
+      const data = await InvoiceService.getDeletedInvoices(nature);
+      setError(null);
+      return data;
+    } catch (error) {
+      setError('Erreur lors du chargement des factures supprimées');
+      console.error('Error in fetchDeletedInvoices:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fonction pour restaurer une facture
+  const restoreInvoice = async (invoiceId) => {
+    setLoading(true);
+    try {
+      const restoredInvoice = await InvoiceService.restoreInvoice(invoiceId);
+      setError(null);
+      
+      // Optionnel: recharger la liste des factures actives
+      await fetchInvoices();
+      
+      return restoredInvoice;
+    } catch (error) {
+      setError('Erreur lors de la restauration de la facture');
+      console.error('Error in restoreInvoice:', error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -138,7 +170,9 @@ export const InvoiceProvider = ({ children }) => {
     updateInvoice,
     addPayment,
     cancelInvoice,
-    deleteInvoice
+    deleteInvoice,
+    fetchDeletedInvoices,
+    restoreInvoice
   };
 
   return (

@@ -220,77 +220,83 @@ const refreshFiches = useCallback(async () => {
   }
 }, [id]);
   // Fonction de calcul du résumé (optimisée)
-  const calculateResume = useCallback((values) => {
-    const {
-      salaire_base = 0,
-      prime_anciennete = 0,
-      indemnite_presence = 0,
-      indemnite_transport = 0,
-      prime_langue = 0,
-      jours_feries_payes = 0,
-      absences_non_remunerees = 0,
-      prime_ramadan = 0,
-      prime_teletravail = 0,
-      avantage_assurance = 0,
-    } = values;
+const calculateResume = useCallback((values) => {
+  const {
+    salaire_base = 0,
+    prime_anciennete = 0,
+    indemnite_presence = 0,
+    indemnite_transport = 0,
+    prime_langue = 0,
+    jours_feries_payes = 0,
+    absences_non_remunerees = 0,
+    prime_ramadan = 0,
+    prime_teletravail = 0,
+    avantage_assurance = 0,
+    avance = 0, // Nouveau champ pour l'avance
+  } = values;
 
-    // Calcul du salaire brut
-    const totalBrut = salaire_base + prime_anciennete + indemnite_presence + 
-                     indemnite_transport + prime_langue + jours_feries_payes + 
-                     prime_ramadan + prime_teletravail + avantage_assurance - absences_non_remunerees;
+  // 1. Calcul du salaire brut (l'avance est soustraite du salaire de base)
+  const salaireBaseAjuste = salaire_base - avance;
+  const totalBrut = salaireBaseAjuste + prime_anciennete + indemnite_presence +
+                    indemnite_transport + prime_langue + jours_feries_payes +
+                    prime_ramadan + prime_teletravail + avantage_assurance - absences_non_remunerees;
 
-    // Salaire imposable
-    const salaireImposable = totalBrut - avantage_assurance;
+  // 2. Base CNSS = Salaire Brut - Avantages en Nature
+  const plafondCNSS = 6000; // Plafond CNSS tunisien
+  const baseCNSS = Math.min(totalBrut - avantage_assurance, plafondCNSS);
 
-    // CNSS ()
-    const plafondCNSS = 6000;
-    const baseCNSS = Math.min(totalBrut, plafondCNSS);
-    const cnssSalarie = baseCNSS * 0.0918; // 9.18%
+  // 3. Cotisations CNSS
+  const cnssSalarie = baseCNSS * 0.0918; // 9.18%
+  const cnssPatronal = baseCNSS * 0.1607; // 16.07%
+  const accidentTravail = baseCNSS * 0.005; // 0.5%
 
-    // IRPP (barème progressif marocain)
-    const baseIRPP = Math.max(0, salaireImposable - cnssSalarie);
-    let irpp = 0;
-    if (baseIRPP > 30000) {
-      irpp = (baseIRPP - 30000) * 0.30 + 2500;
-    } else if (baseIRPP > 20000) {
-      irpp = (baseIRPP - 20000) * 0.20 + 1500;
-    } else if (baseIRPP > 5000) {
-      irpp = (baseIRPP - 5000) * 0.10 + 500;
-    } else if (baseIRPP > 2500) {
-      irpp = (baseIRPP - 2500) * 0.10;
-    }
+  // 4. Salaire imposable = Salaire Brut - Cotisations Sociales Salarié - Avantages en Nature
+  const salaireImposable = totalBrut - cnssSalarie - avantage_assurance;
 
-    // CSS (Contribution Sociale de Solidarité) - 1% sur la tranche > 30000
-    const css = salaireImposable > 30000 ? (salaireImposable - 30000) * 0.01 : 0;
+  // 5. Calcul de l'IRPP annuel puis mensuel
+  const salaireAnnuel = salaireImposable * 12;
+  let irppAnnuel = 0;
+  
+  // Barème IRPP tunisien progressif annuel
+  if (salaireAnnuel > 30000) {
+    irppAnnuel = (salaireAnnuel - 30000) * 0.35 + 7500;
+  } else if (salaireAnnuel > 20000) {
+    irppAnnuel = (salaireAnnuel - 20000) * 0.25 + 2500;
+  } else if (salaireAnnuel > 5000) {
+    irppAnnuel = (salaireAnnuel - 5000) * 0.15;
+  }
+  
+  const irpp = irppAnnuel / 12; // IRPP mensuel
 
-    // Total cotisations salariales
-    const totalCotisations = cnssSalarie + irpp + css;
+  // 6. CSS = Salaire Imposable × 0.5%
+  const css = salaireImposable * 0.005;
 
-    // Charges patronales
-    const cnssPatronal = baseCNSS * 0.1607; // 16.07%
-    const accidentTravail = totalBrut * 0.005; // 0.5%
-    const chargesPatronales = cnssPatronal + accidentTravail;
+  // 7. Total cotisations salariales
+  const totalCotisations = cnssSalarie + irpp + css;
 
-    // Salaire net
-    const salaireNet = totalBrut - totalCotisations;
+  // 8. Charges patronales
+  const chargesPatronales = cnssPatronal + accidentTravail;
 
-    return {
-      totalBrut: Math.round(totalBrut * 100) / 100,
-      salaireImposable: Math.round(salaireImposable * 100) / 100,
-      cnssSalarie: Math.round(cnssSalarie * 100) / 100,
-      irpp: Math.round(irpp * 100) / 100,
-      css: Math.round(css * 100) / 100,
-      totalCotisations: Math.round(totalCotisations * 100) / 100,
-      cnssPatronal: Math.round(cnssPatronal * 100) / 100,
-      accidentTravail: Math.round(accidentTravail * 100) / 100,
-      chargesPatronales: Math.round(chargesPatronales * 100) / 100,
-      salaireNet: Math.round(salaireNet * 100) / 100,
-    };
-  }, []);
+  // 9. Salaire net = Salaire Brut - Cotisations Sociales - IRPP - CSS
+  const salaireNet = totalBrut - totalCotisations;
 
-  // Gestionnaires d'événements
-
-
+  return {
+    salaireBaseAjuste: Math.round(salaireBaseAjuste * 100) / 100, // Nouveau: salaire de base après déduction de l'avance
+    avance: Math.round(avance * 100) / 100, // Nouveau: montant de l'avance
+    totalBrut: Math.round(totalBrut * 100) / 100,
+    salaireImposable: Math.round(salaireImposable * 100) / 100,
+    cnssSalarie: Math.round(cnssSalarie * 100) / 100,
+    irpp: Math.round(irpp * 100) / 100,
+    css: Math.round(css * 100) / 100,
+    totalCotisations: Math.round(totalCotisations * 100) / 100,
+    cnssPatronal: Math.round(cnssPatronal * 100) / 100,
+    accidentTravail: Math.round(accidentTravail * 100) / 100,
+    chargesPatronales: Math.round(chargesPatronales * 100) / 100,
+    salaireNet: Math.round(salaireNet * 100) / 100,
+    salaireAnnuel: Math.round(salaireAnnuel * 100) / 100,
+    irppAnnuel: Math.round(irppAnnuel * 100) / 100,
+  };
+}, []);
   const handleEdit = useCallback(async (fiche) => {
     try {
       setLoading(true);
@@ -534,10 +540,10 @@ const onFinish = useCallback(async (values) => {
     },
     {
       title: 'Cotisations',
-      dataIndex: 'cotisations',
+      dataIndex: 'deduction_totale',
       align: 'right',
       render: (val) => (
-        <div style={{ fontWeight: 600, color: '#fa541c' }}>
+        <div style={{ fontWeight: 600 }}>
           {val?.toLocaleString('fr-MA')} 
         </div>
       ),
@@ -547,11 +553,42 @@ const onFinish = useCallback(async (values) => {
       dataIndex: 'net_a_payer',
       align: 'right',
       render: (val) => (
-        <div style={{ fontWeight: 600, color: '#52c41a' }}>
+        <div style={{ fontWeight: 600 }}>
           {val?.toLocaleString('fr-MA')} 
         </div>
       ),
     },
+    {
+    title: 'Avance',
+    key: 'avance',
+    align: 'center',
+    render: (_, record) => {
+      // Utiliser les avances de l'employé global ou essayer de les récupérer
+      const avancesAcceptees = employee?.avances?.filter(a => 
+        a.statut === 'Acceptée'
+      ) || [];
+      
+      if (avancesAcceptees.length > 0) {
+        const total = avancesAcceptees.reduce((sum, a) => sum + (a.montant || 0), 0);
+        return (
+          <div>
+            <Tag color="warning" style={{ marginBottom: 4 }}>
+              Oui
+            </Tag>
+            <div style={{ 
+              fontSize: 12, 
+              fontWeight: 600, 
+              color: '#fa8c16' 
+            }}>
+              {total.toLocaleString('fr-MA')} DT
+            </div>
+          </div>
+        );
+      }
+      
+      return <Tag color="default">Non</Tag>;
+    }
+  },
     {
       title: 'Statut',
       dataIndex: 'statut',

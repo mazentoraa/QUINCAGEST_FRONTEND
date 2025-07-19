@@ -113,10 +113,10 @@ class FacturePdfApiService {
           const remise = item.remise_pourcentage || 0;
           const fodecRate = orderData.fodec_rate || 1; // 1% par défaut
           const tvaRate = orderData.tax_rate || 0;
-          const totalHT = qte * puht;
+          const totalHT = qte * puht * (1 - remise /100 );
           const remiseVal = totalHT * (remise / 100);
           const fodecVal = totalHT * (fodecRate / 100);
-          const totalHTVA = totalHT - remiseVal + fodecVal;
+          const totalHTVA = totalHT + fodecVal;
           const tvaVal = totalHTVA * (tvaRate / 100);
           const totalTTC = totalHTVA + tvaVal;
           itemsHTML += `
@@ -166,10 +166,10 @@ class FacturePdfApiService {
         const remise = item.remise_pourcentage || 0;
         const fodecRate = orderData.fodec_rate || 1; // 1% par défaut
         const tvaRate = orderData.tax_rate || 0;
-        const totalHT = qte * puht;
+        const totalHT = qte * puht * (1 - remise /100);
         const remiseVal = totalHT * (remise / 100);
         const fodecVal = totalHT * (fodecRate / 100);
-        const totalHTVA = totalHT - remiseVal + fodecVal;
+        const totalHTVA = totalHT + fodecVal;
         const tvaVal = totalHTVA * (tvaRate / 100);
         const totalTTC = totalHTVA + tvaVal;
         return `

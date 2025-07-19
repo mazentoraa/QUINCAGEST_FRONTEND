@@ -1,8 +1,9 @@
 import axios from 'axios';
 import ClientModel from '../models/ClientModel';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
+const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api").replace(/\/+$/, ''); // supprime les / en fin
 const API_URL = `${API_BASE_URL}/clients`;
+
 const ClientService = {
   get_all_clients: async () => {
     try {
@@ -67,16 +68,23 @@ const ClientService = {
   },
 
   search_clients: async (query) => {
-    try {
-      const response = await axios.get(`${API_URL}/search/`, {
-        params: { query }
-      });
-      return response.data.map(client => new ClientModel(client));
-    } catch (error) {
-      console.error('Error searching clients:', error);
-      throw error;
+  try {
+    // Ne pas envoyer la requête si la query est vide ou ne contient que des espaces
+    if (!query || query.trim() === '') {
+      return [];
     }
+
+    const response = await axios.get(`${API_URL}/search/`, {
+      params: { query }
+    });
+
+    return response.data.map(client => new ClientModel(client));
+  } catch (error) {
+    console.error('Error searching clients:', error);
+    throw error;
   }
+}
+
 };
 
 export default ClientService;

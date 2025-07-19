@@ -127,27 +127,90 @@ class InvoiceService {
   }
 
   /**
+   * Get all deleted invoices (corbeille)
+   * @param {string} nature - 'facture' or 'avoir' 
+   * @returns {Promise<Array>} - List of deleted invoices
+   */
+  async getDeletedInvoices(nature = 'facture') {
+    try {
+      const response = await axios.get(`${API_URL}/cds/?deleted=true&nature=${nature}`);
+      console.log('Deleted invoices response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching deleted invoices:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Restore a deleted invoice
+   * @param {number} invoiceId - The invoice ID to restore
+   * @returns {Promise<Object>} - The restored invoice
+   */
+  async restoreInvoice(invoiceId) {
+    try {
+      // CORRECTION: Utilisation du bon endpoint
+      const response = await axios.post(`${API_URL}/cds/${invoiceId}/restore/`);
+      console.log('Invoice restored:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Error restoring invoice ${invoiceId}:`, error);
+      
+      // Ajout de logs de débogage pour mieux comprendre l'erreur
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        console.error('Response headers:', error.response.headers);
+      } else if (error.request) {
+        console.error('Request was made but no response received:', error.request);
+      } else {
+        console.error('Error setting up request:', error.message);
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Soft delete an invoice (move to corbeille)
+   * @param {number} invoiceId - The invoice ID to soft delete
+   * @returns {Promise<Object>} - Success message
+   */
+  async softDeleteInvoice(invoiceId) {
+    try {
+      const response = await axios.post(`${API_URL}/cds/${invoiceId}/delete_logically/`);
+      console.log('Invoice moved to corbeille:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Error moving invoice ${invoiceId} to corbeille:`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Generate a unique invoice number
    * @returns {string} - A unique invoice number
    */
   generateInvoiceNumber(existingData = []) {
     const currentYear = new Date().getFullYear();
     console.log("Existing data:", existingData);
-      const current = existingData.filter(invoice => {
-     return invoice.numero_bon && invoice.numero_bon.startsWith(`BL-${currentYear}-`);
-      });
+    const current = existingData.filter(invoice => {
+      return invoice.numero_bon && invoice.numero_bon.startsWith(`BL-${currentYear}-`);
+    });
+    
     let maxNumber = 0;
     existingData.forEach(invoice => {
-    const parts = invoice.numero_facture.split('-');
-    if (parts.length === 3) {
-      const num = parseInt(parts[2]);
-      if (!isNaN(num) && num > maxNumber) {
-        maxNumber = num;
+      const parts = invoice.numero_facture.split('-');
+      if (parts.length === 3) {
+        const num = parseInt(parts[2]);
+        if (!isNaN(num) && num > maxNumber) {
+          maxNumber = num;
+        }
       }
-    }
-  });
-  const newNumber = maxNumber + 1;
-    return`BL-${currentYear}-${String(newNumber).padStart(5, '0')}`;
+    });
+    
+    const newNumber = maxNumber + 1;
+    return `BL-${currentYear}-${String(newNumber).padStart(5, '0')}`;
   }
 }
 
