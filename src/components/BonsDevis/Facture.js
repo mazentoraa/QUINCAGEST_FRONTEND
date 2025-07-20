@@ -98,7 +98,7 @@ const translatePaymentMethod = (method) => {
 };
 
 
-// This is used for facture and avoir (props contains a nature field which precises facture or avoir)
+// This is used for facture, avoir-facture and avoir (props contains a nature field which precises facture or avoir-facture or avoir)
 export default function Facture(props) {
   const [selectedBonDetails, setSelectedBonDetails] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -210,7 +210,7 @@ export default function Facture(props) {
     setLoading(true);
     setError(null);
     try {
-      // Choose if facture or avoir, each one calls a function
+      // Choose if facture or avoir-facture or avoir, each one calls a function
       const data = await cdsService.getOrders(props.nature)
       console.log(data)
       setOrders(data);
@@ -375,12 +375,13 @@ export default function Facture(props) {
     fetchAvailableBons,
     props.nature
   ]);
-  const handleCreateAvoir = async (order) => {
+  const handleCreateAvoirFacture = async (order) => {
     try{
       const facture = await cdsService.getOrderById(order.id)
+      // To match backend expectations²
       const avoir = {
         ...facture, 
-        nature:'avoir',
+        nature:'avoir-facture',
         produits: facture.produit_commande.map((produit)=> ({
           bon_id: produit.bon_id,
           bon_numero: produit.bon_numero,
@@ -624,7 +625,7 @@ export default function Facture(props) {
         setInvoiceType(values.type_facture)
         console.log("values: ", values)
         const orderPayload = {
-          nature: props.nature, // Facture ou avoir
+          nature: props.nature, // Facture ou avoir-facture ou avoir
           client_id: selectedClientId,
           client: selectedClientId,
           date_commande: toISO(values.date_commande),
@@ -1683,7 +1684,7 @@ const handleDeleteSelected = async () => {
             <Button
               icon={<UndoOutlined />}
               size="small"
-              onClick={() => handleCreateAvoir(record)}
+              onClick={() => handleCreateAvoirFacture(record)}
             />
           </Tooltip>)}
           <Tooltip title="Modifier">

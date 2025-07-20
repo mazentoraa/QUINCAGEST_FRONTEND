@@ -8,7 +8,7 @@ class CdsService {
   async getOrders(nature=null) {
     try {
       const response = await axios.get(`${API_URL}/`,{
-        params: nature ? { nature } : {}, // only add param if nature (facture ou avoir) is passed
+        params: nature ? { nature } : {}, // only add param if nature (facture ou avoir-facture ou avoir) is passed
       });
       // Handle both array and paginated response formats
       if (response.data && response.data.results !== undefined) {

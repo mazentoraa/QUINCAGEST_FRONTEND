@@ -108,7 +108,7 @@ function SideMenu() {
           <Menu.Item key="/reglements/factures" icon={<FileTextOutlined />} onClick={() => handleMenuClick('/reglements/factures')}>
             Factures
           </Menu.Item>
-          <Menu.Item key="/reglements/avoir" icon={<UndoOutlined />} onClick={() => handleMenuClick('/reglements/avoir')}>
+          <Menu.Item key="/reglements/avoir-facture" icon={<UndoOutlined />} onClick={() => handleMenuClick('/reglements/avoir-facture')}>
             Avoirs
           </Menu.Item>
           <Menu.Item key="/reglements/traites" icon={<BankOutlined />} onClick={() => handleMenuClick('/reglements/traites')}>

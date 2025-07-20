@@ -170,6 +170,10 @@ function App() {
                                     element={<Facture nature={'facture'}/>}
                                   />
                                   <Route
+                                    path="/reglements/avoir-facture"
+                                    element={<Facture nature={'avoir-facture'} />}
+                                  />
+                                  <Route
                                     path="/reglements/avoir"
                                     element={<Facture nature={'avoir'} />}
                                   />

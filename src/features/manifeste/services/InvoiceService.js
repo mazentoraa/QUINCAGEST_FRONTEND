@@ -128,7 +128,7 @@ class InvoiceService {
 
   /**
    * Get all deleted invoices (corbeille)
-   * @param {string} nature - 'facture' or 'avoir' 
+   * @param {string} nature - 'facture' or 'avoir-facture' or avoi 
    * @returns {Promise<Array>} - List of deleted invoices
    */
   async getDeletedInvoices(nature = 'facture') {
