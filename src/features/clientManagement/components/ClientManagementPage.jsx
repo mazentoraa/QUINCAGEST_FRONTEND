@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Typography, Button, message, Modal, Divider } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Layout, Typography, Button, message, Modal } from 'antd';
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+
 import ClientTable from './ClientTable';
 import ClientForm from './ClientForm';
 import ClientService from '../services/ClientService';
@@ -16,6 +18,8 @@ const ClientManagementPage = () => {
   const [current_client, set_current_client] = useState(null);
   const [is_editing, set_is_editing] = useState(false);
 
+  const navigate = useNavigate(); // ✅ React Router navigation
+
   useEffect(() => {
     fetch_clients();
   }, []);
@@ -24,12 +28,11 @@ const ClientManagementPage = () => {
     set_loading(true);
     try {
       const data = await ClientService.get_all_clients();
-      // Ensure we always set an array, even if empty
       set_clients(Array.isArray(data) ? data : []);
     } catch (error) {
       message.error('Erreur lors du chargement des clients');
       console.error(error);
-      set_clients([]); // Set empty array on error
+      set_clients([]);
     } finally {
       set_loading(false);
     }
@@ -51,7 +54,7 @@ const ClientManagementPage = () => {
     set_loading(true);
     try {
       await ClientService.delete_client(client_id);
-      message.success('Client supprimé avec succès');
+      message.success('Client déplacé vers la corbeille avec succès');
       fetch_clients();
     } catch (error) {
       message.error('Erreur lors de la suppression du client');
@@ -74,7 +77,7 @@ const ClientManagementPage = () => {
       set_form_visible(false);
       fetch_clients();
     } catch (error) {
-      message.error('Erreur lors de l\'enregistrement du client');
+      message.error("Erreur lors de l'enregistrement du client");
       console.error(error);
     } finally {
       set_loading(false);
@@ -85,18 +88,31 @@ const ClientManagementPage = () => {
     set_form_visible(false);
   };
 
+  const handle_go_to_trash = () => {
+    navigate('/clients/trash'); // ✅ Navigation SPA
+  };
+
   return (
     <Content style={{ padding: '24px', minHeight: 'calc(100vh - 64px)' }}>
       <div style={{ background: '#fff', padding: '24px', borderRadius: '2px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <Title level={2}>Gestion des Clients</Title>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
-            onClick={handle_add_client}
-          >
-            Ajouter un client
-          </Button>
+          <div>
+            <Button 
+              icon={<DeleteOutlined />}
+              onClick={handle_go_to_trash}
+              style={{ marginRight: '8px' }}
+            >
+              Corbeille
+            </Button>
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />} 
+              onClick={handle_add_client}
+            >
+              Ajouter un client
+            </Button>
+          </div>
         </div>
         
         <ClientTable

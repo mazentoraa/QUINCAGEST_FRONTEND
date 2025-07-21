@@ -199,10 +199,11 @@ class DevisPdfService {
   static generateDevisHTML(data) {
     const tableRows = (data.produit_devis || [])
       .map((item) => {
-        const totalPHT = item.quantite * item.prix_unitaire;
+        
         const fodec = totalPHT * 0.01; // 1%
         const remise = item.remise_pourcentage || 0;
-        const totalPHTVA = totalPHT - (totalPHT * remise / 100) + fodec;
+        const totalPHT = item.quantite * item.prix_unitaire * (1 - remise / 100);
+        const totalPHTVA = totalPHT + fodec;
         const tva = item.tax_rate || data.tax_rate || 0;
         const totalPTTC = totalPHTVA + (totalPHTVA * tva / 100);
 

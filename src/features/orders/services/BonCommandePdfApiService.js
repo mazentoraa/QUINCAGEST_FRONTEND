@@ -94,10 +94,11 @@ class BonCommandePdfApiService {
     const itemsHTML = items
       .map(
         (item) => {
-          const totalPHT = (item.quantite || 0) * (item.prix_unitaire || 0);
+          
           const fodec = totalPHT * 0.01; // 1%
           const remise = item.remise_pourcentage || 0;
-          const totalPHTVA = totalPHT - (totalPHT * remise / 100) + fodec;
+          const totalPHT = (item.quantite || 0) * (item.prix_unitaire || 0) * (1 - remise / 100);
+          const totalPHTVA = totalPHT + fodec;
           const tva = orderData.tax_rate || 20;
           const totalPTTC = totalPHTVA + (totalPHTVA * tva / 100);
 

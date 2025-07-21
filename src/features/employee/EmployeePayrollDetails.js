@@ -38,6 +38,8 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import moment from 'moment';
+import { Progress } from 'antd';
+
 import EmployeeService from './EmployeeService';
 
 const { Title, Text } = Typography;
@@ -232,12 +234,11 @@ const calculateResume = useCallback((values) => {
     prime_ramadan = 0,
     prime_teletravail = 0,
     avantage_assurance = 0,
-    avance = 0, // Nouveau champ pour l'avance
+    avance = 0, // Montant de l'avance à déduire ce mois-ci
   } = values;
 
-  // 1. Calcul du salaire brut (l'avance est soustraite du salaire de base)
-  const salaireBaseAjuste = salaire_base - avance;
-  const totalBrut = salaireBaseAjuste + prime_anciennete + indemnite_presence +
+  // 1. Calcul du salaire brut (AVANT déduction de l'avance)
+  const totalBrut = salaire_base + prime_anciennete + indemnite_presence +
                     indemnite_transport + prime_langue + jours_feries_payes +
                     prime_ramadan + prime_teletravail + avantage_assurance - absences_non_remunerees;
 
@@ -271,18 +272,22 @@ const calculateResume = useCallback((values) => {
   // 6. CSS = Salaire Imposable × 0.5%
   const css = salaireImposable * 0.005;
 
-  // 7. Total cotisations salariales
+  // 7. Total cotisations salariales (sans l'avance)
   const totalCotisations = cnssSalarie + irpp + css;
 
   // 8. Charges patronales
   const chargesPatronales = cnssPatronal + accidentTravail;
 
-  // 9. Salaire net = Salaire Brut - Cotisations Sociales - IRPP - CSS
-  const salaireNet = totalBrut - totalCotisations;
+  // 9. Salaire net AVANT déduction de l'avance
+  const salaireNetAvantAvance = totalBrut - totalCotisations;
+  
+  // 10. Salaire net final = Salaire net - Avance
+  const salaireNet = salaireNetAvantAvance - avance;
+
+  // 11. Total des déductions = cotisations + avance
+  const totalDeductions = totalCotisations + avance;
 
   return {
-    salaireBaseAjuste: Math.round(salaireBaseAjuste * 100) / 100, // Nouveau: salaire de base après déduction de l'avance
-    avance: Math.round(avance * 100) / 100, // Nouveau: montant de l'avance
     totalBrut: Math.round(totalBrut * 100) / 100,
     salaireImposable: Math.round(salaireImposable * 100) / 100,
     cnssSalarie: Math.round(cnssSalarie * 100) / 100,
@@ -292,57 +297,92 @@ const calculateResume = useCallback((values) => {
     cnssPatronal: Math.round(cnssPatronal * 100) / 100,
     accidentTravail: Math.round(accidentTravail * 100) / 100,
     chargesPatronales: Math.round(chargesPatronales * 100) / 100,
-    salaireNet: Math.round(salaireNet * 100) / 100,
+    salaireNetAvantAvance: Math.round(salaireNetAvantAvance * 100) / 100, 
+    avance: Math.round(avance * 100) / 100, 
+    salaireNet: Math.round(salaireNet * 100) / 100, 
+    totalDeductions: Math.round(totalDeductions * 100) / 100, // NOUVEAU
     salaireAnnuel: Math.round(salaireAnnuel * 100) / 100,
     irppAnnuel: Math.round(irppAnnuel * 100) / 100,
   };
 }, []);
-  const handleEdit = useCallback(async (fiche) => {
-    try {
-      setLoading(true);
-      const response = await EmployeeService.getFichePaieById(fiche.id);
-      const ficheDetails = response.data || response;
-      
-      form.setFieldsValue({
-        mois: ficheDetails.mois,
-        annee: ficheDetails.annee,
-        salaire_base: ficheDetails.salaire_base,
-        prime_anciennete: ficheDetails.prime_anciennete,
-        indemnite_presence: ficheDetails.indemnite_presence,
-        indemnite_transport: ficheDetails.indemnite_transport,
-        prime_langue: ficheDetails.prime_langue,
-        jours_feries_payes: ficheDetails.jours_feries_payes,
-        absences_non_remunerees: ficheDetails.absences_non_remunerees,
-        prime_ramadan: ficheDetails.prime_ramadan,
-        prime_teletravail: ficheDetails.prime_teletravail,
-        avantage_assurance: ficheDetails.avantage_assurance,
-        conge_precedent: ficheDetails.conge_precedent,
-        conge_acquis: ficheDetails.conge_acquis,
-        conge_pris: ficheDetails.conge_pris,
-        conge_restant: ficheDetails.conge_restant,
-        conge_speciaux: ficheDetails.conge_speciaux,
-        conge_maladie_m: ficheDetails.conge_maladie_m,
-        conge_maladie_a: ficheDetails.conge_maladie_a,
-        banque: ficheDetails.banque,
-        rib: ficheDetails.rib,
-      });
+const calculateAvanceMensuelle = useCallback(() => {
+  if (!employee?.avances || !Array.isArray(employee.avances)) return 0;
 
-      const calculatedResume = calculateResume(ficheDetails);
-      setResume(calculatedResume);
-      setEditingFiche(fiche);
-      setIsModalVisible(true);
-    } catch (error) {
-      console.error('Erreur lors du chargement de la fiche:', error);
-      notification.error({
-        message: 'Erreur',
-        description: 'Impossible de charger les détails de la fiche',
-        placement: 'topRight',
-      });
-    } finally {
-      setLoading(false);
+  // Avances acceptées et non totalement remboursées
+  const avancesEnCours = employee.avances.filter(avance =>
+    avance?.statut === 'Acceptée' &&
+    (avance.montant_rembourse ?? 0) < (avance.montant ?? 0)
+  );
+
+  let totalAvanceMensuelle = 0;
+
+  avancesEnCours.forEach(avance => {
+    const montant = avance.montant ?? 0;
+    const montantRembourse = avance.montant_rembourse ?? 0;
+    const duree = avance.duree_remboursement ?? 1;
+    const moisRembourses = avance.mois_rembourses ?? 0;
+
+    const montantRestant = montant - montantRembourse;
+    const moisRestants = duree - moisRembourses;
+
+    if (moisRestants > 0) {
+      const mensualite = montantRestant / moisRestants;
+      totalAvanceMensuelle += mensualite;
     }
-  }, [form, calculateResume]);
+  });
 
+  return Math.round(totalAvanceMensuelle * 100) / 100;
+}, [employee]);
+
+const handleEdit = useCallback(async (fiche) => {
+  try {
+    setLoading(true);
+    const response = await EmployeeService.getFichePaieById(fiche.id);
+    const ficheDetails = response.data || response;
+    
+    // Calculer l'avance mensuelle automatiquement si elle n'existe pas dans la fiche
+    const avanceMensuelle = ficheDetails.avance || calculateAvanceMensuelle();
+    
+    form.setFieldsValue({
+      mois: ficheDetails.mois,
+      annee: ficheDetails.annee,
+      salaire_base: ficheDetails.salaire_base,
+      prime_anciennete: ficheDetails.prime_anciennete,
+      indemnite_presence: ficheDetails.indemnite_presence,
+      indemnite_transport: ficheDetails.indemnite_transport,
+      prime_langue: ficheDetails.prime_langue,
+      jours_feries_payes: ficheDetails.jours_feries_payes,
+      absences_non_remunerees: ficheDetails.absences_non_remunerees,
+      prime_ramadan: ficheDetails.prime_ramadan,
+      prime_teletravail: ficheDetails.prime_teletravail,
+      avantage_assurance: ficheDetails.avantage_assurance,
+      avance: avanceMensuelle, // Ajouter l'avance
+      conge_precedent: ficheDetails.conge_precedent,
+      conge_acquis: ficheDetails.conge_acquis,
+      conge_pris: ficheDetails.conge_pris,
+      conge_restant: ficheDetails.conge_restant,
+      conge_speciaux: ficheDetails.conge_speciaux,
+      conge_maladie_m: ficheDetails.conge_maladie_m,
+      conge_maladie_a: ficheDetails.conge_maladie_a,
+      banque: ficheDetails.banque,
+      rib: ficheDetails.rib,
+    });
+
+    const calculatedResume = calculateResume({...ficheDetails, avance: avanceMensuelle});
+    setResume(calculatedResume);
+    setEditingFiche(fiche);
+    setIsModalVisible(true);
+  } catch (error) {
+    console.error('Erreur lors du chargement de la fiche:', error);
+    notification.error({
+      message: 'Erreur',
+      description: 'Impossible de charger les détails de la fiche',
+      placement: 'topRight',
+    });
+  } finally {
+    setLoading(false);
+  }
+}, [form, calculateResume, calculateAvanceMensuelle]);
 const handlePrint = useCallback((fiche) => {
   navigate(`/fiches-paie/${fiche.id}/print`);
 }, [navigate]);
@@ -351,39 +391,43 @@ const handlePrint = useCallback((fiche) => {
   navigate(`/fiche-paie/${record.id}/view`);
 };
 
-  const handleAddFiche = useCallback(() => {
-    setEditingFiche(null);
-    form.resetFields();
-    
-    // Valeurs par défaut
-    const defaultValues = {
-      mois: moment().month() + 1,
-      annee: moment().year(),
-      salaire_base: employee?.salaire || 0,
-      prime_anciennete: 0,
-      indemnite_presence: 0,
-      indemnite_transport: 0,
-      prime_langue: 0,
-      jours_feries_payes: 0,
-      absences_non_remunerees: 0,
-      prime_ramadan: 0,
-      prime_teletravail: 0,
-      avantage_assurance: 0,
-      conge_precedent: 0,
-      conge_acquis: 0,
-      conge_pris: 0,
-      conge_restant: 0,
-      conge_speciaux: 0,
-      conge_maladie_m: 0,
-      conge_maladie_a: 0,
-      banque: employee?.banque || '',
-      rib: employee?.rib || '',
-    };
+const handleAddFiche = useCallback(() => {
+  setEditingFiche(null);
+  form.resetFields();
+  
+  // Calculer l'avance mensuelle automatiquement
+  const avanceMensuelle = calculateAvanceMensuelle();
+  
+  // Valeurs par défaut
+  const defaultValues = {
+    mois: moment().month() + 1,
+    annee: moment().year(),
+    salaire_base: employee?.salaire || 0,
+    prime_anciennete: 0,
+    indemnite_presence: 0,
+    indemnite_transport: 0,
+    prime_langue: 0,
+    jours_feries_payes: 0,
+    absences_non_remunerees: 0,
+    prime_ramadan: 0,
+    prime_teletravail: 0,
+    avantage_assurance: 0,
+    avance: avanceMensuelle, // Ajouter l'avance calculée automatiquement
+    conge_precedent: 0,
+    conge_acquis: 0,
+    conge_pris: 0,
+    conge_restant: 0,
+    conge_speciaux: 0,
+    conge_maladie_m: 0,
+    conge_maladie_a: 0,
+    banque: employee?.banque || '',
+    rib: employee?.rib || '',
+  };
 
-    form.setFieldsValue(defaultValues);
-    setResume(calculateResume(defaultValues));
-    setIsModalVisible(true);
-  }, [form, employee, calculateResume]);
+  form.setFieldsValue(defaultValues);
+  setResume(calculateResume(defaultValues));
+  setIsModalVisible(true);
+}, [form, employee, calculateResume, calculateAvanceMensuelle]);
 
 const handleDelete = useCallback(async (fiche) => {
   if (!fiche || !fiche.id) {
@@ -422,6 +466,40 @@ const handleDelete = useCallback(async (fiche) => {
     navigate('/employes/fiche-paie');
   }, [navigate]);
 
+
+  const updateAvanceRemboursement = useCallback(async (avanceMensuelle) => {
+  if (!employee?.avances || avanceMensuelle <= 0) return;
+
+  try {
+    const avancesEnCours = employee.avances.filter(avance => 
+      avance.statut === 'Acceptée' && 
+      (avance.montant_rembourse || 0) < avance.montant
+    );
+
+    for (const avance of avancesEnCours) {
+      const montantRestant = avance.montant - (avance.montant_rembourse || 0);
+      const nombreMoisRestants = avance.duree_remboursement - (avance.mois_rembourses || 0);
+      
+      if (nombreMoisRestants > 0) {
+        const remboursementMensuel = montantRestant / nombreMoisRestants;
+        
+        // Mettre à jour l'avance
+        const nouvelleAvance = {
+          ...avance,
+          montant_rembourse: (avance.montant_rembourse || 0) + remboursementMensuel,
+          mois_rembourses: (avance.mois_rembourses || 0) + 1,
+          statut: ((avance.montant_rembourse || 0) + remboursementMensuel) >= avance.montant ? 'Remboursée' : 'Acceptée'
+        };
+
+        // Appel API pour mettre à jour l'avance
+        await EmployeeService.updateAvance(avance.id, nouvelleAvance);
+      }
+    }
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour des avances:', error);
+  }
+}, [employee]);
+
   // Soumission du formulaire
 const onFinish = useCallback(async (values) => {
   try {
@@ -429,7 +507,7 @@ const onFinish = useCallback(async (values) => {
     
     const calculatedResume = calculateResume(values);
     const ficheData = {
-      employe: parseInt(id), // S'assurer que c'est un nombre
+      employe: parseInt(id),
       mois: values.mois,
       annee: values.annee,
       salaire_brut: calculatedResume.totalBrut,
@@ -441,8 +519,8 @@ const onFinish = useCallback(async (values) => {
       cnss_patronal: calculatedResume.cnssPatronal,
       accident_travail: calculatedResume.accidentTravail,
       charges_patronales: calculatedResume.chargesPatronales,
-      net_a_payer: calculatedResume.salaireNet,
-      deduction_totale: calculatedResume.totalCotisations,
+      net_a_payer: calculatedResume.salaireNet, 
+      deduction_totale: calculatedResume.totalDeductions, // Cotisations + Avance
       statut: editingFiche ? editingFiche.statut : 'Générée',
       date_creation: editingFiche ? editingFiche.date_creation : new Date().toISOString(),
       
@@ -457,6 +535,7 @@ const onFinish = useCallback(async (values) => {
       prime_ramadan: values.prime_ramadan,
       prime_teletravail: values.prime_teletravail,
       avantage_assurance: values.avantage_assurance,
+      avance: values.avance, 
       conge_precedent: values.conge_precedent,
       conge_acquis: values.conge_acquis,
       conge_pris: values.conge_pris,
@@ -470,33 +549,37 @@ const onFinish = useCallback(async (values) => {
 
     console.log('Données envoyées pour l\'employé', id, ':', ficheData);
 
+    let response;
     if (editingFiche) {
-      await EmployeeService.updateFichePaie(editingFiche.id, ficheData);
-      notification.success({
-        message: 'Succès',
-        description: 'Fiche de paie modifiée avec succès',
-        placement: 'topRight',
-      });
+      response = await EmployeeService.updateFichePaie(editingFiche.id, ficheData);
     } else {
-      await EmployeeService.createFichePaie(ficheData);
-      notification.success({
-        message: 'Succès',
-        description: 'Fiche de paie créée avec succès',
-        placement: 'topRight',
-      });
+      response = await EmployeeService.createFichePaie(ficheData);
+      
+      // Mettre à jour les avances seulement lors de la création d'une nouvelle fiche
+      if (values.avance > 0) {
+        await updateAvanceRemboursement(values.avance);
+      }
     }
+    
+    notification.success({
+      message: 'Succès',
+      description: editingFiche ? 'Fiche de paie modifiée avec succès' : 'Fiche de paie créée avec succès',
+      placement: 'topRight',
+    });
     
     setIsModalVisible(false);
     setEditingFiche(null);
     
-    // Attendre un peu avant de rafraîchir pour que l'API se mette à jour
+    // Rafraîchir les données
     setTimeout(async () => {
       await refreshFiches();
+      // Recharger les données de l'employé pour avoir les avances mises à jour
+      const employeeResponse = await EmployeeService.getEmployeeById(id);
+      setEmployee(employeeResponse.data || employeeResponse);
     }, 500);
     
   } catch (error) {
     console.error('Erreur lors de la sauvegarde:', error);
-    console.error('Détails de l\'erreur:', error.response?.data);
     notification.error({
       message: 'Erreur',
       description: `Impossible de sauvegarder la fiche de paie: ${error.response?.data?.message || error.message}`,
@@ -505,7 +588,8 @@ const onFinish = useCallback(async (values) => {
   } finally {
     setLoading(false);
   }
-}, [id, editingFiche, calculateResume, refreshFiches]);
+}, [id, editingFiche, calculateResume, refreshFiches, updateAvanceRemboursement]);
+
   // Mise à jour du résumé en temps réel
   const onFormValuesChange = useCallback((_, allValues) => {
     const calculatedResume = calculateResume(allValues);
@@ -1204,6 +1288,145 @@ const onFinish = useCallback(async (values) => {
               ))}
             </Row>
           </Card>
+{/* AVANCES */}
+<Card 
+  size="small" 
+  style={{ 
+    marginBottom: 20,
+    backgroundColor: '#ffffff',
+    border: '1px solid #e5e7eb',
+    borderRadius: 8,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+  }}
+>
+  <div style={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: 12, 
+    marginBottom: 16,
+    padding: '12px 16px',
+    backgroundColor: '#fff7e6',
+    borderRadius: 6,
+    border: '1px solid #ffd591'
+  }}>
+    <div style={{ 
+      backgroundColor: '#fa8c16', 
+      borderRadius: '50%', 
+      width: 28, 
+      height: 28, 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center' 
+    }}>
+      💸
+    </div>
+    <span style={{ fontSize: 16, fontWeight: 600, color: '#374151' }}>Avances sur Salaire</span>
+  </div>
+
+  {/* Affichage des avances existantes */}
+ {employee?.avances && employee.avances.length > 0 && (
+  <div style={{ marginBottom: 16 }}>
+    <Text strong style={{ color: '#374151', marginBottom: 12, display: 'block' }}>
+      📋 Avances en cours de remboursement :
+    </Text>
+    {employee.avances
+      .filter(avance => avance.statut === 'Acceptée' && (avance.montant_rembourse || 0) < avance.montant)
+      .map((avance, index) => {
+        const montantRestant = avance.montant - (avance.montant_rembourse || 0);
+        const moisRestants = avance.nbr_mensualite - (avance.mois_rembourses || 0);
+        const avanceMensuelle = moisRestants > 0 ? montantRestant / moisRestants : 0;
+
+        return (
+          <div key={index} style={{ 
+            backgroundColor: '#fff7e6', 
+            padding: 12, 
+            borderRadius: 6,
+            border: '1px solid #ffd591',
+            marginBottom: 8
+          }}>
+            <Row gutter={16}>
+              <Col span={6}>
+                <div style={{ fontSize: 12, color: '#8c4a00', fontWeight: 500 }}>Date demande</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#1f2937' }}>
+                  {moment(avance.date_demande).format('DD/MM/YYYY')}
+                </div>
+              </Col>
+              <Col span={6}>
+                <div style={{ fontSize: 12, color: '#8c4a00', fontWeight: 500 }}>Montant total</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#1f2937' }}>
+                  {avance.montant?.toLocaleString()} DT
+                </div>
+              </Col>
+              <Col span={6}>
+                <div style={{ fontSize: 12, color: '#8c4a00', fontWeight: 500 }}>Restant à rembourser</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#d46b08' }}>
+                  {montantRestant?.toLocaleString()} DT
+                </div>
+              </Col>
+              <Col span={6}>
+                <div style={{ fontSize: 12, color: '#8c4a00', fontWeight: 500 }}>Déduction mensuelle</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#cf1322' }}>
+                  {avanceMensuelle?.toLocaleString()} DT
+                </div>
+              </Col>
+            </Row>
+            <div style={{ marginTop: 8 }}>
+              <Progress 
+                percent={Math.round(((avance.mois_rembourses || 0) / avance.nbr_mensualite) * 100)}
+                size="small"
+                status="active"
+                format={() => `${avance.mois_rembourses || 0}/${avance.nbr_mensualite} mois`}
+              />
+            </div>
+          </div>
+        );
+      })}
+  </div>
+)}
+
+   
+
+  {/* Champ de saisie manuel */}
+  <Row gutter={16}>
+    <Col span={12}>
+  <Form.Item 
+  name="avance" 
+  label={
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#374151', fontWeight: 500 }}>
+      <span>💸</span>
+      <span>Montant total à déduire ce mois-ci</span>
+    </div>
+  }
+  tooltip="Ce montant est calculé automatiquement en fonction des avances en cours, mais vous pouvez le modifier si nécessaire."
+  initialValue={calculateAvanceMensuelle() || 0}
+>
+  <InputNumber 
+    min={0}
+    style={{ width: '100%', height: 40, borderRadius: 6 }}
+    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+    placeholder="0"
+    suffix=" DT"
+  />
+</Form.Item>
+
+    </Col>
+    <Col span={12}>
+      <div style={{ 
+        backgroundColor: '#f6ffed', 
+        padding: 12, 
+        borderRadius: 6,
+        border: '1px solid #b7eb8f',
+        marginTop: 30
+      }}>
+        <div style={{ fontSize: 12, color: '#389e0d', fontWeight: 500 }}>💡 Avance calculée automatiquement</div>
+        <div style={{ fontSize: 16, fontWeight: 600, color: '#1f2937' }}>
+          {calculateAvanceMensuelle()?.toLocaleString() || 0} DT
+        </div>
+      </div>
+    </Col>
+  </Row>
+</Card>
 
           {/* CONGÉS */}
           <Card 
@@ -1508,6 +1731,48 @@ const onFinish = useCallback(async (values) => {
                 {resume.salaireNet?.toLocaleString() || 0} 
               </div>
             </div>
+            <div style={{ 
+  backgroundColor: '#fff7e6', 
+  padding: 16, 
+  borderRadius: 6,
+  border: '1px solid #ffd591'
+}}>
+  <div style={{ color: '#d46b08', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+    SALAIRE NET AVANT AVANCE
+  </div>
+  <div style={{ color: '#1f2937', fontSize: 18, fontWeight: 700 }}>
+    {resume.salaireNetAvantAvance?.toLocaleString() || 0} DT
+  </div>
+</div>
+
+<div style={{ 
+  backgroundColor: '#fff1f0', 
+  padding: 16, 
+  borderRadius: 6,
+  border: '1px solid #ffccc7'
+}}>
+  <div style={{ color: '#cf1322', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+    AVANCE À DÉDUIRE
+  </div>
+  <div style={{ color: '#1f2937', fontSize: 18, fontWeight: 700 }}>
+    -{resume.avance?.toLocaleString() || 0} DT
+  </div>
+</div>
+
+<div style={{ 
+  backgroundColor: '#f6ffed', 
+  padding: 16, 
+  borderRadius: 6,
+  border: '1px solid #b7eb8f'
+}}>
+  <div style={{ color: '#389e0d', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+    TOTAL DÉDUCTIONS (Cotisations + Avance)
+  </div>
+  <div style={{ color: '#1f2937', fontSize: 18, fontWeight: 700 }}>
+    {resume.totalDeductions?.toLocaleString() || 0} DT
+  </div>
+</div>
+
           </Card>
         </Form>
       </Modal>

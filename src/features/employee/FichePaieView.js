@@ -70,7 +70,7 @@ const FichePaieView = () => {
           <div className="employee-details">
             <div className="detail-item">
               <span className="label">Matricule :</span>
-              <span className="value">{employee?.id_employe}</span>
+              <span className="value"> {employee?.id_employe}</span>
             </div>
             <div className="detail-item">
               <span className="label">Nom complet :</span>

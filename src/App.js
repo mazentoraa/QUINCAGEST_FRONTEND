@@ -60,6 +60,8 @@ import EmployeePayrollDetails from "./features/employee/EmployeePayrollDetails";
 import FichePaiePrint from "./features/employee/FichePaiePrint";
 import FichePaieView from "./features/employee/FichePaieView";
 import FactureCorbeille from './components/BonsDevis/FactureCorbeille';
+import ClientTrashPage from './features/clientManagement/components/ClientTrashPage';
+
 
 const { Header, Content, Sider } = Layout;
 
@@ -229,6 +231,7 @@ function App() {
                                   <Route path="/tresorerie/par-periode" element={<ParPeriode />} />
                                   <Route path="/tresorerie/simulation" element={<Simulation />} />
                                   <Route path="/factures/corbeille" element={<FactureCorbeille />} />
+                                  <Route path="/clients/trash" element={<ClientTrashPage />} />
 
                                 </Routes>
                               </Content>
