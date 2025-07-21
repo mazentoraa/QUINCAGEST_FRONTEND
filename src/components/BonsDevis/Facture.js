@@ -1882,6 +1882,7 @@ const handleDeleteSelected = async () => {
 
           {/* Action buttons */}
           <Row gutter={16} style={{ marginBottom: 16 }}>
+            {props.nature !== 'avoir-facture' && (
             <Col>
               <Button
                 type="primary"
@@ -1891,6 +1892,7 @@ const handleDeleteSelected = async () => {
                 {props.nature == 'facture' ? 'Nouvelle Facture' : 'Nouveau Avoir'}
               </Button>
             </Col>
+            )}
             <Col>
               <Button
                 icon={<ReloadOutlined />}

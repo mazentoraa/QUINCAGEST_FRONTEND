@@ -41,6 +41,7 @@ import {
   SearchOutlined,
   PrinterOutlined,
   FilePdfOutlined,
+  SnippetsOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
@@ -51,6 +52,8 @@ import {
   ClockCircleOutlined,
 
 } from "@ant-design/icons";
+import CdsService from "../../services/CdsService";
+import devisService from "../../services/DevisService";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -100,9 +103,13 @@ export default function Devis() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showConvertModal, setShowConvertModal] = useState(false);
+  const [showInvoiceConvertModal, setShowInvoiceConvertModal] = useState(false);
   const [convertSuccess, setConvertSuccess] = useState(null);
+  const [invoiceConvertSuccess, setInvoiceConvertSuccess] = useState(null);
   const [form] = Form.useForm();
   const [productForm] = Form.useForm();
+  const [invoiceForm] = Form.useForm();
+  
 
   // New state variables for enhanced features
   const [currentView, setCurrentView] = useState("list");
@@ -595,67 +602,132 @@ export default function Devis() {
   };
 
   // Convert quote to order - Updated to work from both list and detail views
-const handleConvertToOrder = async (devisToConvert = null) => {
-  const targetDevis = devisToConvert || devisDetail;
+  const handleConvertToOrder = async (devisToConvert = null) => {
+    const targetDevis = devisToConvert || devisDetail;
 
-  if (!targetDevis || !targetDevis.id) {
-    notification.error({
-      message: "Erreur",
-      description: "Aucun devis sélectionné pour la conversion",
-    });
-    return;
-  }
-
-  try {
-    setLoading(true);
-    setError(null);
-
-    const payload = {
-      confirmation: true,
-      timbre_fiscal: targetDevis.timbre_fiscal ?? 0,
-      notes: targetDevis.notes ?? "",
-    };
-
-    // 👉 Log ici pour voir les données envoyées
-    console.log("🔄 Données envoyées pour conversion en commande :", payload);
-
-    const response = await axios.post(
-      `${API_BASE_URL}/devis/${targetDevis.id}/convert_to_commande/`,
-      payload
-    );
-
-    setConvertSuccess({
-      message: "Le devis a été converti en commande avec succès!",
-      orderId: response.data.id,
-      orderNumber: response.data.numero_commande,
-    });
-
-    notification.success({
-      message: "Succès",
-      description: "Le devis a été converti en commande avec succès!",
-    });
-
-    if (currentView === "detail" && devisDetail?.id === targetDevis.id) {
-      await fetchDevisDetail(targetDevis.id);
-    } else {
-      await fetchDevisList();
+    if (!targetDevis || !targetDevis.id) {
+      notification.error({
+        message: "Erreur",
+        description: "Aucun devis sélectionné pour la conversion",
+      });
+      return;
     }
 
-    setShowConvertModal(false);
-  } catch (err) {
-    const errorMessage =
-      err.response?.data?.error ||
-      err.response?.data?.message ||
-      "Erreur lors de la conversion du devis en commande";
-    setError(errorMessage);
-    notification.error({
-      message: "Erreur",
-      description: errorMessage,
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+      setError(null);
+
+      const payload = {
+        confirmation: true,
+        timbre_fiscal: targetDevis.timbre_fiscal ?? 0,
+        notes: targetDevis.notes ?? "",
+      };
+
+      // 👉 Log ici pour voir les données envoyées
+      console.log("🔄 Données envoyées pour conversion en commande :", payload);
+
+      const response = await axios.post(
+        `${API_BASE_URL}/devis/${targetDevis.id}/convert_to_commande/`,
+        payload
+      );
+
+      setConvertSuccess({
+        message: "Le devis a été converti en commande avec succès!",
+        orderId: response.data.id,
+        orderNumber: response.data.numero_commande,
+      });
+
+      notification.success({
+        message: "Succès",
+        description: "Le devis a été converti en commande avec succès!",
+      });
+
+      if (currentView === "detail" && devisDetail?.id === targetDevis.id) {
+        await fetchDevisDetail(targetDevis.id);
+      } else {
+        await fetchDevisList();
+      }
+
+      setShowConvertModal(false);
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "Erreur lors de la conversion du devis en commande";
+      setError(errorMessage);
+      notification.error({
+        message: "Erreur",
+        description: errorMessage,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleConvertToInvoice = async (devisToConvert = null) => {
+    const targetDevis = devisToConvert || devisDetail;
+    if (!targetDevis || !targetDevis.id) {
+      notification.error({
+        message: "Erreur",
+        description: "Aucun devis sélectionné pour la conversion",
+      });
+      return;
+    }
+    try{
+      const fetchedDevis = await devisService.getDevisById(targetDevis.id)
+      console.log('Fetched devis: ', fetchedDevis)
+        try {
+          setLoading(true);
+          setError(null);
+          const values = await invoiceForm.validateFields(); // Get and validate the form
+    
+          console.log("Form values:", values);
+          console.log("Devis detail :", targetDevis);
+          // Match facture backend expectations
+          const payload = {
+            ...targetDevis,
+            date_commande: targetDevis.date_emission,
+            statut: values.statut,
+            date_livraison_prevue: values.date_livraison_prevue,
+            mode_paiement: values.mode_paiement,
+            type_facture: 'produit',
+            produits: fetchedDevis.produit_devis,
+            tax_rate: fetchedDevis.tax_rate,
+            // devis: fetchedDevis.id
+          };
+    
+          console.log("🔄 Données envoyées pour conversion en Facture :", payload);
+    
+          const response = await CdsService.createOrder(payload)
+          console.log("response: ", response)
+          setInvoiceConvertSuccess({
+            message: "Le devis a été converti en facture avec succès!",
+            orderId: response.id,
+            orderNumber: response.numero_commande,
+          });
+    
+          notification.success({
+            message: "Succès",
+            description: "Le devis a été converti en facture avec succès!",
+          });
+    
+          setShowInvoiceConvertModal(false);
+        } catch (err) {
+          const errorMessage =
+            err.response?.data?.error ||
+            err.response?.data?.message ||
+            "Erreur lors de la conversion du devis en facture";
+          setError(errorMessage);
+          notification.error({
+            message: "Erreur",
+            description: errorMessage,
+          });
+        } finally {
+          setLoading(false);
+        }
+      }catch(error){
+        console.error('Error fetching Devis : ', error)
+      }
+    };
 
 
   // Status update handler
@@ -824,6 +896,16 @@ const handleConvertToOrder = async (devisToConvert = null) => {
       width: 150,
       render: (_, record) => (
         <Space size="small">
+          <Tooltip title="Convertir en Facture">
+            <Button
+              icon={<SnippetsOutlined />}
+                onClick={() => {
+                  setDevisDetail(record);
+                  setShowInvoiceConvertModal(true);
+                }}
+              size="small"
+            />
+          </Tooltip>
           {record.statut === "draft" && (
             <Tooltip title="Modifier">
               <Button
@@ -1902,6 +1984,102 @@ const handleConvertToOrder = async (devisToConvert = null) => {
             </ul>
           </div>
         )}
+      </Modal>
+      {/* Convert to invoice Modal */}
+      <Modal
+        title="Convertir en facture"
+        open={showInvoiceConvertModal}
+        onCancel={() => {
+          setShowInvoiceConvertModal(false);
+          setInvoiceConvertSuccess(null);
+        }}
+        footer={[
+                <Button key="close" onClick={() => setShowInvoiceConvertModal(false)}>
+                  Annuler
+                </Button>,
+                <Button
+                  key="convert"
+                  type="primary"
+                  loading={loading}
+                  onClick={() => handleConvertToInvoice()}
+                >
+                  Convertir
+                </Button>,
+        ]}
+      >
+        <div style={{ padding: "10px" }}>
+          {devisDetail && (
+            <div
+              style={{
+                marginBottom: 15,
+                padding: 15,
+                backgroundColor: "#f6f6f6",
+                borderRadius: "6px",
+                border: "1px solid #d9d9d9",
+              }}
+            >
+              <Form form={invoiceForm} layout="vertical">
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item name="statut" label="Statut">
+                      <Select>
+                        <Option value="pending">En attente</Option>
+                        <Option value="processing">En cours</Option>
+                        <Option value="completed">Terminée</Option>
+                        <Option value="cancelled">Annulée</Option>
+                        <Option value="invoiced">Facturée</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="date_livraison_prevue"
+                      label="Date Livraison Prévue"
+                      rules={[{ required: true, message: "Veuillez entrer une date" }]}
+                    >
+                      <Input
+                        type="date"
+                        style={{ width: "100%" }}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>  
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="mode_paiement"
+                      label="Mode de Paiement"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Veuillez sélectionner un mode de paiement",
+                        },
+                      ]}
+                      >
+                      <Select placeholder="Sélectionner un mode de paiement">
+                        <Option value="traite">Traite</Option>
+                        <Option value="cash">Comptant</Option>
+                        <Option value="cheque">Chèque</Option>
+                        <Option value="virement">Virement Bancaire</Option>
+                        <Option value="carte">Carte de crédit</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>  
+              </Form>
+              <p>
+                <strong>Devis:</strong> {devisDetail.numero_devis}
+              </p>
+              <p>
+                <strong>Client:</strong> {devisDetail.nom_client}
+              </p>
+              <p>
+                <strong>Montant:</strong>{" "}
+                {formatCurrency(devisDetail.montant_ttc)}
+              </p>
+            </div>
+          )}
+        </div>
       </Modal>
     </>
   );
