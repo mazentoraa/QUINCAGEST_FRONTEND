@@ -41,6 +41,7 @@ import {
     DollarCircleOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
+  UndoOutlined,
 } from "@ant-design/icons";
 
 
@@ -97,7 +98,7 @@ const translatePaymentMethod = (method) => {
 };
 
 
-// This is used for facture and avoir (props contains a nature field which precises facture or avoir)
+// This is used for facture, avoir-facture and avoir (props contains a nature field which precises facture or avoir-facture or avoir)
 export default function Facture(props) {
   const [selectedBonDetails, setSelectedBonDetails] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -209,7 +210,7 @@ export default function Facture(props) {
     setLoading(true);
     setError(null);
     try {
-      // Choose if facture or avoir, each one calls a function
+      // Choose if facture or avoir-facture or avoir, each one calls a function
       const data = await cdsService.getOrders(props.nature)
       console.log(data)
       setOrders(data);
@@ -374,7 +375,36 @@ export default function Facture(props) {
     fetchAvailableBons,
     props.nature
   ]);
-
+  const handleCreateAvoirFacture = async (order) => {
+    try{
+      const facture = await cdsService.getOrderById(order.id)
+      // To match backend expectations²
+      const avoir = {
+        ...facture, 
+        nature:'avoir-facture',
+        produits: facture.produit_commande.map((produit)=> ({
+          bon_id: produit.bon_id,
+          bon_numero: produit.bon_numero,
+          prix_unitaire: produit.prix_unitaire,
+          produit: produit.produit,
+          quantite: produit.quantite,
+          remise_pourcentage: produit.remise_pourcentage
+        }))
+      }
+      console.log("Facture", facture)
+      console.log("Avoir", avoir)
+      try{
+        const response = await cdsService.createOrder(avoir)
+        console.log('Response', response)
+        message.success("Avoir créé avec succés")
+      }catch(error){
+        console.error('Error creating avoir from facture: ', error)
+        message.error("Erreur de création d'avoir à partir de la facture")
+      }
+    }catch(error){
+      console.error('Error getting facture details: ', error)
+    }
+  }
   const handleEditOrder = async (order) => {
     setLoading(true);
     setIsCreating(false)
@@ -595,7 +625,7 @@ export default function Facture(props) {
         setInvoiceType(values.type_facture)
         console.log("values: ", values)
         const orderPayload = {
-          nature: props.nature, // Facture ou avoir
+          nature: props.nature, // Facture ou avoir-facture ou avoir
           client_id: selectedClientId,
           client: selectedClientId,
           date_commande: toISO(values.date_commande),
@@ -1650,6 +1680,13 @@ const handleDeleteSelected = async () => {
       key: "actions",
       render: (_, record) => (
         <Space>
+          {props.nature == 'facture' && (<Tooltip title="Convertir en Avoir">
+            <Button
+              icon={<UndoOutlined />}
+              size="small"
+              onClick={() => handleCreateAvoirFacture(record)}
+            />
+          </Tooltip>)}
           <Tooltip title="Modifier">
             <Button
               type="primary"
@@ -1845,6 +1882,7 @@ const handleDeleteSelected = async () => {
 
           {/* Action buttons */}
           <Row gutter={16} style={{ marginBottom: 16 }}>
+            {props.nature !== 'avoir-facture' && (
             <Col>
               <Button
                 type="primary"
@@ -1854,6 +1892,7 @@ const handleDeleteSelected = async () => {
                 {props.nature == 'facture' ? 'Nouvelle Facture' : 'Nouveau Avoir'}
               </Button>
             </Col>
+            )}
             <Col>
               <Button
                 icon={<ReloadOutlined />}
