@@ -798,7 +798,7 @@ const onFinish = useCallback(async (values) => {
   return (
     <div style={{ 
       padding: 24, 
-      background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)', 
+      background: 'white', 
       minHeight: '100vh' 
     }}>
       {/* Header */}

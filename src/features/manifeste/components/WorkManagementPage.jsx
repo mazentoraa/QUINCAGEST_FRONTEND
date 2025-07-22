@@ -36,6 +36,7 @@ import {
 import { Link } from "react-router-dom";
 import debounce from "lodash/debounce";
 import moment from "moment";
+import { ToolOutlined } from "@ant-design/icons";
 // Import our new PDF API service
 import PdfApiService from "../services/PdfApiService";
 import WorkService from "../services/WorkService";
@@ -1330,7 +1331,64 @@ const fetchWorks = async () => {
             marginBottom: "20px",
           }}
         >
-          <Title level={2}>Gestion des Travaux</Title>
+         <div style={{ marginBottom: 32, position: 'relative' }}>
+  <Space size="large" align="center">
+    <div style={{ position: 'relative' }}>
+      <div
+        style={{
+          width: 48,
+          height: 48,
+          background: "#1890ff",
+          borderRadius: 16,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <ToolOutlined style={{ fontSize: 24, color: "#fff" }} />
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          top: -8,
+          right: -8,
+          background: "#52c41a",
+          color: "white",
+          fontSize: 12,
+          fontWeight: "bold",
+          borderRadius: "50%",
+          width: 20,
+          height: 20,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: "2px solid white",
+        }}
+      >
+    
+      </div>
+    </div>
+
+    <div>
+      <Title
+        level={2}
+        style={{
+          margin: 0,
+          fontWeight: 700,
+          color: "#1890ff",
+          fontSize: "28px",
+        }}
+      >
+        Gestion des Travaux
+      </Title>
+      <Text type="secondary">
+        Suivi et traitement des opérations techniques
+        <span style={{ color: "#52c41a", marginLeft: 8 }}>●</span>
+      </Text>
+    </div>
+  </Space>
+</div>
           {successMessage && (
             <div style={{   marginBottom: 16,
               padding: "12px",
@@ -1410,9 +1468,73 @@ const fetchWorks = async () => {
                 )}
               </div>
             )}
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              Ajouter un travail
-            </Button>
+            {selectedRowKeys.length === 0 && (
+              <Space size="large">
+                <Button 
+                  icon={<DeleteOutlined />} 
+                  size="large"
+                  style={{
+                    borderRadius: '12px',
+                    height: '48px',
+                    padding: '0 20px',
+                    border: '2px solid #ef4444',
+                    color: '#ef4444',
+                    fontWeight: 600,
+                    background: '#ffffff',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    fontSize: '15px',
+                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.borderColor = '#dc2626';
+                    e.target.style.color = '#ffffff';
+                    e.target.style.background = '#ef4444';
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 8px 25px rgba(239, 68, 68, 0.25)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.borderColor = '#ef4444';
+                    e.target.style.color = '#ef4444';
+                    e.target.style.background = '#ffffff';
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.15)';
+                  }}
+                >
+                  Corbeille
+                </Button>
+
+                <Button 
+                  type="primary" 
+                  icon={<PlusOutlined />} 
+                  onClick={handleAdd}
+                  size="large"
+                  style={{
+                    borderRadius: '12px',
+                    height: '48px',
+                    padding: '0 24px',
+                    background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+                    border: 'none',
+                    fontWeight: 600,
+                    fontSize: '15px',
+                    boxShadow: '0 6px 20px rgba(24, 144, 255, 0.3)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 10px 30px rgba(24, 144, 255, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 6px 20px rgba(24, 144, 255, 0.3)';
+                  }}
+                >
+                  Ajouter un travail
+                </Button>
+              </Space>
+            )}
+
           </Space>
         </div>
         {TraiteMessage && (
@@ -1505,404 +1627,572 @@ const fetchWorks = async () => {
           pagination={{ pageSize: 10 }}
         />
 
-        <Modal
-          title={editingWork ? "Modifier un travail" : "Ajouter un travail"}
+    <Modal
+          title={
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 12,
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#1f2937'
+            }}>
+              <div style={{
+                width: 40,
+                height: 40,
+                backgroundColor: editingWork ? '#f59e0b' : '#10b981',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {editingWork ? '✏️' : '➕'}
+              </div>
+              {editingWork ? "Modifier un travail" : "Ajouter un travail"}
+            </div>
+          }
           open={isModalVisible}
           onCancel={() => {
             setIsModalVisible(false)
             setCurrentMaterialsInDrawer([])
           }}
           footer={null}
-          width={800}
+          width={900}
+          style={{
+            top: 20,
+          }}
+          bodyStyle={{
+            padding: '24px',
+            maxHeight: '70vh',
+            overflow: 'auto'
+          }}
         >
           <Form form={form} layout="vertical" onFinish={handleSubmit}>
-            <Form.Item
-              name="client_id"
-              label="Client"
-              rules={[
-                { required: true, message: "Veuillez sélectionner un client" },
-              ]}
-            >
-              <Select
-                showSearch
-                placeholder="Rechercher un client..."
-                filterOption={false}
-                onSearch={(value) => debouncedSearch(value, "client")}
-                onChange={(value) => {
-                  console.log("Client selected:", value);
-                  handleClientChange(value);
-                }}
-                loading={clientSearchLoading}
-                notFoundContent={
-                  clientSearchLoading ? <Spin size="small" /> : null
-                }
-                options={clientOptions}
-              />
-            </Form.Item>
-            <Form.Item
-              name="source"
-              label="Source de la matière première"
-              rules={[
-                { required: true, message: "Veuillez sélectionner une source" },
-              ]}
-            >
-              <Select
-                placeholder="Choisir la source"
-                onChange={(value) => {
-                  setMaterialSource(value);
-                }}
-              >
-                <Option
-                  value={'client'}
-                  >Matières premières client</Option>
-                <Option
-                  value={'stock'}
-                >Stock RM Metalaser</Option>
-              </Select>
-            </Form.Item>
-
-            {materialSource && (
-            <>
-              <Divider>Matières Premières{materialSource=='client'?' Client':''}</Divider>
-
-              <Button
-                type="dashed"
-                onClick={handleAddMaterialToDrawerOrder}
-                style={{ width: "100%", marginBottom: 16 }}
-                icon={<PlusOutlined />}
-              >
-                Ajouter une matière première
-              </Button>
-
-              <Table
-                dataSource={currentMaterialsInDrawer}
-                rowKey="matiere_id"
-                pagination={false}
-                size="small"
-                columns={[
-                  {
-                    title: "Matière",
-                    dataIndex: "nom_matiere",
-                    key: "nom_matiere",
-                  },
-                  {
-                    title: "Quantité",
-                    dataIndex: "quantite",
-                    key: "quantite",
-                  },
-                  ...(materialSource === "stock"
-                    ? [
-                        {
-                          title: "Prix Unitaire",
-                          dataIndex: "prix_unitaire",
-                          key: "prix_unitaire",
-                          render: (prix) => (prix != null ? formatCurrency(prix) : "-"),
-                        },
-                        {
-                          title: "Prix Total",
-                          dataIndex: "prix_total",
-                          key: "prix_total",
-                          render: (prix) => (prix != null ? formatCurrency(prix) : "-"),
-                        },
-                      ]
-                    : []),
-                  {
-                    title: "Actions",
-                    key: "actions",
-                    render: (_, record) => (
-                      <Space>
-                        <Button
-                          icon={<EditOutlined />}
-                          size="small"
-                          onClick={() => {
-                            materialForm.setFieldsValue({
-                              matiere_id: record.matiere_id,
-                              quantite: record.quantite,
-                            });
-                            setEditingMaterial(record);
-                            setIsMaterialModalVisible(true);
-                          }}
-                        />
-                        <Tooltip title="Supprimer">
-                          <Popconfirm
-                            title="Êtes-vous sûr de vouloir supprimer cette matière?"
-                            onConfirm={() =>
-                              handleRemoveMaterialFromDrawerOrder(record.matiere_id)
-                            }
-                            okText="Oui"
-                            cancelText="Non"
-                          >
-                            <Button danger icon={<DeleteOutlined />} size="small" />
-                          </Popconfirm>
-                        </Tooltip>
-                      </Space>
-                    ),
-                  },
-                ]}
-              />
-
-              <Divider />
-            </>
-          )}
-
-            {/* Material Modal */}
-            <Modal
-              title={`Ajouter une matière première ${materialSource === 'client' ? 'pour ce client' : ''}`}
-              open={isMaterialModalVisible}
-              onOk={handleMaterialModalSave}
-              onCancel={() => {
-                setEditingMaterial(null);
-                setIsMaterialModalVisible(false);
-              }}
-              okText={editingMaterial ? "Modifier" : "Ajouter"}
-              cancelText="Annuler"
-            >
-              <Form form={materialForm} layout="vertical">
+            {/* Section Informations Générales */}
+            <div style={{
+              backgroundColor: '#f8fafc',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '24px',
+              border: '1px solid #e2e8f0'
+            }}>
+              <h3 style={{
+                margin: '0 0 16px 0',
+                color: '#374151',
+                fontSize: '16px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{
+                  width: '4px',
+                  height: '16px',
+                  backgroundColor: '#3b82f6',
+                  borderRadius: '2px'
+                }}></span>
+                Informations Générales
+              </h3>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <Form.Item
-                  name="matiere_id"
-                  label="Matière Première"
+                  name="client_id"
+                  label={<span style={{ fontWeight: '500', color: '#374151' }}>Client</span>}
                   rules={[
-                    { required: true, message: "Veuillez sélectionner une matière première" },
-                    {
-                      validator: (_, value) => {
-                        const exists = currentMaterialsInDrawer.find(m => m.matiere_id === value);
-                        if (!editingMaterial && exists) {
-                          return Promise.reject(new Error("Cette matière est déjà ajoutée."));
-                        }
-                        return Promise.resolve();
-                      }
-                    }
+                    { required: true, message: "Veuillez sélectionner un client" },
                   ]}
                 >
                   <Select
-                    placeholder="Sélectionner une matière première"
-                    disabled={!!editingMaterial}
                     showSearch
-                    filterOption={(input, option) =>
-                      option.children.toLowerCase().includes(input.toLowerCase())
+                    placeholder="🔍 Rechercher un client..."
+                    filterOption={false}
+                    onSearch={(value) => debouncedSearch(value, "client")}
+                    onChange={(value) => {
+                      console.log("Client selected:", value);
+                      handleClientChange(value);
+                    }}
+                    loading={clientSearchLoading}
+                    notFoundContent={
+                      clientSearchLoading ? <Spin size="small" /> : null
                     }
+                    options={clientOptions}
+                    size="large"
+                    style={{ borderRadius: '8px' }}
+                  />
+                </Form.Item>
+                
+                <Form.Item
+                  name="source"
+                  label={<span style={{ fontWeight: '500', color: '#374151' }}>Source de la matière première</span>}
+                  rules={[
+                    { required: true, message: "Veuillez sélectionner une source" },
+                  ]}
+                >
+                  <Select
+                    placeholder="📦 Choisir la source"
+                    onChange={(value) => {
+                      setMaterialSource(value);
+                    }}
+                    size="large"
+                    style={{ borderRadius: '8px' }}
                   >
-                    {(materialSource === 'stock' ? availableMaterial : clientMaterials).map((material) => (
-                      <Option key={material.id} value={material.id}>
-                        {(material.nom_matiere || material.type_matiere)} (
-                          {(material.longueur || material.length || "-")}mm ×
-                          {(material.largeur || material.width || "-")}mm ×
-                          {(material.epaisseur || material.thickness || "-")}mm
-                        )
-                        {materialSource === 'stock' && ` - ${formatCurrency(material.prix_unitaire)} TND`}
-                        {" - Stock : " + material.remaining_quantity}
-                      </Option>
-                    ))}
+                    <Option value={'client'}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        👤 Matières premières client
+                      </div>
+                    </Option>
+                    <Option value={'stock'}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        🏭 Stock RM Metalaser
+                      </div>
+                    </Option>
                   </Select>
+                </Form.Item>
+              </div>
+            </div>
+
+            {materialSource && (
+            <>
+              {/* Section Matières Premières */}
+              <div style={{
+                backgroundColor: '#fefefe',
+                borderRadius: '12px',
+                padding: '20px',
+                marginBottom: '24px',
+                border: '2px dashed #d1d5db'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '16px'
+                }}>
+                  <h3 style={{
+                    margin: 0,
+                    color: '#374151',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span style={{
+                      width: '4px',
+                      height: '16px',
+                      backgroundColor: materialSource === 'client' ? '#8b5cf6' : '#f59e0b',
+                      borderRadius: '2px'
+                    }}></span>
+                    Matières Premières {materialSource === 'client' ? 'Client' : 'Stock'}
+                  </h3>
+                  
+                  <Button
+                    type="primary"
+                    onClick={handleAddMaterialToDrawerOrder}
+                    icon={<PlusOutlined />}
+                    style={{
+                      borderRadius: '8px',
+                      height: '40px',
+                      fontWeight: '500',
+                      boxShadow: '0 2px 4px rgba(59, 130, 246, 0.15)'
+                    }}
+                  >
+                    Ajouter une matière première
+                  </Button>
+                </div>
+
+                {currentMaterialsInDrawer.length > 0 ? (
+                  <div style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: '8px',
+                    border: '1px solid #e5e7eb',
+                    overflow: 'hidden'
+                  }}>
+                    <Table
+                      dataSource={currentMaterialsInDrawer}
+                      rowKey="matiere_id"
+                      pagination={false}
+                      size="middle"
+                      style={{ margin: 0 }}
+                      columns={[
+                        {
+                          title: <span style={{ fontWeight: '600', color: '#374151' }}>Matière</span>,
+                          dataIndex: "nom_matiere",
+                          key: "nom_matiere",
+                          render: (text) => (
+                            <span style={{ fontWeight: '500', color: '#1f2937' }}>{text}</span>
+                          )
+                        },
+                        {
+                          title: <span style={{ fontWeight: '600', color: '#374151' }}>Quantité</span>,
+                          dataIndex: "quantite",
+                          key: "quantite",
+                          render: (qty) => (
+                            <span style={{
+                              backgroundColor: '#ecfdf5',
+                              color: '#065f46',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              fontWeight: '500'
+                            }}>
+                              {qty}
+                            </span>
+                          )
+                        },
+                        ...(materialSource === "stock"
+                          ? [
+                              {
+                                title: <span style={{ fontWeight: '600', color: '#374151' }}>Prix Unitaire</span>,
+                                dataIndex: "prix_unitaire",
+                                key: "prix_unitaire",
+                                render: (prix) => (
+                                  <span style={{ fontWeight: '500', color: '#059669' }}>
+                                    {prix != null ? formatCurrency(prix) : "-"}
+                                  </span>
+                                ),
+                              },
+                              {
+                                title: <span style={{ fontWeight: '600', color: '#374151' }}>Prix Total</span>,
+                                dataIndex: "prix_total",
+                                key: "prix_total",
+                                render: (prix) => (
+                                  <span style={{
+                                    backgroundColor: '#ecfdf5',
+                                    color: '#065f46',
+                                    padding: '4px 8px',
+                                    borderRadius: '6px',
+                                    fontSize: '13px',
+                                    fontWeight: '600'
+                                  }}>
+                                    {prix != null ? formatCurrency(prix) : "-"}
+                                  </span>
+                                ),
+                              },
+                            ]
+                          : []),
+                        {
+                          title: <span style={{ fontWeight: '600', color: '#374151' }}>Actions</span>,
+                          key: "actions",
+                          render: (_, record) => (
+                            <Space>
+                              <Button
+                                icon={<EditOutlined />}
+                                size="small"
+                                style={{
+                                  borderRadius: '6px',
+                                  backgroundColor: '#f3f4f6',
+                                  borderColor: '#d1d5db'
+                                }}
+                                onClick={() => {
+                                  materialForm.setFieldsValue({
+                                    matiere_id: record.matiere_id,
+                                    quantite: record.quantite,
+                                  });
+                                  setEditingMaterial(record);
+                                  setIsMaterialModalVisible(true);
+                                }}
+                              />
+                              <Tooltip title="Supprimer">
+                                <Popconfirm
+                                  title="Êtes-vous sûr de vouloir supprimer cette matière?"
+                                  onConfirm={() =>
+                                    handleRemoveMaterialFromDrawerOrder(record.matiere_id)
+                                  }
+                                  okText="Oui"
+                                  cancelText="Non"
+                                  okButtonProps={{ style: { borderRadius: '6px' } }}
+                                  cancelButtonProps={{ style: { borderRadius: '6px' } }}
+                                >
+                                  <Button 
+                                    danger 
+                                    icon={<DeleteOutlined />} 
+                                    size="small"
+                                    style={{ borderRadius: '6px' }}
+                                  />
+                                </Popconfirm>
+                              </Tooltip>
+                            </Space>
+                          ),
+                        },
+                      ]}
+                    />
+                  </div>
+                ) : (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '40px 20px',
+                    color: '#6b7280',
+                    backgroundColor: '#f9fafb',
+                    borderRadius: '8px',
+                    border: '1px dashed #d1d5db'
+                  }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>📦</div>
+                    <p style={{ margin: 0, fontWeight: '500' }}>
+                      Aucune matière première ajoutée
+                    </p>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '14px' }}>
+                      Cliquez sur "Ajouter une matière première" pour commencer
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+            {/* Section Détails du Produit */}
+            <div style={{
+              backgroundColor: '#f8fafc',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '24px',
+              border: '1px solid #e2e8f0'
+            }}>
+              <h3 style={{
+                margin: '0 0 16px 0',
+                color: '#374151',
+                fontSize: '16px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{
+                  width: '4px',
+                  height: '16px',
+                  backgroundColor: '#ef4444',
+                  borderRadius: '2px'
+                }}></span>
+                Détails du Produit
+              </h3>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <Form.Item
+                  name="produit_id"
+                  label={<span style={{ fontWeight: '500', color: '#374151' }}>Produit</span>}
+                  rules={[
+                    { required: true, message: "Veuillez sélectionner un produit" },
+                  ]}
+                >
+                  <Select
+                    showSearch
+                    placeholder="🔍 Rechercher un produit..."
+                    filterOption={false}
+                    onSearch={(value) => debouncedSearch(value, "product")}
+                    loading={productSearchLoading}
+                    notFoundContent={
+                      productSearchLoading ? <Spin size="small" /> : null
+                    }
+                    options={productOptions}
+                    size="large"
+                    style={{ borderRadius: '8px' }}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="duree"
+                  label={<span style={{ fontWeight: '500', color: '#374151' }}>Durée (minutes)</span>}
+                  rules={[{ required: true, message: "Veuillez saisir la durée" }]}
+                >
+                  <InputNumber 
+                    min={1} 
+                    style={{ width: "100%", borderRadius: '8px' }}
+                    size="large"
+                    placeholder="⏱️"
+                  />
                 </Form.Item>
 
                 <Form.Item
                   name="quantite"
-                  label="Quantité"
-                  rules={[{ required: true, message: "Veuillez saisir une quantité" }]}
+                  label={<span style={{ fontWeight: '500', color: '#374151' }}>Quantité Produit</span>}
+                  rules={[
+                    {
+                      required: true,
+                      message: "Veuillez saisir la quantité du produit",
+                    },
+                  ]}
                 >
-                  <InputNumber min={1} style={{ width: "100%" }} />
+                  <InputNumber 
+                    min={0} 
+                    step={1} 
+                    style={{ width: "100%", borderRadius: '8px' }}
+                    size="large"
+                    placeholder="📊"
+                  />
                 </Form.Item>
-              </Form>
-            </Modal>
-
-
-            {/* RESTORED clientMaterials and selectedMaterials sections
-            {materialSource == 'client' && false && clientMaterials.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <Divider orientation="left">
-                  Matières Premières Disponibles pour ce Client
-                </Divider>
-                <List
-                  loading={loadingMaterials}
-                  dataSource={clientMaterials}
-                  renderItem={(material) => {
-                    console.log(material)
-                    const currentSelection = selectedMaterials.find(
-                      (sm) => sm.materialId === material.id
-                    );
-                    return (
-                      <List.Item>
-                        <Card style={{ width: "100%" }} size="small">
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                            }}
-                          >
-                            <div>
-                              <Tag color="blue">
-                                {material.type_matiere || material.materialType}
-                              </Tag>
-                              <span>
-                                {material?.description || material?.designation || ""} (
-                                {material?.thickness != null
-                                  ? `${material.thickness}mm`
-                                  : "-"}{" "}
-                                ×
-                                {material?.length != null
-                                  ? `${material.length}mm`
-                                  : "-"}{" "}
-                                ×
-                                {material?.width != null
-                                  ? `${material.width}mm`
-                                  : "-"}
-                                )
-                              </span>
-                              <div>
-                                <Text type="secondary">
-                                  Disponible: {material.remaining_quantity}
-                                </Text>
-                              </div>
-                            </div>
-                            <div
-                              style={{ display: "flex", alignItems: "center" }}
-                            >
-                              <InputNumber
-                                min={0} // Allow 0 to remove
-                                max={material.remaining_quantity}
-                                value={
-                                  currentSelection
-                                    ? currentSelection.quantite
-                                    : undefined
-                                }
-                                onChange={(value) =>
-                                  handleMaterialSelect(material.id, value)
-                                }
-                                addonAfter="pièces"
-                                placeholder="Qté"
-                                style={{ width: 140, marginRight: 8 }}
-                              />
-                              {currentSelection && (
-                                <Button
-                                  type="link"
-                                  danger
-                                  onClick={() =>
-                                    handleRemoveMaterial(material.id)
-                                  }
-                                >
-                                  Retirer
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </Card>
-                      </List.Item>
-                    );
-                  }}
-                />
-
-                {selectedMaterials.length > 0 && (
-                  <div style={{ marginTop: 16 }}>
-                    <Title level={5}>
-                      Matières sélectionnées pour ce travail
-                    </Title>
-                    <List
-                      size="small"
-                      bordered
-                      dataSource={selectedMaterials}
-                      renderItem={(item) => {
-                        const material = clientMaterials.find(
-                          (m) => m.id === item.materialId
-                        );
-                        return (
-                          <List.Item>
-                            <Text>
-                              {material?.designation ||
-                                material?.type_matiere ||
-                                "Matériau inconnu"}{" "}
-                              ({material?.thickness || "-"}mm) - {item.quantite}{" "}
-                              pièce(s)
-                            </Text>
-                          </List.Item>
-                        );
-                      }}
-                    />
-                  </div>
-                )}
               </div>
-            )} */}
 
-            <Form.Item
-              name="produit_id"
-              label="Produit"
-              rules={[
-                { required: true, message: "Veuillez sélectionner un produit" },
-              ]}
-            >
-              <Select
-                showSearch
-                placeholder="Rechercher un produit..."
-                filterOption={false}
-                onSearch={(value) => debouncedSearch(value, "product")}
-                loading={productSearchLoading}
-                notFoundContent={
-                  productSearchLoading ? <Spin size="small" /> : null
-                }
-                options={productOptions}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="duree"
-              label="Durée (minutes)"
-              rules={[{ required: true, message: "Veuillez saisir la durée" }]}
-            >
-              <InputNumber min={1} style={{ width: "100%" }} />
-            </Form.Item>
-
-            <Form.Item
-              name="quantite"
-              label="Quantité Produit" // Label changed for clarity
-              rules={[
-                {
-                  required: true,
-                  message: "Veuillez saisir la quantité du produit",
-                },
-              ]}
-            >
-              <InputNumber min={0} step={1} style={{ width: "100%" }} />
-            </Form.Item>
-            {/* A supprimer */}
-            {/* <Form.Item name="remise" label="Remise(%)">
-              <InputNumber
-                min={0}
-                step={1}
-                style={{ width: "100%" }}
-                placeholder="Ex: 5"
-              />
-            </Form.Item> */}
-
-            <Form.Item name="description" label="Description">
-              <TextArea rows={4} placeholder="Description du travail..." />
-            </Form.Item>
-
-            <Divider />
-
-            <Form.Item>
-              <div
-                style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
+              <Form.Item 
+                name="description" 
+                label={<span style={{ fontWeight: '500', color: '#374151' }}>Description</span>}
               >
-                <Button
-                  onClick={() => {
-                    setIsModalVisible(false);
-                    setSelectedMaterials([]);
-                    setClientMaterials([]);
-                    setCurrentMaterialsInDrawer([])
-                    form.resetFields();
-                  }}
-                >
-                  Annuler
-                </Button>
-                <Button type="primary" htmlType="submit">
-                  {editingWork ? "Mettre à jour" : "Ajouter"}
-                </Button>
-              </div>
-            </Form.Item>
-          </Form>
-        </Modal>
+                <TextArea 
+                  rows={4} 
+                  placeholder="📝 Description détaillée du travail..."
+                  style={{ borderRadius: '8px' }}
+                />
+              </Form.Item>
+            </div>
 
+            {/* Section Actions */}
+            <div style={{
+              borderTop: '1px solid #e5e7eb',
+              paddingTop: '20px',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px'
+            }}>
+              <Button
+                size="large"
+                style={{
+                  borderRadius: '8px',
+                  height: '44px',
+                  paddingLeft: '20px',
+                  paddingRight: '20px',
+                  fontWeight: '500'
+                }}
+                onClick={() => {
+                  setIsModalVisible(false);
+                  setSelectedMaterials([]);
+                  setClientMaterials([]);
+                  setCurrentMaterialsInDrawer([])
+                  form.resetFields();
+                }}
+              >
+                Annuler
+              </Button>
+              <Button 
+                type="primary" 
+                htmlType="submit"
+                size="large"
+                style={{
+                  borderRadius: '8px',
+                  height: '44px',
+                  paddingLeft: '24px',
+                  paddingRight: '24px',
+                  fontWeight: '500',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.15)'
+                }}
+              >
+                {editingWork ? "✅ Mettre à jour" : "➕ Ajouter"}
+              </Button>
+            </div>
+          </Form>
+
+          {/* Modal Material - Version Améliorée */}
+          <Modal
+            title={
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                fontSize: '16px',
+                fontWeight: '600'
+              }}>
+                <div style={{
+                  width: 36,
+                  height: 36,
+                  backgroundColor: '#10b981',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  📦
+                </div>
+                Ajouter une matière première {materialSource === 'client' ? 'pour ce client' : ''}
+              </div>
+            }
+            open={isMaterialModalVisible}
+            onOk={handleMaterialModalSave}
+            onCancel={() => {
+              setEditingMaterial(null);
+              setIsMaterialModalVisible(false);
+            }}
+            okText={editingMaterial ? "✏️ Modifier" : "➕ Ajouter"}
+            cancelText="Annuler"
+            okButtonProps={{ 
+              style: { 
+                borderRadius: '8px',
+                height: '40px',
+                fontWeight: '500'
+              } 
+            }}
+            cancelButtonProps={{ 
+              style: { 
+                borderRadius: '8px',
+                height: '40px'
+              } 
+            }}
+            width={600}
+            bodyStyle={{ padding: '24px' }}
+          >
+            <Form form={materialForm} layout="vertical">
+              <Form.Item
+                name="matiere_id"
+                label={<span style={{ fontWeight: '500', color: '#374151' }}>Matière Première</span>}
+                rules={[
+                  { required: true, message: "Veuillez sélectionner une matière première" },
+                  {
+                    validator: (_, value) => {
+                      const exists = currentMaterialsInDrawer.find(m => m.matiere_id === value);
+                      if (!editingMaterial && exists) {
+                        return Promise.reject(new Error("Cette matière est déjà ajoutée."));
+                      }
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
+              >
+                <Select
+                  placeholder="🔍 Sélectionner une matière première"
+                  disabled={!!editingMaterial}
+                  showSearch
+                  size="large"
+                  style={{ borderRadius: '8px' }}
+                  filterOption={(input, option) =>
+                    option.children.toLowerCase().includes(input.toLowerCase())
+                  }
+                >
+                  {(materialSource === 'stock' ? availableMaterial : clientMaterials).map((material) => (
+                    <Option key={material.id} value={material.id}>
+                      <div style={{ padding: '4px 0' }}>
+                        <div style={{ fontWeight: '500', color: '#1f2937' }}>
+                          {(material.nom_matiere || material.type_matiere)}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                          📏 {(material.longueur || material.length || "-")}mm × 
+                          {(material.largeur || material.width || "-")}mm × 
+                          {(material.epaisseur || material.thickness || "-")}mm
+                          {materialSource === 'stock' && (
+                            <span style={{ color: '#059669', fontWeight: '500' }}>
+                              {' '}• {formatCurrency(material.prix_unitaire)} TND
+                            </span>
+                          )}
+                          <span style={{ color: '#dc2626', fontWeight: '500' }}>
+                            {' '}• Stock: {material.remaining_quantity}
+                          </span>
+                        </div>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="quantite"
+                label={<span style={{ fontWeight: '500', color: '#374151' }}>Quantité</span>}
+                rules={[{ required: true, message: "Veuillez saisir une quantité" }]}
+              >
+                <InputNumber 
+                  min={1} 
+                  style={{ width: "100%", borderRadius: '8px' }}
+                  size="large"
+                  placeholder="Entrez la quantité"
+                />
+              </Form.Item>
+            </Form>
+          </Modal>
+        </Modal>
         {/* Bill Modal */}
         <Modal
           title={`Préparation ${billModalTarget=='bon'? 'du bon de livraison' : 'de la facture'}`}

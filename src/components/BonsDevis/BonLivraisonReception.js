@@ -28,6 +28,8 @@ import {
   FileSearchOutlined,
   PrinterOutlined,
   DeleteOutlined,
+  
+  ClearOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import { debounce } from "lodash";
@@ -519,12 +521,38 @@ const getMaterialTypeColor = (type) => {
         
           <Title level={2}> <FileDoneOutlined /> Bons de Livraison (Réception)</Title>
           <Space size="middle">
-            <Tooltip title="Rafraîchir">
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => fetchDeliveryNotes()}
-              />
-            </Tooltip>
+                   <Button
+                         icon={<DeleteOutlined />}
+                         size="large"
+                         style={{
+                           borderRadius: '12px',
+                           height: '48px',
+                           padding: '0 20px',
+                           border: '2px solid #ef4444',
+                           color: '#ef4444',
+                           fontWeight: 600,
+                           background: '#ffffff',
+                           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                           fontSize: '15px',
+                           boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
+                         }}
+                         onMouseEnter={(e) => {
+                           e.target.style.borderColor = '#dc2626';
+                           e.target.style.color = '#ffffff';
+                           e.target.style.background = '#ef4444';
+                           e.target.style.transform = 'translateY(-2px)';
+                           e.target.style.boxShadow = '0 8px 25px rgba(239, 68, 68, 0.25)';
+                         }}
+                         onMouseLeave={(e) => {
+                           e.target.style.borderColor = '#ef4444';
+                           e.target.style.color = '#ef4444';
+                           e.target.style.background = '#ffffff';
+                           e.target.style.transform = 'translateY(0)';
+                           e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.15)';
+                         }}
+                       >
+                         Corbeille
+                       </Button>
           </Space>
         </div>
     <Row gutter={16} style={{ marginBottom: 16 }}>
@@ -606,6 +634,7 @@ const getMaterialTypeColor = (type) => {
     fetchDeliveryNotes();
   }}
 >
+  {<ClearOutlined />}
 Effacer les filtres
 </Button>
 

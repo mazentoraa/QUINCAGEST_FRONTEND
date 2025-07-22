@@ -107,20 +107,21 @@ const ClientTable = ({ clients, on_edit, on_delete, loading }) => {
       key: 'actions',
       render: (_, record) => (
         <Space size="middle">
-          <Button 
-            type="primary" 
-            icon={<EditOutlined />} 
-            onClick={() => on_edit(record)}
-          >
-            Modifier
-          </Button>
-          <Button
+              <Button
             type="default"
             icon={<InboxOutlined />}
             onClick={() => view_client_materials(record)}
           >
             Matières
           </Button>
+          <Button 
+            type="primary" 
+            icon={<EditOutlined />} 
+            onClick={() => on_edit(record)}
+          >
+         
+          </Button>
+      
           <Popconfirm
             title="Êtes-vous sûr de vouloir supprimer ce client?"
             onConfirm={() => on_delete(record.id)}
@@ -128,7 +129,7 @@ const ClientTable = ({ clients, on_edit, on_delete, loading }) => {
             cancelText="Non"
           >
             <Button type="primary" danger icon={<DeleteOutlined />}>
-              Supprimer
+              
             </Button>
           </Popconfirm>
         </Space>

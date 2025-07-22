@@ -1,9 +1,13 @@
 .product-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    padding: 1rem 0;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  max-width: 800px; /* augmente ici selon tes besoins, ex: 600px → 800px */
+  width: 100%;
+  margin: 0 auto; /* centre horizontalement */
+}
+
   
   .form-group {
     display: flex;

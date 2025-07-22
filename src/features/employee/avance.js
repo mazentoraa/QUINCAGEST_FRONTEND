@@ -280,7 +280,7 @@ const AvancePage = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #f0f5ff, #e6f7ff)', padding: 24 }}>
+    <div style={{ minHeight: '100vh', background: 'white', padding: 24 }}>
       <Title level={3} style={{ textAlign: 'left', color: '#1890ff', marginBottom: 24 }}>
         💰 Gestion des Avances
       </Title>

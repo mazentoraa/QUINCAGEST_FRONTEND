@@ -198,7 +198,7 @@ const EmployeePayrollList = () => {
   };
 
   return (
-    <div style={{ padding: 24, background: '#f0f5ff', minHeight: '100vh' }}>
+    <div style={{ padding: 24, background: 'withe', minHeight: '100vh' }}>
       <Title level={3} style={{ color: '#1890ff' }}>📄 Fiches de Paie - Liste des Employés</Title>
 
       <Row gutter={16} style={{ marginBottom: 24 }}>

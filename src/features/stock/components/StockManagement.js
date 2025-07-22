@@ -36,10 +36,8 @@ function StockManagement() {
   return (
     <Content className="stock-management">
       <div className="stock-header">
-        <Title level={2}>Gestion des produits</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={showModal}>
-          Ajouter un produit
-        </Button>
+       
+
       </div>
       {successMessage && (
   <div style={{ background: "#f6ffed", border: "1px solid #b7eb8f", padding: "12px", marginBottom: "16px", borderRadius: "4px", color: "#389e0d" }}>
@@ -59,7 +57,7 @@ function StockManagement() {
 
 
       <Modal
-        title="Ajouter un nouveau produit"
+    
         open={isModalVisible}
         onCancel={handleCancel}
         footer={null}

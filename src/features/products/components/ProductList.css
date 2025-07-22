@@ -1,5 +1,6 @@
 .product-list {
     padding: 1rem 0;
+
   }
   
   .products-grid {
@@ -9,7 +10,7 @@
   }
   
   .no-products {
-    background-color: #f8f9fa;
+    background-color: #fcffff;
     border-radius: 8px;
     padding: 2rem;
     text-align: center;

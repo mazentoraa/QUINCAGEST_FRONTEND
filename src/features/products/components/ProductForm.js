@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"; // Import useEffect
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Input,
@@ -10,20 +10,29 @@ import {
   Typography,
   Card,
   Space,
-  Divider,
+  Row,
+  Col,
+  Tooltip,
+  Progress,
+  Badge,
 } from "antd";
 import {
-  UploadOutlined,
-  SaveOutlined,
   PlusOutlined,
+  SaveOutlined,
   CloseOutlined,
+  InfoCircleOutlined,
+  CameraOutlined,
+  TagOutlined,
+  ColumnHeightOutlined,
+  DollarOutlined,
+  FileTextOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 import { useProducts } from "../contexts/ProductContext";
-// ... (importations inchangées)
-//           message.error("Session expirée, veuillez vous reconnecter.");
+
 const { Option } = Select;
 const { TextArea } = Input;
-const { Title } = Typography;
+const { Text } = Typography;
 
 const ProductForm = ({
   onSuccess,
@@ -36,6 +45,31 @@ const ProductForm = ({
   const [fileList, setFileList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [formProgress, setFormProgress] = useState(0);
+
+  // Calcul du progrès du formulaire
+  const calculateProgress = () => {
+    const values = form.getFieldsValue();
+    const requiredFields = ['name'];
+    const optionalFields = ['code_produit', 'material', 'thickness', 'length', 'width', 'surface', 'price', 'description'];
+    
+    let filledRequired = 0;
+    let filledOptional = 0;
+
+    requiredFields.forEach(field => {
+      if (values[field] && values[field].toString().trim()) filledRequired++;
+    });
+
+    optionalFields.forEach(field => {
+      if (values[field] && values[field].toString().trim()) filledOptional++;
+    });
+
+    const progress = ((filledRequired / requiredFields.length) * 60) + 
+                    ((filledOptional / optionalFields.length) * 30) + 
+                    (imagePreview ? 10 : 0);
+    
+    setFormProgress(Math.min(100, progress));
+  };
 
   useEffect(() => {
     if (productToEdit) {
@@ -65,10 +99,12 @@ const ProductForm = ({
         setImagePreview(null);
         setFileList([]);
       }
+      calculateProgress();
     } else {
       form.resetFields();
       setImagePreview(null);
       setFileList([]);
+      setFormProgress(0);
     }
   }, [productToEdit, form]);
 
@@ -78,24 +114,51 @@ const ProductForm = ({
       const file = newFileList[0].originFileObj;
       if (file) {
         const reader = new FileReader();
-        reader.onload = () => setImagePreview(reader.result);
+        reader.onload = () => {
+          setImagePreview(reader.result);
+          calculateProgress();
+        };
         reader.readAsDataURL(file);
       } else {
         setImagePreview(newFileList[0].url || newFileList[0].thumbUrl);
+        calculateProgress();
       }
     } else {
       setImagePreview(null);
+      calculateProgress();
     }
   };
 
   const normFile = (e) => (Array.isArray(e) ? e : e?.fileList || []);
 
+  const onlyNumbersAndDot = (e) => {
+    const allowed = [
+      "Backspace",
+      "Tab",
+      "ArrowLeft",
+      "ArrowRight",
+      "Delete",
+      ...Array.from({ length: 10 }, (_, i) => `${i}`),
+      ".",
+    ];
+    if (!allowed.includes(e.key) && !(e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+    }
+  };
+
+  const handlePasteNumbersOnly = (e) => {
+    const value = e.clipboardData.getData("text");
+    if (!/^\d*\.?\d*$/.test(value)) {
+      e.preventDefault();
+    }
+  };
+
   const handleSubmit = async (values) => {
     try {
       setLoading(true);
+      const changedFields = {};
 
       if (productToEdit && productToEdit.id) {
-        const changedFields = {};
         if (values.name !== productToEdit.nom_produit)
           changedFields.nom_produit = values.name;
         if (values.code_produit !== productToEdit.code_produit)
@@ -106,9 +169,8 @@ const ProductForm = ({
           changedFields.epaisseur = values.thickness;
         if ((values.length || 0) !== productToEdit.longueur)
           changedFields.longueur = values.length || 0;
-        if (Number(values.width || 0) !== Number(productToEdit.largeur)) {
-          changedFields.largeur = Number(values.width || 0);
-        }
+        if ((values.width || 0) !== productToEdit.largeur)
+          changedFields.largeur = values.width || 0;
         if (values.surface !== productToEdit.surface)
           changedFields.surface = values.surface;
         if ((values.price || 0) !== productToEdit.prix)
@@ -126,13 +188,9 @@ const ProductForm = ({
               reader.readAsDataURL(currentFile.originFileObj);
             });
           }
-          console.log("width values: ", values.width, productToEdit.largeur);
-          console.log("Final update payload:", changedFields);
         } else if (productToEdit.image) {
           changedFields.image = "";
-          console.log("Final update payload:", changedFields);
         }
-        
 
         if (
           changedFields.hasOwnProperty("image") &&
@@ -148,8 +206,6 @@ const ProductForm = ({
         } else {
           message.info("Aucune modification détectée");
         }
-       
-
       } else {
         let imageData = null;
         if (fileList.length > 0) {
@@ -162,13 +218,11 @@ const ProductForm = ({
               reader.readAsDataURL(currentFile.originFileObj);
             });
           }
-          
-
         }
-        
+
         const productPayload = {
           nom_produit: values.name,
-          code_produit: values.code_produit, 
+          code_produit: values.code_produit,
           type_matiere: values.material,
           epaisseur: values.thickness,
           longueur: values.length || 0,
@@ -176,17 +230,15 @@ const ProductForm = ({
           surface: values.surface,
           prix: values.price || 0,
           description: values.description || "",
-          image: imageData ?? null 
+          image: imageData ?? null,
         };
-        console.log("Payload to send:", productPayload);
-
 
         await addProduct(productPayload);
-        if (onSuccess) onSuccess();
         message.success("Produit ajouté avec succès");
         form.resetFields();
         setFileList([]);
         setImagePreview(null);
+        setFormProgress(0);
       }
 
       if (onSuccess) onSuccess();
@@ -199,226 +251,554 @@ const ProductForm = ({
     }
   };
 
+  const SectionCard = ({ icon, title, description, color, children }) => (
+    <div style={{
+      backgroundColor: '#ffffff',
+      borderRadius: '16px',
+      padding: '24px',
+      marginBottom: '20px',
+      border: `2px solid ${color}15`,
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+      transition: 'all 0.3s ease'
+    }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '12px', 
+        marginBottom: '20px' 
+      }}>
+        <div style={{
+          width: '44px',
+          height: '44px',
+          backgroundColor: color,
+          borderRadius: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: `0 4px 12px ${color}25`
+        }}>
+          {React.cloneElement(icon, { 
+            style: { color: '#ffffff', fontSize: '20px' } 
+          })}
+        </div>
+        <div>
+          <Text style={{ 
+            fontSize: '18px', 
+            fontWeight: 700, 
+            color: '#1a1a1a',
+            display: 'block',
+            lineHeight: '1.2'
+          }}>
+            {title}
+          </Text>
+          {description && (
+            <Text style={{ 
+              fontSize: '13px', 
+              color: '#6b7280',
+              marginTop: '2px',
+              display: 'block'
+            }}>
+              {description}
+            </Text>
+          )}
+        </div>
+        {!productToEdit && title === "Informations générales" && (
+          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+            <div style={{ marginBottom: '8px' }}>
+              <Text style={{ color: '#6b7280', fontSize: '12px' }}>Progression</Text>
+            </div>
+            <Progress 
+              percent={formProgress} 
+              size="small" 
+              strokeColor={{
+                '0%': '#ff9a56',
+                '50%': '#ffad56',
+                '100%': '#52c41a',
+              }}
+              style={{ width: '120px' }}
+            />
+          </div>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+
+  const StyledFormItem = ({ children, ...props }) => (
+    <Form.Item {...props}>
+      {React.cloneElement(children, {
+        ...children.props,
+        style: {
+          borderRadius: '10px',
+          height: children.type?.displayName === 'TextArea' ? 'auto' : '44px',
+          border: '2px solid #e5e7eb',
+          transition: 'all 0.3s ease',
+          fontSize: '15px',
+          ...children.props.style
+        },
+        onFocus: (e) => {
+          e.target.style.borderColor = '#3b82f6';
+          e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+        },
+        onBlur: (e) => {
+          e.target.style.borderColor = '#e5e7eb';
+          e.target.style.boxShadow = 'none';
+        }
+      })}
+    </Form.Item>
+  );
+
+  const RequiredLabel = ({ children }) => (
+    <span style={{ fontWeight: '600', color: '#374151' }}>
+      {children} <span style={{ color: '#ef4444' }}>*</span>
+    </span>
+  );
+
+  const OptionalLabel = ({ children }) => (
+    <span style={{ fontWeight: '500', color: '#374151' }}>
+      {children}
+    </span>
+  );
+
   return (
-    <Card
-      title={
-        <Title level={4}>
-          {productToEdit ? "Modifier le produit" : "Ajouter un nouveau produit"}
-        </Title>
-      }
-      extra={isModal && <Button icon={<CloseOutlined />} onClick={onCancel} />}
-    >
-      <Form form={form} layout="vertical" onFinish={handleSubmit}>
-        <Form.Item
-          name="name"
-          label="Nom du produit"
-          rules={[
-            { required: true, message: "Le nom du produit est obligatoire" },
-          ]}
+    <div style={{ 
+      maxHeight: '85vh', 
+      overflowY: 'auto', 
+      paddingRight: '12px',
+      background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+      margin: isModal ? '-16px' : '0',
+      padding: '24px'
+    }}>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        scrollToFirstError
+        onValuesChange={calculateProgress}
+      >
+        {/* Section Informations générales */}
+        <SectionCard
+          icon={<TagOutlined />}
+          title="Informations générales"
+          description="Nom, code et type de matériau du produit"
+          color="#3b82f6"
         >
-          <Input placeholder="Nom du produit" />
-        </Form.Item>
-        <Form.Item
-          name="code_produit"
-          label="Code du produit"
-          rules={[]}
+          <Row gutter={[20, 0]}>
+            <Col xs={24} sm={12}>
+              <StyledFormItem
+                name="name"
+                label={<RequiredLabel>Nom du produit</RequiredLabel>}
+                rules={[{ required: true, message: "Le nom du produit est obligatoire" }]}
+              >
+                <Input 
+                  placeholder="🏷️ Entrez le nom du produit" 
+                  prefix={<TagOutlined style={{ color: '#9ca3af' }} />}
+                />
+              </StyledFormItem>
+            </Col>
+            <Col xs={24} sm={12}>
+              <StyledFormItem 
+                name="code_produit" 
+                label={
+                  <OptionalLabel>
+                    Code du produit
+                    <Tooltip title="Code unique pour identifier le produit">
+                      <InfoCircleOutlined style={{ marginLeft: 4, color: '#bfbfbf' }} />
+                    </Tooltip>
+                  </OptionalLabel>
+                }
+              >
+                <Input 
+                  placeholder="🔢 Ex: ACIER-001" 
+                  prefix={<TagOutlined style={{ color: '#9ca3af' }} />}
+                />
+              </StyledFormItem>
+            </Col>
+          </Row>
+
+          <StyledFormItem 
+            name="material" 
+            label={<OptionalLabel>Type de matériau</OptionalLabel>}
+          >
+            <Select 
+              placeholder="🔧 Sélectionner un matériau" 
+              allowClear
+              style={{ 
+                height: '44px',
+              }}
+            >
+              <Option value="acier">🔩 Acier</Option>
+              <Option value="acier_inoxydable">✨ Acier inoxydable</Option>
+              <Option value="aluminium">⚡ Aluminium</Option>
+              <Option value="laiton">🟡 Laiton</Option>
+              <Option value="cuivre">🟠 Cuivre</Option>
+              <Option value="acier_galvanise">🛡️ Acier galvanisé</Option>
+              <Option value="autre">❓ Autre</Option>
+            </Select>
+          </StyledFormItem>
+        </SectionCard>
+
+        {/* Section Dimensions */}
+        <SectionCard
+          icon={<ColumnHeightOutlined />}
+          title="Dimensions & Spécifications"
+          description="Mesures précises du produit en millimètres"
+          color="#10b981"
         >
-          <Input  />
-        </Form.Item>
+          <Row gutter={[20, 0]}>
+            <Col xs={12} sm={6}>
+              <Form.Item 
+                name="thickness" 
+                label={<OptionalLabel>Épaisseur (mm)</OptionalLabel>}
+              >
+                <InputNumber
+                  min={0}
+                  step={0.01}
+                  style={{ 
+                    width: "100%", 
+                    height: '44px',
+                    borderRadius: '10px',
+                    border: '2px solid #e5e7eb',
+                    fontSize: '15px'
+                  }}
+                  onKeyDown={onlyNumbersAndDot}
+                  onPaste={handlePasteNumbersOnly}
+                  placeholder="📏 1.5"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={12} sm={6}>
+              <Form.Item 
+                name="length" 
+                label={<OptionalLabel>Longueur (mm)</OptionalLabel>}
+              >
+                <InputNumber
+                  min={0}
+                  step={0.01}
+                  style={{ 
+                    width: "100%", 
+                    height: '44px',
+                    borderRadius: '10px',
+                    border: '2px solid #e5e7eb',
+                    fontSize: '15px'
+                  }}
+                  onKeyDown={onlyNumbersAndDot}
+                  onPaste={handlePasteNumbersOnly}
+                  placeholder="📐 1000"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={12} sm={6}>
+              <Form.Item 
+                name="width" 
+                label={<OptionalLabel>Largeur (mm)</OptionalLabel>}
+              >
+                <InputNumber
+                  min={0}
+                  step={0.01}
+                  style={{ 
+                    width: "100%", 
+                    height: '44px',
+                    borderRadius: '10px',
+                    border: '2px solid #e5e7eb',
+                    fontSize: '15px'
+                  }}
+                  onKeyDown={onlyNumbersAndDot}
+                  onPaste={handlePasteNumbersOnly}
+                  placeholder="📏 500"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={12} sm={6}>
+              <Form.Item 
+                name="surface" 
+                label={<OptionalLabel>Surface (m²)</OptionalLabel>}
+              >
+                <InputNumber
+                  min={0}
+                  step={0.01}
+                  style={{ 
+                    width: "100%", 
+                    height: '44px',
+                    borderRadius: '10px',
+                    border: '2px solid #e5e7eb',
+                    fontSize: '15px'
+                  }}
+                  onKeyDown={onlyNumbersAndDot}
+                  onPaste={handlePasteNumbersOnly}
+                  placeholder="📐 2.5"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </SectionCard>
 
-        <Form.Item name="material" label="Type de matériau">
-          <Select placeholder="Sélectionner un matériau">
-            <Option value="acier">Acier</Option>
-            <Option value="acier_inoxydable">Acier inoxydable</Option> 
-            <Option value="aluminium">Aluminium</Option>
-            <Option value="laiton">Laiton</Option>
-            <Option value="cuivre">Cuivre</Option>
-            <Option value="acier_galvanise">Acier galvanisé</Option>
-            <Option value="autre">Autre</Option>
-          </Select>
-        </Form.Item>
+        {/* Section Prix et Description */}
+        <SectionCard
+          icon={<DollarOutlined />}
+          title="Prix & Description"
+          description="Informations commerciales du produit"
+          color="#f59e0b"
+        >
+          <Row gutter={[20, 0]}>
+            <Col xs={24} sm={12}>
+              <Form.Item 
+                name="price" 
+                label={<OptionalLabel>Prix </OptionalLabel>}
+              >
+                <InputNumber
+                  min={0}
+                  step={0.01}
+                  style={{ 
+                    width: "100%", 
+                    height: '44px',
+                    borderRadius: '10px',
+                    border: '2px solid #e5e7eb',
+                    fontSize: '15px'
+                  }}
+                  onKeyDown={onlyNumbersAndDot}
+                  onPaste={handlePasteNumbersOnly}
+                  placeholder="💰 100.00"
+                 
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-        <Divider orientation="left">Dimensions</Divider>
-
-        <Space style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-          <Form.Item name="thickness" label="Épaisseur (mm)">
-            <InputNumber min={0} step={1} style={{ width: 160 }}
-            onKeyDown={(e) => {
-    const allowed = [
-      "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
-      ...Array.from({ length: 10 }, (_, i) => `${i}`),
-      "."
-    ];
-    if (
-      !allowed.includes(e.key) &&
-      !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
-    ) {
-      e.preventDefault();
-    }
-  }}
-  onPaste={(e) => {
-    const value = e.clipboardData.getData("text");
-    if (!/^\d*\.?\d*$/.test(value)) {
-      e.preventDefault();
-    }
-  }}
+          <Form.Item 
+            name="description" 
+            label={<OptionalLabel>Description</OptionalLabel>}
+          >
+            <TextArea
+              rows={5}
+              placeholder="📝 Description détaillée du produit..."
+              showCount
+              maxLength={500}
+              style={{ 
+                borderRadius: '12px',
+                resize: 'none',
+                border: '2px solid #e5e7eb',
+                fontSize: '15px',
+                transition: 'all 0.3s ease'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e5e7eb';
+                e.target.style.boxShadow = 'none';
+              }}
             />
           </Form.Item>
+        </SectionCard>
 
-          <Form.Item name="length" label="Longueur (mm)">
-            <InputNumber min={0} step={1} style={{ width: 160 }} onKeyDown={(e) => {
-    const allowed = [
-      "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
-      ...Array.from({ length: 10 }, (_, i) => `${i}`),
-      "."
-    ];
-    if (
-      !allowed.includes(e.key) &&
-      !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
-    ) {
-      e.preventDefault();
-    }
-  }}
-  onPaste={(e) => {
-    const value = e.clipboardData.getData("text");
-    if (!/^\d*\.?\d*$/.test(value)) {
-      e.preventDefault();
-    }
-  }} />
-          </Form.Item>
-
-          <Form.Item name="width" label="Largeur (mm)">
-            <InputNumber min={0} step={1} style={{ width: 160 }} onKeyDown={(e) => {
-    const allowed = [
-      "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
-      ...Array.from({ length: 10 }, (_, i) => `${i}`),
-      "."
-    ];
-    if (
-      !allowed.includes(e.key) &&
-      !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
-    ) {
-      e.preventDefault();
-    }
-  }}
-  onPaste={(e) => {
-    const value = e.clipboardData.getData("text");
-    if (!/^\d*\.?\d*$/.test(value)) {
-      e.preventDefault();
-    }
-  }} />
-          </Form.Item>
-
-          <Form.Item name="surface" label="Surface (m²)">
-            <InputNumber min={0} step={1} style={{ width: 160 }} onKeyDown={(e) => {
-    const allowed = [
-      "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
-      ...Array.from({ length: 10 }, (_, i) => `${i}`),
-      "."
-    ];
-    if (
-      !allowed.includes(e.key) &&
-      !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
-    ) {
-      e.preventDefault();
-    }
-  }}
-  onPaste={(e) => {
-    const value = e.clipboardData.getData("text");
-    if (!/^\d*\.?\d*$/.test(value)) {
-      e.preventDefault();
-    }
-  }} />
-          </Form.Item>
-        </Space>
-
-        <Divider />
-
-        <Form.Item name="price" label="Prix">
-          <InputNumber
-            min={0}
-            step={1}
-        
-            style={{ width: 200 }}
-            onKeyDown={(e) => {
-              const allowed = [
-                "Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete",
-                ...Array.from({ length: 10 }, (_, i) => `${i}`),
-                "."
-              ];
-              if (
-                !allowed.includes(e.key) &&
-                !(e.ctrlKey || e.metaKey) // allow Ctrl+V, etc.
-              ) {
-                e.preventDefault();
-              }
-            }}
-            onPaste={(e) => {
-              const value = e.clipboardData.getData("text");
-              if (!/^\d*\.?\d*$/.test(value)) {
-                e.preventDefault();
-              }
-            }}
-          />
-        </Form.Item>
-
-        <Form.Item name="description" label="Description">
-          <TextArea
-            rows={4}
-            placeholder="Description détaillée du produit"
-            showCount
-            maxLength={500}
-          />
-        </Form.Item>
-
-        <Form.Item
-          name="upload"
-          label="Image du produit"
-          valuePropName="fileList"
-          getValueFromEvent={normFile}
+        {/* Section Image */}
+        <SectionCard
+          icon={<CameraOutlined />}
+          title="Image du produit"
+          description="Formats supportés: JPG, PNG • Taille max: 5MB"
+          color="#722ed1"
         >
-          <Upload
-            listType="picture-card"
-            fileList={fileList}
-            onChange={handleUploadChange}
-            beforeUpload={() => false}
-            maxCount={1}
-          >
-            {fileList.length < 1 && (
-              <div>
-                <PlusOutlined />
-                <div style={{ marginTop: 8 }}>Télécharger</div>
-              </div>
+        <Form.Item
+  name="upload"
+  valuePropName="fileList"
+  getValueFromEvent={normFile}
+>
+  <Upload
+    listType="picture-card"
+    fileList={fileList}
+    onChange={handleUploadChange}
+    beforeUpload={() => false}
+    maxCount={1}
+    accept="image/png,image/jpeg,image/jpg,image/webp"
+    className="custom-upload"
+  >
+    {fileList.length < 1 && (
+      <div className="upload-content">
+        
+        <div className="upload-text">
+          📸 Ajouter une image 
+        </div>
+     
+      </div>
+    )}
+  </Upload>
+</Form.Item>
+
+{/* CSS à ajouter */}
+<style jsx>{`
+  .custom-upload .ant-upload-select {
+    background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+    border: 2px dashed #d9d9d9;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .custom-upload .ant-upload-select:hover {
+    border-color: #722ed1;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8f0ff 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(114, 46, 209, 0.15);
+  }
+
+  .upload-content {
+    text-align: center;
+    padding: 20px;
+  }
+
+  .upload-icon {
+    font-size: 24px;
+    color: #722ed1;
+    margin-bottom: 12px;
+    transition: transform 0.2s ease;
+  }
+
+  .custom-upload .ant-upload-select:hover .upload-icon {
+    transform: scale(1.1);
+  }
+
+  .upload-text {
+    color: #722ed1;
+    font-weight: 500;
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+
+  .upload-hint {
+    color: #8c8c8c;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  .custom-upload .ant-upload-list-picture-card-container {
+    width: 100%;
+  }
+
+  .custom-upload .ant-upload-list-picture-card .ant-upload-list-item {
+    border-radius: 12px;
+  }
+`}</style>
+          {imagePreview && (
+            <div style={{ 
+              textAlign: "center", 
+              marginTop: '24px',
+              padding: '20px',
+              background: 'linear-gradient(135deg, #fafafa, #f5f5f5)',
+              borderRadius: '16px',
+            }}>
+              <Badge 
+                status="success" 
+                text={
+                  <span style={{ color: '#52c41a', fontWeight: 500 }}>
+                    <CheckCircleOutlined /> Image ajoutée avec succès
+                  </span>
+                }
+                style={{ marginBottom: '16px', display: 'block' }}
+              />
+              <img
+                src={imagePreview}
+                alt="Aperçu du produit"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: 300,
+                  borderRadius: 16,
+                  objectFit: "contain",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                  border: '4px solid white',
+                }}
+              />
+            </div>
+          )}
+        </SectionCard>
+
+        {/* Actions */}
+        <div style={{ 
+          backgroundColor: '#ffffff',
+          borderRadius: '16px',
+          padding: '24px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+          border: '1px solid #e5e7eb'
+        }}>
+          <div style={{ 
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '16px',
+            alignItems: 'center'
+          }}>
+            {onCancel && (
+              <Button 
+                onClick={onCancel}
+                size="large"
+                style={{
+                  borderRadius: '10px',
+                  height: '48px',
+                  padding: '0 28px',
+                  border: '2px solid #e5e7eb',
+                  color: '#6b7280',
+                  fontWeight: 600,
+                  fontSize: '15px',
+                  minWidth: '120px',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.borderColor = '#9ca3af';
+                  e.target.style.color = '#374151';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.borderColor = '#e5e7eb';
+                  e.target.style.color = '#6b7280';
+                }}
+              >
+                ❌ Annuler
+              </Button>
             )}
-          </Upload>
-        </Form.Item>
-
-        {imagePreview && (
-          <img
-            src={imagePreview}
-            alt="Aperçu"
-            style={{
-              maxWidth: "100%",
-              maxHeight: "200px",
-              marginBottom: 16,
-              objectFit: "contain",
-            }}
-          />
-        )}
-
-        <Form.Item>
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={loading}
-            icon={<SaveOutlined />}
-            size="large"
-          >
-            {productToEdit ? "Modifier le produit" : "Ajouter le produit"}
-          </Button>
-        </Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              size="large"
+              style={{
+                borderRadius: '10px',
+                height: '48px',
+                padding: '0 32px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '15px',
+                boxShadow: '0 6px 20px rgba(59, 130, 246, 0.25)',
+                minWidth: '140px',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 8px 25px rgba(59, 130, 246, 0.35)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 6px 20px rgba(59, 130, 246, 0.25)';
+              }}
+            >
+              {productToEdit ? "✅ Mettre à jour" : "➕ Créer le produit"}
+            </Button>
+          </div>
+          
+          <div style={{
+            marginTop: '16px',
+            textAlign: 'center',
+            color: '#9ca3af',
+            fontSize: '13px',
+            fontStyle: 'italic'
+          }}>
+            💡 Les champs marqués d'un * sont obligatoires
+          </div>
+        </div>
       </Form>
-    </Card>
+    </div>
   );
 };
 

@@ -16,6 +16,7 @@ import {
   Popconfirm,
   AutoComplete,
   Empty,
+
   Spin,
   message,
   Switch,
@@ -26,6 +27,7 @@ import {
   PrinterOutlined,
   SaveOutlined,
   EditOutlined,
+   ClearOutlined,
   DeleteOutlined,
 } from "@ant-design/icons";
 import RawMaterialService from "../../clientManagement/services/RawMaterialService";
@@ -35,6 +37,8 @@ import ClientMaterialService from "../services/ClientMaterialService";
 import ClientMaterialPdfService from "../services/ClientMaterialPdfService";
 import moment from "moment";
 import debounce from "lodash/debounce";
+import { GoldOutlined } from "@ant-design/icons";
+
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -281,12 +285,6 @@ const fetchClientMaterials = async (clientId) => {
 
     return [
       ...clientColumn,
-      // {
-      //   title: "N° Bon de livraison",
-      //   dataIndex: "numero_bon",
-      //   key: "numero_bon",
-      //   render: (numero_bon, record) => record.numero_bon || "-",
-      // },
       {
         title: "Date de réception",
         dataIndex: "reception_date",
@@ -663,8 +661,6 @@ const handleEdit = (material) => {
       });
     }
   };
-
-  // Save bill handler
   const handleSaveBill = async () => {
     try {
       if (!billableData || billableData.length === 0) {
@@ -676,9 +672,7 @@ const handleEdit = (material) => {
         notification.error({ message: "Client non sélectionné" });
         return;
       }
-
       const materialIds = billableData.map((material) => material.id);
-
       const invoiceData = {
         client: selectedClient.id,
         matieres: materialIds,
@@ -689,33 +683,21 @@ const handleEdit = (material) => {
         tax_rate: 19, // Default tax rate
         notes: "Facture générée automatiquement",
       };
-
-      // If editing (invoice number exists in the database), update instead of create
       let response;
-
-      // Show loading message
       message.loading({
         content: "Enregistrement de la facture...",
         key: "savingInvoice",
       });
-
       response = await ClientMaterialService.createMaterialInvoice(invoiceData);
-
-      // Update the invoice number with the generated one (if it was empty)
       if (response && response.numero_bon) {
         setInvoiceNumber(response.numero_bon);
       }
-
       message.success({
         content: "Facture enregistrée avec succès",
         key: "savingInvoice",
         duration: 2,
       });
-
-      // Close the modal after successful save
       setIsBillModalVisible(false);
-
-      // Clear selected rows after successful save
       setSelectedRowKeys([]);
       setSelectedRowsData([]);
     } catch (err) {
@@ -728,9 +710,6 @@ const handleEdit = (material) => {
       });
     }
   };
-
-// Form submission handler
-// Form submission handler
 const handleSubmit = async (values) => {
   try {
     const clientId = selectedClient?.id || editingMaterial?.client_id;
@@ -742,67 +721,39 @@ const handleSubmit = async (values) => {
       });
       return;
     }
-
     const formattedValues = {
       ...values,
       reception_date: moment(values.reception_date).format("YYYY-MM-DD"),
       client_id: clientId,
     };
-
     let response;
     if (editingMaterial) {
-      // Mise à jour
       response = await RawMaterialService.update_material(editingMaterial.id, formattedValues);
-
       notification.success({
         message: "Succès",
         description: "Matière première modifiée avec succès.",
       });
-      
-      // Fermer le modal et réinitialiser le formulaire
       form.resetFields();
       setEditingMaterial(null);
       setIsModalVisible(false);
-
-      // **REFRESH AUTOMATIQUE APRÈS MISE À JOUR**
-      // Option 1: Refresh complet de la page
       window.location.reload();
-      
-      // Option 2: Ou si vous préférez juste recharger les données sans refresh complet
-      // Décommentez les lignes suivantes et commentez window.location.reload()
-      /*
-      if (viewAllMaterials) {
-        await fetchAllMaterials();
-      } else if (selectedClient) {
-        await fetchClientMaterials(selectedClient.id);
-      }
-      */
-
     } else {
-      // Création
       response = await RawMaterialService.add_material_to_client(clientId, formattedValues);
-
       const clientName = selectedClient?.nom_client || selectedClient?.name || selectedClient?.client_name || `Client ID: ${clientId}`;
-
       const newMaterial = {
         ...response,
         display_type: getMaterialTypeLabel(response.type_matiere),
         client_name: clientName,
       };
-
       setMaterials((prev) => [...prev, newMaterial]);
-
       notification.success({
         message: "Succès",
         description: "Matière première ajoutée avec succès.",
       });
-
-      // Fermer le modal et réinitialiser le formulaire
       form.resetFields();
       setEditingMaterial(null);
       setIsModalVisible(false);
     }
-
   } catch (error) {
     console.error("Erreur lors de la sauvegarde :", error);
     notification.error({
@@ -811,23 +762,16 @@ const handleSubmit = async (values) => {
     });
   }
 };
-
-  // Cancel form handler
   const handleCancel = () => {
     setIsModalVisible(false);
     form.resetFields();
     setEditingMaterial(null);
-  };
-
-  // Generate invoice number
+  }
   const generateInvoiceNumber =  async () => {
      try {
         const currentYear = new Date().getFullYear();
         const response = await ClientMaterialService.getAllMaterialInvoices();
-        
-        // Vérification et normalisation des données
-        let allInvoices = [];
-        
+        let allInvoices = [];      
         if (Array.isArray(response)) {
             allInvoices = response;
         } else if (response?.data && Array.isArray(response.data)) {
@@ -838,8 +782,6 @@ const handleSubmit = async (values) => {
             console.error('Format de réponse inattendu:', response);
             return `BL-${currentYear}-00001`; // Fallback
         }
-        
-        // Filtrage et calcul du numéro
         const currentYearInvoices = allInvoices.filter(invoice => 
             invoice?.numero_bon?.startsWith(`BL-${currentYear}-`)
         );
@@ -860,8 +802,6 @@ const handleSubmit = async (values) => {
         return `BL-${new Date().getFullYear()}-00001`; // Fallback en cas d'erreur
     }
   };
-
-  // Row selection for table
   const rowSelection = {
     selectedRowKeys,
     onChange: (keys, rows) => {
@@ -869,7 +809,6 @@ const handleSubmit = async (values) => {
       setSelectedRowsData(rows);
     },
   };
-
   return (
     <div className="client-materials-container">
       <Card>
@@ -880,13 +819,74 @@ const handleSubmit = async (values) => {
             marginBottom: 20,
           }}
         >
-          <div>
-            <Title level={2}>Matières Premières Client</Title>
-            <Text type="secondary">
-              Gestion des matières premières reçues des clients pour la
-              production
-            </Text>
-          </div>
+          
+         <div style={{ marginBottom: 32, position: 'relative' }}>
+<Space size="large" align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
+  
+  <Space size="large" align="center">
+    
+    <div style={{ position: 'relative' }}>
+      
+      <div
+        style={{
+          width: 48,
+          height: 48,
+          background: "#1890ff",
+          borderRadius: 16,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <GoldOutlined style={{ fontSize: 24, color: "#fff" }} />
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          top: -8,
+          right: -8,
+          background: "#52c41a",
+          color: "white",
+          fontSize: 12,
+          fontWeight: "bold",
+          borderRadius: "50%",
+          width: 20,
+          height: 20,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: "2px solid white",
+        }}
+      >
+        {materials?.length || 0}
+      </div>
+    </div>
+
+    <div>
+      <Title
+        level={2}
+        style={{
+          margin: 0,
+          fontWeight: 700,
+          color: "#1890ff",
+          fontSize: "28px",
+        }}
+      >
+        Matières Premières Client
+      </Title>
+      <Text type="secondary">
+        Gestion des matières premières reçues des clients pour la production
+        <span style={{ color: "#52c41a", marginLeft: 8 }}>●</span>
+      </Text>
+    </div>
+  </Space>
+  
+
+  
+</Space>
+
+</div>
         </div>{" "}
         <div style={{ marginBottom: 20 }}>
           <div
@@ -897,42 +897,11 @@ const handleSubmit = async (values) => {
               marginBottom: 10,
             }}
           >
-            {/* <Title level={4}>Rechercher un client</Title>
-            <div>
-              <Switch
-                checked={viewAllMaterials}
-                onChange={handleToggleViewAllMaterials}
-                style={{ marginRight: 8 }}
-              />
-              <Text>Voir toutes les matières premières</Text>
-            </div> */}
           </div>
-
-          
-            {/* <div style={{ display: "flex", gap: 16 }}>
-              <AutoComplete
-                style={{ width: "100%" }}
-                options={searchOptions}
-                onSearch={(value) => debouncedSearch(value)}
-                onSelect={handleClientSelect}
-                // placeholder="Rechercher par nom ou ID client"
-                value={searchText}
-                onChange={setSearchText}
-                notFoundContent={
-                  clientSearchLoading ? (
-                    <Spin size="small" />
-                  ) : (
-                    "Aucun client trouvé"
-                  )
-                }
-              />
-            </div> */}
-          
         </div>
         {(selectedClient ||  materials.length > 0) && (
           <>
             {" "}
-            {/* Show client info card only when a client is selected and not when viewing all materials only */}
             {selectedClient && (
               <div className="client-info" style={{ marginBottom: 16 }}>
                 <Card size="small" title="Client sélectionné">
@@ -955,8 +924,6 @@ const handleSubmit = async (values) => {
                 </Card>
               </div>
             )}
-            {/* Show status message when in "view all" mode */}
-            
             <div
               style={{
                 display: "flex",
@@ -975,50 +942,24 @@ const handleSubmit = async (values) => {
                     Ajouter une matière première
                   </Button>
                 )}
-
-                {/* Add filter dropdown */}
-                {/* <Select
-                  style={{ width: 200 }}
-                  placeholder="Filtrer par type de matériau"
-                  onChange={handleMaterialTypeFilterChange}
-                  value={materialTypeFilter}
-                  allowClear
-                >
-                  {material_types.map((type) => (
-                    <Option key={type.value} value={type.value}>
-                      <Tag
-                        color={getMaterialTypeColor(type.value)}
-                        style={{ marginRight: 5 }}
-                      >
-                        {type.label}
-                      </Tag>
-                    </Option>
-                  ))}
-                </Select> */}
               </div>
-
-              {/* Only show right-side button if we have selections */}
               {selectedRowKeys.length > 0 ? (
                 <Button type="primary" onClick={handleProcessSelectedMaterials}>
                   Préparer le bon de livraison ({selectedRowKeys.length}{" "}
                   matière(s) sélectionnée(s))
                 </Button>
               ) : (
-                /* Empty div to maintain flex layout when no selections */
                 <div></div>
               )}
             </div>
             <div style={{ marginBottom: 16 }}>
   <Space size="middle">
-    {/* Filtre par nom de client */}
     <Input
       placeholder="Filtrer par nom de client"
       value={clientNameFilter}
       onChange={(e) => setClientNameFilter(e.target.value)}
       style={{ width: 200 }}
     />
-
-    {/* Filtre par date */}
     <DatePicker
       placeholder="Du"
       value={startDateFilter}
@@ -1031,8 +972,6 @@ const handleSubmit = async (values) => {
       onChange={(date) => setEndDateFilter(date)}
       format="YYYY-MM-DD"
     />
-
-    {/* Filtre par type de matériau */}
     <Select
       style={{ width: 200 }}
       placeholder="Filtrer par type de matériau"
@@ -1046,16 +985,51 @@ const handleSubmit = async (values) => {
         </Option>
       ))}
     </Select>
-
-    {/* Réinitialiser les filtres */}
     <Button onClick={() => {
       setClientNameFilter("");
       setStartDateFilter(null);
       setEndDateFilter(null);
       setMaterialTypeFilter(null);
+      
     }}>
+       {<ClearOutlined />}
+         
      Effacer les filtres
     </Button>
+    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+  <Button
+    icon={<DeleteOutlined />}
+    size="large"
+    style={{
+      borderRadius: '12px',
+      height: '35px',
+      padding: '0 20px',
+      border: '2px solid #ef4444',
+      color: '#ef4444',
+      fontWeight: 600,
+      background: '#ffffff',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      fontSize: '15px',
+      boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
+    }}
+    onMouseEnter={(e) => {
+      e.target.style.borderColor = '#dc2626';
+      e.target.style.color = '#ffffff';
+      e.target.style.background = '#ef4444';
+      e.target.style.transform = 'translateY(-2px)';
+      e.target.style.boxShadow = '0 8px 25px rgba(239, 68, 68, 0.25)';
+    }}
+    onMouseLeave={(e) => {
+      e.target.style.borderColor = '#ef4444';
+      e.target.style.color = '#ef4444';
+      e.target.style.background = '#ffffff';
+      e.target.style.transform = 'translateY(0)';
+      e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.15)';
+    }}
+  >
+    Corbeille
+  </Button>
+</div>
   </Space>
 </div>
           <Table
@@ -1108,7 +1082,6 @@ const handleSubmit = async (values) => {
     </div>
   </div>
 )}
-
           <div style={{ marginBottom: 16 }}>
             <Title level={4}>Informations livraison</Title>
             <div style={{ display: "flex", gap: 16 }}>
@@ -1298,21 +1271,6 @@ const handleSubmit = async (values) => {
             rowKey="id"
             pagination={false}
             columns={[
-              // {
-              //   title: "N° Bon de livraison",
-              //   dataIndex: "numero_bon",
-              //   key: "numero_bon",
-              //   render: (text, record, idx) => (
-              //     <Input
-              //       value={record.numero_bon}
-              //       onChange={(e) => {
-              //         const newData = [...billableData];
-              //         newData[idx].numero_bon = e.target.value;
-              //         setBillableData(newData);
-              //       }}
-              //     />
-              //   ),
-              // },
               {
                 title: "Date de réception",
                 dataIndex: "reception_date",

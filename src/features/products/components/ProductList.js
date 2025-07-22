@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Row,
   Col,
@@ -11,18 +11,25 @@ import {
   Card,
   Button,
   Input,
+  Badge,
+  Modal,
 } from "antd";
 import {
   ReloadOutlined,
   FilterOutlined,
   SearchOutlined,
-  CloseOutlined,
+  ClearOutlined,
+  AppstoreOutlined,
+  DeleteOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 import { useProducts } from "../contexts/ProductContext";
+import { StockContext } from "../../stock/contexts/StockContext";
 import ProductCard from "./ProductCard";
+import ProductForm from "./ProductForm";
 
 const { Option } = Select;
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { Search } = Input;
 
 const ProductList = ({ onDuplicateSuccess }) => {
@@ -34,6 +41,11 @@ const ProductList = ({ onDuplicateSuccess }) => {
     filterByMaterial,
     refreshProducts,
   } = useProducts();
+
+  // Integration StockManagement
+  const { filteredProducts } = useContext(StockContext);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [displayedProducts, setDisplayedProducts] = useState([]);
@@ -69,18 +81,45 @@ const ProductList = ({ onDuplicateSuccess }) => {
     setDisplayedProducts(searchFiltered);
   }, [products, searchTerm, selectedMaterial]);
 
-  const handleSearch = (value) => {
-    setSearchTerm(value);
-  };
+  // Gestion du message de succès
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(""), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
-  const handleMaterialFilter = (value) => {
-    filterByMaterial(value);
-  };
-
+  const handleSearch = (value) => setSearchTerm(value);
+  const handleMaterialFilter = (value) => filterByMaterial(value);
   const handleClearFilters = () => {
     setSearchTerm("");
     filterByMaterial("all");
   };
+
+  // Gestion du modal
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const handleProductAdded = () => {
+    setIsModalVisible(false);
+    setSuccessMessage(" ✅ Produit créé avec succès");
+  };
+
+  const handleDuplicateSuccess = () => {
+    console.log("Received onDuplicateSuccess in ProductList!");
+    setSuccessMessage(" ✅ Produit dupliqué avec succès");
+    if (onDuplicateSuccess) {
+      onDuplicateSuccess();
+    }
+  };
+
+  const hasActiveFilters =
+    searchTerm || (selectedMaterial && selectedMaterial !== "all");
 
   const materialOptions = [
     { value: "all", label: "Tous les matériaux" },
@@ -96,85 +135,313 @@ const ProductList = ({ onDuplicateSuccess }) => {
   if (error) {
     return (
       <Alert
-        message="Erreur"
+        message="Erreur de chargement"
         description="Impossible de charger les produits. Veuillez réessayer plus tard."
         type="error"
         showIcon
+        action={
+          <Button icon={<ReloadOutlined />} onClick={refreshProducts}>
+            Réessayer
+          </Button>
+        }
+        style={{
+          margin: "24px",
+          borderRadius: "12px",
+          border: "1px solid #ffccc7",
+        }}
       />
     );
   }
 
   return (
-    <Card className="product-list-container">
-      <Space direction="vertical" size="large" style={{ width: "100%" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "10px",
-          }}
-        >
-          <Title level={4} style={{ margin: 0 }}>
-            Liste des produits ({displayedProducts.length})
-          </Title>
-          <Space wrap>
-            <Search
-              placeholder="Rechercher un produit..."
-              allowClear
-              value={searchTerm}
-              onSearch={handleSearch}
-              onChange={(e) => handleSearch(e.target.value)}
-              style={{ width: 250 }}
-            />
-            <Select
-              style={{ width: 200 }}
-              placeholder="Filtrer par matériau"
-              onChange={handleMaterialFilter}
-              value={selectedMaterial || "all"}
-              suffixIcon={<FilterOutlined />}
-            >
-              {materialOptions.map((option) => (
-                <Option key={option.value} value={option.value}>
-                  {option.label}
-                </Option>
-              ))}
-            </Select>
+    <div style={{ padding: "32px 48px", background: "#f7f8fa", minHeight: "100vh" }}>
+      {/* Message de succès */}
+      {successMessage && (
+        <div style={{ 
+          background: "#f6ffed", 
+          border: "1px solid #b7eb8f", 
+          padding: "12px", 
+          marginBottom: "24px", 
+          borderRadius: "8px", 
+          color: "#389e0d",
+          fontWeight: "500"
+        }}>
+          {successMessage}
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ marginBottom: 32, position: 'relative' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Space size="large" align="center">
+            <div style={{ position: 'relative' }}>
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  background: "#1890ff",
+                  borderRadius: 16,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+                }}
+              >
+                <AppstoreOutlined style={{ fontSize: 24, color: "#fff" }} />
+              </div>
+              <div
+                style={{
+                  position: "absolute",
+                  top: -8,
+                  right: -8,
+                  background: "#52c41a",
+                  color: "white",
+                  fontSize: 12,
+                  fontWeight: "bold",
+                  borderRadius: "50%",
+                  width: 20,
+                  height: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "2px solid white",
+                }}
+              >
+                {products?.length || 0}
+              </div>
+            </div>
+
+            <div>
+              <Title
+                level={2}
+                style={{
+                  margin: 0,
+                  fontWeight: 700,
+                  color: "#1890ff",
+                  fontSize: "28px",
+                }}
+              >
+                Catalogue des Produits
+              </Title>
+              <Text
+                type="secondary"
+                style={{
+                  color: "#64748b",
+                  fontSize: "18px",
+                  fontWeight: 500,
+                }}
+              >
+                {products?.length || 0} produit{products?.length > 1 ? "s" : ""} enregistré{products?.length > 1 ? "s" : ""}
+                <span
+                  style={{
+                    color: "#52c41a",
+                    marginLeft: 8,
+                    fontWeight: "bold",
+                  }}
+                >
+                  ●
+                </span>
+              </Text>
+            </div>
+          </Space>
+
+          {/* Boutons modernisés à droite */}
+          <Space size="large">
             <Button
-       
-              onClick={handleClearFilters}
-              type="default"
+              icon={<DeleteOutlined />}
+              size="large"
+              style={{
+                borderRadius: '12px',
+                height: '48px',
+                padding: '0 20px',
+                border: '2px solid #ef4444',
+                color: '#ef4444',
+                fontWeight: 600,
+                background: '#ffffff',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                fontSize: '15px',
+                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = '#dc2626';
+                e.target.style.color = '#ffffff';
+                e.target.style.background = '#ef4444';
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 8px 25px rgba(239, 68, 68, 0.25)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = '#ef4444';
+                e.target.style.color = '#ef4444';
+                e.target.style.background = '#ffffff';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.15)';
+              }}
             >
-              Effacer les filtres
+              Corbeille
             </Button>
-  
+
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              size="large"
+              onClick={showModal}
+              style={{
+                borderRadius: '12px',
+                height: '48px',
+                padding: '0 24px',
+                background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+                border: 'none',
+                fontWeight: 600,
+                fontSize: '15px',
+                boxShadow: '0 6px 20px rgba(24, 144, 255, 0.3)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 10px 30px rgba(24, 144, 255, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 6px 20px rgba(24, 144, 255, 0.3)';
+              }}
+            >
+              Ajouter un produit
+            </Button>
           </Space>
         </div>
+      </div>
 
+      {/* Filtres */}
+      <Card
+        style={{
+          borderRadius: 12,
+          boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+          border: "1px solid #f0f0f0",
+        }}
+      >
+        <div style={{ marginBottom: 24 }}>
+          <Title level={4} style={{ marginBottom: 8 }}>Recherche et filtres</Title>
+          <Text type="secondary">Affinez votre recherche de produits</Text>
+        </div>
+        <Space wrap size="middle" style={{ marginBottom: 16 }}>
+          <Search
+            placeholder="Rechercher un produit..."
+            value={searchTerm}
+            allowClear
+            onSearch={handleSearch}
+            onChange={(e) => handleSearch(e.target.value)}
+            style={{ width: 280 }}
+            prefix={<SearchOutlined />}
+          />
+
+          <Select
+            placeholder="Filtrer par matériau"
+            style={{ width: 220 }}
+            value={selectedMaterial || "all"}
+            onChange={handleMaterialFilter}
+            suffixIcon={<FilterOutlined />}
+          >
+            {materialOptions.map((option) => (
+              <Option key={option.value} value={option.value}>
+                {option.label}
+              </Option>
+            ))}
+          </Select>
+
+          <Button
+            onClick={handleClearFilters}
+            icon={<ClearOutlined />}
+            disabled={!hasActiveFilters}
+          >
+            Effacer les filtres
+          </Button>
+
+          <Button
+            onClick={refreshProducts}
+            icon={<ReloadOutlined />}
+            loading={loading}
+          >
+            Actualiser
+          </Button>
+        </Space>
+
+        {hasActiveFilters && (
+          <div style={{ marginTop: 12 }}>
+            <Space>
+              <Text type="secondary">Filtres actifs :</Text>
+              {searchTerm && (
+                <Badge count={`Recherche : "${searchTerm}"`} style={{ background: "#e6f7ff", color: "#1890ff" }} />
+              )}
+              {selectedMaterial !== "all" && (
+                <Badge
+                  count={materialOptions.find(opt => opt.value === selectedMaterial)?.label}
+                  style={{ background: "#fffbe6", color: "#faad14" }}
+                />
+              )}
+            </Space>
+          </div>
+        )}
+      </Card>
+
+      {/* Résultat Produits */}
+      <div style={{ marginTop: 32 }}>
         {loading ? (
-          <div style={{ textAlign: "center", padding: "50px" }}>
+          <div style={{ textAlign: "center", padding: "60px 0" }}>
             <Spin size="large" />
+            <div style={{ marginTop: 12 }}>
+              <Text type="secondary">Chargement des produits...</Text>
+            </div>
           </div>
         ) : displayedProducts.length === 0 ? (
           <Empty
-            description="Aucun produit ne correspond à votre recherche"
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-          />
+            description={
+              <>
+                <Text strong>Aucun produit trouvé</Text>
+                <br />
+                <Text type="secondary">
+                  {hasActiveFilters
+                    ? "Essayez d'ajuster vos filtres"
+                    : "Aucun produit disponible pour le moment"}
+                </Text>
+              </>
+            }
+            style={{ padding: "80px 0" }}
+          >
+            {hasActiveFilters && (
+              <Button type="primary" onClick={handleClearFilters}>
+                Réinitialiser les filtres
+              </Button>
+            )}
+          </Empty>
         ) : (
-          <Row gutter={[16, 16]}>
+          <Row gutter={[24, 24]}>
             {displayedProducts.map((product) => (
               <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
-                <ProductCard
-                  product={product}
-                  onDuplicateSuccess={onDuplicateSuccess}
+                <ProductCard 
+                  product={product} 
+                  onDuplicateSuccess={handleDuplicateSuccess} 
                 />
               </Col>
             ))}
           </Row>
         )}
-      </Space>
-    </Card>
+      </div>
+
+      {/* Modal pour ajouter un produit */}
+      <Modal
+        title="Formulaire d'ajout de produit"
+        open={isModalVisible}
+        onCancel={handleCancel}
+        footer={null}
+        destroyOnClose={true}
+        width={800}
+        style={{ top: 20 }}
+      >
+        <ProductForm onSuccess={handleProductAdded} />
+      </Modal>
+    </div>
   );
 };
 
