@@ -1323,12 +1323,13 @@ const fetchWorks = async () => {
 
   return (
     <Content style={{ padding: "24px", minHeight: "calc(100vh - 64px)" }}>
-      <div style={{ background: "#fff", padding: "24px", borderRadius: "2px" }}>
+      <div style={{ background: "#fff", padding: "24px", borderRadius: "13px" }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             marginBottom: "20px",
+            
           }}
         >
          <div style={{ marginBottom: 32, position: 'relative' }}>

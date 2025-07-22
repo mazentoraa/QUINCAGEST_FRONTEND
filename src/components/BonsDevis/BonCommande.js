@@ -1109,9 +1109,107 @@ export default function BonCommande() {
         <div style={{ marginBottom: 16 }}>
           <Row gutter={[16, 16]} align="middle">
             <Col span={24}>
-              <Title level={2}>
-                <FileDoneOutlined /> Bons de Commande
-              </Title>
+            <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  }}
+>
+  <Space size="large" align="center">
+    <div style={{ position: 'relative' }}>
+      <div
+        style={{
+          width: 48,
+          height: 48,
+          background: "#1890ff",
+          borderRadius: 16,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <FileDoneOutlined style={{ fontSize: 24, color: "#fff" }} />
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          top: -8,
+          right: -8,
+          background: "#52c41a",
+          color: "white",
+          fontSize: 12,
+          fontWeight: "bold",
+          borderRadius: "50%",
+          width: 20,
+          height: 20,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: "2px solid white",
+        }}
+      >
+        {/* Badge content si besoin */}
+      </div>
+    </div>
+
+    <div>
+      <Title
+        level={2}
+        style={{
+          margin: 0,
+          fontWeight: 700,
+          color: "#1890ff",
+          fontSize: "28px",
+        }}
+      >
+        Bons de Commande
+      </Title>
+      <Text type="secondary">
+        Suivi des commandes 
+        <span style={{ color: "#52c41a", marginLeft: 8 }}>●</span>
+      </Text>
+    </div>
+  </Space>
+
+  <Space size="middle">
+    <Button
+      icon={<DeleteOutlined />}
+      size="large"
+      style={{
+        borderRadius: '12px',
+        height: '48px',
+        padding: '0 20px',
+        border: '2px solid #ef4444',
+        color: '#ef4444',
+        fontWeight: 600,
+        background: '#ffffff',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        fontSize: '15px',
+        boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
+      }}
+      onMouseEnter={(e) => {
+        e.target.style.borderColor = '#dc2626';
+        e.target.style.color = '#ffffff';
+        e.target.style.background = '#ef4444';
+        e.target.style.transform = 'translateY(-2px)';
+        e.target.style.boxShadow = '0 8px 25px rgba(239, 68, 68, 0.25)';
+      }}
+      onMouseLeave={(e) => {
+        e.target.style.borderColor = '#ef4444';
+        e.target.style.color = '#ef4444';
+        e.target.style.background = '#ffffff';
+        e.target.style.transform = 'translateY(0)';
+        e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.15)';
+      }}
+    >
+      Corbeille
+    </Button>
+  </Space>
+</div>
+
             </Col>
           </Row>
           {successMessage && (
@@ -1344,7 +1442,7 @@ export default function BonCommande() {
               showTotal: (total, range) =>
                 `${range[0]}-${range[1]} sur ${total} commandes`,
             }}
-            scroll={{ x: 1200 }}
+          
           />
         </Spin>
       </Card>

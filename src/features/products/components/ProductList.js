@@ -153,26 +153,49 @@ const ProductList = ({ onDuplicateSuccess }) => {
     );
   }
 
-  return (
-    <div style={{ padding: "32px 48px", background: "#f7f8fa", minHeight: "100vh" }}>
+return (
+  <div
+ 
+  >
+    <div
+      style={{
+        background: "#ffffff",
+        borderRadius: "13px", // arrondi sur les côtés et coins
+        boxShadow: "0 4px 12px rgba(0,0,0,0.1)", // ombre légère
+        width: "100%",
+        maxWidth: "100%",
+        minHeight: 'calc(100vh - 80px)', // prend toute la hauteur visible moins padding
+        padding: "20px 30px", // padding interne plus généreux
+        margin: "0 auto", // centrer le contenu
+        boxSizing: "border-box",
+      }}
+    >
       {/* Message de succès */}
       {successMessage && (
-        <div style={{ 
-          background: "#f6ffed", 
-          border: "1px solid #b7eb8f", 
-          padding: "12px", 
-          marginBottom: "24px", 
-          borderRadius: "8px", 
-          color: "#389e0d",
-          fontWeight: "500"
-        }}>
+        <div
+          style={{
+            background: "#f6ffed",
+            border: "1px solid #b7eb8f",
+            padding: "12px",
+            marginBottom: "24px",
+            borderRadius: "8px",
+            color: "#389e0d",
+            fontWeight: "500",
+          }}
+        >
           {successMessage}
         </div>
       )}
 
       {/* Header */}
       <div style={{ marginBottom: 32, position: 'relative' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <Space size="large" align="center">
             <div style={{ position: 'relative' }}>
               <div
@@ -227,8 +250,8 @@ const ProductList = ({ onDuplicateSuccess }) => {
                 type="secondary"
                 style={{
                   color: "#64748b",
-                  fontSize: "18px",
-                  fontWeight: 500,
+                  fontSize: '14px'
+                
                 }}
               >
                 {products?.length || 0} produit{products?.length > 1 ? "s" : ""} enregistré{products?.length > 1 ? "s" : ""}
@@ -419,9 +442,9 @@ const ProductList = ({ onDuplicateSuccess }) => {
           <Row gutter={[24, 24]}>
             {displayedProducts.map((product) => (
               <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
-                <ProductCard 
-                  product={product} 
-                  onDuplicateSuccess={handleDuplicateSuccess} 
+                <ProductCard
+                  product={product}
+                  onDuplicateSuccess={handleDuplicateSuccess}
                 />
               </Col>
             ))}
@@ -442,7 +465,9 @@ const ProductList = ({ onDuplicateSuccess }) => {
         <ProductForm onSuccess={handleProductAdded} />
       </Modal>
     </div>
-  );
+  </div>
+);
+
 };
 
 export default ProductList;

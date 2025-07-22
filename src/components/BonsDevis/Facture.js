@@ -41,6 +41,7 @@ import {
     DollarCircleOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
+  UndoOutlined,
 } from "@ant-design/icons";
 
 
@@ -97,7 +98,7 @@ const translatePaymentMethod = (method) => {
 };
 
 
-// This is used for facture and avoir (props contains a nature field which precises facture or avoir)
+// This is used for facture, avoir-facture and avoir (props contains a nature field which precises facture or avoir-facture or avoir)
 export default function Facture(props) {
   const [selectedBonDetails, setSelectedBonDetails] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -209,7 +210,7 @@ export default function Facture(props) {
     setLoading(true);
     setError(null);
     try {
-      // Choose if facture or avoir, each one calls a function
+      // Choose if facture or avoir-facture or avoir, each one calls a function
       const data = await cdsService.getOrders(props.nature)
       console.log(data)
       setOrders(data);
@@ -374,7 +375,36 @@ export default function Facture(props) {
     fetchAvailableBons,
     props.nature
   ]);
-
+  const handleCreateAvoirFacture = async (order) => {
+    try{
+      const facture = await cdsService.getOrderById(order.id)
+      // To match backend expectations²
+      const avoir = {
+        ...facture, 
+        nature:'avoir-facture',
+        produits: facture.produit_commande.map((produit)=> ({
+          bon_id: produit.bon_id,
+          bon_numero: produit.bon_numero,
+          prix_unitaire: produit.prix_unitaire,
+          produit: produit.produit,
+          quantite: produit.quantite,
+          remise_pourcentage: produit.remise_pourcentage
+        }))
+      }
+      console.log("Facture", facture)
+      console.log("Avoir", avoir)
+      try{
+        const response = await cdsService.createOrder(avoir)
+        console.log('Response', response)
+        message.success("Avoir créé avec succés")
+      }catch(error){
+        console.error('Error creating avoir from facture: ', error)
+        message.error("Erreur de création d'avoir à partir de la facture")
+      }
+    }catch(error){
+      console.error('Error getting facture details: ', error)
+    }
+  }
   const handleEditOrder = async (order) => {
     setLoading(true);
     setIsCreating(false)
@@ -595,7 +625,7 @@ export default function Facture(props) {
         setInvoiceType(values.type_facture)
         console.log("values: ", values)
         const orderPayload = {
-          nature: props.nature, // Facture ou avoir
+          nature: props.nature, // Facture ou avoir-facture ou avoir
           client_id: selectedClientId,
           client: selectedClientId,
           date_commande: toISO(values.date_commande),
@@ -1650,6 +1680,13 @@ const handleDeleteSelected = async () => {
       key: "actions",
       render: (_, record) => (
         <Space>
+          {props.nature == 'facture' && (<Tooltip title="Convertir en Avoir">
+            <Button
+              icon={<UndoOutlined />}
+              size="small"
+              onClick={() => handleCreateAvoirFacture(record)}
+            />
+          </Tooltip>)}
           <Tooltip title="Modifier">
             <Button
               type="primary"
@@ -1727,47 +1764,178 @@ const handleDeleteSelected = async () => {
         <div style={{ marginBottom: 16 }}>
           <Row gutter={[16, 16]} align="middle">
             <Col span={24}>
-              <Title level={2}>
-                <FileDoneOutlined /> {props.nature == 'facture' ? 'Factures' : 'Avoirs'}
-              </Title>
+                     <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  }}
+>
+<Space size="large" align="center">
+  <div style={{ position: 'relative' }}>
+    <div
+      style={{
+        width: 48,
+        height: 48,
+        background: "#1890ff",
+        borderRadius: 16,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+      }}
+    >
+      <FileDoneOutlined style={{ fontSize: 24, color: "#fff" }} />
+    </div>
+    <div
+      style={{
+        position: "absolute",
+        top: -8,
+        right: -8,
+        background: "#52c41a",
+        color: "white",
+        fontSize: 12,
+        fontWeight: "bold",
+        borderRadius: "50%",
+        width: 20,
+        height: 20,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        border: "2px solid white",
+      }}
+    >
+      {/* Badge content si besoin */}
+    </div>
+  </div>
+
+  <div>
+    <Title
+      level={2}
+      style={{
+        margin: 0,
+        fontWeight: 700,
+        color: "#1890ff",
+        fontSize: "28px",
+      }}
+    >
+      {props.nature === 'facture' ? 'Factures' : 'Avoirs'}
+    </Title>
+    <Text type="secondary">
+      {props.nature === 'facture'
+        ? 'Suivi des factures émises'
+        : 'Suivi des avoirs émis'}
+      <span style={{ color: "#52c41a", marginLeft: 8 }}>●</span>
+    </Text>
+  </div>
+</Space>
+
+{/* Bouton Corbeille toujours affiché, redirige selon la nature */}
+<Space size="middle" style={{ marginTop: 16 }}>
+  <Button
+    icon={<DeleteOutlined />}
+    size="large"
+    onClick={() => navigate(props.nature === 'facture' ? "/factures/corbeille" : "/avoirs/corbeille")}
+    style={{
+      borderRadius: '12px',
+      height: '48px',
+      padding: '0 20px',
+      border: '2px solid #ef4444',
+      color: '#ef4444',
+      fontWeight: 600,
+      background: '#ffffff',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      fontSize: '15px',
+      boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
+    }}
+    onMouseEnter={(e) => {
+      e.target.style.borderColor = '#dc2626';
+      e.target.style.color = '#ffffff';
+      e.target.style.background = '#ef4444';
+      e.target.style.transform = 'translateY(-2px)';
+      e.target.style.boxShadow = '0 8px 25px rgba(239, 68, 68, 0.25)';
+    }}
+    onMouseLeave={(e) => {
+      e.target.style.borderColor = '#ef4444';
+      e.target.style.color = '#ef4444';
+      e.target.style.background = '#ffffff';
+      e.target.style.transform = 'translateY(0)';
+      e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.15)';
+    }}
+  >
+    Corbeille
+  </Button>
+</Space>
+
+  
+</div>
+
+
             </Col>
           </Row>
 
           {/* Statistics */}
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={6}>
-              <Statistic
-                title= {`Total ${props.nature == 'facture' ? 'Factures' : 'Avoirs'}`}
-                value={filteredOrders.length}
-                prefix={<FileDoneOutlined />}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="Montant Total TTC"
-                value={totalAmount}
-                formatter={(value) => formatCurrency(value)}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="En Attente"
-                value={
-                  filteredOrders.filter((o) => o.statut === "pending").length
-                }
-                valueStyle={{ color: "#fa8c16" }}
-              />
-            </Col>
-            <Col span={6}>
-              <Statistic
-                title="Terminées"
-                value={
-                  filteredOrders.filter((o) => o.statut === "completed").length
-                }
-                valueStyle={{ color: "#52c41a" }}
-              />
-            </Col>
-          </Row>
+<Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
+  {[{
+    title: `Total ${props.nature === 'facture' ? 'Factures' : 'Avoirs'}`,
+    value: filteredOrders.length,
+    prefix: <FileDoneOutlined style={{ color: '#1890ff' }} />,
+    valueStyle: { fontWeight: 'bold', fontSize: 28 }
+  },
+  {
+    title: "Montant Total TTC",
+    value: totalAmount,
+    formatter: (value) => formatCurrency(value),
+    prefix: <span style={{ color: '#722ed1', fontWeight: 'bold' }}>💰</span>,
+    valueStyle: { fontWeight: 'bold', fontSize: 28 }
+  },
+  {
+    title: "En Attente",
+    value: filteredOrders.filter((o) => o.statut === "pending").length,
+    prefix: <FileDoneOutlined style={{ color: '#fa8c16' }} />,
+    valueStyle: { color: "#fa8c16", fontWeight: 'bold', fontSize: 28 }
+  },
+  {
+    title: "Terminées",
+    value: filteredOrders.filter((o) => o.statut === "completed").length,
+    prefix: <FileDoneOutlined style={{ color: '#52c41a' }} />,
+    valueStyle: { color: "#52c41a", fontWeight: 'bold', fontSize: 28 }
+  }].map(({ title, value, prefix, formatter, valueStyle }, index) => (
+    <Col key={index} xs={24} sm={12} md={6}>
+      <Card
+        bordered={false}
+        style={{
+          borderRadius: 12,
+          boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)',
+          backgroundColor: '#fff',
+          textAlign: 'left',
+          padding: '20px 24px',
+          cursor: 'pointer',
+          transition: 'box-shadow 0.3s ease, transform 0.3s ease',
+        }}
+        hoverable
+        onMouseEnter={e => {
+          e.currentTarget.style.boxShadow = '0 8px 24px rgb(0 0 0 / 0.2)';
+          e.currentTarget.style.transform = 'translateY(-4px)';
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.boxShadow = '0 4px 12px rgb(0 0 0 / 0.1)';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}
+      >
+        <Statistic
+          title={<span style={{ fontSize: 16, fontWeight: 600, color: '#595959' }}>{title}</span>}
+          value={value}
+          prefix={prefix}
+          formatter={formatter}
+          valueStyle={valueStyle}
+        />
+      </Card>
+    </Col>
+  ))}
+</Row>
+
           <Divider />
 
           {/* Filters */}
@@ -1845,6 +2013,7 @@ const handleDeleteSelected = async () => {
 
           {/* Action buttons */}
           <Row gutter={16} style={{ marginBottom: 16 }}>
+            {props.nature !== 'avoir-facture' && (
             <Col>
               <Button
                 type="primary"
@@ -1854,6 +2023,7 @@ const handleDeleteSelected = async () => {
                 {props.nature == 'facture' ? 'Nouvelle Facture' : 'Nouveau Avoir'}
               </Button>
             </Col>
+            )}
             <Col>
               <Button
                 icon={<ReloadOutlined />}

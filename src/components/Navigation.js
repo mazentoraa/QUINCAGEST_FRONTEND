@@ -22,8 +22,9 @@ function Navigation() {
       </div>
       
       <Menu theme="dark" mode="horizontal" className="nav-menu">
-        <Menu.Item key="home" icon={<HomeOutlined />} onClick={() => navigate('/')}>
-          Tableau de Bord
+        <Menu.Item key="home" icon={<HomeOutlined />} onClick={() => navigate('/')}  >
+        <span style={{ color: '#fff' }}> Tableau de Bord</span>
+         
         </Menu.Item>
       </Menu>
       

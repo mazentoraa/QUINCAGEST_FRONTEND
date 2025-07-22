@@ -45,6 +45,8 @@ import {
   StarOutlined,
   FireOutlined,
   RocketOutlined,
+  TeamOutlined,
+  ShopOutlined,
 } from "@ant-design/icons";
 import "./Dashboard.css";
 
@@ -190,6 +192,26 @@ function Dashboard() {
       change: "+12%",
       trend: "up",
       subtitle: "Base clients",
+    },
+    {
+      title: "Fournisseurs Actifs",
+      value: counts.fournisseurs , // Valeur par défaut si pas dans l'API
+      icon: <ShopOutlined />,
+      gradient: "linear-gradient(135deg, #722ed1 0%, #531dab 100%)",
+      path: "/fournisseurs",
+      change: "+5%",
+      trend: "up",
+      subtitle: "Partenaires",
+    },
+    {
+      title: "Employés Actifs",
+      value: counts.employes, // Valeur par défaut si pas dans l'API
+      icon: <TeamOutlined />,
+      gradient: "linear-gradient(135deg, #eb2f96 0%, #c41d7f 100%)",
+      path: "/employes",
+      change: "+3%",
+      trend: "up",
+      subtitle: "Équipe",
     },
     {
       title: "Projets en Cours",
@@ -630,6 +652,18 @@ function Dashboard() {
               icon: <UserOutlined />,
               label: "Clients",
               path: "/clients",
+              color: "#eb2f96",
+            },
+            {
+              icon: <ShopOutlined />,
+              label: "Fournisseurs",
+              path: "/fournisseurs",
+              color: "#722ed1",
+            },
+            {
+              icon: <TeamOutlined />,
+              label: "Employés",
+              path: "/employees",
               color: "#eb2f96",
             },
           ].map((action, index) => (

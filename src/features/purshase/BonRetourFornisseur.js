@@ -33,6 +33,7 @@ import {
   CheckOutlined,
   CloseOutlined,
   SendOutlined,
+  TagOutlined
 } from "@ant-design/icons";
 import debounce from "lodash/debounce";
 import moment from "moment";
@@ -660,8 +661,148 @@ const generateBonRetourPDF = async (recordFromList) => {
       <div
 >
 
+<div
+      style={{
+        padding: "7px 20px 30px",
+        borderBottom: "1px solid #f1f5f9",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 24,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "48px",
+            height: "48px",
+            borderRadius: "16px",
+            background: "linear-gradient(135deg, #eb2f96 0%, #ff85c0 100%)",
+            boxShadow: "0 6px 20px rgba(235, 47, 150, 0.25)",
+            position: "relative",
+          }}
+        >
+          <FileDoneOutlined style={{ fontSize: "24px", color: "#ffffff" }} />
+          <div
+            style={{
+              position: "absolute",
+              top: "-2px",
+              right: "-2px",
+              width: "18px",
+              height: "18px",
+              borderRadius: "10px",
+              backgroundColor: "#52c41a",
+              border: "2px solid #ffffff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span
+              style={{
+                color: "#ffffff",
+                fontSize: "9px",
+                fontWeight: "bold",
+              }}
+            >
+              {bonsRetour.length}
 
- <Title level={2}><FileDoneOutlined /> Bon de Retour</Title>
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <h2
+            style={{
+              margin: 0,
+              fontWeight: 600,
+              color: "#eb2f96",
+              fontSize: "28px",
+              letterSpacing: "-0.5px",
+            }}
+          >
+            Bon de Retour
+          </h2>
+        <span style={{ color: "#64748b", fontSize: "14px" }}>
+  {bonsRetour.length} retour{bonsRetour.length !== 1 ? "s" : ""} enregistré{bonsRetour.length !== 1 ? "s" : ""}
+</span>
+
+        </div>
+      </div>
+        <Space size="middle">
+            <Button
+              icon={<DeleteOutlined />}
+              size="large"
+              style={{
+                borderRadius: "12px",
+                height: "48px",
+                padding: "0 20px",
+                border: "2px solid #ef4444",
+                color: "#ef4444",
+                fontWeight: 600,
+                background: "#ffffff",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                fontSize: "15px",
+                boxShadow: "0 4px 12px rgba(239, 68, 68, 0.15)",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = "#dc2626";
+                e.target.style.color = "#ffffff";
+                e.target.style.background = "#ef4444";
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 8px 25px rgba(239, 68, 68, 0.25)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = "#ef4444";
+                e.target.style.color = "#ef4444";
+                e.target.style.background = "#ffffff";
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 12px rgba(239, 68, 68, 0.15)";
+              }}
+              onClick={() => {
+                message.info("Fonction de corbeille à implémenter");
+              }}
+            >
+              Corbeille
+            </Button>
+      
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              size="large"
+              onClick={handleAdd}
+               
+              
+              style={{
+                borderRadius: "12px",
+                height: "48px",
+                padding: "0 24px",
+                background: "linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)",
+                border: "none",
+                fontWeight: 600,
+                fontSize: "15px",
+                boxShadow: "0 6px 20px rgba(24, 144, 255, 0.3)",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                color: "#fff",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow =
+                  "0 10px 30px rgba(24, 144, 255, 0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow =
+                  "0 6px 20px rgba(24, 144, 255, 0.3)";
+              }}
+            >
+              Ajouter un bon
+            </Button>
+          </Space>
+    </div>
 <Card style={{ marginBottom: 24, overflowX: "auto" }}>
   <Row
   gutter={16}
@@ -843,13 +984,6 @@ const generateBonRetourPDF = async (recordFromList) => {
     Effacer les filtres
   </Button>
 
-  <Button
-    type="primary"
-    icon={<PlusOutlined />}
-    onClick={handleAdd}
-  >
-    Nouveau Bon de Retour
-  </Button>
 </div>
 
         </Card>
@@ -871,201 +1005,375 @@ const generateBonRetourPDF = async (recordFromList) => {
 
         {/* Modal for Add/Edit */}
         <Modal
-          title={
-            editingBonRetour
-              ? "Modifier le Bon de Retour"
-              : "Nouveau Bon de Retour"
-          }
-          open={isModalVisible}
-          onCancel={() => {
-            setIsModalVisible(false);
-            setSelectedMaterials([]);
-            setAvailableMaterials([]);
-            form.resetFields();
-          }}
-          footer={null}
-          width={1000}
+      title={editingBonRetour ? "Modifier le Bon de Retour" : "Nouveau Bon de Retour"}
+      open={isModalVisible}
+      onCancel={() => {
+        setIsModalVisible(false);
+        setSelectedMaterials([]);
+        setAvailableMaterials([]);
+        form.resetFields();
+      }}
+      footer={null}
+      width={900}
+      bodyStyle={{
+        backgroundColor: "#fafafa",
+        borderRadius: 16,
+        padding: 32,
+        boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
+      }}
+      centered
+      maskStyle={{ backgroundColor: "rgba(0,0,0,0.2)" }}
+    >
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        colon={false}
+        labelAlign="left"
+        labelCol={{ span: 24 }}
+      >
+        <Row gutter={24}>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="numero_bon"
+              label={<Text strong>Numéro du Bon</Text>}
+              rules={[{ required: true, message: "Veuillez saisir le numéro du bon" }]}
+              style={{ marginBottom: 24 }}
+            >
+              <Input
+                disabled={!!editingBonRetour}
+                size="large"
+                style={{
+                  borderRadius: 12,
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                  border: "2px solid #e5e7eb",
+                  fontSize: 15,
+                  transition: "all 0.3s ease",
+                }}
+                onFocus={e => {
+                  e.currentTarget.style.boxShadow = "0 0 8px #3b82f6";
+                  e.currentTarget.style.borderColor = "#3b82f6";
+                }}
+                onBlur={e => {
+                  e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.08)";
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                }}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="status"
+              label={<Text strong>Statut</Text>}
+              rules={[{ required: true, message: "Veuillez sélectionner un statut" }]}
+              style={{ marginBottom: 24 }}
+            >
+              <Select
+                size="large"
+                placeholder="Sélectionner un statut"
+                dropdownMatchSelectWidth={false}
+                style={{
+                  borderRadius: 12,
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                  border: "2px solid #e5e7eb",
+                  fontSize: 15,
+                  transition: "all 0.3s ease",
+                }}
+                onFocus={e => {
+                  e.currentTarget.style.boxShadow = "0 0 8px #3b82f6";
+                  e.currentTarget.style.borderColor = "#3b82f6";
+                }}
+                onBlur={e => {
+                  e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.08)";
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                }}
+              >
+                {statusOptions.map((option) => (
+                  <Select.Option key={option.value} value={option.value}>
+                    <TagOutlined style={{ color: option.color, marginRight: 6 }} />
+                    {option.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Form.Item
+          name="fournisseur"
+          label={<Text strong>Fournisseur</Text>}
+          rules={[{ required: true, message: "Veuillez sélectionner un fournisseur" }]}
+          style={{ marginBottom: 24 }}
         >
-          <Form form={form} layout="vertical" onFinish={handleSubmit}>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="numero_bon"
-                  label="Numéro du Bon"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Veuillez saisir le numéro du bon",
-                    },
-                  ]}
-                >
-                  <Input disabled={!!editingBonRetour} />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="status"
-                  label="Statut"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Veuillez sélectionner un statut",
-                    },
-                  ]}
-                >
-                  <Select>
-                    {statusOptions.map((option) => (
-                      <Select.Option key={option.value} value={option.value}>
-                        <Tag color={option.color}>{option.label}</Tag>
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-            </Row>
-
-         <Form.Item
-  name="fournisseur"
-  label="Fournisseur"
-  rules={[
-    { required: true, message: "Veuillez sélectionner un fournisseur" },
-  ]}
->
-  <Select
-  showSearch
-  placeholder="Rechercher un fournisseur..."
-  filterOption={false}
-  onSearch={debouncedSearch}
-  onChange={handleFournisseurChange}
-  loading={fournisseurSearchLoading}
-  notFoundContent={
-    fournisseurSearchLoading ? <Spin size="small" /> : null
-  }
-  options={fournisseurOptions}
-/>
-</Form.Item>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-  name="date_retour"
-  label="Date de Retour"
-  rules={[
-    {
-      required: true,
-      message: "Veuillez sélectionner la date de retour",
-    },
-  ]}
->
-  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
-</Form.Item>
-
-              </Col>
-              <Col span={12}>
-               <Form.Item
-  name="date_reception"
-  label="Date de Réception"
-  rules={[
-    {
-      required: true,
-      message: "Veuillez sélectionner la date de réception",
-    },
-  ]}
->
-  <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
-</Form.Item>
-
-              </Col>
-            </Row>
-
-            {/* Available Materials */}
-            <Divider orientation="left">Matières à retourner</Divider>
-<List
-  bordered
-  dataSource={customMaterials}
-  renderItem={(item, index) => (
-    <List.Item
-      actions={[
-        customMaterials.length > 1 ? (
-          <Button
-            danger
-            type="text"
-            icon={<DeleteOutlined />}
-            onClick={() => {
-              const newList = [...customMaterials];
-              newList.splice(index, 1);
-              setCustomMaterials(newList);
+          <Select
+            size="large"
+            showSearch
+            placeholder="Rechercher un fournisseur..."
+            filterOption={false}
+            onSearch={debouncedSearch}
+            onChange={handleFournisseurChange}
+            loading={fournisseurSearchLoading}
+            notFoundContent={fournisseurSearchLoading ? <Spin size="small" /> : null}
+            options={fournisseurOptions}
+            style={{
+              borderRadius: 12,
+              boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+              border: "2px solid #e5e7eb",
+              fontSize: 15,
+              transition: "all 0.3s ease",
+            }}
+            onFocus={e => {
+              e.currentTarget.style.boxShadow = "0 0 8px #3b82f6";
+              e.currentTarget.style.borderColor = "#3b82f6";
+            }}
+            onBlur={e => {
+              e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.08)";
+              e.currentTarget.style.borderColor = "#e5e7eb";
             }}
           />
-        ) : null,
-      ]}
-    >
-      <Space style={{ width: "100%" }} direction="vertical">
-        <Input
-          placeholder="Nom de la matière"
-          value={item.name}
-          onChange={(e) => {
-            const newList = [...customMaterials];
-            newList[index].name = e.target.value;
-            setCustomMaterials(newList);
-          }}
-        />
-        <InputNumber
-          placeholder="Quantité"
-          min={1}
-          value={item.quantite}
-          onChange={(value) => {
-            const newList = [...customMaterials];
-            newList[index].quantite = value;
-            setCustomMaterials(newList);
-          }}
-          style={{ width: "100%" }}
-        />
-      </Space>
-    </List.Item>
-  )}
-  footer={
-    <Button
-      type="dashed"
-      icon={<PlusOutlined />}
-      onClick={() =>
-        setCustomMaterials([...customMaterials, { name: "", quantite: 1 }])
-      }
-      block
-    >
-      Ajouter une matière
-    </Button>
-  }
-/>
+        </Form.Item>
 
-
-            <Form.Item name="notes" label="Notes">
-              <TextArea rows={4} placeholder="Notes supplémentaires..." />
+        <Row gutter={24}>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="date_retour"
+              label={<Text strong>Date de Retour</Text>}
+              rules={[{ required: true, message: "Veuillez sélectionner la date de retour" }]}
+              style={{ marginBottom: 24 }}
+            >
+              <DatePicker
+                size="large"
+                format="DD/MM/YYYY"
+                style={{
+                  width: "100%",
+                  borderRadius: 12,
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                  border: "2px solid #e5e7eb",
+                  fontSize: 15,
+                  transition: "all 0.3s ease",
+                }}
+                onFocus={e => {
+                  e.currentTarget.style.boxShadow = "0 0 8px #3b82f6";
+                  e.currentTarget.style.borderColor = "#3b82f6";
+                }}
+                onBlur={e => {
+                  e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.08)";
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                }}
+              />
             </Form.Item>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="date_reception"
+              label={<Text strong>Date de Réception</Text>}
+              rules={[{ required: true, message: "Veuillez sélectionner la date de réception" }]}
+              style={{ marginBottom: 24 }}
+            >
+              <DatePicker
+                size="large"
+                format="DD/MM/YYYY"
+                style={{
+                  width: "100%",
+                  borderRadius: 12,
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                  border: "2px solid #e5e7eb",
+                  fontSize: 15,
+                  transition: "all 0.3s ease",
+                }}
+                onFocus={e => {
+                  e.currentTarget.style.boxShadow = "0 0 8px #3b82f6";
+                  e.currentTarget.style.borderColor = "#3b82f6";
+                }}
+                onBlur={e => {
+                  e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.08)";
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                }}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
 
-            <Divider />
+        <Divider orientation="left" style={{ fontWeight: 600, fontSize: 16, color: "#374151" }}>
+          Matières à retourner
+        </Divider>
 
-            <Form.Item>
-              <div
-                style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
-              >
-                <Button
-                  onClick={() => {
-                    setIsModalVisible(false);
-                    setSelectedMaterials([]);
-                    setAvailableMaterials([]);
-                    form.resetFields();
+        <List
+          bordered
+          dataSource={customMaterials}
+          style={{ backgroundColor: "#fff", borderRadius: 12, padding: 16 }}
+          renderItem={(item, index) => (
+            <List.Item
+              style={{ display: "flex", flexDirection: "column", gap: 8 }}
+              actions={[
+                customMaterials.length > 1 && (
+                  <Button
+                    danger
+                    type="text"
+                    icon={<DeleteOutlined />}
+                    onClick={() => {
+                      const newList = [...customMaterials];
+                      newList.splice(index, 1);
+                      setCustomMaterials(newList);
+                    }}
+                    style={{ fontSize: 18 }}
+                  />
+                ),
+              ]}
+              key={index}
+            >
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <Input
+                  size="large"
+                  placeholder="Nom de la matière"
+                  value={item.name}
+                  onChange={(e) => {
+                    const newList = [...customMaterials];
+                    newList[index].name = e.target.value;
+                    setCustomMaterials(newList);
                   }}
-                >
-                  Annuler
-                </Button>
-                <Button type="primary" htmlType="submit">
-                  {editingBonRetour ? "Mettre à jour" : "Créer"}
-                </Button>
-              </div>
-            </Form.Item>
-          </Form>
-        </Modal>
+                  style={{
+                    borderRadius: 12,
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                    border: "2px solid #e5e7eb",
+                    fontSize: 15,
+                    transition: "all 0.3s ease",
+                  }}
+                  onFocus={e => {
+                    e.currentTarget.style.boxShadow = "0 0 8px #3b82f6";
+                    e.currentTarget.style.borderColor = "#3b82f6";
+                  }}
+                  onBlur={e => {
+                    e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.08)";
+                    e.currentTarget.style.borderColor = "#e5e7eb";
+                  }}
+                />
+                <InputNumber
+                  size="large"
+                  min={1}
+                  placeholder="Quantité"
+                  value={item.quantite}
+                  onChange={(value) => {
+                    const newList = [...customMaterials];
+                    newList[index].quantite = value;
+                    setCustomMaterials(newList);
+                  }}
+                  style={{
+                    width: "100%",
+                    borderRadius: 12,
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                    border: "2px solid #e5e7eb",
+                    fontSize: 15,
+                    transition: "all 0.3s ease",
+                  }}
+                  onFocus={e => {
+                    e.currentTarget.style.boxShadow = "0 0 8px #3b82f6";
+                    e.currentTarget.style.borderColor = "#3b82f6";
+                  }}
+                  onBlur={e => {
+                    e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.08)";
+                    e.currentTarget.style.borderColor = "#e5e7eb";
+                  }}
+                />
+              </Space>
+            </List.Item>
+          )}
+          footer={
+            <Button
+              type="dashed"
+              icon={<PlusOutlined />}
+              onClick={() => setCustomMaterials([...customMaterials, { name: "", quantite: 1 }])}
+              block
+              style={{
+                borderRadius: 12,
+                fontWeight: "600",
+                fontSize: 16,
+                marginTop: 12,
+              }}
+            >
+              Ajouter une matière
+            </Button>
+          }
+        />
+
+        <Form.Item
+          name="notes"
+          label={<Text strong>Notes</Text>}
+          style={{ marginTop: 24 }}
+        >
+          <TextArea
+            rows={4}
+            placeholder="Notes supplémentaires..."
+            style={{
+              borderRadius: 12,
+              boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+              border: "2px solid #e5e7eb",
+              fontSize: 15,
+              transition: "all 0.3s ease",
+              padding: 12,
+            }}
+            onFocus={e => {
+              e.currentTarget.style.boxShadow = "0 0 8px #3b82f6";
+              e.currentTarget.style.borderColor = "#3b82f6";
+            }}
+            onBlur={e => {
+              e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.08)";
+              e.currentTarget.style.borderColor = "#e5e7eb";
+            }}
+          />
+        </Form.Item>
+
+        <Divider style={{ marginTop: 36 }} />
+
+        <Form.Item>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+            <Button
+              onClick={() => {
+                setIsModalVisible(false);
+                setSelectedMaterials([]);
+                setAvailableMaterials([]);
+                form.resetFields();
+              }}
+              style={{
+                borderRadius: 12,
+                fontWeight: "600",
+                fontSize: 16,
+                padding: "8px 32px",
+              }}
+            >
+              Annuler
+            </Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              style={{
+                borderRadius: 12,
+                fontWeight: "700",
+                fontSize: 16,
+                padding: "8px 36px",
+                background:
+                  "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                border: "none",
+                boxShadow: "0 8px 25px rgba(59, 130, 246, 0.35)",
+                transition: "all 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow =
+                  "0 12px 35px rgba(59, 130, 246, 0.45)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow =
+                  "0 8px 25px rgba(59, 130, 246, 0.35)";
+              }}
+            >
+              {editingBonRetour ? "Mettre à jour" : "Créer"}
+            </Button>
+          </div>
+        </Form.Item>
+      </Form>
+    </Modal>
       </div>
     </Content>
   );

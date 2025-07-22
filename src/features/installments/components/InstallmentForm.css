@@ -12,8 +12,8 @@
 .installment-form {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
-  background-color: #f8f9fa;
+  padding: 0px;
+ 
   min-height: 100vh;
 }
 
@@ -40,6 +40,7 @@
   padding: 25px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   border: 1px solid #e0e0e0;
+   margin-bottom: 25px;
 }
 
 .section-title {
@@ -412,6 +413,7 @@
   
   .form-section {
     padding: 15px;
+    
   }
   
   .form-title {

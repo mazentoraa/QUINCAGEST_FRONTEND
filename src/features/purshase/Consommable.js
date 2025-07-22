@@ -19,12 +19,22 @@ import axios from "axios";
 import moment from "moment";
 import "moment/locale/fr";
 import frFR from "antd/es/locale/fr_FR";
-
+import { AppstoreOutlined } from "@ant-design/icons";
+import {  Row, Col } from "antd";
+import {
+  TagOutlined,
+  NumberOutlined,
+  CalendarOutlined,
+  ProfileOutlined,
+  FontSizeOutlined,
+} from "@ant-design/icons"
 moment.locale("fr");
 
 const { TextArea } = Input;
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
+
+const {Text } = Typography;
 
 export default function Consommables() {
   const [consommables, setConsommables] = useState([]);
@@ -245,22 +255,164 @@ export default function Consommables() {
   return (
     <ConfigProvider locale={frFR}>
       <Card>
+
+
+<div style={{ marginBottom: 32, position: "relative" }}>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+    }}
+  >
+    <Space size="large" align="center">
+      {/* Badge & Titre */}
+      <div style={{ position: "relative" }}>
         <div
-          style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}
+          style={{
+            width: 48,
+            height: 48,
+            background: "#eb2f96", // rose vif
+            borderRadius: 16,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            boxShadow: "0 2px 6px rgba(235, 47, 150, 0.4)",
+          }}
         >
-          <Title level={4}>Gestion des consommables</Title>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              form.resetFields();
-              setCurrentId(null);
-              setVisible(true);
+          <AppstoreOutlined style={{ fontSize: 24, color: "#fff" }} />
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            top: -8,
+            right: -8,
+            background: "#52c41a",
+            color: "white",
+            fontSize: 12,
+            fontWeight: "bold",
+            borderRadius: "50%",
+            width: 20,
+            height: 20,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "2px solid white",
+          }}
+        >
+          {filteredConsommables?.length || 0}
+        </div>
+      </div>
+
+      <div>
+        <Title
+          level={2}
+          style={{
+            margin: 0,
+            fontWeight: 700,
+            color: "#eb2f96",
+            fontSize: "28px",
+          }}
+        >
+          Consommables
+        </Title>
+        <Text
+          type="secondary"
+          style={{
+            color: "#64748b",
+            fontSize: "14px",
+          }}
+        >
+          {filteredConsommables?.length || 0} consommable
+          {filteredConsommables?.length > 1 ? "s" : ""} enregistré
+          {filteredConsommables?.length > 1 ? "s" : ""}
+          <span
+            style={{
+              color: "#52c41a",
+              marginLeft: 8,
+              fontWeight: "bold",
             }}
           >
-            Ajouter
-          </Button>
-        </div>
+            ●
+          </span>
+        </Text>
+      </div>
+    </Space>
+
+    {/* Boutons Corbeille & Ajouter */}
+    <Space size="large">
+      <Button
+        icon={<DeleteOutlined />}
+        size="large"
+        style={{
+          borderRadius: "12px",
+          height: "48px",
+          padding: "0 20px",
+          border: "2px solid #ef4444",
+          color: "#ef4444",
+          fontWeight: 600,
+          background: "#ffffff",
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          fontSize: "15px",
+          boxShadow: "0 4px 12px rgba(239, 68, 68, 0.15)",
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.borderColor = "#dc2626";
+          e.target.style.color = "#ffffff";
+          e.target.style.background = "#ef4444";
+          e.target.style.transform = "translateY(-2px)";
+          e.target.style.boxShadow = "0 8px 25px rgba(239, 68, 68, 0.25)";
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.borderColor = "#ef4444";
+          e.target.style.color = "#ef4444";
+          e.target.style.background = "#ffffff";
+          e.target.style.transform = "translateY(0)";
+          e.target.style.boxShadow = "0 4px 12px rgba(239, 68, 68, 0.15)";
+        }}
+        onClick={() => {
+          message.info("Fonction de corbeille à implémenter");
+        }}
+      >
+        Corbeille
+      </Button>
+
+      <Button
+        type="primary"
+        icon={<PlusOutlined />}
+        size="large"
+        onClick={() => {
+          form.resetFields();
+          setCurrentId(null);
+          setVisible(true);
+        }}
+        style={{
+          borderRadius: "12px",
+          height: "48px",
+          padding: "0 24px",
+          background: "linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)",
+          border: "none",
+          fontWeight: 600,
+          fontSize: "15px",
+          boxShadow: "0 6px 20px rgba(24, 144, 255, 0.3)",
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          color: "#fff",
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.transform = "translateY(-2px)";
+          e.target.style.boxShadow = "0 10px 30px rgba(24, 144, 255, 0.4)";
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = "translateY(0)";
+          e.target.style.boxShadow = "0 6px 20px rgba(24, 144, 255, 0.3)";
+        }}
+      >
+        Ajouter un consommable
+      </Button>
+    </Space>
+  </div>
+</div>
+
 
         <Form
           form={filterForm}
@@ -294,82 +446,191 @@ export default function Consommables() {
           />
         </Spin>
 
-        <Modal
-          title={currentId ? "Modifier le consommable" : "Nouveau consommable"}
-          open={visible}
-          onOk={handleSubmit}
-          onCancel={() => {
-            setVisible(false);
-            form.resetFields();
-            setCurrentId(null);
-          }}
-          width={800}
-          okText="Enregistrer"
-          cancelText="Annuler"
-          confirmLoading={loading}
+  <Modal
+  title={currentId ? "Modifier le consommable" : "Nouveau consommable"}
+  open={visible}
+  onOk={form.submit}
+  onCancel={() => {
+    setVisible(false);
+    form.resetFields();
+    setCurrentId(null);
+  }}
+  width={720}
+  okText="Enregistrer"
+  cancelText="Annuler"
+  confirmLoading={loading}
+  bodyStyle={{
+    padding: 32,
+    backgroundColor: "#fafafa",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+    borderRadius: 10,
+  }}
+  okButtonProps={{
+    style: {
+      borderRadius: 8,
+      background: "linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)",
+      border: "none",
+      fontWeight: "600",
+      fontSize: 16,
+      boxShadow: "0 6px 20px rgba(24, 144, 255, 0.3)",
+      padding: "8px 32px",
+      transition: "all 0.3s ease",
+    },
+  }}
+  cancelButtonProps={{
+    style: {
+      borderRadius: 8,
+      fontWeight: "600",
+      fontSize: 16,
+      padding: "8px 32px",
+    },
+  }}
+>
+  <Form
+    form={form}
+    layout="vertical"
+    onFinish={handleSubmit}
+    colon={false}
+    labelAlign="left"
+    labelCol={{ span: 24 }}
+  >
+    <Form.Item
+      name="nom"
+      label={<Typography.Text strong>Nom du consommable</Typography.Text>}
+      rules={[{ required: true, message: "Ce champ est requis" }]}
+      style={{ marginBottom: 24 }}
+    >
+      <Input
+        placeholder="Entrez le nom du consommable"
+        size="large"
+        prefix={<ProfileOutlined style={{ color: "#1890ff" }} />}
+        style={{
+          borderRadius: 8,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          transition: "box-shadow 0.3s ease",
+        }}
+        onFocus={e => (e.currentTarget.style.boxShadow = "0 0 6px #40a9ff")}
+        onBlur={e => (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")}
+      />
+    </Form.Item>
+
+    <Form.Item
+      name="description"
+      label={<Typography.Text strong>Description</Typography.Text>}
+      style={{ marginBottom: 32 }}
+    >
+      <TextArea
+        rows={3}
+        placeholder="Décrire le consommable (optionnel)"
+        style={{
+          borderRadius: 8,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          transition: "box-shadow 0.3s ease",
+        }}
+        onFocus={e => (e.currentTarget.style.boxShadow = "0 0 6px #40a9ff")}
+        onBlur={e => (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")}
+      />
+    </Form.Item>
+
+    <Row gutter={24}>
+      <Col span={8}>
+        <Form.Item
+          name="prix_unitaire"
+          label={<Typography.Text strong>Prix unitaire</Typography.Text>}
+          rules={[
+            {
+              validator: (_, value) => {
+                if (value === undefined || value === null || value === "")
+                  return Promise.resolve();
+                const num = Number(value);
+                if (isNaN(num) || num < 0) {
+                  return Promise.reject(new Error("Doit être un nombre positif"));
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
+          style={{ marginBottom: 24 }}
         >
-          <Form form={form} layout="vertical">
-            <Form.Item
-              name="nom"
-              label="Nom"
-              rules={[{ required: true, message: "Ce champ est requis" }]}
-            >
-              <Input placeholder="Nom du consommable" />
-            </Form.Item>
+          <Input
+            type="number"
+            min={0}
+            step="0.01"
+            placeholder="0.00"
+            size="large"
+            prefix={<TagOutlined style={{ color: "#1890ff" }} />}
+            style={{
+              borderRadius: 8,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              transition: "box-shadow 0.3s ease",
+            }}
+            onFocus={e => (e.currentTarget.style.boxShadow = "0 0 6px #40a9ff")}
+            onBlur={e => (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")}
+          />
+        </Form.Item>
+      </Col>
 
-            <Form.Item name="description" label="Description">
-              <TextArea rows={2} />
-            </Form.Item>
+      <Col span={8}>
+        <Form.Item
+          name="quantite"
+          label={<Typography.Text strong>Quantité</Typography.Text>}
+          rules={[
+            {
+              validator: (_, value) => {
+                if (value === undefined || value === null || value === "")
+                  return Promise.resolve();
+                const num = Number(value);
+                if (isNaN(num) || num < 0) {
+                  return Promise.reject(new Error("Doit être un nombre positif"));
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
+          style={{ marginBottom: 24 }}
+        >
+          <Input
+            type="number"
+            min={0}
+            placeholder="0"
+            size="large"
+            prefix={<NumberOutlined style={{ color: "#1890ff" }} />}
+            style={{
+              borderRadius: 8,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              transition: "box-shadow 0.3s ease",
+            }}
+            onFocus={e => (e.currentTarget.style.boxShadow = "0 0 6px #40a9ff")}
+            onBlur={e => (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")}
+          />
+        </Form.Item>
+      </Col>
 
-            <Space style={{ display: "flex", justifyContent: "space-between" }}>
-              <Form.Item
-                name="prix_unitaire"
-                label="Prix unitaire"
-                style={{ flex: 1 }}
-                rules={[
-                  {
-                    validator: (_, value) => {
-                      if (value === undefined || value === null || value === "")
-                        return Promise.resolve();
-                      const num = Number(value);
-                      if (isNaN(num) || num < 0) {
-                        return Promise.reject(new Error("Doit être un nombre positif"));
-                      }
-                      return Promise.resolve();
-                    },
-                  },
-                ]}
-              >
-                <Input type="number" min={0} step="0.01" />
-              </Form.Item>
-
-              <Form.Item
-                name="quantite"
-                label="Quantité"
-                style={{ flex: 1 }}
-                rules={[
-                  {
-                    validator: (_, value) => {
-                      if (value === undefined || value === null || value === "")
-                        return Promise.resolve();
-                      const num = Number(value);
-                      if (isNaN(num) || num < 0) {
-                        return Promise.reject(new Error("Doit être un nombre positif"));
-                      }
-                      return Promise.resolve();
-                    },
-                  },
-                ]}
-              >
-                <Input type="number" min={0} />
-              </Form.Item>
-
-              <Form.Item name="date_achat" label="Date" style={{ flex: 1 }}>
-                <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
-              </Form.Item>
-            </Space>
-          </Form>
-        </Modal>
+      <Col span={8}>
+        <Form.Item
+          name="date_achat"
+          label={<Typography.Text strong>Date d'achat</Typography.Text>}
+          style={{ marginBottom: 24 }}
+        >
+          <DatePicker
+            format="DD/MM/YYYY"
+            style={{
+              width: "100%",
+              borderRadius: 8,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              transition: "box-shadow 0.3s ease",
+            }}
+            size="large"
+            placeholder="JJ/MM/AAAA"
+            suffixIcon={<CalendarOutlined style={{ color: "#1890ff" }} />}
+            onFocus={e => (e.currentTarget.style.boxShadow = "0 0 6px #40a9ff")}
+            onBlur={e => (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")}
+          />
+        </Form.Item>
+      </Col>
+    </Row>
+  </Form>
+</Modal>
       </Card>
     </ConfigProvider>
   );

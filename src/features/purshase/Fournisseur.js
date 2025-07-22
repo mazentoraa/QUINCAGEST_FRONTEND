@@ -14,6 +14,7 @@ import {
 } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import FournisseurService from "./Services/FournisseurService";
+import { TeamOutlined } from "@ant-design/icons";
 
 export default function Fournisseur() {
   const [form] = Form.useForm();
@@ -22,6 +23,7 @@ export default function Fournisseur() {
   const [visible, setVisible] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [loading, setLoading] = useState(false);
+const [isHovered, setIsHovered] = useState(false);
 
   // États pour les filtres
   const [searchNom, setSearchNom] = useState("");
@@ -188,67 +190,154 @@ export default function Fournisseur() {
   ];
 
   return (
-    <Card
-      style={{ margin: 24 }}
-      bodyStyle={{ padding: 24 }}
-      title={
-        <div style={{ fontSize: 22 }}>
-          Gestion des fournisseurs
+  <Card
+  style={{ margin: 24 }}
+  bodyStyle={{ padding: 24 }}
+  title={null} // on le remplace manuellement plus bas
+>
+  <div style={{
+    padding: '7px 20px 30px',
+    borderBottom: '1px solid #f1f5f9',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24
+  }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '48px',
+        height: '48px',
+        borderRadius: '16px',
+        background: 'linear-gradient(135deg, #eb2f96 0%, #ff85c0 100%)',
+        boxShadow: '0 6px 20px rgba(235, 47, 150, 0.25)',
+        position: 'relative'
+      }}>
+        <TeamOutlined style={{ fontSize: '24px', color: '#ffffff' }} />
+        <div style={{
+          position: 'absolute',
+          top: '-2px',
+          right: '-2px',
+          width: '18px',
+          height: '18px',
+          borderRadius: '10px',
+          backgroundColor: '#52c41a',
+          border: '2px solid #ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <span style={{
+            color: '#ffffff',
+            fontSize: '9px',
+            fontWeight: 'bold'
+          }}>
+            {fournisseurs.length}
+          </span>
         </div>
-      }
-    >
+      </div>
+
+      <div>
+        <h2 style={{
+          margin: 0,
+          fontWeight: 600,
+          color: '#eb2f96',
+          fontSize: "28px",
+          letterSpacing: '-0.5px'
+        }}>
+          Gestion des Fournisseurs
+        </h2>
+        <span style={{
+          color: '#64748b',
+          fontSize: '14px'
+        }}>
+          {fournisseurs.length} fournisseur{fournisseurs.length !== 1 ? 's' : ''} enregistré{fournisseurs.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+    </div>
+
+  </div>
+
       <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
         <Col>
           <div style={{ fontSize: 18, fontWeight: "500", marginBottom: 8 }}>
             Liste des fournisseurs
           </div>
         </Col>
-        <Col>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={openModalForAdd}
-            disabled={loading}
-          >
-            Ajouter un fournisseur
-          </Button>
-        </Col>
+  
       </Row>
 
       {/* Ligne des filtres et bouton */}
-      <Row
-        gutter={16}
-        align="middle"
-        style={{ marginBottom: 16, maxWidth: 800, width: "100%" }}
-      >
-        <Col>
-          <Input
-            placeholder="Filtrer par nom"
-            value={searchNom}
-            onChange={onSearchNomChange}
-            allowClear
-            style={{ width: 280 }}
-          />
-        </Col>
-        <Col>
-          <Input
-            placeholder="Filtrer par numéro d'enregistrement fiscal"
-            value={searchNumRegFiscal}
-            onChange={onSearchNumRegFiscalChange}
-            allowClear
-            style={{ width: 280 }}
-          />
-        </Col>
-        <Col>
-          <Button
-            onClick={clearFilters}
-            style={{ height: 32, marginTop: 2 }} // Aligne verticalement avec les inputs
-          >
-            Effacer filtres
-          </Button>
-        </Col>
-        
-      </Row>
+<Row
+  justify="space-between"
+  align="middle"
+  style={{ marginBottom: 16, width: "100%" }}
+>
+  {/* Colonne gauche : filtres + effacer */}
+  <Col>
+    <Row gutter={16} align="middle">
+      <Col>
+        <Input
+          placeholder="Filtrer par nom"
+          value={searchNom}
+          onChange={onSearchNomChange}
+          allowClear
+          style={{ width: 240, height: 32 }}
+        />
+      </Col>
+      <Col>
+        <Input
+          placeholder="Filtrer par numéro d'enregistrement fiscal"
+          value={searchNumRegFiscal}
+          onChange={onSearchNumRegFiscalChange}
+          allowClear
+          style={{ width: 280, height: 32 }}
+        />
+      </Col>
+      <Col style={{ display: "flex", alignItems: "center" }}>
+        <Button
+          onClick={clearFilters}
+          style={{ height: 32 }}
+        >
+          Effacer filtres
+        </Button>
+      </Col>
+    </Row>
+  </Col>
+
+  {/* Colonne droite : bouton Ajouter */}
+<Col>
+  <Button
+    icon={<PlusOutlined />}
+    onClick={openModalForAdd}
+    disabled={loading}
+    onMouseEnter={() => setIsHovered(true)}
+    onMouseLeave={() => setIsHovered(false)}
+    style={{
+      borderRadius: '8px',
+      height: 32,
+      padding: '0 20px',
+      background: isHovered
+        ? 'linear-gradient(135deg, #0f7ae5 0%, #2194ff 100%)'
+        : 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+      border: 'none',
+      fontWeight: 500,
+      color: '#fff',
+      boxShadow: isHovered
+        ? '0 6px 20px rgba(24, 144, 255, 0.4)'
+        : '0 2px 8px rgba(24, 144, 255, 0.2)',
+      transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
+      transition: 'all 0.3s ease',
+    }}
+  >
+    Ajouter un fournisseur
+  </Button>
+</Col>
+
+</Row>
+
 
       <Table
         columns={columns}
@@ -259,63 +348,144 @@ export default function Fournisseur() {
         loading={loading}
       />
 
-      <Modal
-        title={currentId ? "Modifier fournisseur" : "Nouveau fournisseur"}
-        open={visible}
-        onOk={handleSubmit}
-        onCancel={() => {
-          setVisible(false);
-          form.resetFields();
+<Modal
+  title={
+    <span style={{ fontWeight: 700, fontSize: "20px", color: "#1f2937" }}>
+      {currentId ? "✏️ Modifier fournisseur" : "➕ Nouveau fournisseur"}
+    </span>
+  }
+  open={visible}
+  onOk={handleSubmit}
+  onCancel={() => {
+    setVisible(false);
+    form.resetFields();
+  }}
+  okText="Enregistrer"
+  cancelText="Annuler"
+  destroyOnClose
+  confirmLoading={loading}
+  bodyStyle={{
+    padding: '24px 24px 8px',
+  
+    borderRadius: '12px',
+  }}
+  style={{
+    borderRadius: '16px',
+    overflow: 'hidden',
+    paddingBottom: '0',
+  }}
+  okButtonProps={{
+    style: {
+      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+      border: 'none',
+      fontWeight: 600,
+      borderRadius: '10px',
+      height: '40px',
+      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)',
+    },
+    onMouseEnter: (e) => {
+      e.target.style.transform = 'translateY(-1px)';
+    },
+    onMouseLeave: (e) => {
+      e.target.style.transform = 'translateY(0)';
+    },
+  }}
+  cancelButtonProps={{
+    style: {
+      borderRadius: '10px',
+      height: '40px',
+      border: '1px solid #d1d5db',
+      fontWeight: 500,
+      color: '#4b5563',
+    }
+  }}
+>
+  <Form form={form} layout="vertical">
+    <Form.Item
+      name="nom"
+      label={<strong style={{ color: '#374151' }}>Nom</strong>}
+      rules={[{ required: true, message: "Veuillez entrer le nom" }]}
+    >
+      <Input
+        placeholder="🏢 Nom du fournisseur"
+        style={{
+          borderRadius: '10px',
+          height: '42px',
+          border: '1.5px solid #d1d5db',
         }}
-        okText="Enregistrer"
-        cancelText="Annuler"
-        destroyOnClose
-        confirmLoading={loading}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="nom"
-            label="Nom"
-            rules={[{ required: true, message: "Veuillez entrer le nom" }]}
-          >
-            <Input placeholder="Nom du fournisseur" />
-          </Form.Item>
+        onFocus={(e) => {
+          e.target.style.borderColor = '#3b82f6';
+          e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = '#d1d5db';
+          e.target.style.boxShadow = 'none';
+        }}
+      />
+    </Form.Item>
 
-          <Form.Item
-            name="num_reg_fiscal"
-            label="Numéro d'enregistrement fiscal"
-          >
-            <Input placeholder="Numéro d'enregistrement fiscal" />
-          </Form.Item>
+    <Form.Item
+      name="num_reg_fiscal"
+      label={<strong style={{ color: '#374151' }}>Numéro d'enregistrement fiscal</strong>}
+    >
+      <Input
+        placeholder="📋 Numéro d'enregistrement fiscal"
+        style={{ borderRadius: '10px', height: '42px', border: '1.5px solid #d1d5db' }}
+      />
+    </Form.Item>
 
-          <Form.Item name="adresse" label="Adresse">
-            <Input placeholder="Adresse" />
-          </Form.Item>
+    <Form.Item
+      name="adresse"
+      label={<strong style={{ color: '#374151' }}>Adresse</strong>}
+    >
+      <Input
+        placeholder="📍 Adresse du fournisseur"
+        style={{ borderRadius: '10px', height: '42px', border: '1.5px solid #d1d5db' }}
+      />
+    </Form.Item>
 
-          <Form.Item
-            name="telephone"
-            label="Numéro de téléphone"
-            rules={[
-              {
-                pattern: /^\+?\d{7,15}$/,
-                message: "Entrez un numéro valide (chiffres uniquement)",
-              },
-            ]}
-          >
-            <Input placeholder="Numéro de téléphone" />
-          </Form.Item>
+    <Form.Item
+      name="telephone"
+      label={<strong style={{ color: '#374151' }}>Numéro de téléphone</strong>}
+      rules={[
+        {
+          pattern: /^\+?\d{7,15}$/,
+          message: "Entrez un numéro valide (chiffres uniquement)",
+        },
+      ]}
+    >
+      <Input
+        placeholder="📞 Numéro de téléphone"
+        style={{ borderRadius: '10px', height: '42px', border: '1.5px solid #d1d5db' }}
+      />
+    </Form.Item>
 
-          <Form.Item
-            name="infos_complementaires"
-            label="Informations complémentaires"
-          >
-            <Input.TextArea
-              placeholder="Informations complémentaires (optionnel)"
-              rows={3}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
+    <Form.Item
+      name="infos_complementaires"
+      label={<strong style={{ color: '#374151' }}>Informations complémentaires</strong>}
+    >
+      <Input.TextArea
+        placeholder="📝 Notes, remarques ou détails..."
+        rows={3}
+        style={{
+          borderRadius: '12px',
+          border: '1.5px solid #d1d5db',
+          resize: 'none',
+          fontSize: '14px',
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = '#3b82f6';
+          e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = '#d1d5db';
+          e.target.style.boxShadow = 'none';
+        }}
+      />
+    </Form.Item>
+  </Form>
+</Modal>
+
     </Card>
   );
 }

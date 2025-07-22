@@ -519,7 +519,63 @@ const getMaterialTypeColor = (type) => {
           }}
         >
         
-          <Title level={2}> <FileDoneOutlined /> Bons de Livraison (Réception)</Title>
+        <Space size="large" align="center">
+  <div style={{ position: 'relative' }}>
+    <div
+      style={{
+        width: 48,
+        height: 48,
+        background: "#1890ff",
+        borderRadius: 16,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+      }}
+    >
+      <FileDoneOutlined style={{ fontSize: 24, color: "#fff" }} />
+    </div>
+    <div
+      style={{
+        position: "absolute",
+        top: -8,
+        right: -8,
+        background: "#52c41a",
+        color: "white",
+        fontSize: 12,
+        fontWeight: "bold",
+        borderRadius: "50%",
+        width: 20,
+        height: 20,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        border: "2px solid white",
+      }}
+    >
+      {/* Badge content si nécessaire */}
+    </div>
+  </div>
+
+  <div>
+    <Title
+      level={2}
+      style={{
+        margin: 0,
+        fontWeight: 700,
+        color: "#1890ff",
+        fontSize: "28px",
+      }}
+    >
+      Bons de Livraison (Réception)
+    </Title>
+    <Text type="secondary">
+      Suivi des réceptions et livraisons
+      <span style={{ color: "#52c41a", marginLeft: 8 }}>●</span>
+    </Text>
+  </div>
+</Space>
+
           <Space size="middle">
                    <Button
                          icon={<DeleteOutlined />}

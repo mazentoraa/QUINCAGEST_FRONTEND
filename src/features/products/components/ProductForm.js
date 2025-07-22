@@ -365,7 +365,7 @@ const ProductForm = ({
       maxHeight: '85vh', 
       overflowY: 'auto', 
       paddingRight: '12px',
-      background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+     
       margin: isModal ? '-16px' : '0',
       padding: '24px'
     }}>

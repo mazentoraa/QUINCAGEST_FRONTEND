@@ -12,6 +12,8 @@ import {
   ClockCircleOutlined,
   SyncOutlined,
 } from "@ant-design/icons";
+import { Space, Button } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 
@@ -111,39 +113,172 @@ const InstallmentManagement = () => {
 
   if (showDetails && selectedInstallment) {
     return (
-      <InstallmentDetails
-        installment={selectedInstallment}
-        onBack={handleBackToList}
-        onUpdateInstallment={updateInstallment}
-      />
+      <div style={{ backgroundColor: "#ffffff", minHeight: "100vh" }}>
+        <InstallmentDetails
+          installment={selectedInstallment}
+          onBack={handleBackToList}
+          onUpdateInstallment={updateInstallment}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="installment-management">
+    <div className="installment-management" style={{ backgroundColor: "#ffffff", minHeight: "100vh", borderRadius: "15px" }}>
       <div className="installment-header">
-        <h1>Gestion des Traites</h1>
+       <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  }}
+>
+  <Space size="large" align="center">
+    <div>
+      <div
+        style={{
+          width: 48,
+          height: 48,
+          background: "#1890ff",
+          borderRadius: 16,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <FileDoneOutlined style={{ fontSize: 24, color: "#fff" }} />
+      </div>
+    </div>
 
-        {countEnRetard > 0 && (
-          <div
-            style={{
-              backgroundColor: "#f5222d",
-              color: "white",
-              padding: "12px 20px",
-              borderRadius: 6,
-              marginTop: 10,
-              fontWeight: "bold",
-              fontSize: 16,
-            }}
-          >
-            ⚠️ {countEnRetard} traite{countEnRetard > 1 ? "s" : ""} en retard
-          </div>
-        )}
+    <div>
+      <Title
+        level={2}
+        style={{
+          margin: 0,
+          fontWeight: 700,
+          color: "#1890ff",
+          fontSize: "28px",
+        }}
+      >
+        Gestion des Traites
+      </Title>
+      <Text type="secondary">
+        Suivi complet des traites émises
+        <span style={{ color: "#52c41a", marginLeft: 8 }}>●</span>
+      </Text>
+    </div>
+  </Space>
+
+</div>
+
+{countEnRetard > 0 && (
+  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+    {/* Bouton Corbeille - avec cadre et hover effect */}
+    <div style={{
+      border: "2px solid #e5e7eb",
+      borderRadius: "12px",
+      padding: "8px",
+      backgroundColor: "#ffffff",
+      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+    }}>
+      <Button
+        icon={<DeleteOutlined />}
+        size="middle"
+        style={{
+          borderRadius: "8px",
+          height: "36px",
+          padding: "0 16px",
+          border: "2px solid #ef4444",
+          color: "#ef4444",
+          fontWeight: 600,
+          background: "#ffffff",
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          fontSize: "14px",
+          boxShadow: "0 4px 12px rgba(239, 68, 68, 0.15)",
+          cursor: "pointer",
+          width: "100%",
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.borderColor = "#dc2626";
+          e.target.style.color = "#ffffff";
+          e.target.style.background = "#ef4444";
+          e.target.style.transform = "translateY(-2px)";
+          e.target.style.boxShadow = "0 8px 25px rgba(239, 68, 68, 0.25)";
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.borderColor = "#ef4444";
+          e.target.style.color = "#ef4444";
+          e.target.style.background = "#ffffff";
+          e.target.style.transform = "translateY(0)";
+          e.target.style.boxShadow = "0 4px 12px rgba(239, 68, 68, 0.15)";
+        }}
+        onClick={() => {
+          message.info("Bouton Corbeille cliqué !");
+        }}
+      >
+        Corbeille
+      </Button>
+    </div>
+
+    {/* Alerte en retard (rouge) - avec cadre et hover effect */}
+    <div
+      style={{
+        border: "2px solid #f5222d",
+        backgroundColor: "#f5222d",
+        color: "white",
+        padding: "12px 20px",
+        borderRadius: 8,
+        fontWeight: "bold",
+        fontSize: 16,
+        transition: "all 0.3s ease",
+        cursor: "pointer",
+        boxShadow: "0 2px 8px rgba(245, 34, 45, 0.2)",
+      }}
+      onMouseEnter={(e) => {
+        e.target.style.backgroundColor = "#cf1322";
+        e.target.style.borderColor = "#cf1322";
+        e.target.style.transform = "scale(1.02)";
+        e.target.style.boxShadow = "0 4px 15px rgba(245, 34, 45, 0.3)";
+      }}
+      onMouseLeave={(e) => {
+        e.target.style.backgroundColor = "#f5222d";
+        e.target.style.borderColor = "#f5222d";
+        e.target.style.transform = "scale(1)";
+        e.target.style.boxShadow = "0 2px 8px rgba(245, 34, 45, 0.2)";
+      }}
+    >
+      ⚠️ {countEnRetard} traite{countEnRetard > 1 ? "s" : ""} en retard
+    </div>
+  </div>
+)}
+
       </div>
 
       <Row gutter={16} style={{ marginBottom: 24, flexWrap: "nowrap", overflowX: "auto" }}>
         <Col flex="1 1 0" style={{ minWidth: 140 }}>
-          <Card bordered={false}>
+          <Card 
+            bordered={true}
+            style={{ 
+              backgroundColor: "#ffffff", 
+              transition: "all 0.3s ease", 
+              cursor: "pointer",
+              border: "2px solid #e5e7eb",
+              borderRadius: "12px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.15)";
+              e.currentTarget.style.borderColor = "#1890ff";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
+              e.currentTarget.style.borderColor = "#e5e7eb";
+            }}
+          >
             <Title level={4} style={{ color: "#555", fontWeight: "600" }}>Total Traites</Title>
             <Text style={{ fontSize: 20, fontWeight: "700", display: "flex", alignItems: "center" }}>
               <FileDoneOutlined style={{ marginRight: 8, color: "#1890ff" }} />
@@ -152,13 +287,53 @@ const InstallmentManagement = () => {
           </Card>
         </Col>
         <Col flex="1 1 0" style={{ minWidth: 140 }}>
-          <Card bordered={false}>
+          <Card 
+            bordered={true}
+            style={{ 
+              backgroundColor: "#ffffff", 
+              transition: "all 0.3s ease", 
+              cursor: "pointer",
+              border: "2px solid #e5e7eb",
+              borderRadius: "12px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.15)";
+              e.currentTarget.style.borderColor = "#1890ff";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
+              e.currentTarget.style.borderColor = "#e5e7eb";
+            }}
+          >
             <Title level={4} style={{ color: "#555", fontWeight: "600" }}>Montant Total</Title>
             <Text style={{ fontSize: 20, fontWeight: "700" }}>{totalAmount.toFixed(3)}</Text>
           </Card>
         </Col>
         <Col flex="1 1 0" style={{ minWidth: 140 }}>
-          <Card bordered={false}>
+          <Card 
+            bordered={true}
+            style={{ 
+              backgroundColor: "#ffffff", 
+              transition: "all 0.3s ease", 
+              cursor: "pointer",
+              border: "2px solid #e5e7eb",
+              borderRadius: "12px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.15)";
+              e.currentTarget.style.borderColor = "#52c41a";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
+              e.currentTarget.style.borderColor = "#e5e7eb";
+            }}
+          >
             <Title level={4} style={{ color: "#555", fontWeight: "600" }}>Payées</Title>
             <Text style={{ fontSize: 20, fontWeight: "700", color: "#52c41a", display: "flex", alignItems: "center" }}>
               <CheckCircleOutlined style={{ marginRight: 8 }} />
@@ -167,7 +342,27 @@ const InstallmentManagement = () => {
           </Card>
         </Col>
         <Col flex="1 1 0" style={{ minWidth: 140 }}>
-          <Card bordered={false}>
+          <Card 
+            bordered={true}
+            style={{ 
+              backgroundColor: "#ffffff", 
+              transition: "all 0.3s ease", 
+              cursor: "pointer",
+              border: "2px solid #e5e7eb",
+              borderRadius: "12px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.15)";
+              e.currentTarget.style.borderColor = "#fa8c16";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
+              e.currentTarget.style.borderColor = "#e5e7eb";
+            }}
+          >
             <Title level={4} style={{ color: "#555", fontWeight: "600" }}>Non Payées</Title>
             <Text style={{ fontSize: 20, fontWeight: "700", color: "#fa8c16", display: "flex", alignItems: "center" }}>
               <ClockCircleOutlined style={{ marginRight: 8 }} />
@@ -176,7 +371,27 @@ const InstallmentManagement = () => {
           </Card>
         </Col>
         <Col flex="1 1 0" style={{ minWidth: 140 }}>
-          <Card bordered={false}>
+          <Card 
+            bordered={true}
+            style={{ 
+              backgroundColor: "#ffffff", 
+              transition: "all 0.3s ease", 
+              cursor: "pointer",
+              border: "2px solid #e5e7eb",
+              borderRadius: "12px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.15)";
+              e.currentTarget.style.borderColor = "#fa541c";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
+              e.currentTarget.style.borderColor = "#e5e7eb";
+            }}
+          >
             <Title level={4} style={{ color: "#555", fontWeight: "600" }}>Partiel- Payées</Title>
             <Text style={{ fontSize: 20, fontWeight: "700", color: "#fa541c", display: "flex", alignItems: "center" }}>
               <SyncOutlined style={{ marginRight: 8 }} />
@@ -277,7 +492,7 @@ const InstallmentManagement = () => {
                         <th>Numéro de Facture</th>
                         <th>Montant Total</th>
                         <th>Nombre de Traites</th>
-                        <th>Banque</th> {/* Colonne banque ajoutée */}
+                        <th>Banque</th>
                         <th>Status</th>
                         <th>Actions</th>
                       </tr>
@@ -293,7 +508,7 @@ const InstallmentManagement = () => {
                           <td>{installment.numero_commande || installment.invoiceNumber || "N/A"}</td>
                           <td>{installment.montant_total ? parseFloat(installment.montant_total).toFixed(3) : "N/A"}</td>
                           <td>{installment.nombre_traite || installment.numberOfInstallments || "N/A"}</td>
-                          <td>{installment.bankName || "N/A"}</td> {/* Affichage banque */}
+                          <td>{installment.bankName || "N/A"}</td>
                           <td>
                             <span
                               className={`status-badge ${installment.status?.toLowerCase() || "unknown"}`}

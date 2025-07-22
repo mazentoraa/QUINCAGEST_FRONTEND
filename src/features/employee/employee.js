@@ -9,6 +9,8 @@ import {
 } from '@ant-design/icons';
 import moment from 'moment';
 import EmployeeService from './EmployeeService';
+import { Space } from 'antd';
+const { Text } = Typography;
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -205,9 +207,124 @@ const handleSubmit = async (values) => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'white', padding: 24 }}>
-      <Title level={3} style={{ textAlign: 'left', color: '#1890ff', marginBottom: 24 }}>
-        👨‍💼 Gestion des Employés
+ <div
+  style={{
+    padding: "40px 40px 30px",
+    borderBottom: "1px solid #f1f5f9",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  }}
+>
+  <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "48px",
+        height: "48px",
+        borderRadius: "16px",
+        background:
+          "linear-gradient(135deg, #52c41a 0%, #7ed957 100%)",
+        boxShadow: "0 6px 20px rgba(82, 196, 26, 0.25)",
+        position: "relative",
+      }}
+    >
+      <TeamOutlined style={{ fontSize: "24px", color: "#ffffff" }} />
+      <div
+        style={{
+          position: "absolute",
+          top: "-2px",
+          right: "-2px",
+          width: "18px",
+          height: "18px",
+          borderRadius: "10px",
+          backgroundColor: "#1890ff",
+          border: "2px solid #ffffff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <span
+          style={{
+            color: "#ffffff",
+            fontSize: "9px",
+            fontWeight: "bold",
+          }}
+        >
+          {employees.length}
+        </span>
+      </div>
+    </div>
+
+    <div>
+      <Title
+        level={2}
+        style={{
+          margin: 0,
+          fontWeight: 600,
+          color: "#52c41a",
+          fontSize: "24px",
+          letterSpacing: "-0.5px",
+        }}
+      >
+        Gestion des Employés
       </Title>
+      <Text
+        style={{
+          color: "#64748b",
+          fontSize: "14px",
+        }}
+      >
+        {employees.length} employé{employees.length !== 1 ? "s" : ""} enregistré
+        {employees.length !== 1 ? "s" : ""}
+      </Text>
+    </div>
+  </div>
+
+  <Space size="large">
+    <Button
+      icon={<DeleteOutlined />}
+      onClick={() => {
+        // ta fonction de suppression globale, ou tu peux en créer une
+        message.info("Fonction Corbeille à implémenter");
+      }}
+      style={{
+        borderRadius: "8px",
+        height: "40px",
+        padding: "0 16px",
+        border: "1px solid #ef4444",
+        color: "#ef4444",
+        fontWeight: 500,
+        background: "#ffffff",
+        transition: "all 0.3s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = "#dc2626";
+        e.currentTarget.style.color = "#ffffff";
+        e.currentTarget.style.background = "#ef4444";
+        e.currentTarget.style.transform = "translateY(-1px)";
+        e.currentTarget.style.boxShadow = "0 4px 12px rgba(239, 68, 68, 0.3)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "#ef4444";
+        e.currentTarget.style.color = "#ef4444";
+        e.currentTarget.style.background = "#ffffff";
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "none";
+      }}
+    >
+      Corbeille
+    </Button>
+
+
+  </Space>
+</div>
+
+
 
       {successMessage && (
         <Alert

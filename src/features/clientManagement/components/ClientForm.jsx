@@ -178,7 +178,7 @@ const ClientForm = ({ initial_values, on_finish, on_cancel, loading, is_edit }) 
       maxHeight: '75vh', 
       overflowY: 'auto', 
       paddingRight: '12px',
-      background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+   
       margin: '-16px',
       padding: '24px'
     }}>

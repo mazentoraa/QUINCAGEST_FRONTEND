@@ -1,221 +1,218 @@
-/* Styles CSS pour améliorer le design du menu latéral */
+/* ====== Fichier: sideMenu.css ====== */
 
+/* ---------- STRUCTURE DU MENU ---------- */
 .sidebar {
-  background: #ffffff;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
+  height: 100vh;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-header {
   padding: 20px;
-
-  color: white;
+  font-weight: bold;
   text-align: center;
-
+  font-size: 18px;
+  color: #020230;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.sidebar-header h2 {
-  margin: 0;
-  font-weight: 600;
-  font-size: 20px;
-
-}
-
-/* Section VENTES - Bleu */
-.ant-menu-item[data-section="ventes"],
-.ant-menu-submenu[data-section="ventes"] > .ant-menu-submenu-title {
+/* ---------- STYLE DES ÉLÉMENTS ---------- */
+.ant-menu-item, .ant-menu-submenu-title {
+  padding-left: 24px !important;
+  height: 48px !important;
+  line-height: 48px !important;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333333;
   transition: all 0.3s ease;
 }
 
-.ant-menu-item[data-section="ventes"] .anticon,
-.ant-menu-submenu[data-section="ventes"] > .ant-menu-submenu-title .anticon {
-  color: #1890ff;
-  transition: all 0.3s ease;
-}
-
-.ant-menu-item[data-section="ventes"]:hover,
-.ant-menu-submenu[data-section="ventes"]:hover > .ant-menu-submenu-title {
-  background: linear-gradient(90deg, rgba(24, 144, 255, 0.08), rgba(24, 144, 255, 0.03));
-  border-radius: 6px;
-  margin: 2px 8px;
-}
-
-.ant-menu-item[data-section="ventes"]:hover .anticon,
-.ant-menu-submenu[data-section="ventes"]:hover > .ant-menu-submenu-title .anticon {
-  color: #0050b3;
-  transform: scale(1.1);
-}
-
-/* Section EMPLOYÉS - Vert */
-.ant-menu-item[data-section="employes"],
-.ant-menu-submenu[data-section="employes"] > .ant-menu-submenu-title {
-  transition: all 0.3s ease;
-}
-
-.ant-menu-item[data-section="employes"] .anticon,
-.ant-menu-submenu[data-section="employes"] > .ant-menu-submenu-title .anticon {
-  color: #52c41a;
-  transition: all 0.3s ease;
-}
-
-.ant-menu-item[data-section="employes"]:hover,
-.ant-menu-submenu[data-section="employes"]:hover > .ant-menu-submenu-title {
-  background: linear-gradient(90deg, rgba(82, 196, 26, 0.08), rgba(82, 196, 26, 0.03));
-  border-radius: 6px;
-  margin: 2px 8px;
-}
-
-.ant-menu-item[data-section="employes"]:hover .anticon,
-.ant-menu-submenu[data-section="employes"]:hover > .ant-menu-submenu-title .anticon {
-  color: #389e0d;
-  transform: scale(1.1);
-}
-
-/* Section ACHATS - Orange */
-.ant-menu-item[data-section="achats"],
-.ant-menu-submenu[data-section="achats"] > .ant-menu-submenu-title {
-  transition: all 0.3s ease;
-}
-
-.ant-menu-item[data-section="achats"] .anticon,
-.ant-menu-submenu[data-section="achats"] > .ant-menu-submenu-title .anticon {
-  color: #fa8c16;
-  transition: all 0.3s ease;
-}
-
-.ant-menu-item[data-section="achats"]:hover,
-.ant-menu-submenu[data-section="achats"]:hover > .ant-menu-submenu-title {
-  background: linear-gradient(90deg, rgba(250, 140, 22, 0.08), rgba(250, 140, 22, 0.03));
-  border-radius: 6px;
-  margin: 2px 8px;
-}
-
-.ant-menu-item[data-section="achats"]:hover .anticon,
-.ant-menu-submenu[data-section="achats"]:hover > .ant-menu-submenu-title .anticon {
-  color: #d46b08;
-  transform: scale(1.1);
-}
-
-/* Section TRÉSORERIE - Violet */
-.ant-menu-item[data-section="tresorerie"],
-.ant-menu-submenu[data-section="tresorerie"] > .ant-menu-submenu-title {
-  transition: all 0.3s ease;
-}
-
-.ant-menu-item[data-section="tresorerie"] .anticon,
-.ant-menu-submenu[data-section="tresorerie"] > .ant-menu-submenu-title .anticon {
-  color: #722ed1;
-  transition: all 0.3s ease;
-}
-
-.ant-menu-item[data-section="tresorerie"]:hover,
-.ant-menu-submenu[data-section="tresorerie"]:hover > .ant-menu-submenu-title {
-  background: linear-gradient(90deg, rgba(114, 46, 209, 0.08), rgba(114, 46, 209, 0.03));
-  border-radius: 6px;
-  margin: 2px 8px;
-}
-
-.ant-menu-item[data-section="tresorerie"]:hover .anticon,
-.ant-menu-submenu[data-section="tresorerie"]:hover > .ant-menu-submenu-title .anticon {
-  color: #531dab;
-  transform: scale(1.1);
-}
-
-/* Section RAPPORT - Rose/Rouge */
-.ant-menu-item[data-section="rapport"],
-.ant-menu-submenu[data-section="rapport"] > .ant-menu-submenu-title {
-  transition: all 0.3s ease;
-}
-
-.ant-menu-item[data-section="rapport"] .anticon,
-.ant-menu-submenu[data-section="rapport"] > .ant-menu-submenu-title .anticon {
-  color: #CA3C66;
-  transition: all 0.3s ease;
-}
-
-.ant-menu-item[data-section="rapport"]:hover,
-.ant-menu-submenu[data-section="rapport"]:hover > .ant-menu-submenu-title {
-  background: linear-gradient(90deg, rgba(202, 60, 102, 0.08), rgba(202, 60, 102, 0.03));
-  border-radius: 6px;
-  margin: 2px 8px;
-}
-
-.ant-menu-item[data-section="rapport"]:hover .anticon,
-.ant-menu-submenu[data-section="rapport"]:hover > .ant-menu-submenu-title .anticon {
-  color: #A52A4A;
-  transform: scale(1.1);
-}
-
-/* Styles pour les éléments sélectionnés */
+/* Réinitialiser les styles par défaut d'Ant Design */
 .ant-menu-item-selected {
-  background: linear-gradient(90deg, rgba(24, 144, 255, 0.12), rgba(24, 144, 255, 0.04)) !important;
-  border-radius: 6px !important;
-  margin: 2px 8px !important;
-  border-right: 3px solid #1890ff !important;
-}
-
-.ant-menu-item-selected .anticon {
-  color: #0050b3 !important;
-}
-
-/* Styles pour les sous-menus ouverts */
-.ant-menu-submenu-open > .ant-menu-submenu-title {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 6px;
-  margin: 2px 8px;
-}
-
-/* Espacement et padding */
-.ant-menu-item,
-.ant-menu-submenu-title {
-  margin: 4px 8px !important;
-  border-radius: 6px;
-  padding-left: 16px !important;
-  height: 42px !important;
-  line-height: 42px !important;
-}
-
-.ant-menu-sub .ant-menu-item {
-  margin: 2px 16px !important;
-  padding-left: 32px !important;
-  height: 36px !important;
-  line-height: 36px !important;
-}
-
-/* Animation de l'icône */
-.anticon {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Séparateurs visuels */
-.menu-section-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #f0f0f0, transparent);
-  margin: 12px 16px;
-}
-
-/* Amélioration du survol général */
-.ant-menu-item:hover,
-.ant-menu-submenu-title:hover {
+  background-color: transparent !important;
   color: inherit !important;
 }
 
-/* Styles pour les sous-menus imbriqués */
-.ant-menu-sub .ant-menu-item[data-section="ventes"]:hover {
-  background: linear-gradient(90deg, rgba(24, 144, 255, 0.06), rgba(24, 144, 255, 0.02));
+.ant-menu-item-selected::after {
+  display: none !important;
 }
 
-.ant-menu-sub .ant-menu-item[data-section="employes"]:hover {
-  background: linear-gradient(90deg, rgba(82, 196, 26, 0.06), rgba(82, 196, 26, 0.02));
+/* ---------- ICONES & FLECHES ---------- */
+.ant-menu-submenu-arrow {
+  color: #999 !important;
 }
 
-.ant-menu-sub .ant-menu-item[data-section="achats"]:hover {
-  background: linear-gradient(90deg, rgba(250, 140, 22, 0.06), rgba(250, 140, 22, 0.02));
+.ant-menu-inline .ant-menu-submenu-title .anticon {
+  margin-right: 12px;
 }
 
-.ant-menu-sub .ant-menu-item[data-section="tresorerie"]:hover {
-  background: linear-gradient(90deg, rgba(114, 46, 209, 0.06), rgba(114, 46, 209, 0.02));
+.ant-menu .ant-menu-item-icon, .ant-menu .anticon {
+  font-size: 17px;
 }
 
-.ant-menu-sub .ant-menu-item[data-section="rapport"]:hover {
-  background: linear-gradient(90deg, rgba(202, 60, 102, 0.06), rgba(202, 60, 102, 0.02));
+/* ---------- COULEURS DES ICONES ---------- */
+.blue-icon { color: #1890ff !important; }
+.green-icon { color: #52c41a !important; }
+.pink-icon { color: #eb2f96 !important; }
+.orange-icon { color: #fa8c16 !important; }
+.purple-icon { color: #722ed1 !important; }
+
+/* ---------- SELECTION PAR COULEUR ---------- */
+.selected-blue {
+  background-color: #e6f7ff !important;
+  color: #1890ff !important;
+  border-right: 3px solid #1890ff !important;
+}
+
+.selected-blue .anticon {
+  color: #1890ff !important;
+}
+
+.selected-green {
+  background-color: #f6ffed !important;
+  color: #52c41a !important;
+  border-right: 3px solid #52c41a !important;
+}
+
+.selected-green .anticon {
+  color: #52c41a !important;
+}
+
+.selected-pink {
+  background-color: #fff0f6 !important;
+  color: #eb2f96 !important;
+  border-right: 3px solid #eb2f96 !important;
+}
+
+.selected-pink .anticon {
+  color: #eb2f96 !important;
+}
+
+.selected-orange {
+  background-color: #fff7e6 !important;
+  color: #fa8c16 !important;
+  border-right: 3px solid #fa8c16 !important;
+}
+
+.selected-orange .anticon {
+  color: #fa8c16 !important;
+}
+
+.selected-purple {
+  background-color: #f9f0ff !important;
+  color: #722ed1 !important;
+  border-right: 3px solid #722ed1 !important;
+}
+
+.selected-purple .anticon {
+  color: #722ed1 !important;
+}
+
+/* ---------- SOUS-MENUS OUVERTS ---------- */
+.ant-menu-submenu-open > .ant-menu-submenu-title {
+  background-color: #f0f0f0 !important;
+}
+
+.ant-menu-submenu-open > .ant-menu-submenu-title .blue-icon {
+  color: #1890ff !important;
+}
+
+.ant-menu-submenu-open > .ant-menu-submenu-title .green-icon {
+  color: #52c41a !important;
+}
+
+.ant-menu-submenu-open > .ant-menu-submenu-title .pink-icon {
+  color: #eb2f96 !important;
+}
+
+.ant-menu-submenu-open > .ant-menu-submenu-title .orange-icon {
+  color: #fa8c16 !important;
+}
+
+.ant-menu-submenu-open > .ant-menu-submenu-title .purple-icon {
+  color: #722ed1 !important;
+}
+
+/* ---------- ITEMS DE SOUS-MENUS SÉLECTIONNÉS ---------- */
+/* Override des styles par défaut d'Ant Design pour les sous-menus */
+.ant-menu-sub .ant-menu-item-selected {
+  background-color: transparent !important;
+  color: inherit !important;
+}
+
+.ant-menu-sub .ant-menu-item-selected::after {
+  display: none !important;
+}
+
+/* Styles pour les items de sous-menus sélectionnés - BLEU */
+.ant-menu-sub .ant-menu-item.selected-blue {
+  background-color: #e6f7ff !important;
+  color: #1890ff !important;
+  border-right: 3px solid #1890ff !important;
+}
+
+.ant-menu-sub .ant-menu-item.selected-blue .anticon {
+  color: #1890ff !important;
+}
+
+/* Styles pour les items de sous-menus sélectionnés - VERT */
+.ant-menu-sub .ant-menu-item.selected-green {
+  background-color: #f6ffed !important;
+  color: #52c41a !important;
+  border-right: 3px solid #52c41a !important;
+}
+
+.ant-menu-sub .ant-menu-item.selected-green .anticon {
+  color: #52c41a !important;
+}
+
+/* Styles pour les items de sous-menus sélectionnés - ROSE */
+.ant-menu-sub .ant-menu-item.selected-pink {
+  background-color: #fff0f6 !important;
+  color: #eb2f96 !important;
+  border-right: 3px solid #eb2f96 !important;
+}
+
+.ant-menu-sub .ant-menu-item.selected-pink .anticon {
+  color: #eb2f96 !important;
+}
+
+/* Styles pour les items de sous-menus sélectionnés - ORANGE */
+.ant-menu-sub .ant-menu-item.selected-orange {
+  background-color: #fff7e6 !important;
+  color: #fa8c16 !important;
+  border-right: 3px solid #fa8c16 !important;
+}
+
+.ant-menu-sub .ant-menu-item.selected-orange .anticon {
+  color: #fa8c16 !important;
+}
+
+/* Styles pour les items de sous-menus sélectionnés - VIOLET */
+.ant-menu-sub .ant-menu-item.selected-purple {
+  background-color: #f9f0ff !important;
+  color: #722ed1 !important;
+  border-right: 3px solid #722ed1 !important;
+}
+
+.ant-menu-sub .ant-menu-item.selected-purple .anticon {
+  color: #722ed1 !important;
+}
+
+/* Flèches des sous-menus ouverts */
+.ant-menu-submenu-open > .ant-menu-submenu-title .ant-menu-submenu-arrow {
+  color: #1890ff !important;
+}
+
+/* ---------- ANIMATIONS SMOOTH ---------- */
+.ant-menu-item, .ant-menu-submenu-title {
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+/* ---------- FOCUS ET ACTIVE STATES ---------- */
+.ant-menu-item:focus, .ant-menu-submenu-title:focus {
+  outline: none;
+}
+
+.ant-menu-item:active, .ant-menu-submenu-title:active {
+  transform: translateY(1px);
 }

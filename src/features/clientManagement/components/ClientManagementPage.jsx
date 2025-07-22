@@ -28,7 +28,28 @@ const ClientManagementPage = () => {
     set_loading(true);
     try {
       const data = await ClientService.get_all_clients();
-      set_clients(Array.isArray(data) ? data : []);
+      // Tri décroissant des clients par nom (Z vers A)
+      const sorted_clients = Array.isArray(data) ? data.sort((a, b) => {
+        // Tri par nom d'abord, puis par prénom, puis par ID - ORDRE DÉCROISSANT
+        const name_a = (a.nom || '').toLowerCase();
+        const name_b = (b.nom || '').toLowerCase();
+        
+        if (name_a !== name_b) {
+          return name_b.localeCompare(name_a); // Inversé pour ordre décroissant
+        }
+        
+        const firstname_a = (a.prenom || '').toLowerCase();
+        const firstname_b = (b.prenom || '').toLowerCase();
+        
+        if (firstname_a !== firstname_b) {
+          return firstname_b.localeCompare(firstname_a); // Inversé pour ordre décroissant
+        }
+        
+        // Si même nom et prénom, trier par ID décroissant
+        return (b.id || 0) - (a.id || 0); // Inversé pour ordre décroissant
+      }) : [];
+      
+      set_clients(sorted_clients);
     } catch (error) {
       message.error('Erreur lors du chargement des clients');
       console.error(error);
@@ -55,7 +76,7 @@ const ClientManagementPage = () => {
     try {
       await ClientService.delete_client(client_id);
       message.success('Client déplacé vers la corbeille avec succès');
-      fetch_clients();
+      fetch_clients(); // Le tri sera automatiquement appliqué lors du rechargement
     } catch (error) {
       message.error('Erreur lors de la suppression du client');
       console.error(error);
@@ -75,7 +96,7 @@ const ClientManagementPage = () => {
         message.success('Client ajouté avec succès');
       }
       set_form_visible(false);
-      fetch_clients();
+      fetch_clients(); // Le tri sera automatiquement appliqué lors du rechargement
     } catch (error) {
       message.error("Erreur lors de l'enregistrement du client");
       console.error(error);
@@ -94,44 +115,48 @@ const ClientManagementPage = () => {
 
   return (
     <Content 
-      style={{ 
-        padding: '40px 60px', 
-        backgroundColor: '#f8fafc', 
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)'
-      }}
+   
     >
-      {/* En-tête avec statistiques modernisé */}
+      {/* Container unifié avec titre, boutons et tableau */}
       <div style={{ 
-        marginBottom: '40px',
-        padding: '32px 0',
-        borderBottom: '2px solid #e2e8f0'
+        background: '#ffffff',
+        borderRadius: '16px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+        border: '1px solid #e2e8f0',
+        overflow: 'hidden',
+        width: '100%',
+        maxWidth: '1600px',
+        margin: '0 auto',
+        minHeight: 'calc(100vh - 40px)' // Prend toute la hauteur moins le padding
       }}>
+        
+        {/* Barre d'actions avec titre */}
         <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+          padding: '40px 40px 30px',
+          borderBottom: '1px solid #f1f5f9',
+          display: 'flex',
           justifyContent: 'space-between',
-          marginBottom: '16px'
+          alignItems: 'center'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '64px',
-              height: '64px',
-              borderRadius: '20px',
+              width: '48px',
+              height: '48px',
+              borderRadius: '16px',
               background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
-              boxShadow: '0 8px 25px rgba(24, 144, 255, 0.25)',
+              boxShadow: '0 6px 20px rgba(24, 144, 255, 0.25)',
               position: 'relative'
             }}>
-              <TeamOutlined style={{ fontSize: '32px', color: '#ffffff' }} />
+              <TeamOutlined style={{ fontSize: '24px', color: '#ffffff' }} />
               <div style={{
                 position: 'absolute',
                 top: '-2px',
                 right: '-2px',
-                width: '20px',
-                height: '20px',
+                width: '18px',
+                height: '18px',
                 borderRadius: '10px',
                 backgroundColor: '#52c41a',
                 border: '2px solid #ffffff',
@@ -141,7 +166,7 @@ const ClientManagementPage = () => {
               }}>
                 <span style={{ 
                   color: '#ffffff', 
-                  fontSize: '10px', 
+                  fontSize: '9px', 
                   fontWeight: 'bold' 
                 }}>
                   {clients.length}
@@ -150,194 +175,137 @@ const ClientManagementPage = () => {
             </div>
             
             <div>
-              <Title level={1} style={{ 
+              <Title level={2} style={{ 
                 margin: 0, 
-                fontWeight: 700,
+                fontWeight: 600,
                 color: '#1890ff',
-                fontSize: '30px',
-                letterSpacing: '-1px',
-                background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textShadow: 'none'
+                fontSize: "28px",
+                letterSpacing: '-0.5px'
               }}>
                 Gestion des Clients
               </Title>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '12px',
-                marginTop: '8px'
+              <Text style={{ 
+                color: '#64748b', 
+                fontSize: '14px'
               }}>
-                <Text style={{ 
-                  color: '#64748b', 
-                  fontSize: '18px',
-                  fontWeight: 500
-                }}>
-                  {clients.length} client{clients.length !== 1 ? 's' : ''} enregistré{clients.length !== 1 ? 's' : ''}
-                </Text>
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#52c41a',
-                  animation: 'pulse 2s infinite'
-                }}></div>
-              </div>
+                {clients.length} client{clients.length !== 1 ? 's' : ''} enregistré{clients.length !== 1 ? 's' : ''}
+              </Text>
             </div>
           </div>
-          
-          {/* Statistiques rapides */}
-         
+
+          <Space size="large">
+            <Button 
+              icon={<DeleteOutlined />} 
+              onClick={handle_go_to_trash}
+              style={{
+                borderRadius: '8px',
+                height: '40px',
+                padding: '0 16px',
+                border: '1px solid #ef4444',
+                color: '#ef4444',
+                fontWeight: 500,
+                background: '#ffffff',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = '#dc2626';
+                e.target.style.color = '#ffffff';
+                e.target.style.background = '#ef4444';
+                e.target.style.transform = 'translateY(-1px)';
+                e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = '#ef4444';
+                e.target.style.color = '#ef4444';
+                e.target.style.background = '#ffffff';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = 'none';
+              }}
+            >
+              Corbeille
+            </Button>
+
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />} 
+              onClick={handle_add_client}
+              style={{
+                borderRadius: '8px',
+                height: '40px',
+                padding: '0 20px',
+                background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+                border: 'none',
+                fontWeight: 500,
+                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.2)',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'linear-gradient(135deg, #0f7ae5 0%, #2194ff 100%)';
+                e.target.style.transform = 'translateY(-1px)';
+                e.target.style.boxShadow = '0 6px 20px rgba(24, 144, 255, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(24, 144, 255, 0.2)';
+              }}
+            >
+              Ajouter un client
+            </Button>
+          </Space>
+        </div>
+
+        {/* Tableau des clients avec largeur augmentée */}
+        <div style={{ 
+          padding: '32px 40px 40px', 
+          width: '100%',
+          minHeight: 'calc(100vh - 200px)', // Étend la zone du tableau
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <div style={{ 
+            width: '100%', 
+            minHeight: '750px',
+            flex: 1 // Prend tout l'espace disponible
+          }}>
+            <ClientTable
+              clients={clients}
+              loading={loading}
+              on_edit={handle_edit_client}
+              on_delete={handle_delete_client}
+              scroll={{ x: 1800 }}
+              size="large"
+              style={{ 
+                width: '100%',
+                fontSize: '16px'
+              }}
+              pagination={{ 
+                pageSize: 15,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} clients`,
+                // Optionnel: maintenir le tri même avec la pagination
+                onChange: (page, pageSize) => {
+                  // Le tri est déjà appliqué aux données, pas besoin d'action spéciale
+                }
+              }}
+              // Configuration du tri par défaut dans le tableau
+              defaultSorter={{
+                columnKey: 'nom', // Ou la clé de votre colonne nom
+                order: 'descend' // Changé en ordre décroissant
+              }}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Contenu principal avec design amélioré */}
-      <Card
-        bordered={false}
-        style={{
-          borderRadius: '24px',
-          padding: '0',
-          background: '#ffffff',
-          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05)',
-          border: '1px solid #e2e8f0',
-          overflow: 'hidden',
-          position: 'relative'
-        }}
-      >
-        {/* Décoration de fond */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          width: '200px',
-          height: '200px',
-          background: 'linear-gradient(135deg, rgba(24, 144, 255, 0.05) 0%, rgba(64, 169, 255, 0.02) 100%)',
-          borderRadius: '50%',
-          transform: 'translate(50%, -50%)',
-          pointerEvents: 'none'
-        }}></div>
-
-        {/* Barre d'actions modernisée */}
-        <div style={{ 
-          padding: '32px 40px',
-          borderBottom: '2px solid #f1f5f9',
-          background: 'linear-gradient(90deg, #fafbfc 0%, #f8fafc 100%)',
-          position: 'relative',
-          zIndex: 1
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center'
-          }}>
-            <div>
-              <Title level={3} style={{ 
-                margin: 0, 
-                color: '#1e293b',
-                fontWeight: 600,
-                fontSize: '22px',
-                marginBottom: '8px'
-              }}>
-                Liste des clients
-              </Title>
-              <Text style={{ 
-                color: '#64748b', 
-                fontSize: '16px',
-                fontWeight: 400
-              }}>
-                Gérez vos clients et leurs informations de manière centralisée
-              </Text>
-            </div>
-            
-            <Space size="large">
-              <Button 
-                icon={<DeleteOutlined />} 
-                onClick={handle_go_to_trash}
-                size="large"
-                style={{
-                  borderRadius: '12px',
-                  height: '48px',
-                  padding: '0 20px',
-                  border: '2px solid #ef4444',
-                  color: '#ef4444',
-                  fontWeight: 600,
-                  background: '#ffffff',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  fontSize: '15px',
-                  boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.borderColor = '#dc2626';
-                  e.target.style.color = '#ffffff';
-                  e.target.style.background = '#ef4444';
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 8px 25px rgba(239, 68, 68, 0.25)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.borderColor = '#ef4444';
-                  e.target.style.color = '#ef4444';
-                  e.target.style.background = '#ffffff';
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.15)';
-                }}
-              >
-                Corbeille
-              </Button>
-
-              <Button 
-                type="primary" 
-                icon={<PlusOutlined />} 
-                onClick={handle_add_client}
-                size="large"
-                style={{
-                  borderRadius: '12px',
-                  height: '48px',
-                  padding: '0 24px',
-                  background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
-                  border: 'none',
-                  fontWeight: 600,
-                  fontSize: '15px',
-                  boxShadow: '0 6px 20px rgba(24, 144, 255, 0.3)',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 10px 30px rgba(24, 144, 255, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 6px 20px rgba(24, 144, 255, 0.3)';
-                }}
-              >
-                Ajouter un client
-              </Button>
-            </Space>
-          </div>
-        </div>
-
-        {/* Table des clients avec padding amélioré */}
-        <div style={{ padding: '40px' }}>
-          <ClientTable
-            clients={clients}
-            loading={loading}
-            on_edit={handle_edit_client}
-            on_delete={handle_delete_client}
-          />
-        </div>
-      </Card>
-
-      {/* Modal du formulaire modernisée */}
+      {/* Modal du formulaire */}
       <Modal
         title={
           <div style={{
-            fontSize: '22px',
-            fontWeight: 700,
+            fontSize: '20px',
+            fontWeight: 600,
             color: '#1e293b',
-            padding: '8px 0',
             display: 'flex',
             alignItems: 'center',
             gap: '12px'
@@ -364,18 +332,18 @@ const ClientManagementPage = () => {
         style={{ top: 40 }}
         styles={{
           content: {
-            borderRadius: '24px',
+            borderRadius: '16px',
             overflow: 'hidden',
             padding: 0,
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.12)'
           },
           header: {
-            padding: '32px 40px 24px',
-            borderBottom: '2px solid #f1f5f9',
-            background: 'linear-gradient(90deg, #fafbfc 0%, #f8fafc 100%)'
+            padding: '24px 32px 20px',
+            borderBottom: '1px solid #f1f5f9',
+            background: '#fafbfc'
           },
           body: {
-            padding: '32px 40px 40px',
+            padding: '24px 32px 32px',
             background: '#ffffff'
           }
         }}
@@ -388,24 +356,6 @@ const ClientManagementPage = () => {
           is_edit={is_editing}
         />
       </Modal>
-
-      {/* CSS pour l'animation pulse */}
-      <style jsx>{`
-        @keyframes pulse {
-          0% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          50% {
-            transform: scale(1.2);
-            opacity: 0.7;
-          }
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </Content>
   );
 };
