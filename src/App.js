@@ -168,12 +168,16 @@ function App() {
                                   />
                                   {/* <Route path="/manifeste/inventaire" element={<ManifestePage />} /> */}
                                   <Route
+                                    path="/bons/avoir"
+                                    element={<Facture nature={'avoir'} />}
+                                  />
+                                  <Route
                                     path="/reglements/factures"
                                     element={<Facture nature={'facture'}/>}
                                   />
                                   <Route
-                                    path="/reglements/avoir"
-                                    element={<Facture nature={'avoir'} />}
+                                    path="/reglements/avoir-facture"
+                                    element={<Facture nature={'avoir-facture'} />}
                                   />
                                   <Route
                                     path="/reglements/traites"
