@@ -27,7 +27,8 @@ import { useProducts } from "../contexts/ProductContext";
 import { StockContext } from "../../stock/contexts/StockContext";
 import ProductCard from "./ProductCard";
 import ProductForm from "./ProductForm";
-
+import TrashModal from './TrashModal'; 
+import { useNavigate } from 'react-router-dom';
 const { Option } = Select;
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -46,9 +47,16 @@ const ProductList = ({ onDuplicateSuccess }) => {
   const { filteredProducts } = useContext(StockContext);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+const navigate = useNavigate();
+const handleTrashClick = () => {
+    navigate('/products/trash');
+  };
 
   const [searchTerm, setSearchTerm] = useState("");
   const [displayedProducts, setDisplayedProducts] = useState([]);
+
+  const [trashModalVisible, setTrashModalVisible] = useState(false);
+
 
   useEffect(() => {
     if (!Array.isArray(products)) {
@@ -273,6 +281,7 @@ return (
             <Button
               icon={<DeleteOutlined />}
               size="large"
+              onClick={handleTrashClick} 
               style={{
                 borderRadius: '12px',
                 height: '48px',

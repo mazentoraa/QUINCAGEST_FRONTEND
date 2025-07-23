@@ -358,40 +358,7 @@ const AvancePage = () => {
       </Text>
     </div>
   </div>
-   <Space size="large">
-      <Button
-        icon={<DeleteOutlined />}
-        onClick={() => {
-          message.info("Fonction Corbeille à implémenter");
-        }}
-        style={{
-          borderRadius: "8px",
-          height: "40px",
-          padding: "0 16px",
-          border: "1px solid #ef4444",
-          color: "#ef4444",
-          fontWeight: 500,
-          background: "#ffffff",
-          transition: "all 0.3s ease",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = "#dc2626";
-          e.currentTarget.style.color = "#ffffff";
-          e.currentTarget.style.background = "#ef4444";
-          e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.boxShadow = "0 4px 12px rgba(239, 68, 68, 0.3)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = "#ef4444";
-          e.currentTarget.style.color = "#ef4444";
-          e.currentTarget.style.background = "#ffffff";
-          e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "none";
-        }}
-      >
-        Corbeille
-      </Button>
-    </Space>
+ 
 </div>
 
       {successMessage && (

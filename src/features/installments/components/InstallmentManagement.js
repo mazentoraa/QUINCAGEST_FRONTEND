@@ -124,7 +124,7 @@ const InstallmentManagement = () => {
   }
 
   return (
-    <div className="installment-management" style={{ backgroundColor: "#ffffff", minHeight: "100vh", borderRadius: "15px" }}>
+    <div className="installment-management" style={{ backgroundColor: "#ffffff", minHeight: "100vh" }}>
       <div className="installment-header">
        <div
   style={{

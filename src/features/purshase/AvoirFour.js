@@ -32,23 +32,19 @@ import moment from "moment";
 // Import vos services - adaptez selon votre structure
 import AvoirService from "./Services/AvoirService"; // Service pour les avoirs
 import FournisseurService from "./Services/FournisseurService";
-import CorbeilleAvoirs from "./CorbeilleAvoirs"; // AJOUT: Import du composant corbeille
 
 const { Title } = Typography;
 const { Option } = Select;
 
 export default function Avoir() {
   const [form] = Form.useForm();
-  const [avoirs, setAvoirs] = useState([]);
+const [avoirs, setAvoirs] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
   const [visible, setVisible] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [articles, setArticles] = useState([]);
   const [editingArticleIndex, setEditingArticleIndex] = useState(null);
-  
-  // AJOUT: État pour gérer l'affichage de la corbeille
-  const [showCorbeille, setShowCorbeille] = useState(false);
 
   // Filtres
   const [filterNumero, setFilterNumero] = useState("");
@@ -64,30 +60,40 @@ export default function Avoir() {
     { value: "traite", label: "Traite" },
   ];
 
-  const fetchAvoirs = async () => {
-    setLoading(true);
-    try {
-      const data = await AvoirService.getAll();
-      
-      let avoirsList = [];
-      if (data && Array.isArray(data.results)) {
-        avoirsList = data.results;
-      } else if (Array.isArray(data)) {
-        avoirsList = data;
-      } else if (data && typeof data === 'object') {
-        avoirsList = data.data || data.avoirs || [];
-      }
-      
-      setAvoirs(avoirsList);
-    } catch (error) {
-      console.error("Erreur lors du chargement des avoirs:", error);
-      message.error("Erreur lors du chargement des avoirs");
-      setAvoirs([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Charger avoirs
 
+// Dans le composant Avoir, modifiez la fonction fetchAvoirs :
+
+const fetchAvoirs = async () => {
+  setLoading(true);
+  try {
+    const data = await AvoirService.getAll();
+    
+    // Correction : s'assurer que data est bien un tableau
+    let avoirsList = [];
+    if (data && Array.isArray(data.results)) {
+      // Si l'API retourne un objet avec une propriété 'results' contenant le tableau
+      avoirsList = data.results;
+    } else if (Array.isArray(data)) {
+      // Si l'API retourne directement un tableau
+      avoirsList = data;
+    } else if (data && typeof data === 'object') {
+      // Si c'est un objet, essayer de trouver la propriété qui contient le tableau
+      avoirsList = data.data || data.avoirs || [];
+    }
+    
+    setAvoirs(avoirsList);
+  } catch (error) {
+    console.error("Erreur lors du chargement des avoirs:", error);
+    message.error("Erreur lors du chargement des avoirs");
+    // Important : définir avoirs comme tableau vide en cas d'erreur
+    setAvoirs([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // Charger fournisseurs
   const fetchFournisseurs = async () => {
     try {
       const data = await FournisseurService.getAll();
@@ -109,76 +115,75 @@ export default function Avoir() {
     fetchFournisseurs();
   }, []);
 
-  // AJOUT: Si on affiche la corbeille, retourner le composant corbeille
-  if (showCorbeille) {
-    return <CorbeilleAvoirs onRetour={() => setShowCorbeille(false)} />;
-  }
+const filteredAvoirs = avoirs.filter((a) => {
+  // Sécurisation des valeurs
+  const avoirNumero = (a.numero || "").toLowerCase();
+  const avoirFournisseur = (a.fournisseur || "").toLowerCase();
+  const filterNum = (filterNumero || "").toLowerCase();
+  const filterFourn = (filterFournisseur || "").toLowerCase();
+  
+  // Vérifications
+  const matchNumero = !filterNum || avoirNumero.includes(filterNum);
+  const matchFournisseur = !filterFourn || avoirFournisseur.includes(filterFourn);
+  const matchType = !filterType || a.type_avoir === filterType;
 
-  const filteredAvoirs = avoirs.filter((a) => {
-    const avoirNumero = (a.numero || "").toLowerCase();
-    const avoirFournisseur = (a.fournisseur || "").toLowerCase();
-    const filterNum = (filterNumero || "").toLowerCase();
-    const filterFourn = (filterFournisseur || "").toLowerCase();
-    
-    const matchNumero = !filterNum || avoirNumero.includes(filterNum);
-    const matchFournisseur = !filterFourn || avoirFournisseur.includes(filterFourn);
-    const matchType = !filterType || a.type_avoir === filterType;
+  return matchNumero && matchFournisseur && matchType;
+});
 
-    return matchNumero && matchFournisseur && matchType;
-  });
 
-  const handleSubmit = async (values) => {
-    try {
-      if (!values) {
-        values = await form.validateFields();
-      }
 
-      const cleanArticles = articles.map((article) => ({
-        nom: String(article.nom || '').trim(),
-        prix: Number(article.prix) || 0,
-        quantite: Number(article.quantite) || 1,
-      }));
-
-      const payload = {
-        ...values,
-        date_avoir: values.date_avoir ? values.date_avoir.format("YYYY-MM-DD") : null,
-        articles: cleanArticles,
-      };
-
-      setLoading(true);
-
-      if (currentId) {
-        await AvoirService.update(currentId, payload);
-        message.success("Avoir mis à jour avec succès");
-      } else {
-        await AvoirService.create(payload);
-        message.success("Avoir ajouté avec succès");
-      }
-
-      setVisible(false);
-      form.resetFields();
-      setArticles([]);
-      setEditingArticleIndex(null);
-      setCurrentId(null);
-      await fetchAvoirs();
-      
-    } catch (error) {
-      console.error("Erreur lors de la soumission :", error);
-      message.error("Erreur lors de l'enregistrement");
-    } finally {
-      setLoading(false);
+const handleSubmit = async (values) => {
+  try {
+    if (!values) {
+      values = await form.validateFields();
     }
-  };
 
-  // MODIFICATION: La fonction de suppression pour envoyer vers la corbeille
-  const handleDelete = async (id, numero) => {
+    // CORRECTION : Nettoyage simplifié et sécurisé des articles
+    const cleanArticles = articles.map((article) => ({
+      nom: String(article.nom || '').trim(),
+      prix: Number(article.prix) || 0,
+      quantite: Number(article.quantite) || 1,
+    }));
+
+    const payload = {
+      ...values,
+      date_avoir: values.date_avoir ? values.date_avoir.format("YYYY-MM-DD") : null,
+      articles: cleanArticles,
+    };
+
+    setLoading(true);
+
+    if (currentId) {
+      await AvoirService.update(currentId, payload);
+      message.success("Avoir mis à jour avec succès");
+    } else {
+      await AvoirService.create(payload);
+      message.success("Avoir ajouté avec succès");
+    }
+
+    setVisible(false);
+    form.resetFields();
+    setArticles([]);
+    setEditingArticleIndex(null);
+    setCurrentId(null); // AJOUT : Reset currentId
+    await fetchAvoirs();
+    
+  } catch (error) {
+    console.error("Erreur lors de la soumission :", error);
+    message.error("Erreur lors de l'enregistrement");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  const handleDelete = async (id) => {
     setLoading(true);
     try {
-      await AvoirService.delete(id); // Cette méthode doit maintenant envoyer vers la corbeille
-      message.success(`Avoir ${numero || `ID-${id}`} déplacé vers la corbeille`);
-      await fetchAvoirs(); // Recharger la liste
-    } catch (error) {
-      console.error("Erreur lors de la suppression:", error);
+      await AvoirService.delete(id);
+      message.success("Avoir supprimé avec succès");
+      await fetchAvoirs();
+    } catch {
       message.error("Erreur lors de la suppression");
     } finally {
       setLoading(false);
@@ -259,6 +264,7 @@ export default function Avoir() {
       width: 140,
       ellipsis: true,
     },
+
     {
       title: "Article",
       key: "article_nom",
@@ -383,10 +389,7 @@ export default function Avoir() {
           />
           <Popconfirm
             title="Supprimer cet avoir ?"
-            description="L'avoir sera déplacé vers la corbeille"
-            onConfirm={() => handleDelete(record.id, record.numero)}
-            okText="Oui, supprimer"
-            cancelText="Annuler"
+            onConfirm={() => handleDelete(record.id)}
           >
             <Button icon={<DeleteOutlined />} danger />
           </Popconfirm>
@@ -419,22 +422,28 @@ export default function Avoir() {
   return (
     <>
       <style>{`
+        /* Suppression des bordures par défaut du tableau */
         .custom-table .ant-table-container {
           border: none !important;
         }
+        /* Lignes horizontales noires */
         .custom-table .ant-table-tbody > tr > td {
           border-bottom: 0.5px solid #e0e0e0 !important;
         }
+        /* Bordures verticales grises claires */
         .custom-table .ant-table-cell {
           border-left: 0.2px solid #d9d9d9 !important;
           border-right: 0px solid #d9d9d9 !important;
         }
+        /* Pas de double bordure à gauche du tableau */
         .custom-table .ant-table-tbody > tr > td:first-child {
           border-left: none !important;
         }
+        /* Pas de double bordure à droite du tableau */
         .custom-table .ant-table-tbody > tr > td:last-child {
           border-right: none !important;
         }
+        /* Même pour l'en-tête */
         .custom-table .ant-table-thead > tr > th {
           border-left: 0.2px solid #d9d9d9 !important;
           border-right: 0px solid #d9d9d9 !important;
@@ -460,6 +469,7 @@ export default function Avoir() {
         marginBottom: 24,
       }}
     >
+      {/* Partie gauche : icône + titre + sous-texte */}
       <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
         <div
           style={{
@@ -521,43 +531,9 @@ export default function Avoir() {
         </div>
       </div>
 
+      {/* Partie droite : boutons */}
       <Space size="middle">
-        {/* MODIFICATION: Bouton corbeille fonctionnel */}
-        <Button
-          icon={<DeleteOutlined />}
-          size="large"
-          style={{
-            borderRadius: "12px",
-            height: "48px",
-            padding: "0 20px",
-            border: "2px solid #ef4444",
-            color: "#ef4444",
-            fontWeight: 600,
-            background: "#ffffff",
-            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            fontSize: "15px",
-            boxShadow: "0 4px 12px rgba(239, 68, 68, 0.15)",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.borderColor = "#dc2626";
-            e.target.style.color = "#ffffff";
-            e.target.style.background = "#ef4444";
-            e.target.style.transform = "translateY(-2px)";
-            e.target.style.boxShadow = "0 8px 25px rgba(239, 68, 68, 0.25)";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.borderColor = "#ef4444";
-            e.target.style.color = "#ef4444";
-            e.target.style.background = "#ffffff";
-            e.target.style.transform = "translateY(0)";
-            e.target.style.boxShadow = "0 4px 12px rgba(239, 68, 68, 0.15)";
-          }}
-          onClick={() => setShowCorbeille(true)} // MODIFICATION: Navigation vers la corbeille
-        >
-          Corbeille
-        </Button>
-
+    
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -597,7 +573,7 @@ export default function Avoir() {
     </div>
         }
       >
-        {/* FILTRES */}
+        {/* FILTRES + BOUTON AJOUT */}
         <div
           style={{
             marginBottom: 32,
@@ -617,7 +593,7 @@ export default function Avoir() {
             />
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", flexDirection: "column" }}>
                <Select
                  placeholder="Sélectionner un fournisseur"
                  value={filterFournisseur || undefined}
@@ -669,71 +645,89 @@ export default function Avoir() {
         />
 
         {/* MODAL FORM */}
+ {/* MODAL FORM - VERSION MODIFIÉE COMME FACTURE */}
         <Modal
-          title={currentId ? "Modifier l'avoir" : "Nouvel avoir"}
-          open={visible}
-          onOk={() => form.submit()}
-          onCancel={() => {
-            setVisible(false);
-            form.resetFields();
-            setArticles([]);
-            setEditingArticleIndex(null);
-            setCurrentId(null);
-          }}
-          width={820}
-          okText="Enregistrer"
-          cancelText="Annuler"
-          confirmLoading={loading}
-          destroyOnClose
-          styles={{
-            body: {
-              padding: 32,
-              backgroundColor: "#fafafa",
-              borderRadius: 14,
-              boxShadow: "0 12px 32px rgba(0,0,0,0.1)",
-            }
-          }}
-          okButtonProps={{
-            style: {
-              borderRadius: 8,
-              background: "linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)",
-              border: "none",
-              fontWeight: "600",
-              fontSize: 16,
-              padding: "8px 32px",
-              boxShadow: "0 6px 20px rgba(24, 144, 255, 0.3)",
-              transition: "all 0.3s ease",
-            },
-          }}
-          cancelButtonProps={{
-            style: {
-              borderRadius: 8,
-              fontWeight: "600",
-              fontSize: 16,
-              padding: "8px 32px",
-            },
-          }}
-        >
-          {/* Le reste du formulaire reste identique */}
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-            colon={false}
-            labelAlign="left"
-            labelCol={{ span: 24 }}
-          >
-            {/* Tous les champs du formulaire restent identiques - je les abrège pour la lisibilité */}
-            <Form.Item name="numero" label="Numéro d'avoir" rules={[{ required: false }]}>
+  title={currentId ? "Modifier l'avoir" : "Nouvel avoir"}
+  open={visible}
+  onOk={() => form.submit()}
+  onCancel={() => {
+    setVisible(false);
+    form.resetFields();
+    setArticles([]);
+    setEditingArticleIndex(null);
+    setCurrentId(null);
+  }}
+  width={820}
+  okText="Enregistrer"
+  cancelText="Annuler"
+  confirmLoading={loading}
+  destroyOnClose
+  styles={{
+    body: {
+      padding: 32,
+      backgroundColor: "#fafafa",
+      borderRadius: 14,
+      boxShadow: "0 12px 32px rgba(0,0,0,0.1)",
+    }
+  }}
+  okButtonProps={{
+    style: {
+      borderRadius: 8,
+      background: "linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)",
+      border: "none",
+      fontWeight: "600",
+      fontSize: 16,
+      padding: "8px 32px",
+      boxShadow: "0 6px 20px rgba(24, 144, 255, 0.3)",
+      transition: "all 0.3s ease",
+    },
+  }}
+  cancelButtonProps={{
+    style: {
+      borderRadius: 8,
+      fontWeight: "600",
+      fontSize: 16,
+      padding: "8px 32px",
+    },
+  }}
+>
+  <Form
+    form={form}
+    layout="vertical"
+    onFinish={handleSubmit}
+    colon={false}
+    labelAlign="left"
+    labelCol={{ span: 24 }}
+  >
+            <Form.Item
+              name="numero"
+              label="Numéro d'avoir"
+              rules={[{ required: false }]}
+            >
               <Input
                 placeholder="Ex: AV-2024-001"
                 size="large"
                 prefix={<TagOutlined style={{ color: "#1890ff" }} />}
-                style={{ borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+                style={{
+                  borderRadius: 10,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  transition: "box-shadow 0.3s ease",
+                  fontSize: 15,
+                }}
+                onFocus={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 0 6px #1890ff")
+                }
+                onBlur={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")
+                }
               />
             </Form.Item>
 
-            <Form.Item name="fournisseur" label="Fournisseur" rules={[{ required: false }]}>
+            <Form.Item
+              name="fournisseur"
+              label="Fournisseur"
+              rules={[{ required: false }]}
+            >
               <Select
                 size="large"
                 placeholder="Sélectionner un fournisseur"
@@ -744,7 +738,19 @@ export default function Avoir() {
                   option.children.toLowerCase().includes(input.toLowerCase())
                 }
                 suffixIcon={<UserOutlined style={{ color: "#1890ff" }} />}
-                style={{ borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+                dropdownStyle={{ borderRadius: 12 }}
+                style={{
+                  borderRadius: 10,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  fontSize: 15,
+                  transition: "box-shadow 0.3s ease",
+                }}
+                onFocus={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 0 6px #1890ff")
+                }
+                onBlur={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")
+                }
               >
                 {fournisseurs.map((f) => (
                   <Option key={f.id} value={f.nom}>
@@ -754,12 +760,28 @@ export default function Avoir() {
               </Select>
             </Form.Item>
 
-            <Form.Item name="mode_paiement" label="Mode de paiement" rules={[{ required: false }]}>
+      
+            <Form.Item
+              name="mode_paiement"
+              label="Mode de paiement"
+              rules={[{ required: false }]}
+            >
               <Select
                 size="large"
                 placeholder="Sélectionner un mode de paiement"
                 suffixIcon={<CreditCardOutlined style={{ color: "#1890ff" }} />}
-                style={{ borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+                style={{
+                  borderRadius: 10,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  fontSize: 15,
+                  transition: "box-shadow 0.3s ease",
+                }}
+                onFocus={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 0 6px #1890ff")
+                }
+                onBlur={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")
+                }
               >
                 {modePaiementOptions.map((option) => (
                   <Option key={option.value} value={option.value}>
@@ -776,28 +798,67 @@ export default function Avoir() {
                 placeholder="Montant total (optionnel)"
                 size="large"
                 prefix={<DollarOutlined style={{ color: "#1890ff" }} />}
-                style={{ borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+                style={{
+                  borderRadius: 10,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  fontSize: 15,
+                  transition: "box-shadow 0.3s ease",
+                }}
+                onFocus={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 0 6px #1890ff")
+                }
+                onBlur={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")
+                }
               />
             </Form.Item>
 
             <Form.Item name="date_avoir" label="Date d'avoir">
               <DatePicker
                 size="large"
-                style={{ width: "100%", borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+                style={{
+                  width: "100%",
+                  borderRadius: 10,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  fontSize: 15,
+                  transition: "box-shadow 0.3s ease",
+                }}
                 suffixIcon={<CalendarOutlined style={{ color: "#1890ff" }} />}
+                onFocus={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 0 6px #1890ff")
+                }
+                onBlur={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")
+                }
               />
             </Form.Item>
 
             <Title level={5} style={{ marginTop: 24, marginBottom: 12 }}>
               Articles
             </Title>
-            <Space size="middle" wrap style={{ marginBottom: 12, gap: 12, alignItems: "center" }}>
+            <Space
+              size="middle"
+              wrap
+              style={{ marginBottom: 12, gap: 12, alignItems: "center" }}
+            >
               <Form.Item name="article_nom" noStyle>
                 <Input
                   placeholder="Nom"
                   size="large"
                   prefix={<TagOutlined style={{ color: "#1890ff" }} />}
-                  style={{ width: 180, borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+                  style={{
+                    width: 180,
+                    borderRadius: 10,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    fontSize: 15,
+                    transition: "box-shadow 0.3s ease",
+                  }}
+                  onFocus={(e) =>
+                    (e.currentTarget.style.boxShadow = "0 0 6px #1890ff")
+                  }
+                  onBlur={(e) =>
+                    (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")
+                  }
                 />
               </Form.Item>
               <Form.Item name="article_prix" noStyle>
@@ -807,7 +868,19 @@ export default function Avoir() {
                   placeholder="Prix"
                   size="large"
                   prefix={<DollarOutlined style={{ color: "#1890ff" }} />}
-                  style={{ width: 140, borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+                  style={{
+                    width: 140,
+                    borderRadius: 10,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    fontSize: 15,
+                    transition: "box-shadow 0.3s ease",
+                  }}
+                  onFocus={(e) =>
+                    (e.currentTarget.style.boxShadow = "0 0 6px #1890ff")
+                  }
+                  onBlur={(e) =>
+                    (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")
+                  }
                 />
               </Form.Item>
               <Form.Item name="article_quantite" noStyle>
@@ -817,7 +890,19 @@ export default function Avoir() {
                   placeholder="Quantité"
                   size="large"
                   prefix={<NumberOutlined style={{ color: "#1890ff" }} />}
-                  style={{ width: 140, borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+                  style={{
+                    width: 140,
+                    borderRadius: 10,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    fontSize: 15,
+                    transition: "box-shadow 0.3s ease",
+                  }}
+                  onFocus={(e) =>
+                    (e.currentTarget.style.boxShadow = "0 0 6px #1890ff")
+                  }
+                  onBlur={(e) =>
+                    (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")
+                  }
                 />
               </Form.Item>
 
@@ -825,7 +910,37 @@ export default function Avoir() {
                 type={editingArticleIndex !== null ? "default" : "primary"}
                 onClick={addArticle}
                 icon={<PlusOutlined />}
-                style={{ borderRadius: 10, fontWeight: "600", height: 44, padding: "0 24px" }}
+                style={{
+                  borderRadius: 10,
+                  fontWeight: "600",
+                  fontSize: 15,
+                  height: 44,
+                  padding: "0 24px",
+                  boxShadow:
+                    editingArticleIndex === null
+                      ? "0 6px 18px rgba(82, 196, 26, 0.3)"
+                      : "none",
+                  background:
+                    editingArticleIndex === null
+                      ? "linear-gradient(135deg, #1890ff 0%, #1890ff 100%)"
+                      : "initial",
+                  color: editingArticleIndex === null ? "white" : "inherit",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  if (editingArticleIndex === null) {
+                    e.currentTarget.style.boxShadow =
+                      "0 8px 22px rgba(26, 139, 196, 0.5)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (editingArticleIndex === null) {
+                    e.currentTarget.style.boxShadow =
+                      "0 6px 18px rgba(26, 108, 196, 0.3)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }
+                }}
               >
                 {editingArticleIndex !== null ? "Modifier" : "Ajouter"}
               </Button>
@@ -843,7 +958,7 @@ export default function Avoir() {
             />
           </Form>
         </Modal>
-      </Card>
+   </Card>
     </>
   );
 }

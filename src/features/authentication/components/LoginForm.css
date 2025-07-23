@@ -1,599 +1,715 @@
-/* Supprime tout scroll vertical global */
-html, body {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    height: 100%;
+/* ===== VARIABLES CSS ===== */
+:root {
+  --primary-color: #4f46e5;
+  --secondary-color: #06b6d4;
+  --accent-color: #8b5cf6;
+  --success-color: #10b981;
+  --light-blue: #e0f2fe;
+  --light-purple: #f3e8ff;
+  --light-gray: #fefefe;
+  --medium-gray: #6b7280;
+  --border-color: #f1f5f9;
+  --shadow-light: 0 4px 6px -1px rgba(79, 70, 229, 0.1);
+  --shadow-medium: 0 10px 15px -3px rgba(79, 70, 229, 0.15);
+  --shadow-heavy: 0 25px 50px -12px rgba(79, 70, 229, 0.25);
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-secondary: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  --gradient-accent: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
 }
 
-/* Container principal */
-.login-container {
-    display: flex;
-    height: 100vh; /* Changement ici */
-    position: relative;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+/* ===== RESET ET BASE ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-/* Animation de fond avec particules */
-.background-animation {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    z-index: 0;
+.yucca-login-wrapper {
+  height: 100vh;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--gradient-bg);
 }
 
-.particle {
-    position: absolute;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    pointer-events: none;
-    animation: float 6s ease-in-out infinite;
+/* ===== ARRIÈRE-PLAN ANIMÉ ===== */
+.yucca-bg-animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
 }
 
-/* Particules (inchangé) */
-.particle:nth-child(1) { width: 80px; height: 80px; top: 20%; left: 20%; animation-delay: 0s; }
-.particle:nth-child(2) { width: 120px; height: 120px; top: 60%; left: 80%; animation-delay: 2s; }
-.particle:nth-child(3) { width: 60px; height: 60px; top: 80%; left: 10%; animation-delay: 4s; }
-.particle:nth-child(4) { width: 100px; height: 100px; top: 10%; left: 70%; animation-delay: 1s; }
-.particle:nth-child(5) { width: 40px; height: 40px; top: 40%; left: 60%; animation-delay: 3s; }
-.particle:nth-child(6) { width: 90px; height: 90px; top: 70%; left: 40%; animation-delay: 5s; }
+.yucca-floating-element {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(15px);
+  animation: float 20s infinite linear;
+  box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
+}
+
+.yucca-element-1 {
+  width: 80px;
+  height: 80px;
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+  animation-duration: 25s;
+}
+
+.yucca-element-2 {
+  width: 120px;
+  height: 120px;
+  top: 60%;
+  left: 80%;
+  animation-delay: -5s;
+  animation-duration: 30s;
+}
+
+.yucca-element-3 {
+  width: 60px;
+  height: 60px;
+  top: 80%;
+  left: 20%;
+  animation-delay: -10s;
+  animation-duration: 35s;
+}
+
+.yucca-element-4 {
+  width: 100px;
+  height: 100px;
+  top: 20%;
+  left: 70%;
+  animation-delay: -15s;
+  animation-duration: 28s;
+}
+
+.yucca-element-5 {
+  width: 140px;
+  height: 140px;
+  top: 50%;
+  left: 5%;
+  animation-delay: -20s;
+  animation-duration: 32s;
+}
+
+.yucca-element-6 {
+  width: 90px;
+  height: 90px;
+  top: 30%;
+  left: 40%;
+  animation-delay: -12s;
+  animation-duration: 26s;
+}
 
 @keyframes float {
-    0%, 100% {
-        transform: translateY(0px) rotate(0deg);
-        opacity: 0.7;
-    }
-    50% {
-        transform: translateY(-20px) rotate(180deg);
-        opacity: 0.3;
-    }
+  0% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.7;
+  }
+  33% {
+    transform: translateY(-30px) rotate(120deg);
+    opacity: 0.4;
+  }
+  66% {
+    transform: translateY(20px) rotate(240deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(0px) rotate(360deg);
+    opacity: 0.7;
+  }
 }
 
-/* Section branding (gauche) */
-.branding-section {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    position: relative;
-    z-index: 1;
-    padding: 60px;
-    overflow: hidden;
+/* ===== PANNEAU DE MARQUE ===== */
+.yucca-brand-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 2rem;
+  position: relative;
+  z-index: 1;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
-
-.brand-content {
-    max-width: 500px;
-    color: white;
-    text-align: center;
+.yucca-brand-inner {
+  max-width: 500px;
+  text-align: center;
+  color: white;
+  transform: scale(0.9);
 }
 
-.logo-container {
-    margin-bottom: 40px;
-    animation: slideInLeft 1s ease-out;
+.yucca-logo-section {
+  margin-bottom: 2rem;
+  animation: fadeInUp 1s ease-out;
 }
 
-.logo-icon {
-    margin-bottom: 20px;
-    animation: pulse 2s ease-in-out infinite;
+.yucca-brand-logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1rem;
+  animation: logoFloat 6s ease-in-out infinite;
+  filter: drop-shadow(0 15px 25px rgba(255, 255, 255, 0.2));
+  transition: transform 0.3s ease;
 }
 
-.brand-name {
-    font-size: 3.5rem;
-    font-weight: 700;
-    margin: 0;
-    background: linear-gradient(45deg, #ffffff, #a8edea);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+.yucca-brand-logo:hover {
+  transform: scale(1.15) rotate(8deg);
 }
 
-.brand-description {
-    animation: slideInLeft 1s ease-out 0.3s both;
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(-1deg);
+  }
+  75% {
+    transform: translateY(-15px) rotate(1deg);
+  }
 }
 
-.brand-description h2 {
-    font-size: 1.8rem;
-    font-weight: 600;
-    margin-bottom: 16px;
-    color: rgba(255, 255, 255, 0.95);
+.yucca-brand-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: linear-gradient(45deg, #ffffff, #f0f9ff, #e0f2fe);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+  text-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+  letter-spacing: -0.02em;
 }
 
-.brand-description p {
-    font-size: 1.1rem;
-    line-height: 1.6;
-    margin-bottom: 40px;
-    color: rgba(255, 255, 255, 0.8);
+.yucca-brand-info {
+  animation: fadeInUp 1s ease-out 0.3s both;
 }
 
-.features-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    text-align: left;
+.yucca-brand-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+  color: rgba(255, 255, 255, 0.98);
+  line-height: 1.3;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.feature-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
+.yucca-brand-description {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1.8rem;
+  line-height: 1.6;
 }
 
-.feature-item:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateX(10px);
+.yucca-features-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
 }
 
-.feature-icon {
-    font-size: 1.5rem;
+.yucca-feature-card {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  animation: slideInLeft 0.8s ease-out;
 }
 
-/* Section formulaire (droite) */
-.form-section {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f8fafc;
-    position: relative;
-    z-index: 1;
-    padding: 40px;
-    overflow: hidden;
+.yucca-feature-card:nth-child(2) {
+  animation-delay: 0.2s;
 }
 
-.form-container {
-    width: 100%;
-    max-width: 420px;
-    animation: slideInRight 1s ease-out;
-    overflow: hidden;
+.yucca-feature-card:nth-child(3) {
+  animation-delay: 0.4s;
 }
 
-.login-card {
-    border: none;
-    border-radius: 24px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-    padding: 40px;
-    background: white;
-    position: relative;
-    overflow: hidden;
+.yucca-feature-card:hover {
+  transform: translateX(10px);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: var(--shadow-medium);
 }
 
-.login-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+.yucca-feature-icon {
+  font-size: 1.6rem;
+  margin-right: 0.8rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
-.card-header {
-    text-align: center;
-    margin-bottom: 32px;
+.yucca-feature-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.login-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1a202c;
-    margin-bottom: 8px !important;
+/* ===== PANNEAU FORMULAIRE ===== */
+.yucca-form-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: white;
+  position: relative;
+  z-index: 1;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
-.login-subtitle {
-    color: #64748b;
-    font-size: 1rem;
+.yucca-form-container {
+  width: 100%;
+  max-width: 320px;
+  animation: fadeInRight 1s ease-out;
 }
 
-.login-form .ant-form-item {
-    margin-bottom: 20px;
+.yucca-login-card {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(25px);
+  border-radius: 28px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 32px 64px -12px rgba(79, 70, 229, 0.15), 
+              0 0 0 1px rgba(255, 255, 255, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
-.custom-input {
-    height: 48px;
-    border-radius: 12px;
-    border: 2px solid #e2e8f0;
-    transition: all 0.3s ease;
-    font-size: 16px;
+.yucca-login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
 }
 
-.custom-input:hover {
-    border-color: #667eea;
+.yucca-login-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 40px 80px -12px rgba(79, 70, 229, 0.25),
+              0 0 0 1px rgba(255, 255, 255, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-.custom-input:focus,
-.custom-input.ant-input-focused {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+.yucca-login-card .ant-card-body {
+  padding: 1.8rem 1.5rem;
 }
 
-.input-icon {
-    color: #64748b;
-    font-size: 18px;
+.yucca-card-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
 }
 
-.form-options {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px !important;
+.yucca-login-title {
+  color: var(--primary-color) !important;
+  font-size: 2rem !important;
+  font-weight: 800 !important;
+  margin-bottom: 0.3rem !important;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
 }
 
-.remember-checkbox {
-    color: #64748b;
+.yucca-login-subtitle {
+  color: var(--medium-gray) !important;
+  font-size: 1rem !important;
 }
 
-.forgot-password {
-    color: #667eea;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.3s ease;
+/* ===== FORMULAIRE ===== */
+.yucca-auth-form {
+  margin-top: 1.5rem;
 }
 
-.forgot-password:hover {
-    color: #764ba2;
+.yucca-auth-form .ant-form-item {
+  margin-bottom: 1.2rem;
 }
 
-.login-button {
-    width: 100%;
-    height: 48px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    font-size: 16px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+.yucca-form-input {
+  height: 48px !important;
+  border-radius: 16px !important;
+  border: 2px solid rgba(79, 70, 229, 0.1) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px) !important;
+  font-size: 0.95rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  padding-left: 45px !important;
+  box-shadow: 0 4px 8px rgba(79, 70, 229, 0.05) !important;
 }
 
-.login-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
+.yucca-form-input:hover {
+  border-color: var(--secondary-color) !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(79, 70, 229, 0.1) !important;
 }
 
-.login-button:hover::before {
-    left: 100%;
+.yucca-form-input:focus,
+.yucca-form-input.ant-input-focused {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1), 0 8px 16px rgba(79, 70, 229, 0.15) !important;
+  background: white !important;
+  transform: translateY(-2px);
 }
 
-.login-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+.yucca-input-icon {
+  color: var(--medium-gray) !important;
+  font-size: 1.2rem !important;
+  margin-right: 0.5rem !important;
+  transition: color 0.3s ease !important;
 }
 
-.divider {
-    text-align: center;
-    margin: 24px 0;
-    position: relative;
-    color: #64748b;
+.yucca-form-input:focus .yucca-input-icon,
+.yucca-form-input.ant-input-focused + .yucca-input-icon {
+  color: var(--accent-color) !important;
 }
 
-.divider::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: #e2e8f0;
+.yucca-submit-btn {
+  width: 100% !important;
+  height: 46px !important;
+  border-radius: 16px !important;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%) !important;
+  border: none !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  margin-top: 0.8rem !important;
+  position: relative !important;
+  overflow: hidden !important;
 }
 
-.divider span {
-    background: white;
-    padding: 0 16px;
-    position: relative;
-    z-index: 1;
+.yucca-submit-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
 }
 
-.social-login {
-    margin-top: 16px;
+.yucca-submit-btn:hover::before {
+  left: 100%;
 }
 
-.social-button {
-    width: 100%;
-    height: 48px;
-    border-radius: 12px;
-    border: 2px solid #e2e8f0;
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    font-weight: 500;
-    transition: all 0.3s ease;
+.yucca-submit-btn:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: 0 15px 35px rgba(79, 70, 229, 0.4) !important;
+  background: linear-gradient(135deg, #4338ca 0%, #7c2d12 50%, #0891b2 100%) !important;
 }
 
-.social-button:hover {
-    border-color: #667eea;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.yucca-submit-btn:active {
+  transform: translateY(-1px) !important;
 }
 
-.help-section {
-    text-align: center;
-    margin-top: 24px;
+.yucca-submit-btn svg {
+  transition: transform 0.3s ease;
 }
 
-.help-text {
-    color: #64748b;
+.yucca-submit-btn:hover svg {
+  transform: translateX(4px);
 }
 
-.contact-link {
-    color: #667eea;
-    text-decoration: none;
-    font-weight: 500;
+/* ===== SECTION AIDE ===== */
+.yucca-help-section {
+  margin-top: 1.2rem;
+  text-align: center;
+  padding: 1rem;
+  background: rgba(79, 70, 229, 0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(79, 70, 229, 0.1);
 }
 
-.contact-link:hover {
-    color: #764ba2;
+.yucca-help-text {
+  color: var(--medium-gray) !important;
+  font-size: 0.9rem !important;
 }
 
-/* Animations */
+.yucca-contact-link {
+  color: var(--secondary-color) !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+}
+
+.yucca-contact-link:hover {
+  color: #0891b2 !important;
+  text-shadow: 0 0 12px rgba(6, 182, 212, 0.6);
+}
+
+.yucca-contact-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(45deg, var(--secondary-color), var(--accent-color));
+  transition: width 0.3s ease;
+}
+
+.yucca-contact-link:hover::after {
+  width: 100%;
+}
+
+/* ===== MODAL DE CONTACT ===== */
+.yucca-contact-modal .ant-modal-content {
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  box-shadow: var(--shadow-heavy) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.yucca-contact-modal .ant-modal-header {
+  background: var(--gradient-primary) !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.yucca-contact-modal .ant-modal-body {
+  padding: 0 !important;
+}
+
+.yucca-modal-content {
+  background: white;
+}
+
+.yucca-modal-header {
+  background: var(--gradient-bg);
+  color: white;
+  padding: 2rem;
+  text-align: center;
+}
+
+.yucca-modal-logo img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  animation: logoFloat 6s ease-in-out infinite;
+}
+
+.yucca-contact-info {
+  padding: 2rem;
+}
+
+.yucca-contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  background: rgba(248, 250, 252, 0.5);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.yucca-contact-item:hover {
+  background: rgba(6, 182, 212, 0.05);
+  border-color: rgba(6, 182, 212, 0.2);
+  transform: translateX(8px);
+}
+
+.yucca-contact-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.yucca-contact-footer {
+  padding: 1.5rem 2rem;
+  background: var(--light-gray);
+  border-top: 1px solid var(--border-color);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes slideInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-@keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+  .yucca-brand-inner {
+    transform: scale(0.85);
+  }
+  
+  .yucca-form-container {
+    max-width: 300px;
+  }
 }
 
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.05);
-    }
-}
-
-/* Responsive */
 @media (max-width: 1024px) {
-    .login-container {
-        flex-direction: column;
-        height: 100vh; /* important pour éviter le scroll */
-    }
-
-    .branding-section {
-        min-height: 40vh;
-        padding: 40px 20px;
-    }
-
-    .brand-name {
-        font-size: 2.5rem;
-    }
-
-    .features-list {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .feature-item {
-        flex: 1;
-        min-width: 200px;
-    }
+  .yucca-login-wrapper {
+    flex-direction: column;
+    height: 100vh;
+  }
+  
+  .yucca-brand-panel {
+    flex: 0 0 40vh;
+    padding: 1.5rem 1rem;
+    min-height: 40vh;
+    max-height: 40vh;
+  }
+  
+  .yucca-brand-inner {
+    transform: scale(0.8);
+  }
+  
+  .yucca-brand-title {
+    font-size: 1.8rem;
+  }
+  
+  .yucca-brand-heading {
+    font-size: 1.2rem;
+  }
+  
+  .yucca-form-panel {
+    flex: 1;
+    padding: 1rem;
+    max-height: 60vh;
+  }
+  
+  .yucca-form-container {
+    max-width: 290px;
+  }
 }
 
 @media (max-width: 768px) {
-    .form-section {
-        padding: 20px;
-    }
-
-    .login-card {
-        padding: 30px 20px;
-    }
-
-    .brand-name {
-        font-size: 2rem;
-    }
-
-    .features-list {
-        flex-direction: column;
-    }
-}
-
-/* Améliorations spécifiques Ant Design */
-.ant-spin-spinning {
-    position: relative;
-}
-
-.ant-spin-dot {
-    color: #667eea;
-}
-
-.ant-form-item-explain-error {
-    color: #ef4444;
-    font-size: 14px;
-}
-
-.ant-checkbox-wrapper:hover .ant-checkbox-inner,
-.ant-checkbox:hover .ant-checkbox-inner {
-    border-color: #667eea;
-}
-
-.ant-checkbox-checked .ant-checkbox-inner {
-    background-color: #667eea;
-    border-color: #667eea;
-}
-
-
-
-
-/* Animation légère pour le logo - mouvement vertical */
-@keyframes logoMove {
-  0%, 100% {
-    transform: translateY(0);
+  .yucca-brand-panel {
+    flex: 0 0 35vh;
+    padding: 1rem;
+    min-height: 35vh;
+    max-height: 35vh;
   }
-  50% {
-    transform: translateY(-8px);
+  
+  .yucca-brand-inner {
+    transform: scale(0.75);
+  }
+  
+  .yucca-brand-logo {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .yucca-brand-title {
+    font-size: 1.6rem;
+  }
+  
+  .yucca-brand-heading {
+    font-size: 1.1rem;
+  }
+  
+  .yucca-form-panel {
+    flex: 1;
+    max-height: 65vh;
+  }
+  
+  .yucca-login-card .ant-card-body {
+    padding: 1.3rem 1.1rem;
+  }
+  
+  .yucca-login-title {
+    font-size: 1.7rem !important;
+  }
+  
+  .yucca-features-grid {
+    gap: 0.6rem;
+  }
+  
+  .yucca-feature-card {
+    padding: 0.6rem;
   }
 }
 
-/* Conteneur principal de la modal */
-.contact-modal .ant-modal-content {
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 40px 80px -20px rgba(60, 81, 218, 0.3);
-  border: none;
-  padding: 32px 40px;
-  background: #f8f9fd; /* très clair vert doux */
-  font-family: 'Poppins', sans-serif;
-}
-
-/* Contenu interne */
-.contact-modal-content {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-/* En-tête contact */
-.contact-header {
-  text-align: center;
-  position: relative;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #030141;
-}
-
-/* Logo avec animation */
-.contact-logo {
-  margin: 0 auto 16px auto;
-  width: 70px;
-  height: 70px;
-  animation: logoMove 3s ease-in-out infinite;
-  filter: drop-shadow(0 0 6px rgba(65, 74, 235, 0.4));
-}
-
-/* Titre */
-.contact-header h3 {
-  margin: 0 0 6px 0;
-  color: #667eea; /* vert vif */
-  font-weight: 700;
-  font-size: 28px;
-  letter-spacing: 1.1px;
-  text-transform: uppercase;
-  text-shadow: 0 1px 4px rgba(34, 197, 94, 0.3);
-}
-
-/* Description */
-.contact-header .ant-typography {
-  font-size: 15px;
-  color: #4a4a4a;
-  font-weight: 500;
-  opacity: 0.85;
-  letter-spacing: 0.02em;
-}
-
-/* Section info contact */
-.contact-info {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-}
-
-/* Chaque item de contact (téléphone, email, etc.) */
-.contact-item {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  background: #b8cbf3;
-  border-radius: 14px;
-  padding: 14px 20px;
-  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.7);
-  transition: background-color 0.3s ease;
-  cursor: default;
-}
-
-.contact-item:hover {
-  background-color: #64b8ef;
-}
-
-/* Icônes */
-.contact-item svg {
-  font-size: 24px;
-  color: #667eea;
-  flex-shrink: 0;
-  filter: drop-shadow(0 1px 2px rgba(93, 133, 236, 0.3));
-}
-
-/* Détails texte à côté de l'icône */
-.contact-details {
-  display: flex;
-  flex-direction: column;
-  user-select: none;
-}
-
-/* Label fort */
-.contact-details strong,
-.contact-details .ant-typography-strong {
-  color: #2d2d2d;
-  font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 4px;
-}
-
-/* Texte descriptif */
-.contact-details .ant-typography {
-  color: #555;
-  font-size: 14px;
-  line-height: 1.5;
-  opacity: 0.8;
-}
-
-/* Pour l'adresse avec saut de ligne */
-.contact-details .ant-typography br {
-  content: "";
-  margin-bottom: 4px;
-}
-
-/* Pied de modal */
-.contact-footer {
-  margin-top: 28px;
-  text-align: center;
-  user-select: none;
-}
-
-/* Texte du footer */
-.contact-footer .ant-typography {
-  color: #8b8b8b;
-  font-size: 13px;
-  font-style: italic;
-  font-weight: 500;
-  letter-spacing: 0.05em;
+@media (max-width: 480px) {
+  .yucca-brand-panel {
+    flex: 0 0 30vh;
+    padding: 0.8rem;
+    min-height: 30vh;
+    max-height: 30vh;
+  }
+  
+  .yucca-brand-inner {
+    transform: scale(0.7);
+  }
+  
+  .yucca-form-panel {
+    flex: 1;
+    max-height: 70vh;
+  }
+  
+  .yucca-login-card .ant-card-body {
+    padding: 1.2rem 1rem;
+  }
+  
+  .yucca-form-input {
+    height: 42px !important;
+    padding-left: 38px !important;
+  }
+  
+  .yucca-submit-btn {
+    height: 42px !important;
+  }
+  
+  .yucca-help-section {
+    margin-top: 0.8rem;
+    padding: 0.8rem;
+  }
 }
