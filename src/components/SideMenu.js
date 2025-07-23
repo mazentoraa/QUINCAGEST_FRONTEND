@@ -190,10 +190,10 @@ function SideMenu() {
               Bons de Retour
             </Menu.Item>
             <Menu.Item 
-              key="/reglements/avoir" 
+              key="/bons/avoir" 
               icon={<UndoOutlined className="blue-icon" />} 
-              onClick={() => handleMenuClick('/reglements/avoir')} 
-              className={isSelected('/reglements/avoir') ? 'selected-blue' : ''}
+              onClick={() => handleMenuClick('/bons/avoir')} 
+              className={isSelected('/bons/avoir') ? 'selected-blue' : ''}
             >
               Avoirs
             </Menu.Item>
