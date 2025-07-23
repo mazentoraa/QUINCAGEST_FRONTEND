@@ -61,8 +61,9 @@ import FichePaiePrint from "./features/employee/FichePaiePrint";
 import FichePaieView from "./features/employee/FichePaieView";
 import FactureCorbeille from './components/BonsDevis/FactureCorbeille';
 import ClientTrashPage from './features/clientManagement/components/ClientTrashPage';
+import Avoir from './features/purshase/Avoir';
 
-
+  
 const { Header, Content, Sider } = Layout;
 
 const PrivateRoute = ({ children }) => {
@@ -172,10 +173,6 @@ function App() {
                                     element={<Facture nature={'facture'}/>}
                                   />
                                   <Route
-                                    path="/reglements/avoir-facture"
-                                    element={<Facture nature={'avoir-facture'} />}
-                                  />
-                                  <Route
                                     path="/reglements/avoir"
                                     element={<Facture nature={'avoir'} />}
                                   />
@@ -236,7 +233,7 @@ function App() {
                                   <Route path="/tresorerie/simulation" element={<Simulation />} />
                                   <Route path="/factures/corbeille" element={<FactureCorbeille />} />
                                   <Route path="/clients/trash" element={<ClientTrashPage />} />
-
+              <Route path="/achats/avoir" element={<Avoir />} />
                                 </Routes>
                               </Content>
                             </Layout>

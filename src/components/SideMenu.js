@@ -348,6 +348,15 @@ function SideMenu() {
           >
             Traites
           </Menu.Item>
+          <Menu.Item
+  key="/achats/avoir"
+  icon={<UndoOutlined className="pink-icon" />}
+  onClick={() => handleMenuClick('/achats/avoir')}
+  className={isSelected('/achats/avoir') ? 'selected-pink' : ''}
+>
+  Avoir
+</Menu.Item>
+
         </SubMenu>
 
         {/* --- TRÉSORERIE --- */}

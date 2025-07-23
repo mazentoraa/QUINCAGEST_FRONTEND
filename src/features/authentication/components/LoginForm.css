@@ -1,0 +1,599 @@
+/* Supprime tout scroll vertical global */
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+}
+
+/* Container principal */
+.login-container {
+    display: flex;
+    height: 100vh; /* Changement ici */
+    position: relative;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Animation de fond avec particules */
+.background-animation {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    z-index: 0;
+}
+
+.particle {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Particules (inchangé) */
+.particle:nth-child(1) { width: 80px; height: 80px; top: 20%; left: 20%; animation-delay: 0s; }
+.particle:nth-child(2) { width: 120px; height: 120px; top: 60%; left: 80%; animation-delay: 2s; }
+.particle:nth-child(3) { width: 60px; height: 60px; top: 80%; left: 10%; animation-delay: 4s; }
+.particle:nth-child(4) { width: 100px; height: 100px; top: 10%; left: 70%; animation-delay: 1s; }
+.particle:nth-child(5) { width: 40px; height: 40px; top: 40%; left: 60%; animation-delay: 3s; }
+.particle:nth-child(6) { width: 90px; height: 90px; top: 70%; left: 40%; animation-delay: 5s; }
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+        opacity: 0.7;
+    }
+    50% {
+        transform: translateY(-20px) rotate(180deg);
+        opacity: 0.3;
+    }
+}
+
+/* Section branding (gauche) */
+.branding-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    z-index: 1;
+    padding: 60px;
+    overflow: hidden;
+}
+
+
+.brand-content {
+    max-width: 500px;
+    color: white;
+    text-align: center;
+}
+
+.logo-container {
+    margin-bottom: 40px;
+    animation: slideInLeft 1s ease-out;
+}
+
+.logo-icon {
+    margin-bottom: 20px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.brand-name {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(45deg, #ffffff, #a8edea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.brand-description {
+    animation: slideInLeft 1s ease-out 0.3s both;
+}
+
+.brand-description h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.brand-description p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 40px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.features-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.feature-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateX(10px);
+}
+
+.feature-icon {
+    font-size: 1.5rem;
+}
+
+/* Section formulaire (droite) */
+.form-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    position: relative;
+    z-index: 1;
+    padding: 40px;
+    overflow: hidden;
+}
+
+.form-container {
+    width: 100%;
+    max-width: 420px;
+    animation: slideInRight 1s ease-out;
+    overflow: hidden;
+}
+
+.login-card {
+    border: none;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    background: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.card-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.login-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 8px !important;
+}
+
+.login-subtitle {
+    color: #64748b;
+    font-size: 1rem;
+}
+
+.login-form .ant-form-item {
+    margin-bottom: 20px;
+}
+
+.custom-input {
+    height: 48px;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+    font-size: 16px;
+}
+
+.custom-input:hover {
+    border-color: #667eea;
+}
+
+.custom-input:focus,
+.custom-input.ant-input-focused {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.input-icon {
+    color: #64748b;
+    font-size: 18px;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px !important;
+}
+
+.remember-checkbox {
+    color: #64748b;
+}
+
+.forgot-password {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.forgot-password:hover {
+    color: #764ba2;
+}
+
+.login-button {
+    width: 100%;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.login-button:hover::before {
+    left: 100%;
+}
+
+.login-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.divider {
+    text-align: center;
+    margin: 24px 0;
+    position: relative;
+    color: #64748b;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.divider span {
+    background: white;
+    padding: 0 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.social-login {
+    margin-top: 16px;
+}
+
+.social-button {
+    width: 100%;
+    height: 48px;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.social-button:hover {
+    border-color: #667eea;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.help-section {
+    text-align: center;
+    margin-top: 24px;
+}
+
+.help-text {
+    color: #64748b;
+}
+
+.contact-link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.contact-link:hover {
+    color: #764ba2;
+}
+
+/* Animations */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .login-container {
+        flex-direction: column;
+        height: 100vh; /* important pour éviter le scroll */
+    }
+
+    .branding-section {
+        min-height: 40vh;
+        padding: 40px 20px;
+    }
+
+    .brand-name {
+        font-size: 2.5rem;
+    }
+
+    .features-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .feature-item {
+        flex: 1;
+        min-width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-section {
+        padding: 20px;
+    }
+
+    .login-card {
+        padding: 30px 20px;
+    }
+
+    .brand-name {
+        font-size: 2rem;
+    }
+
+    .features-list {
+        flex-direction: column;
+    }
+}
+
+/* Améliorations spécifiques Ant Design */
+.ant-spin-spinning {
+    position: relative;
+}
+
+.ant-spin-dot {
+    color: #667eea;
+}
+
+.ant-form-item-explain-error {
+    color: #ef4444;
+    font-size: 14px;
+}
+
+.ant-checkbox-wrapper:hover .ant-checkbox-inner,
+.ant-checkbox:hover .ant-checkbox-inner {
+    border-color: #667eea;
+}
+
+.ant-checkbox-checked .ant-checkbox-inner {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+
+
+
+/* Animation légère pour le logo - mouvement vertical */
+@keyframes logoMove {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Conteneur principal de la modal */
+.contact-modal .ant-modal-content {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 40px 80px -20px rgba(60, 81, 218, 0.3);
+  border: none;
+  padding: 32px 40px;
+  background: #f8f9fd; /* très clair vert doux */
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Contenu interne */
+.contact-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* En-tête contact */
+.contact-header {
+  text-align: center;
+  position: relative;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #030141;
+}
+
+/* Logo avec animation */
+.contact-logo {
+  margin: 0 auto 16px auto;
+  width: 70px;
+  height: 70px;
+  animation: logoMove 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(65, 74, 235, 0.4));
+}
+
+/* Titre */
+.contact-header h3 {
+  margin: 0 0 6px 0;
+  color: #667eea; /* vert vif */
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  text-shadow: 0 1px 4px rgba(34, 197, 94, 0.3);
+}
+
+/* Description */
+.contact-header .ant-typography {
+  font-size: 15px;
+  color: #4a4a4a;
+  font-weight: 500;
+  opacity: 0.85;
+  letter-spacing: 0.02em;
+}
+
+/* Section info contact */
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Chaque item de contact (téléphone, email, etc.) */
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: #b8cbf3;
+  border-radius: 14px;
+  padding: 14px 20px;
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.7);
+  transition: background-color 0.3s ease;
+  cursor: default;
+}
+
+.contact-item:hover {
+  background-color: #64b8ef;
+}
+
+/* Icônes */
+.contact-item svg {
+  font-size: 24px;
+  color: #667eea;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(93, 133, 236, 0.3));
+}
+
+/* Détails texte à côté de l'icône */
+.contact-details {
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+/* Label fort */
+.contact-details strong,
+.contact-details .ant-typography-strong {
+  color: #2d2d2d;
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+/* Texte descriptif */
+.contact-details .ant-typography {
+  color: #555;
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+
+/* Pour l'adresse avec saut de ligne */
+.contact-details .ant-typography br {
+  content: "";
+  margin-bottom: 4px;
+}
+
+/* Pied de modal */
+.contact-footer {
+  margin-top: 28px;
+  text-align: center;
+  user-select: none;
+}
+
+/* Texte du footer */
+.contact-footer .ant-typography {
+  color: #8b8b8b;
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
