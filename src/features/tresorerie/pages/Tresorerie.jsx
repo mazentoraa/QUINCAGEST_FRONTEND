@@ -137,8 +137,8 @@ function TresorerieMetalGest() {
   const handleKPIClick = (kpiType) => {
     const details = {
       balance: 'Détail du solde actuel : Compte principal 35,680 DT + Compte épargne 10,000 DT',
-      income: 'Encaissements prévus : Factures clients 25,450 DT + Autres recettes 3,000 DT',
-      expense: 'Décaissements prévus : Salaires 12,000 DT + Fournisseurs 4,200 DT + Autres 2,000 DT',
+      expected_income: 'Encaissements prévus : Factures clients 25,450 DT + Autres recettes 3,000 DT',
+      expected_expense: 'Décaissements prévus : Salaires 12,000 DT + Fournisseurs 4,200 DT + Autres 2,000 DT',
       forecast: 'Solde prévisionnel calculé sur la base des flux programmés et des tendances historiques'
     }
     alert(details[kpiType])
@@ -187,36 +187,36 @@ function TresorerieMetalGest() {
             </div>
             <div 
               className="bg-white rounded-lg p-6 shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleKPIClick('income')}
+              onClick={() => handleKPIClick('expected_income')}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <TrendingUp className="h-6 w-6 text-blue-600" />
                 </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(kpiData?.income.positive)}`}>
-                  {getTrendIcon(kpiData?.income.trend, kpiData?.income.positive)}
-                  {kpiData?.income.trend}%
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(kpiData?.expected_income.positive)}`}>
+                  {getTrendIcon(kpiData?.expected_income.trend, kpiData?.expected_income.positive)}
+                  {kpiData?.expected_income.trend}%
                 </div>
               </div>
               <div className="text-sm text-gray-600 mb-1">Encaissements Prévus</div>
-              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.income.value)}</div>
+              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.expected_income.value)}</div>
               <div className="text-xs text-gray-500 mt-1">7 prochains jours</div>
             </div>
             <div 
               className="bg-white rounded-lg p-6 shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleKPIClick('expense')}
+              onClick={() => handleKPIClick('expected_expense')}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                   <TrendingDown className="h-6 w-6 text-red-600" />
                 </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(!kpiData?.expense.positive)}`}>
-                  {getTrendIcon(kpiData?.expense.trend, !kpiData?.expense.positive)}
-                  {Math.abs(kpiData?.expense.trend)}%
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(!kpiData?.expected_expense.positive)}`}>
+                  {getTrendIcon(kpiData?.expected_expense.trend, !kpiData?.expected_expense.positive)}
+                  {Math.abs(kpiData?.expected_expense.trend)}%
                 </div>
               </div>
               <div className="text-sm text-gray-600 mb-1">Décaissements Prévus</div>
-              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.expense.value)}</div>
+              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.expected_expense.value)}</div>
               <div className="text-xs text-gray-500 mt-1">7 prochains jours</div>
             </div>
             <div 

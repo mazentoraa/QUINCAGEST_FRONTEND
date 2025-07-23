@@ -177,6 +177,10 @@ function App() {
                                     element={<Facture nature={'avoir'} />}
                                   />
                                   <Route
+                                    path="/reglements/avoir-facture"
+                                    element={<Facture nature={'avoir-facture'} />}
+                                  />
+                                  <Route
                                     path="/reglements/traites"
                                     element={<InstallmentManagement />}
                                   />
