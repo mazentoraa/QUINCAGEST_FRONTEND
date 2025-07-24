@@ -7,7 +7,7 @@
 
     const { Title } = Typography;
 
-    export default function FactureCorbeille() {
+    export default function FactureCorbeille(props) {
         const [deletedInvoices, setDeletedInvoices] = useState([]);
         const [loading, setLoading] = useState(false);
         const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -15,7 +15,7 @@
         const { nature } = useParams();
         const { fetchDeletedInvoices, restoreInvoice } = useContext(InvoiceContext);
 
-        const currentNature = nature || 'facture';
+        const currentNature = props.nature || nature || 'facture';
 
         const formatCurrency = (value) => {
         return new Intl.NumberFormat('fr-FR', {
@@ -187,7 +187,7 @@
         <Card>
             <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 24 }}>
             <Col>
-                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate("/reglements/factures")}>
+                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(currentNature==='facture'?"/reglements/factures":currentNature=='avoir'?"/bons/avoir":"/reglements/avoir-facture")}>
                 Retour
                 </Button>
             </Col>

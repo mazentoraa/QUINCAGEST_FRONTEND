@@ -235,11 +235,13 @@ function App() {
                                   <Route path="/tresorerie/traite" element={<TresorerieTraite />} />
                                   <Route path="/tresorerie/par-periode" element={<ParPeriode />} />
                                   <Route path="/tresorerie/simulation" element={<Simulation />} />
-                                  <Route path="/factures/corbeille" element={<FactureCorbeille />} />
+                                  <Route path="/factures/corbeille" element={<FactureCorbeille nature='facture'/>} />
+                                  <Route path="/avoirs-factures/corbeille" element={<FactureCorbeille nature='avoir-facture'/>} />
+                                  <Route path="/avoirs/corbeille" element={<FactureCorbeille nature='avoir' />} />
                                   <Route path="/bons/livraison-decoupe/corbeille" element={<BonLivraisonDecoupeCorbeille />} />
                                   <Route path="/clients/trash" element={<ClientTrashPage />} />
                                   <Route path="/achats/avoir" element={<Avoir />} />
-                                  <Route path="/products/trash" element={<TrashPage />} />
+                                  <Route path="/products/trash" element={<TrashPage />} />  
                                 </Routes>
                               </Content>
                             </Layout>
