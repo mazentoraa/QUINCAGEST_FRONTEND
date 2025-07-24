@@ -63,6 +63,7 @@ import FactureCorbeille from './components/BonsDevis/FactureCorbeille';
 import ClientTrashPage from './features/clientManagement/components/ClientTrashPage';
 import Avoir from './features/purshase/AvoirFour';
 import TrashPage from './features/products/components/TrashPage';
+import BonLivraisonDecoupeCorbeille from "./components/BonsDevis/BonLivraisonDecoupeCorbeille";
 const { Header, Content, Sider } = Layout;
 
 const PrivateRoute = ({ children }) => {
@@ -235,9 +236,10 @@ function App() {
                                   <Route path="/tresorerie/par-periode" element={<ParPeriode />} />
                                   <Route path="/tresorerie/simulation" element={<Simulation />} />
                                   <Route path="/factures/corbeille" element={<FactureCorbeille />} />
+                                  <Route path="/bons/livraison-decoupe/corbeille" element={<BonLivraisonDecoupeCorbeille />} />
                                   <Route path="/clients/trash" element={<ClientTrashPage />} />
-              <Route path="/achats/avoir" element={<Avoir />} />
-             <Route path="/products/trash" element={<TrashPage />} />
+                                  <Route path="/achats/avoir" element={<Avoir />} />
+                                  <Route path="/products/trash" element={<TrashPage />} />
                                 </Routes>
                               </Content>
                             </Layout>

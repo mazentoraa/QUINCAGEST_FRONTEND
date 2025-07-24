@@ -141,6 +141,20 @@ class InvoiceService {
       throw error;
     }
   }
+  /**
+   * Get all deleted bons livraison decoupe (corbeille)
+   * @returns {Promise<Array>} - List of deleted invoices
+   */
+  async getDeletedBonsLivraisonDecoupe() {
+    try {
+      const response = await axios.get(`${API_URL}/factures/?deleted=true`);
+      console.log('Deleted bons response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching deleted bons:', error);
+      throw error;
+    }
+  }
 
   /**
    * Restore a deleted invoice
@@ -170,6 +184,33 @@ class InvoiceService {
       throw error;
     }
   }
+  /**
+   * Restore a deleted bon de livraison decoupe
+   * @param {number} invoiceId - The bon ID to restore
+   * @returns {Promise<Object>} - The restored bon
+   */
+  async restoreBonLivraisonDecoupe(invoiceId) {
+    try {
+      const response = await axios.post(`${API_URL}/factures/${invoiceId}/restore/`);
+      console.log('Bon restored:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Error restoring bon ${invoiceId}:`, error);
+      
+      // Ajout de logs de débogage pour mieux comprendre l'erreur
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        console.error('Response headers:', error.response.headers);
+      } else if (error.request) {
+        console.error('Request was made but no response received:', error.request);
+      } else {
+        console.error('Error setting up request:', error.message);
+      }
+      
+      throw error;
+    }
+  }
 
   /**
    * Soft delete an invoice (move to corbeille)
@@ -180,6 +221,21 @@ class InvoiceService {
     try {
       const response = await axios.post(`${API_URL}/cds/${invoiceId}/delete_logically/`);
       console.log('Invoice moved to corbeille:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Error moving invoice ${invoiceId} to corbeille:`, error);
+      throw error;
+    }
+  }
+  /**
+   * Soft delete a Bon de livraison découpe (move to corbeille)
+   * @param {number} invoiceId - The invoice ID to soft delete
+   * @returns {Promise<Object>} - Success message
+   */
+  async softDeleteBon(invoiceId) {
+    try {
+      const response = await axios.post(`${API_URL}/factures/${invoiceId}/delete_logically/`);
+      console.log('Bon moved to corbeille:', response.data);
       return response.data;
     } catch (error) {
       console.error(`Error moving invoice ${invoiceId} to corbeille:`, error);

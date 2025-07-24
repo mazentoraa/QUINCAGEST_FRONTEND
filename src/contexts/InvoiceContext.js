@@ -139,6 +139,21 @@ export const InvoiceProvider = ({ children }) => {
       setLoading(false);
     }
   };
+  // Fonction pour récupérer les factures supprimées
+  const fetchDeletedBonLivraisonDecoupe = async (nature = 'facture') => {
+    setLoading(true);
+    try {
+      const data = await InvoiceService.getDeletedBonsLivraisonDecoupe(nature);
+      setError(null);
+      return data;
+    } catch (error) {
+      setError('Erreur lors du chargement des bons supprimées');
+      console.error('Error in fetchDeletedBonLivraisonDecoupe:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fonction pour restaurer une facture
   const restoreInvoice = async (invoiceId) => {
@@ -147,13 +162,30 @@ export const InvoiceProvider = ({ children }) => {
       const restoredInvoice = await InvoiceService.restoreInvoice(invoiceId);
       setError(null);
       
+            
       // Optionnel: recharger la liste des factures actives
       await fetchInvoices();
-      
+
       return restoredInvoice;
     } catch (error) {
       setError('Erreur lors de la restauration de la facture');
       console.error('Error in restoreInvoice:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+  // Fonction pour restaurer un bon de livraison découpe
+  const restoreBonLivraisonDecoupe = async (invoiceId) => {
+    setLoading(true);
+    try {
+      const restoredInvoice = await InvoiceService.restoreBonLivraisonDecoupe(invoiceId);
+      setError(null);
+      
+      return restoredInvoice;
+    } catch (error) {
+      setError('Erreur lors de la restauration du bon');
+      console.error('Error in restoreBonLivraisonDecoupe:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -172,7 +204,9 @@ export const InvoiceProvider = ({ children }) => {
     cancelInvoice,
     deleteInvoice,
     fetchDeletedInvoices,
-    restoreInvoice
+    fetchDeletedBonLivraisonDecoupe,
+    restoreInvoice,
+    restoreBonLivraisonDecoupe
   };
 
   return (
