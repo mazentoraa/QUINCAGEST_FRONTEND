@@ -3,13 +3,10 @@ import ProductModel from '../models/ProductModel';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
 
-
-
 class ProductService {
   static async getAllProducts() {
     try {
       const response = await axios.get(API_BASE_URL + '/produits/');
-      // Handle paginated response or direct response
       const productData = response.data.results || response.data;
       return productData.map(product => new ProductModel(product));
     } catch (error) {
@@ -18,7 +15,6 @@ class ProductService {
     }
   }
 
-  // New method to fetch all products across all pages
   static async getAllProductsPaginated() {
     try {
       let allProducts = [];
@@ -36,7 +32,6 @@ class ProductService {
         } else if (data.count && data.results) {
           totalPages = Math.ceil(data.count / data.results.length);
         } else {
-          // If no pagination info, assume single page
           totalPages = 1;
         }
 
@@ -62,8 +57,7 @@ class ProductService {
 
   static async getProductsByMaterialType(materialType) {
     try {
-      const response = await axios.get(`${API_BASE_URL}/produits/?material_type=${materialType}`);
-      // Handle paginated response or direct response
+      const response = await axios.get(`${API_BASE_URL}/produits/by_material_type/?type_matiere=${materialType}`);
       const productData = response.data.results || response.data;
       return productData.map(product => new ProductModel(product));
     } catch (error) {
@@ -74,7 +68,6 @@ class ProductService {
 
   static async createProduct(product) {
     try {
-      console.log("product", product)
       const response = await axios.post(`${API_BASE_URL}/produits/`, product);
       return new ProductModel(response.data);
     } catch (error) {
@@ -99,6 +92,48 @@ class ProductService {
       return true;
     } catch (error) {
       console.error(`Error deleting product ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // ✅ Corbeille - nouveaux services :
+  static async getDeletedProducts() {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/produits/trash/`);
+      const productData = response.data.results || response.data;
+      return productData.map(product => new ProductModel(product));
+    } catch (error) {
+      console.error("Erreur récupération corbeille :", error);
+      throw error;
+    }
+  }
+
+  static async restoreProduct(id) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/produits/${id}/restore/`);
+      return new ProductModel(response.data.product);
+    } catch (error) {
+      console.error(`Erreur restauration produit ${id}:`, error);
+      throw error;
+    }
+  }
+
+  static async permanentDeleteProduct(id) {
+    try {
+      await axios.delete(`${API_BASE_URL}/produits/${id}/permanent_delete/`);
+      return true;
+    } catch (error) {
+      console.error(`Erreur suppression définitive produit ${id}:`, error);
+      throw error;
+    }
+  }
+
+  static async emptyTrash() {
+    try {
+      await axios.delete(`${API_BASE_URL}/produits/empty_trash/`);
+      return true;
+    } catch (error) {
+      console.error("Erreur vidage corbeille :", error);
       throw error;
     }
   }

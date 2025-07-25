@@ -1182,6 +1182,7 @@ export default function Devis() {
     <Button
       icon={<DeleteOutlined />}
       size="large"
+      onClick={() => navigate("/devis/corbeille")}
       style={{
         borderRadius: '12px',
         height: '48px',

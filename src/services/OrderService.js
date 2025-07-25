@@ -114,6 +114,25 @@ class OrderService {
       throw error;
     }
   }
+  async getDeletedOrders() {
+  try {
+    const response = await axios.get(`${API_URL}/deleted/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching deleted orders:", error);
+    throw error;
+  }
+}
+async restoreOrder(id) {
+  try {
+    const response = await axios.post(`${API_URL}/${id}/restore/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error restoring order ${id}:`, error);
+    throw error;
+  }
+}
+
 }
 
 export default new OrderService();

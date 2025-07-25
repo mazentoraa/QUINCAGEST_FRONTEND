@@ -45,6 +45,7 @@ import { getApiService } from "../../services/apiServiceFactory";
 import ClientService from "../../features/clientManagement/services/ClientService";
 import ProductService from "../../components/BonsDevis/ProductService";
 import BonCommandePdfApiService from "../../features/orders/services/BonCommandePdfApiService";
+import { useNavigate } from "react-router-dom";
 
 import moment from "moment";
 
@@ -279,6 +280,7 @@ export default function BonCommande() {
     }
     setLoading(false);
   };
+const navigate = useNavigate();
 
   // Function to create a new order
   const handleCreateOrder = () => {
@@ -1175,38 +1177,40 @@ export default function BonCommande() {
   </Space>
 
   <Space size="middle">
-    <Button
-      icon={<DeleteOutlined />}
-      size="large"
-      style={{
-        borderRadius: '12px',
-        height: '48px',
-        padding: '0 20px',
-        border: '2px solid #ef4444',
-        color: '#ef4444',
-        fontWeight: 600,
-        background: '#ffffff',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        fontSize: '15px',
-        boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
-      }}
-      onMouseEnter={(e) => {
-        e.target.style.borderColor = '#dc2626';
-        e.target.style.color = '#ffffff';
-        e.target.style.background = '#ef4444';
-        e.target.style.transform = 'translateY(-2px)';
-        e.target.style.boxShadow = '0 8px 25px rgba(239, 68, 68, 0.25)';
-      }}
-      onMouseLeave={(e) => {
-        e.target.style.borderColor = '#ef4444';
-        e.target.style.color = '#ef4444';
-        e.target.style.background = '#ffffff';
-        e.target.style.transform = 'translateY(0)';
-        e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.15)';
-      }}
-    >
-      Corbeille
-    </Button>
+   <Button
+  icon={<DeleteOutlined />}
+  size="large"
+  style={{
+    borderRadius: '12px',
+    height: '48px',
+    padding: '0 20px',
+    border: '2px solid #ef4444',
+    color: '#ef4444',
+    fontWeight: 600,
+    background: '#ffffff',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    fontSize: '15px',
+    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
+  }}
+  onMouseEnter={(e) => {
+    e.target.style.borderColor = '#dc2626';
+    e.target.style.color = '#ffffff';
+    e.target.style.background = '#ef4444';
+    e.target.style.transform = 'translateY(-2px)';
+    e.target.style.boxShadow = '0 8px 25px rgba(239, 68, 68, 0.25)';
+  }}
+  onMouseLeave={(e) => {
+    e.target.style.borderColor = '#ef4444';
+    e.target.style.color = '#ef4444';
+    e.target.style.background = '#ffffff';
+    e.target.style.transform = 'translateY(0)';
+    e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.15)';
+  }}
+  onClick={() => navigate('/commandes/corbeille')}
+>
+  Corbeille
+</Button>
+
   </Space>
 </div>
 

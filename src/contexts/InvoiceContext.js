@@ -141,24 +141,44 @@ export const InvoiceProvider = ({ children }) => {
   };
 
   // Fonction pour restaurer une facture
-  const restoreInvoice = async (invoiceId) => {
+const restoreInvoice = async (invoiceId, nature = 'facture') => {
+  setLoading(true);
+  try {
+    const restoredInvoice = await InvoiceService.restoreInvoice(invoiceId, nature);
+    setError(null);
+
+    // Recharger la liste des factures actives avec le bon filtre
+    await fetchInvoices(nature);
+
+    return restoredInvoice;
+  } catch (error) {
+    setError('Erreur lors de la restauration de la facture');
+    console.error('Error in restoreInvoice:', error);
+    throw error;
+  } finally {
+    setLoading(false);
+  }
+};
+
+    // Fonction pour supprimer définitivement une facture
+  const permanentlyDeleteInvoice = async (invoiceId) => {
     setLoading(true);
     try {
-      const restoredInvoice = await InvoiceService.restoreInvoice(invoiceId);
+      await InvoiceService.permanentlyDeleteInvoice(invoiceId);
       setError(null);
       
-      // Optionnel: recharger la liste des factures actives
-      await fetchInvoices();
-      
-      return restoredInvoice;
+      // Optionnel : tu peux ici forcer un rechargement des factures supprimées
+      // await fetchDeletedInvoices(); (si tu veux les mettre à jour automatiquement)
+
     } catch (error) {
-      setError('Erreur lors de la restauration de la facture');
-      console.error('Error in restoreInvoice:', error);
+      setError('Erreur lors de la suppression définitive de la facture');
+      console.error('Error in permanentlyDeleteInvoice:', error);
       throw error;
     } finally {
       setLoading(false);
     }
   };
+
 
   // Valeurs exposées par le contexte
   const contextValue = {
@@ -172,7 +192,8 @@ export const InvoiceProvider = ({ children }) => {
     cancelInvoice,
     deleteInvoice,
     fetchDeletedInvoices,
-    restoreInvoice
+    restoreInvoice,
+     permanentlyDeleteInvoice
   };
 
   return (
