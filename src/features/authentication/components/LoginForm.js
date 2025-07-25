@@ -53,7 +53,7 @@ const LoginForm = ({ onSuccess }) => {
                             alt="Logo Yucca"
                             className="yucca-brand-logo"
                         />
-                        <h1 className="yucca-brand-title">Yucca ERP</h1>
+                        <h1 className="yucca-brand-title">YUCCA ERP</h1>
                     </div>
 
                     <div className="yucca-brand-info">
@@ -136,7 +136,7 @@ const LoginForm = ({ onSuccess }) => {
 
                     <div className="yucca-help-section">
                         <Text className="yucca-help-text">
-                            Nouveau sur Yucca ERP ? 
+                            Nouveau sur YUCCA ERP ? 
                             <a href="#contact" className="yucca-contact-link" onClick={showContactModal}> Contactez notre équipe</a>
                         </Text>
                     </div>
@@ -163,7 +163,7 @@ const LoginForm = ({ onSuccess }) => {
                             />
                         </div>
                         <Title level={3} style={{ margin: '16px 0 8px 0', color: '#010d43' }}>
-                            Yucca Info
+                            YUCCA Info
                         </Title>
                         <Text style={{ color: '#666', fontSize: '14px' }}>
                             Solutions ERP innovantes
@@ -175,7 +175,7 @@ const LoginForm = ({ onSuccess }) => {
                             <PhoneOutlined style={{ color: '#22c55e', fontSize: '16px' }} />
                             <div className="yucca-contact-details">
                                 <Text strong style={{ color: '#333' }}>Téléphone</Text>
-                                <Text style={{ color: '#666' }}>+212 5 37 XX XX XX</Text>
+                                <Text style={{ color: '#666' }}>+21697131795 / +21623198524</Text>
                             </div>
                         </div>
 
@@ -183,7 +183,7 @@ const LoginForm = ({ onSuccess }) => {
                             <MailOutlined style={{ color: '#22c55e', fontSize: '16px' }} />
                             <div className="yucca-contact-details">
                                 <Text strong style={{ color: '#333' }}>Email</Text>
-                                <Text style={{ color: '#666' }}>contact@yuccainfo.ma</Text>
+                                <Text style={{ color: '#666' }}>contact@yuccainfo.com.tn</Text>
                             </div>
                         </div>
 
@@ -191,7 +191,7 @@ const LoginForm = ({ onSuccess }) => {
                             <GlobalOutlined style={{ color: '#22c55e', fontSize: '16px' }} />
                             <div className="yucca-contact-details">
                                 <Text strong style={{ color: '#333' }}>Site Web</Text>
-                                <Text style={{ color: '#666' }}>www.yuccainfo.ma</Text>
+                                <Text style={{ color: '#666' }}>http://www.yuccainfo.com.tn</Text>
                             </div>
                         </div>
 
@@ -200,8 +200,9 @@ const LoginForm = ({ onSuccess }) => {
                             <div className="yucca-contact-details">
                                 <Text strong style={{ color: '#333' }}>Adresse</Text>
                                 <Text style={{ color: '#666' }}>
-                                    Nabeul, Tunisie<br />
-                                    Zone Technopolis
+                                   Dar Chaabane Fehri, Nabeul, Tunisia
+<br />
+                                    Technopole Sousse, Tunisia
                                 </Text>
                             </div>
                         </div>

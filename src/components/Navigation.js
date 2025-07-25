@@ -1,14 +1,25 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Button, Typography, Space, Avatar } from 'antd';
-import { HomeOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Menu, Button, Typography, Space, Avatar, Switch, Tooltip } from 'antd';
+import { HomeOutlined, UserOutlined, LogoutOutlined, BulbOutlined } from '@ant-design/icons';
 import './Navigation.css';
 import AuthService from '../services/AuthService';
+import  { useState, useEffect } from 'react';
 
 const { Title } = Typography;
 
 function Navigation() {
   const navigate = useNavigate();
+  const [isDarkMode, setIsDarkMode] = useState(
+  localStorage.getItem("theme") === "dark"
+);
+
+useEffect(() => {
+  const theme = isDarkMode ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("theme", theme);
+}, [isDarkMode]);
+
 
   const handleLogout = () => {
     AuthService.logout();
@@ -29,7 +40,15 @@ function Navigation() {
       </Menu>
       
       <div className="nav-right">
-        <Space>
+        <Space align="center" size="middle">
+          <Tooltip title={isDarkMode ? "Mode clair" : "Mode sombre"}>
+            <Switch
+              checkedChildren={<BulbOutlined />}
+              unCheckedChildren={<BulbOutlined />}
+              checked={isDarkMode}
+              onChange={() => setIsDarkMode(!isDarkMode)}
+            />
+          </Tooltip>
           <Avatar icon={<UserOutlined />} />
           <span style={{ color: '#fff' }}>
             {(AuthService.getCurrentUser()?.username).toUpperCase() || 'UTILISATEUR'}
@@ -44,6 +63,7 @@ function Navigation() {
           </Button>
         </Space>
       </div>
+      
     </div>
   );
 }

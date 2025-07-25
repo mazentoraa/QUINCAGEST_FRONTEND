@@ -8,7 +8,7 @@ export const ProductContext = createContext();
 
 export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // Start as false until we're ready to fetch
   const [error, setError] = useState(null);
   const [selectedMaterial, setSelectedMaterial] = useState("all");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -20,7 +20,7 @@ export const ProductProvider = ({ children }) => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
       setIsAuthenticated(!!token);
-      setIsReady(true);
+      setIsReady(true); // Mark the context as ready to start fetching data
     };
 
     checkAuth();
@@ -33,6 +33,7 @@ export const ProductProvider = ({ children }) => {
 
   // Fetch all products or filtered products by material type
   useEffect(() => {
+    // Only fetch if we're ready (authentication check completed)
     if (!isReady) {
       return;
     }
@@ -42,10 +43,13 @@ export const ProductProvider = ({ children }) => {
       try {
         let data;
         if (selectedMaterial && selectedMaterial !== "all") {
-          data = await ProductService.getProductsByMaterialType(selectedMaterial);
+          data = await ProductService.getProductsByMaterialType(
+            selectedMaterial
+          );
         } else {
           data = await ProductService.getAllProducts();
         }
+        // Convert raw data to ProductModel instances to ensure consistent field mapping
         const products = Array.isArray(data)
           ? data.map((item) => new ProductModel(item))
           : [];
@@ -72,6 +76,7 @@ export const ProductProvider = ({ children }) => {
     try {
       setLoading(true);
 
+      // If productData is FormData, convert it to a plain object
       let dataToSend = productData;
       if (productData instanceof FormData) {
         dataToSend = {};
@@ -80,6 +85,7 @@ export const ProductProvider = ({ children }) => {
         }
       }
 
+      // Ensure numeric fields are properly parsed
       if (typeof dataToSend === "object") {
         if (dataToSend.price !== undefined)
           dataToSend.price = parseFloat(dataToSend.price) || 0;
@@ -91,7 +97,9 @@ export const ProductProvider = ({ children }) => {
           dataToSend.surface = parseFloat(dataToSend.surface) || 0;
       }
 
+      // Map frontend field names to backend field names
       if (typeof dataToSend === "object") {
+        // If we're receiving a product with frontend field names, we need to map them
         if (dataToSend.material && !dataToSend.material_type) {
           dataToSend.material_type = dataToSend.material;
         }
@@ -100,11 +108,15 @@ export const ProductProvider = ({ children }) => {
         }
       }
 
+      // Create product model
       const product = new ProductModel(dataToSend);
+
       const savedProduct = await ProductService.createProduct(product);
       console.log("Product saved successfully:", savedProduct);
 
+      // Explicitly refresh the product list instead of just appending
       refreshProducts();
+
       message.success("Produit ajouté avec succès");
       return savedProduct;
     } catch (err) {
@@ -125,8 +137,11 @@ export const ProductProvider = ({ children }) => {
       console.log("Product ID:", id);
       console.log("Raw productData received:", productData);
 
+      // For updates, send only the changed fields directly without creating a ProductModel
+      // This ensures we're doing a true PATCH operation
       let dataToSend = productData;
 
+      // If productData is FormData, convert it to a plain object
       if (productData instanceof FormData) {
         console.log("Converting FormData to object");
         dataToSend = {};
@@ -136,8 +151,10 @@ export const ProductProvider = ({ children }) => {
         console.log("Converted FormData:", dataToSend);
       }
 
+      // Clean the data to only include backend field names and remove frontend duplicates
       const cleanedData = {};
 
+      // Only include backend field names and necessary fields
       if (dataToSend.nom_produit !== undefined)
         cleanedData.nom_produit = dataToSend.nom_produit;
       if (dataToSend.code_produit !== undefined)
@@ -150,6 +167,7 @@ export const ProductProvider = ({ children }) => {
         cleanedData.longueur = parseFloat(dataToSend.longueur) || 0;
       if (dataToSend.largeur !== undefined)
         cleanedData.largeur = parseFloat(dataToSend.largeur) || 0;
+      
       if (dataToSend.surface !== undefined)
         cleanedData.surface = parseFloat(dataToSend.surface) || 0;
       if (dataToSend.prix !== undefined)
@@ -157,25 +175,32 @@ export const ProductProvider = ({ children }) => {
       if (dataToSend.description !== undefined)
         cleanedData.description = dataToSend.description;
 
+      // Handle image field carefully - only include if it's a new upload (base64) or null (removal)
       if (dataToSend.hasOwnProperty("image")) {
         const imageValue = dataToSend.image;
         console.log("Processing image field:", imageValue);
         console.log("Image type:", typeof imageValue);
 
         if (imageValue === null) {
+          // Image removal
           cleanedData.image = null;
           console.log("Image removal detected");
         } else if (
           typeof imageValue === "string" &&
           imageValue.startsWith("data:")
         ) {
+          // New base64 image upload
           cleanedData.image = imageValue;
           console.log("New base64 image detected");
         } else if (
           typeof imageValue === "string" &&
           imageValue.startsWith("http")
         ) {
-          console.log("Existing image URL detected - NOT including in PATCH payload");
+          // This is an existing image URL - don't include it in PATCH
+          console.log(
+            "Existing image URL detected - NOT including in PATCH payload"
+          );
+          // Don't add image to cleanedData
         } else {
           console.log("Unknown image format:", imageValue);
         }
@@ -188,7 +213,10 @@ export const ProductProvider = ({ children }) => {
       console.log("Image value:", dataToSend.image);
       console.log("Image type:", typeof dataToSend.image);
 
+      // Don't create a ProductModel for updates - send the raw data directly
       const updatedProduct = await ProductService.updateProduct(id, dataToSend);
+
+      // Convert the updated product to ProductModel for consistent state management
       const productModel = new ProductModel(updatedProduct);
 
       setProducts((prevProducts) =>
@@ -208,121 +236,20 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
-  // Delete a product (suppression logique)
+  // Delete a product
   const deleteProduct = async (id) => {
     try {
       setLoading(true);
       await ProductService.deleteProduct(id);
-      // Retirer le produit de la liste locale car il est maintenant supprimé logiquement
       setProducts((prevProducts) =>
         prevProducts.filter((product) => product.id !== id)
       );
-      message.success("Produit déplacé vers la corbeille");
+      message.success("Produit supprimé avec succès");
     } catch (err) {
       message.error("Erreur lors de la suppression du produit");
       throw err;
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Fonction pour récupérer les produits supprimés
-  const fetchTrashedProducts = async () => {
-    try {
-      const response = await fetch('/api/produits/trash/', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Erreur lors du chargement de la corbeille');
-      }
-
-      const data = await response.json();
-      return data.map(item => new ProductModel(item));
-    } catch (error) {
-      console.error('Erreur lors du chargement de la corbeille:', error);
-      throw error;
-    }
-  };
-
-  // Fonction pour restaurer un produit
-  const restoreProduct = async (productId) => {
-    try {
-      const response = await fetch(`/api/produits/${productId}/restore/`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de la restauration');
-      }
-
-      const data = await response.json();
-      
-      // Recharger la liste des produits pour inclure le produit restauré
-      refreshProducts();
-      
-      message.success("Produit restauré avec succès");
-      return data;
-    } catch (error) {
-      console.error('Erreur lors de la restauration:', error);
-      message.error("Erreur lors de la restauration du produit");
-      throw error;
-    }
-  };
-
-  // Fonction pour supprimer définitivement un produit
-  const permanentDeleteProduct = async (productId) => {
-    try {
-      const response = await fetch(`/api/produits/${productId}/permanent_delete/`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de la suppression définitive');
-      }
-
-      message.success("Produit supprimé définitivement");
-      return true;
-    } catch (error) {
-      console.error('Erreur lors de la suppression définitive:', error);
-      message.error("Erreur lors de la suppression définitive");
-      throw error;
-    }
-  };
-
-  // Fonction pour vider la corbeille
-  const emptyTrash = async () => {
-    try {
-      const response = await fetch('/api/produits/empty_trash/', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors du vidage de la corbeille');
-      }
-
-      const data = await response.json();
-      message.success("Corbeille vidée avec succès");
-      return data;
-    } catch (error) {
-      console.error('Erreur lors du vidage de la corbeille:', error);
-      message.error("Erreur lors du vidage de la corbeille");
-      throw error;
     }
   };
 
@@ -342,11 +269,6 @@ export const ProductProvider = ({ children }) => {
     deleteProduct,
     filterByMaterial,
     refreshProducts,
-    // Nouvelles fonctions pour la corbeille
-    fetchTrashedProducts,
-    restoreProduct,
-    permanentDeleteProduct,
-    emptyTrash,
   };
 
   return (

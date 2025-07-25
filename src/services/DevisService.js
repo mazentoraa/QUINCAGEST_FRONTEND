@@ -180,6 +180,33 @@ const devisService = {
       return [];
     }
   },
+
+  getDevisSupprimes: async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/devis/deleted/`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const text = await response.text();
+    return text && text.trim() ? JSON.parse(text) : [];
+  } catch (error) {
+    console.error("Error fetching deleted quotes:", error);
+    return [];
+  }
+},
+
+restoreDevis: async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/devis/${id}/restore/`, {
+      method: "POST",
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error("Error restoring quote:", error);
+    throw error;
+  }
+},
+
+
 };
 
 export default devisService;
