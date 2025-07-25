@@ -45,12 +45,15 @@ import InvoiceService from "../../features/manifeste/services/InvoiceService";
 import ClientService from "../../features/clientManagement/services/ClientService";
 // Import new PDF service
 import BonLivraisonDecoupePdfService from "../../services/BonLivraisonDecoupePdfService";
+import { useNavigate } from 'react-router-dom';
 
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
 const BonLivraisonDecoupe = () => {
+  
+  const navigate = useNavigate();
   // State for invoices
   const [invoices, setInvoices] = useState([]);
   const [filteredInvoices, setFilteredInvoices] = useState([]); // Add filtered invoices state
@@ -367,8 +370,8 @@ if (currentFilters.montantRange) {
     const handleDeleteInvoice = async (Id) => {
     try {
       setLoading(true);
-      await InvoiceService.deleteInvoice(Id)
-      message.success("Bon de Livraison  supprimée avec succès"); 
+      await InvoiceService.softDeleteBon(Id)
+      message.success("Bon de Livraison déplacée dans la corbeille"); 
       fetchInvoices()
     } catch(error){
       message.error("Erreur lors de la suppression: " + error.message);
@@ -593,6 +596,7 @@ if (currentFilters.montantRange) {
     <Button
       icon={<DeleteOutlined />}
       size="large"
+      onClick={() => navigate("/bons/livraison-decoupe/corbeille")}
       style={{
         borderRadius: '12px',
         height: '48px',

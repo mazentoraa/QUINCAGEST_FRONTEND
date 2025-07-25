@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useContext } from 'react';
+
+ import React, { useEffect, useState, useContext } from 'react';
+
 import {
   Table,
   Button,
@@ -20,6 +22,30 @@ import {
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import moment from 'moment';
 import { InvoiceContext } from '../../contexts/InvoiceContext';
+    import { Table, Button, message, Popconfirm, Typography, Card, Row, Col, Space, Tag } from 'antd';
+    import { ReloadOutlined, RollbackOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+    
+
+    const { Title } = Typography;
+
+    export default function FactureCorbeille(props) {
+        const [deletedInvoices, setDeletedInvoices] = useState([]);
+        const [loading, setLoading] = useState(false);
+        const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+        const navigate = useNavigate();
+        const { nature } = useParams();
+        const { fetchDeletedInvoices, restoreInvoice } = useContext(InvoiceContext);
+
+        const currentNature = props.nature || nature || 'facture';
+
+        const formatCurrency = (value) => {
+        return new Intl.NumberFormat('fr-FR', {
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3,
+        }).format(value);
+        };
+
+
 
 const { Title } = Typography;
 
@@ -297,6 +323,32 @@ export default function FactureCorbeille() {
             </Button>
           </Popconfirm>
 
+
+    return (
+        <div style={{ padding: 24 }}>
+        <Card>
+            <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 24 }}>
+            <Col>
+                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(currentNature==='facture'?"/reglements/factures":currentNature=='avoir'?"/bons/avoir":"/reglements/avoir-facture")}>
+                Retour
+                </Button>
+            </Col>
+            <Col flex="auto">
+                <Title level={2} style={{ margin: 0 }}>
+                🗑️ {currentNature === 'facture' ? 'Factures' : 'Avoirs'} Supprimées
+                </Title>
+            </Col>
+            </Row>
+
+            <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+            <Col>
+                <Button icon={<ReloadOutlined />} onClick={loadDeletedInvoices} loading={loading}>
+                Recharger
+                </Button>
+            </Col>
+            {selectedRowKeys.length > 0 && (
+                <Col>
+
           <Popconfirm
             title="Supprimer définitivement ?"
             description="Cette action est irréversible."
@@ -358,6 +410,7 @@ export default function FactureCorbeille() {
           {selectedRowKeys.length > 0 && (
             <>
               <Col>
+
                 <Button
                   type="primary"
                   icon={<RollbackOutlined />}

@@ -63,9 +63,13 @@ import FactureCorbeille from './components/BonsDevis/FactureCorbeille';
 import ClientTrashPage from './features/clientManagement/components/ClientTrashPage';
 import Avoir from './features/purshase/AvoirFour';
 import TrashPage from './features/products/components/TrashPage';
+
+import BonLivraisonDecoupeCorbeille from "./components/BonsDevis/BonLivraisonDecoupeCorbeille";
+
 import CorbeilleDevis from "./components/BonsDevis/CorbeilleDevis";
 import CorbeilleBonLivraison from "./components/BonsDevis/CorbeilleBonLivraison";
 import TrashOrders from "./components/BonsDevis/TrashOrders";
+
 const { Header, Content, Sider } = Layout;
 
 const PrivateRoute = ({ children }) => {
@@ -237,13 +241,20 @@ function App() {
                                   <Route path="/tresorerie/traite" element={<TresorerieTraite />} />
                                   <Route path="/tresorerie/par-periode" element={<ParPeriode />} />
                                   <Route path="/tresorerie/simulation" element={<Simulation />} />
-                                  <Route path="/factures/corbeille" element={<FactureCorbeille />} />
+                                  <Route path="/factures/corbeille" element={<FactureCorbeille nature='facture'/>} />
+                                  <Route path="/avoirs-factures/corbeille" element={<FactureCorbeille nature='avoir-facture'/>} />
+                                  <Route path="/avoirs/corbeille" element={<FactureCorbeille nature='avoir' />} />
+                                  <Route path="/bons/livraison-decoupe/corbeille" element={<BonLivraisonDecoupeCorbeille />} />
                                   <Route path="/clients/trash" element={<ClientTrashPage />} />
+
+                                  <Route path="/products/trash" element={<TrashPage />} />  
+
                <Route path="/achats/avoir" element={<Avoir />} />
               <Route path="/trash" element={<TrashPage />} />
               <Route path="/devis/corbeille" element={<CorbeilleDevis />} />
               <Route path="/corbeille-bon-livraison" element={<CorbeilleBonLivraison />} />
               <Route path="/commandes/corbeille" element={<TrashOrders />} />
+
                                 </Routes>
                               </Content>
                             </Layout>

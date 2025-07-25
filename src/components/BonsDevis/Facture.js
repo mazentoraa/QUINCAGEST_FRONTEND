@@ -1836,7 +1836,7 @@ const handleDeleteSelected = async () => {
   <Button
     icon={<DeleteOutlined />}
     size="large"
-    onClick={() => navigate(props.nature === 'facture' ? "/factures/corbeille" : "/avoirs/corbeille")}
+    onClick={() => navigate(props.nature === 'facture' ? "/factures/corbeille" : props.nature=='avoir'?"/avoirs/corbeille":"/avoirs-factures/corbeille")}
     style={{
       borderRadius: '12px',
       height: '48px',

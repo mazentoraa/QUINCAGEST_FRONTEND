@@ -139,6 +139,21 @@ export const InvoiceProvider = ({ children }) => {
       setLoading(false);
     }
   };
+  // Fonction pour récupérer les factures supprimées
+  const fetchDeletedBonLivraisonDecoupe = async (nature = 'facture') => {
+    setLoading(true);
+    try {
+      const data = await InvoiceService.getDeletedBonsLivraisonDecoupe(nature);
+      setError(null);
+      return data;
+    } catch (error) {
+      setError('Erreur lors du chargement des bons supprimées');
+      console.error('Error in fetchDeletedBonLivraisonDecoupe:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fonction pour restaurer une facture
 const restoreInvoice = async (invoiceId, nature = 'facture') => {
@@ -167,12 +182,36 @@ const restoreInvoice = async (invoiceId, nature = 'facture') => {
       await InvoiceService.permanentlyDeleteInvoice(invoiceId);
       setError(null);
       
+
+            
+      // Optionnel: recharger la liste des factures actives
+      await fetchInvoices();
+
+      return restoredInvoice;
+
       // Optionnel : tu peux ici forcer un rechargement des factures supprimées
       // await fetchDeletedInvoices(); (si tu veux les mettre à jour automatiquement)
+
 
     } catch (error) {
       setError('Erreur lors de la suppression définitive de la facture');
       console.error('Error in permanentlyDeleteInvoice:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+  // Fonction pour restaurer un bon de livraison découpe
+  const restoreBonLivraisonDecoupe = async (invoiceId) => {
+    setLoading(true);
+    try {
+      const restoredInvoice = await InvoiceService.restoreBonLivraisonDecoupe(invoiceId);
+      setError(null);
+      
+      return restoredInvoice;
+    } catch (error) {
+      setError('Erreur lors de la restauration du bon');
+      console.error('Error in restoreBonLivraisonDecoupe:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -192,8 +231,14 @@ const restoreInvoice = async (invoiceId, nature = 'facture') => {
     cancelInvoice,
     deleteInvoice,
     fetchDeletedInvoices,
+
+    fetchDeletedBonLivraisonDecoupe,
+    restoreInvoice,
+    restoreBonLivraisonDecoupe
+
     restoreInvoice,
      permanentlyDeleteInvoice
+
   };
 
   return (
