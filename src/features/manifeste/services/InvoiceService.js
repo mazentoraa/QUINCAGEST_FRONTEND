@@ -127,17 +127,24 @@ class InvoiceService {
   }
 
   /**
-   * Get all deleted invoices (corbeille)
-   * @param {string} nature - 'facture' or 'avoir-facture' or avoi 
+   * Get all deleted invoices (corbeille) - Support pour tous les types
+   * @param {string} nature - 'facture', 'avoir-facture', ou 'avoir'
    * @returns {Promise<Array>} - List of deleted invoices
    */
   async getDeletedInvoices(nature = 'facture') {
     try {
-      const response = await axios.get(`${API_URL}/cds/?deleted=true&nature=${nature}`);
-      console.log('Deleted invoices response:', response.data);
+      // Validation de la nature
+      const validNatures = ['facture', 'avoir-facture', 'avoir'];
+      if (!validNatures.includes(nature)) {
+        console.warn(`Nature invalide: ${nature}. Utilisation de 'facture' par défaut.`);
+        nature = 'facture';
+      }
+
+      const response = await axios.get(`${API_URL}/cds/?deleted=true&nature=${encodeURIComponent(nature)}`);
+      console.log(`Deleted ${nature} response:`, response.data);
       return response.data;
     } catch (error) {
-      console.error('Error fetching deleted invoices:', error);
+      console.error(`Error fetching deleted ${nature}:`, error);
       throw error;
     }
   }
@@ -157,30 +164,50 @@ class InvoiceService {
   }
 
   /**
-   * Restore a deleted invoice
+   * Restore a deleted invoice - Support pour tous les types
    * @param {number} invoiceId - The invoice ID to restore
+   * @param {string} nature - 'facture', 'avoir-facture', ou 'avoir'
    * @returns {Promise<Object>} - The restored invoice
    */
-  async restoreInvoice(invoiceId) {
+  async restoreInvoice(invoiceId, nature = 'facture') {
     try {
-      // CORRECTION: Utilisation du bon endpoint
-      const response = await axios.post(`${API_URL}/cds/${invoiceId}/restore/`);
-      console.log('Invoice restored:', response.data);
+      // Validation de la nature
+      const validNatures = ['facture', 'avoir-facture', 'avoir'];
+      if (!validNatures.includes(nature)) {
+        console.warn(`Nature invalide: ${nature}. Utilisation de 'facture' par défaut.`);
+        nature = 'facture';
+      }
+
+      const response = await axios.post(
+        `${API_URL}/cds/${invoiceId}/restore/?nature=${encodeURIComponent(nature)}`
+      );
+      console.log(`${nature} ${invoiceId} restored:`, response.data);
       return response.data;
     } catch (error) {
-      console.error(`Error restoring invoice ${invoiceId}:`, error);
-      
-      // Ajout de logs de débogage pour mieux comprendre l'erreur
+      console.error(`Error restoring ${nature} ${invoiceId}:`, error);
+
       if (error.response) {
         console.error('Response status:', error.response.status);
         console.error('Response data:', error.response.data);
-        console.error('Response headers:', error.response.headers);
+        
+        // Messages d'erreur plus spécifiques
+        if (error.response.status === 400) {
+          const errorData = error.response.data;
+          if (errorData.error && errorData.error.includes('Nature mismatch')) {
+            throw new Error(`Impossible de restaurer: le type de document ne correspond pas (${errorData.requested_nature} vs ${errorData.record_nature})`);
+          } else if (errorData.error && errorData.error.includes('not deleted')) {
+            throw new Error('Ce document n\'est pas dans la corbeille');
+          }
+        } else if (error.response.status === 404) {
+          throw new Error('Document non trouvé');
+        }
       } else if (error.request) {
         console.error('Request was made but no response received:', error.request);
+        throw new Error('Erreur de connexion au serveur');
       } else {
         console.error('Error setting up request:', error.message);
       }
-      
+
       throw error;
     }
   }
@@ -213,7 +240,7 @@ class InvoiceService {
   }
 
   /**
-   * Soft delete an invoice (move to corbeille)
+   * Soft delete an invoice (move to corbeille) - Support pour tous les types
    * @param {number} invoiceId - The invoice ID to soft delete
    * @returns {Promise<Object>} - Success message
    */
@@ -224,6 +251,42 @@ class InvoiceService {
       return response.data;
     } catch (error) {
       console.error(`Error moving invoice ${invoiceId} to corbeille:`, error);
+      
+      if (error.response?.status === 400) {
+        const errorData = error.response.data;
+        if (errorData.error && errorData.error.includes('already deleted')) {
+          throw new Error('Ce document est déjà dans la corbeille');
+        }
+      } else if (error.response?.status === 404) {
+        throw new Error('Document non trouvé');
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Permanently delete a logically deleted invoice - Support pour tous les types
+   * @param {number} invoiceId - The invoice ID to permanently delete
+   * @returns {Promise<Object>} - Success message
+   */
+  async permanentlyDeleteInvoice(invoiceId) {
+    try {
+      const response = await axios.delete(`${API_URL}/cds/${invoiceId}/delete_permanently/`);
+      console.log(`Invoice ${invoiceId} deleted permanently:`, response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Error permanently deleting invoice ${invoiceId}:`, error);
+      
+      if (error.response?.status === 400) {
+        const errorData = error.response.data;
+        if (errorData.error && errorData.error.includes('pas dans la corbeille')) {
+          throw new Error('Ce document n\'est pas dans la corbeille. Suppression logique requise d\'abord.');
+        }
+      } else if (error.response?.status === 404) {
+        throw new Error('Document non trouvé');
+      }
+      
       throw error;
     }
   }
@@ -267,6 +330,39 @@ class InvoiceService {
     
     const newNumber = maxNumber + 1;
     return `BL-${currentYear}-${String(newNumber).padStart(5, '0')}`;
+  }
+
+  /**
+   * Get statistics for different document types
+   * @returns {Promise<Object>} - Statistics object
+   */
+  async getStatistics() {
+    try {
+      const [factures, avoirs, avoirFactures, deletedFactures, deletedAvoirs, deletedAvoirFactures] = await Promise.allSettled([
+        axios.get(`${API_URL}/cds/?deleted=false&nature=facture`),
+        axios.get(`${API_URL}/cds/?deleted=false&nature=avoir`),
+        axios.get(`${API_URL}/cds/?deleted=false&nature=avoir-facture`),
+        axios.get(`${API_URL}/cds/?deleted=true&nature=facture`),
+        axios.get(`${API_URL}/cds/?deleted=true&nature=avoir`),
+        axios.get(`${API_URL}/cds/?deleted=true&nature=avoir-facture`)
+      ]);
+
+      return {
+        active: {
+          factures: factures.status === 'fulfilled' ? factures.value.data.length : 0,
+          avoirs: avoirs.status === 'fulfilled' ? avoirs.value.data.length : 0,
+          avoirFactures: avoirFactures.status === 'fulfilled' ? avoirFactures.value.data.length : 0,
+        },
+        deleted: {
+          factures: deletedFactures.status === 'fulfilled' ? deletedFactures.value.data.length : 0,
+          avoirs: deletedAvoirs.status === 'fulfilled' ? deletedAvoirs.value.data.length : 0,
+          avoirFactures: deletedAvoirFactures.status === 'fulfilled' ? deletedAvoirFactures.value.data.length : 0,
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+      throw error;
+    }
   }
 }
 

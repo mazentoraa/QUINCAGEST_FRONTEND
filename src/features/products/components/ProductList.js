@@ -27,7 +27,6 @@ import { useProducts } from "../contexts/ProductContext";
 import { StockContext } from "../../stock/contexts/StockContext";
 import ProductCard from "./ProductCard";
 import ProductForm from "./ProductForm";
-import TrashModal from './TrashModal'; 
 import { useNavigate } from 'react-router-dom';
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -42,22 +41,28 @@ const ProductList = ({ onDuplicateSuccess }) => {
     filterByMaterial,
     refreshProducts,
   } = useProducts();
+  const navigate = useNavigate();
 
+  // Auto refresh products every 30 seconds
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      refreshProducts();
+    }, 30000); // 30000 ms = 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, [refreshProducts]);
+  
+const handleTrashClick = () => {
+    navigate('/trash'); // ou '/products/trash' selon votre routing
+  };
   // Integration StockManagement
   const { filteredProducts } = useContext(StockContext);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-const navigate = useNavigate();
-const handleTrashClick = () => {
-    navigate('/products/trash');
-  };
 
   const [searchTerm, setSearchTerm] = useState("");
   const [displayedProducts, setDisplayedProducts] = useState([]);
-
-  const [trashModalVisible, setTrashModalVisible] = useState(false);
-
-
+  
   useEffect(() => {
     if (!Array.isArray(products)) {
       setDisplayedProducts([]);
@@ -278,40 +283,39 @@ return (
 
           {/* Boutons modernisés à droite */}
           <Space size="large">
-            <Button
-              icon={<DeleteOutlined />}
-              size="large"
-              onClick={handleTrashClick} 
-              style={{
-                borderRadius: '12px',
-                height: '48px',
-                padding: '0 20px',
-                border: '2px solid #ef4444',
-                color: '#ef4444',
-                fontWeight: 600,
-                background: '#ffffff',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                fontSize: '15px',
-                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.borderColor = '#dc2626';
-                e.target.style.color = '#ffffff';
-                e.target.style.background = '#ef4444';
-                e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 8px 25px rgba(239, 68, 68, 0.25)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.borderColor = '#ef4444';
-                e.target.style.color = '#ef4444';
-                e.target.style.background = '#ffffff';
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.15)';
-              }}
-            >
-              Corbeille
-            </Button>
-
+         <Button
+      icon={<DeleteOutlined />}
+      size="large"
+      onClick={handleTrashClick}
+      style={{
+        borderRadius: '12px',
+        height: '48px',
+        padding: '0 20px',
+        border: '2px solid #ef4444',
+        color: '#ef4444',
+        fontWeight: 600,
+        background: '#ffffff',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        fontSize: '15px',
+        boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
+      }}
+      onMouseEnter={(e) => {
+        e.target.style.borderColor = '#dc2626';
+        e.target.style.color = '#ffffff';
+        e.target.style.background = '#ef4444';
+        e.target.style.transform = 'translateY(-2px)';
+        e.target.style.boxShadow = '0 8px 25px rgba(239, 68, 68, 0.25)';
+      }}
+      onMouseLeave={(e) => {
+        e.target.style.borderColor = '#ef4444';
+        e.target.style.color = '#ef4444';
+        e.target.style.background = '#ffffff';
+        e.target.style.transform = 'translateY(0)';
+        e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.15)';
+      }}
+    >
+      Corbeille
+    </Button>
             <Button
               type="primary"
               icon={<PlusOutlined />}
