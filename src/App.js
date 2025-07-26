@@ -249,11 +249,11 @@ function App() {
 
                                   <Route path="/products/trash" element={<TrashPage />} />  
 
-               <Route path="/achats/avoir" element={<Avoir />} />
-              <Route path="/trash" element={<TrashPage />} />
-              <Route path="/devis/corbeille" element={<CorbeilleDevis />} />
-              {/* <Route path="/corbeille-bon-livraison" element={<CorbeilleBonLivraison />} /> */}
-              <Route path="/commandes/corbeille" element={<TrashOrders />} />
+                                  <Route path="/achats/avoir" element={<Avoir />} />
+                                  <Route path="/trash" element={<TrashPage />} />
+                                  <Route path="/devis/corbeille" element={<CorbeilleDevis />} />
+                                  {/* <Route path="/corbeille-bon-livraison" element={<CorbeilleBonLivraison />} /> */}
+                                  <Route path="/commandes/corbeille" element={<TrashOrders />} />
 
                                 </Routes>
                               </Content>

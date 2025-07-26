@@ -4,6 +4,7 @@ import {
   Button,
   Select,
   Input,
+  InputNumber,
   Modal,
   Form,
   Typography,
@@ -50,6 +51,7 @@ export default function FactureMatiere() {
   const [filterNumero, setFilterNumero] = useState("");
   const [filterFournisseur, setFilterFournisseur] = useState("");
   const [filterType, setFilterType] = useState("");
+  const [modePaiement, setModePaiement] = useState("");
 
   const typeOptions = ["matière première", "consommable", "autres"];
   const modePaiementOptions = [
@@ -58,6 +60,7 @@ export default function FactureMatiere() {
   { value: "virement", label: "Virement Bancaire" },
   { value: "carte", label: "Carte de crédit" },
   { value: "traite", label: "Traite" },
+  { value: "mixte", label: "Mixte" },
 ];
 
 
@@ -354,7 +357,9 @@ export default function FactureMatiere() {
                 achat_prix: null,
                 achat_quantite: null,
                 mode_paiement: record.mode_paiement || "cash",
+                mixte_comptant: record.mixte_comptant || 0,
               });
+              setModePaiement(record.mode_paiement)
               setAchats(record.achats || []);
               setCurrentId(record.id);
               setEditingAchatIndex(null);
@@ -771,6 +776,7 @@ export default function FactureMatiere() {
             size="large"
             placeholder="Sélectionner un mode de paiement"
             suffixIcon={<CreditCardOutlined style={{ color: "#1890ff" }} />}
+            onChange={(value)=>setModePaiement(value)}
             style={{
               borderRadius: 10,
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
@@ -791,7 +797,19 @@ export default function FactureMatiere() {
             ))}
           </Select>
         </Form.Item>
-
+        {modePaiement=='mixte' && (
+              <Form.Item
+                name='mixte_comptant'
+                label='Partie Comptant'
+              >
+                <InputNumber
+                  placeholder="Comptant"
+                  style={{ width: "100%" }}
+                  min={0}
+                  step={0.001}
+                  ></InputNumber>
+              </Form.Item>
+        )}    
         <Form.Item name="prix_total" label="Prix total">
           <Input
             type="number"

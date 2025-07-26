@@ -106,6 +106,8 @@ export default function Facture(props) {
   // Type facture : produit ou bon de livraison
   const [invoiceType, setInvoiceType] = useState("");
 
+  const [modePaiement, setModePaiement] = useState('')
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -517,7 +519,7 @@ export default function Facture(props) {
 
         // Set the selected client ID for the dropdown
         setSelectedClientId(clientId);
-
+        setModePaiement(fullOrderDetails.mode_paiement)
         // Populate form with all order data
         drawerForm.setFieldsValue({
           ...fullOrderDetails,
@@ -526,6 +528,7 @@ export default function Facture(props) {
           date_commande: moment(fullOrderDetails.date_commande).format("YYYY-MM-DD"),
           date_livraison_prevue: moment(fullOrderDetails.date_livraison_prevue).format("YYYY-MM-DD"),
           mode_paiement: fullOrderDetails.mode_paiement || "cash",
+          mixte_comptant: fullOrderDetails.mixte_comptant || 0,
           statut: fullOrderDetails.statut || "pending",
           tax_rate: fullOrderDetails.tax_rate || 0,
           timbre_fiscal: fullOrderDetails.timbre_fiscal || 1, // Add timbre fiscal
@@ -635,6 +638,7 @@ export default function Facture(props) {
           notes: values.notes || "",
           conditions_paiement: values.conditions_paiement || "",
           mode_paiement: values.mode_paiement || "cash",
+          mixte_comptant: values.mixte_comptant || 0,
           tax_rate: taxRate,
           timbre_fiscal: timbreFiscal,
           montant_ht: finalMontantHt,
@@ -2212,22 +2216,36 @@ const handleDeleteSelected = async () => {
                   },
                 ]}
                 >
-                <Select placeholder="Sélectionner un mode de paiement">
+                <Select placeholder="Sélectionner un mode de paiement" onChange={(value)=>setModePaiement(value)}>
                   <Option value="traite">Traite</Option>
                   <Option value="cash">Comptant</Option>
                   <Option value="cheque">Chèque</Option>
                   <Option value="virement">Virement Bancaire</Option>
                   <Option value="carte">Carte de crédit</Option>
+                  <Option value="mixte">Mixte</Option>
                 </Select>
               </Form.Item>
             </Col>
+            {modePaiement=='mixte' && (<Col span={12}>
+                <Form.Item
+                  name='mixte_comptant'
+                  label='Partie Comptant'
+                >
+                  <InputNumber
+                   placeholder="Comptant"
+                   style={{ width: "100%" }}
+                   min={0}
+                   step={0.001}
+                   ></InputNumber>
+                </Form.Item>
+            </Col>)}
             {props.nature == 'facture'?
               <Col span={12}>
                 <Form.Item name="timbre_fiscal" label="Timbre Fiscal">
                   <InputNumber
                     min={0}
                     style={{ width: "100%" }}
-                    step={0.01}
+                    step={0.001}
                     onChange={(value) => {
                       const currentTaxRate =
                         drawerForm.getFieldValue("tax_rate") || 0;
