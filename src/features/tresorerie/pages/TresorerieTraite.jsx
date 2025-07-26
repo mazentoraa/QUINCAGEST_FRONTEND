@@ -240,7 +240,7 @@ export default function TresorerieTraite() {
                         {traite.status === 'paye' ? `Payé le: ${traite.echeance}` : `Échéance: ${traite.echeance}`}
                         </span>
                         <span className={`font-semibold ${traite.status === 'echu' ? 'text-red-600' : 'text-orange-600'}`}>
-                        -{traite.montant.toLocaleString()} DT
+                        {traite.montant.toLocaleString()} DT
                         </span>
                     </div>
                     </div>
