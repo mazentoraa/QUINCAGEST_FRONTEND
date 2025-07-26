@@ -187,12 +187,9 @@ const restoreInvoice = async (invoiceId, nature = 'facture') => {
       // Optionnel: recharger la liste des factures actives
       await fetchInvoices();
 
-      return restoredInvoice;
-
       // Optionnel : tu peux ici forcer un rechargement des factures supprimées
       // await fetchDeletedInvoices(); (si tu veux les mettre à jour automatiquement)
-
-
+      
     } catch (error) {
       setError('Erreur lors de la suppression définitive de la facture');
       console.error('Error in permanentlyDeleteInvoice:', error);
@@ -231,13 +228,10 @@ const restoreInvoice = async (invoiceId, nature = 'facture') => {
     cancelInvoice,
     deleteInvoice,
     fetchDeletedInvoices,
-
     fetchDeletedBonLivraisonDecoupe,
     restoreInvoice,
-    restoreBonLivraisonDecoupe
-
-    restoreInvoice,
-     permanentlyDeleteInvoice
+    restoreBonLivraisonDecoupe,
+    permanentlyDeleteInvoice
 
   };
 
