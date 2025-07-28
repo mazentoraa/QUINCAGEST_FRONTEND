@@ -45,6 +45,7 @@ import MaterialAchatManagement from './features/purshase/MaterialManagement';
 import FactureMatiere from './features/purshase/FactureMatiere';
 import BonLivraison from './features/purshase/BonLivraison';
 import Fournisseur from "./features/purshase/Fournisseur";
+import FournisseurCorbeille from "./features/purshase/FournisseurCorbeille";
 import Consommable from './features/purshase/Consommable';
 import BonRetourFornisseur from "./features/purshase/BonRetourFornisseur";
 import SupplierInstallmentPage from './features/purshase/SupplierInstallmentPage';
@@ -67,7 +68,6 @@ import TrashPage from './features/products/components/TrashPage';
 import BonLivraisonDecoupeCorbeille from "./components/BonsDevis/BonLivraisonDecoupeCorbeille";
 
 import CorbeilleDevis from "./components/BonsDevis/CorbeilleDevis";
-// import CorbeilleBonLivraison from "./components/BonsDevis/CorbeilleBonLivraison";
 import TrashOrders from "./components/BonsDevis/TrashOrders";
 
 const { Header, Content, Sider } = Layout;
@@ -252,8 +252,9 @@ function App() {
                                   <Route path="/achats/avoir" element={<Avoir />} />
                                   <Route path="/trash" element={<TrashPage />} />
                                   <Route path="/devis/corbeille" element={<CorbeilleDevis />} />
-                                  {/* <Route path="/corbeille-bon-livraison" element={<CorbeilleBonLivraison />} /> */}
+                              
                                   <Route path="/commandes/corbeille" element={<TrashOrders />} />
+                                  <Route path="/fournisseurs/corbeille" element={<FournisseurCorbeille />} />
 
                                 </Routes>
                               </Content>

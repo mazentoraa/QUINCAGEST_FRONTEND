@@ -11,38 +11,33 @@ import {
   Card,
   Row,
   Col,
-  Tabs,
   Tooltip,
 } from "antd";
 import { 
   PlusOutlined, 
   EditOutlined, 
-  DeleteOutlined, 
-  UndoOutlined,
-  ExclamationCircleOutlined 
+  DeleteOutlined,
+  ExclamationCircleOutlined,
+  DeleteFilled
 } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import FournisseurService from "./Services/FournisseurService";
-import { TeamOutlined, DeleteFilled } from "@ant-design/icons";
-
-const { TabPane } = Tabs;
+import { TeamOutlined } from "@ant-design/icons";
 
 export default function Fournisseur() {
+  const navigate = useNavigate();
   const [form] = Form.useForm();
   const [fournisseurs, setFournisseurs] = useState([]);
-  const [trashedFournisseurs, setTrashedFournisseurs] = useState([]);
+  const [trashedCount, setTrashedCount] = useState(0);
   const [filteredFournisseurs, setFilteredFournisseurs] = useState([]);
-  const [filteredTrashedFournisseurs, setFilteredTrashedFournisseurs] = useState([]);
   const [visible, setVisible] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [activeTab, setActiveTab] = useState("active");
 
   // États pour les filtres
   const [searchNom, setSearchNom] = useState("");
   const [searchNumRegFiscal, setSearchNumRegFiscal] = useState("");
-  const [searchNomTrash, setSearchNomTrash] = useState("");
-  const [searchNumRegFiscalTrash, setSearchNumRegFiscalTrash] = useState("");
 
   const fetchFournisseurs = async () => {
     setLoading(true);
@@ -65,30 +60,24 @@ export default function Fournisseur() {
     }
   };
 
-  const fetchTrashedFournisseurs = async () => {
-    setLoading(true);
+  const fetchTrashedCount = async () => {
     try {
       const data = await FournisseurService.getTrash();
-      let list = [];
+      let count = 0;
       if (data && Array.isArray(data.results)) {
-        list = data.results;
+        count = data.results.length;
       } else if (Array.isArray(data)) {
-        list = data;
+        count = data.length;
       }
-      setTrashedFournisseurs(list);
-      setFilteredTrashedFournisseurs(list);
+      setTrashedCount(count);
     } catch (error) {
-      message.error("Erreur lors du chargement de la corbeille");
-      setTrashedFournisseurs([]);
-      setFilteredTrashedFournisseurs([]);
-    } finally {
-      setLoading(false);
+      setTrashedCount(0);
     }
   };
 
   useEffect(() => {
     fetchFournisseurs();
-    fetchTrashedFournisseurs();
+    fetchTrashedCount();
   }, []);
 
   // Filtrer fournisseurs actifs
@@ -110,25 +99,6 @@ export default function Fournisseur() {
     setFilteredFournisseurs(filtered);
   }, [searchNom, searchNumRegFiscal, fournisseurs]);
 
-  // Filtrer fournisseurs dans la corbeille
-  useEffect(() => {
-    let filtered = trashedFournisseurs;
-
-    if (searchNomTrash) {
-      filtered = filtered.filter((f) =>
-        f.nom.toLowerCase().includes(searchNomTrash.toLowerCase())
-      );
-    }
-    if (searchNumRegFiscalTrash) {
-      filtered = filtered.filter((f) =>
-        f.num_reg_fiscal
-          ? f.num_reg_fiscal.toLowerCase().includes(searchNumRegFiscalTrash.toLowerCase())
-          : false
-      );
-    }
-    setFilteredTrashedFournisseurs(filtered);
-  }, [searchNomTrash, searchNumRegFiscalTrash, trashedFournisseurs]);
-
   const onSearchNomChange = (e) => {
     setSearchNom(e.target.value);
   };
@@ -137,22 +107,9 @@ export default function Fournisseur() {
     setSearchNumRegFiscal(e.target.value);
   };
 
-  const onSearchNomTrashChange = (e) => {
-    setSearchNomTrash(e.target.value);
-  };
-
-  const onSearchNumRegFiscalTrashChange = (e) => {
-    setSearchNumRegFiscalTrash(e.target.value);
-  };
-
   const clearFilters = () => {
     setSearchNom("");
     setSearchNumRegFiscal("");
-  };
-
-  const clearTrashFilters = () => {
-    setSearchNomTrash("");
-    setSearchNumRegFiscalTrash("");
   };
 
   const openModalForAdd = () => {
@@ -173,39 +130,10 @@ export default function Fournisseur() {
       await FournisseurService.delete(id);
       message.success("Fournisseur déplacé vers la corbeille");
       await fetchFournisseurs();
-      await fetchTrashedFournisseurs();
+      await fetchTrashedCount();
       clearFilters();
     } catch (error) {
       message.error("Erreur lors de la suppression");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRestore = async (id) => {
-    setLoading(true);
-    try {
-      await FournisseurService.restore(id);
-      message.success("Fournisseur restauré avec succès");
-      await fetchFournisseurs();
-      await fetchTrashedFournisseurs();
-      clearTrashFilters();
-    } catch (error) {
-      message.error("Erreur lors de la restauration");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePermanentDelete = async (id) => {
-    setLoading(true);
-    try {
-      await FournisseurService.permanentDelete(id);
-      message.success("Fournisseur supprimé définitivement");
-      await fetchTrashedFournisseurs();
-      clearTrashFilters();
-    } catch (error) {
-      message.error("Erreur lors de la suppression définitive");
     } finally {
       setLoading(false);
     }
@@ -234,7 +162,7 @@ export default function Fournisseur() {
   };
 
   // Colonnes pour les fournisseurs actifs
-  const activeColumns = [
+  const columns = [
     {
       title: "Nom",
       dataIndex: "nom",
@@ -294,69 +222,114 @@ export default function Fournisseur() {
     },
   ];
 
-  // Colonnes pour les fournisseurs dans la corbeille
-  const trashColumns = [
-    {
-      title: "Nom",
-      dataIndex: "nom",
-      key: "nom",
-      width: 200,
-    },
-    {
-      title: "Numéro d'enregistrement fiscal",
-      dataIndex: "num_reg_fiscal",
-      key: "num_reg_fiscal",
-      width: 200,
-    },
-    {
-      title: "Adresse",
-      dataIndex: "adresse",
-      key: "adresse",
-      width: 250,
-    },
-    {
-      title: "Numéro de téléphone",
-      dataIndex: "telephone",
-      key: "telephone",
-      width: 150,
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 130,
-      render: (_, record) => (
-        <Space>
-          <Tooltip title="Restaurer">
-            <Button
-              icon={<UndoOutlined />}
-              type="primary"
-              onClick={() => handleRestore(record.id)}
-              disabled={loading}
-              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-            />
-          </Tooltip>
-          <Popconfirm
-            title="Supprimer définitivement ?"
-            description="Cette action est irréversible !"
-            onConfirm={() => handlePermanentDelete(record.id)}
-            icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
-          >
-            <Tooltip title="Supprimer définitivement">
-              <Button 
-                icon={<DeleteOutlined />} 
-                danger 
-                disabled={loading}
-                style={{ backgroundColor: '#ff4d4f' }}
-              />
-            </Tooltip>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+  return (
+    <Card
+      style={{ margin: 24 }}
+      bodyStyle={{ padding: 24 }}
+      title={null}
+    >
+      <div style={{
+        padding: '7px 20px 30px',
+        borderBottom: '1px solid #f1f5f9',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '48px',
+            height: '48px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #eb2f96 0%, #ff85c0 100%)',
+            boxShadow: '0 6px 20px rgba(235, 47, 150, 0.25)',
+            position: 'relative'
+          }}>
+            <TeamOutlined style={{ fontSize: '24px', color: '#ffffff' }} />
+            <div style={{
+              position: 'absolute',
+              top: '-2px',
+              right: '-2px',
+              width: '18px',
+              height: '18px',
+              borderRadius: '10px',
+              backgroundColor: '#52c41a',
+              border: '2px solid #ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <span style={{
+                color: '#ffffff',
+                fontSize: '9px',
+                fontWeight: 'bold'
+              }}>
+                {fournisseurs.length}
+              </span>
+            </div>
+          </div>
 
-  const renderActiveTab = () => (
-    <>
+          <div>
+            <h2 style={{
+              margin: 0,
+              fontWeight: 600,
+              color: '#eb2f96',
+              fontSize: "28px",
+              letterSpacing: '-0.5px'
+            }}>
+              Gestion des Fournisseurs
+            </h2>
+            <span style={{
+              color: '#64748b',
+              fontSize: '14px'
+            }}>
+              {fournisseurs.length} fournisseur{fournisseurs.length !== 1 ? 's' : ''} actif{fournisseurs.length !== 1 ? 's' : ''}
+              {trashedCount > 0 && (
+                <span style={{ color: '#ff4d4f', marginLeft: 10 }}>
+                  • {trashedCount} dans la corbeille
+                </span>
+              )}
+            </span>
+          </div>
+        </div>
+
+        {/* Bouton Corbeille */}
+      {/* Bouton Corbeille - toujours visible */}
+        <Button
+          icon={<DeleteFilled />}
+          onClick={() => navigate('/fournisseurs/corbeille')}
+          style={{
+            borderRadius: '8px',
+            height: '40px',
+            padding: '0 16px',
+            border: '1px solid #ef4444',
+            color: '#ef4444',
+            fontWeight: 500,
+            background: '#ffffff',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.borderColor = '#dc2626';
+            e.target.style.color = '#ffffff';
+            e.target.style.background = '#ef4444';
+            e.target.style.transform = 'translateY(-1px)';
+            e.target.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.borderColor = '#ef4444';
+            e.target.style.color = '#ef4444';
+            e.target.style.background = '#ffffff';
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = 'none';
+          }}
+        >
+          Corbeille ({trashedCount})
+        </Button>
+      </div>
+
       <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
         <Col>
           <div style={{ fontSize: 18, fontWeight: "500", marginBottom: 8 }}>
@@ -424,171 +397,12 @@ export default function Fournisseur() {
       </Row>
 
       <Table
-        columns={activeColumns}
+        columns={columns}
         dataSource={filteredFournisseurs}
         rowKey="id"
         bordered
         pagination={{ pageSize: 5 }}
         loading={loading}
-      />
-    </>
-  );
-
-  const renderTrashTab = () => (
-    <>
-      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-        <Col>
-          <div style={{ fontSize: 18, fontWeight: "500", marginBottom: 8, color: '#ff4d4f' }}>
-            <DeleteFilled style={{ marginRight: 8 }} />
-            Corbeille ({trashedFournisseurs.length})
-          </div>
-        </Col>
-      </Row>
-
-      <Row justify="space-between" align="middle" style={{ marginBottom: 16, width: "100%" }}>
-        <Col>
-          <Row gutter={16} align="middle">
-            <Col>
-              <Input
-                placeholder="Filtrer par nom"
-                value={searchNomTrash}
-                onChange={onSearchNomTrashChange}
-                allowClear
-                style={{ width: 240, height: 32 }}
-              />
-            </Col>
-            <Col>
-              <Input
-                placeholder="Filtrer par numéro d'enregistrement fiscal"
-                value={searchNumRegFiscalTrash}
-                onChange={onSearchNumRegFiscalTrashChange}
-                allowClear
-                style={{ width: 280, height: 32 }}
-              />
-            </Col>
-            <Col style={{ display: "flex", alignItems: "center" }}>
-              <Button onClick={clearTrashFilters} style={{ height: 32 }}>
-                Effacer filtres
-              </Button>
-            </Col>
-          </Row>
-        </Col>
-      </Row>
-
-      <Table
-        columns={trashColumns}
-        dataSource={filteredTrashedFournisseurs}
-        rowKey="id"
-        bordered
-        pagination={{ pageSize: 5 }}
-        loading={loading}
-        locale={{
-          emptyText: "Aucun fournisseur dans la corbeille"
-        }}
-      />
-    </>
-  );
-
-  return (
-    <Card
-      style={{ margin: 24 }}
-      bodyStyle={{ padding: 24 }}
-      title={null}
-    >
-      <div style={{
-        padding: '7px 20px 30px',
-        borderBottom: '1px solid #f1f5f9',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 24
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '48px',
-            height: '48px',
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, #eb2f96 0%, #ff85c0 100%)',
-            boxShadow: '0 6px 20px rgba(235, 47, 150, 0.25)',
-            position: 'relative'
-          }}>
-            <TeamOutlined style={{ fontSize: '24px', color: '#ffffff' }} />
-            <div style={{
-              position: 'absolute',
-              top: '-2px',
-              right: '-2px',
-              width: '18px',
-              height: '18px',
-              borderRadius: '10px',
-              backgroundColor: '#52c41a',
-              border: '2px solid #ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <span style={{
-                color: '#ffffff',
-                fontSize: '9px',
-                fontWeight: 'bold'
-              }}>
-                {fournisseurs.length}
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <h2 style={{
-              margin: 0,
-              fontWeight: 600,
-              color: '#eb2f96',
-              fontSize: "28px",
-              letterSpacing: '-0.5px'
-            }}>
-              Gestion des Fournisseurs
-            </h2>
-            <span style={{
-              color: '#64748b',
-              fontSize: '14px'
-            }}>
-              {fournisseurs.length} fournisseur{fournisseurs.length !== 1 ? 's' : ''} actif{fournisseurs.length !== 1 ? 's' : ''}
-              {trashedFournisseurs.length > 0 && (
-                <span style={{ color: '#ff4d4f', marginLeft: 10 }}>
-                  • {trashedFournisseurs.length} dans la corbeille
-                </span>
-              )}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <Tabs 
-        activeKey={activeTab} 
-        onChange={setActiveTab}
-        items={[
-          {
-            key: 'active',
-            label: (
-              <span>
-                <TeamOutlined />
-                Fournisseurs actifs ({fournisseurs.length})
-              </span>
-            ),
-            children: renderActiveTab()
-          },
-          {
-            key: 'trash',
-            label: (
-              <span style={{ color: trashedFournisseurs.length > 0 ? '#ff4d4f' : undefined }}>
-                <DeleteFilled />
-                Corbeille ({trashedFournisseurs.length})
-              </span>
-            ),
-            children: renderTrashTab()
-          }
-        ]}
       />
 
       <Modal

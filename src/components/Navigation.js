@@ -41,14 +41,7 @@ useEffect(() => {
       
       <div className="nav-right">
         <Space align="center" size="middle">
-          <Tooltip title={isDarkMode ? "Mode clair" : "Mode sombre"}>
-            <Switch
-              checkedChildren={<BulbOutlined />}
-              unCheckedChildren={<BulbOutlined />}
-              checked={isDarkMode}
-              onChange={() => setIsDarkMode(!isDarkMode)}
-            />
-          </Tooltip>
+         
           <Avatar icon={<UserOutlined />} />
           <span style={{ color: '#fff' }}>
             {(AuthService.getCurrentUser()?.username).toUpperCase() || 'UTILISATEUR'}
