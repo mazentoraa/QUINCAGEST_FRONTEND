@@ -272,20 +272,7 @@ export default function ParPeriode() {
                 <div className="text-2xl font-bold text-gray-900">{formatAmount(periodData?.decaissements.value)}</div>
                 <div className="text-xs text-gray-500 mt-1">{periodData?.label}</div>
             </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Building2 className="h-6 w-6 text-orange-600" />
-                </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(!periodData?.traitesFournisseurs.positive)}`}>
-                    {getTrendIcon(periodData?.traitesFournisseurs.trend, !periodData?.traitesFournisseurs.positive)}
-                    {Math.abs(periodData?.traitesFournisseurs.trend)}%
-                </div>
-                </div>
-                <div className="text-sm text-gray-600 mb-1">Traites Fournisseurs</div>
-                <div className="text-2xl font-bold text-gray-900">{formatAmount(periodData?.traitesFournisseurs.value)}</div>
-                <div className="text-xs text-gray-500 mt-1">{periodData?.label}</div>
-            </div>
+            
             <div className="bg-white rounded-lg p-6 shadow-sm border">
                 <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">

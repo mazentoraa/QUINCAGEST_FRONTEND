@@ -80,7 +80,7 @@ const translateOrderStatus = (status) => {
     processing: "En cours",
     completed: "Terminée",
     cancelled: "Annulée",
-    invoiced: "Facturée",
+    // invoiced: "Facturée",
   };
   return statusMap[status] || status;
 };
@@ -1998,7 +1998,7 @@ const handleDeleteSelected = async () => {
                 <Option value="processing">En cours</Option>
                 <Option value="completed">Terminée</Option>
                 <Option value="cancelled">Annulée</Option>
-                <Option value="invoiced">Facturée</Option>
+                {/* <Option value="invoiced">Facturée</Option> */}
               </Select>
             </Col>
             <Col xs={24} sm={12} md={8} lg={6}>
@@ -2152,7 +2152,7 @@ const handleDeleteSelected = async () => {
                   <Option value="processing">En cours</Option>
                   <Option value="completed">Terminée</Option>
                   <Option value="cancelled">Annulée</Option>
-                  <Option value="invoiced">Facturée</Option>
+                  {/* <Option value="invoiced">Facturée</Option> */}
                 </Select>
               </Form.Item>
             </Col>

@@ -201,7 +201,7 @@ function TresorerieMetalGest() {
               </div>
               <div className="text-sm text-gray-600 mb-1">Encaissements Prévus</div>
               <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.expected_income.value)}</div>
-              <div className="text-xs text-gray-500 mt-1">7 prochains jours</div>
+              <div className="text-xs text-gray-500 mt-1">Les prochains jours</div>
             </div>
             <div 
               className="bg-white rounded-lg p-6 shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
@@ -218,7 +218,7 @@ function TresorerieMetalGest() {
               </div>
               <div className="text-sm text-gray-600 mb-1">Décaissements Prévus</div>
               <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.expected_expense.value)}</div>
-              <div className="text-xs text-gray-500 mt-1">7 prochains jours</div>
+              <div className="text-xs text-gray-500 mt-1">Les prochains jours</div>
             </div>
             <div 
               className="bg-white rounded-lg p-6 shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
@@ -235,7 +235,6 @@ function TresorerieMetalGest() {
               </div>
               <div className="text-sm text-gray-600 mb-1">Solde Prévisionnel</div>
               <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.forecast.value)}</div>
-              <div className="text-xs text-gray-500 mt-1">Dans 7 jours</div>
             </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
