@@ -96,9 +96,9 @@ export default function Simulation() {
 
 
     const handleSimulate = () => {
-        if (!kpiData?.balance?.value) return;
+        if (!kpiData?.global_balance?.value) return;
 
-        const currentBalance = kpiData.balance.value;
+        const currentBalance = kpiData.global_balance.value;
 
         const plannedIncome = kpiData?.expected_income?.value || 0;
         const plannedExpense = kpiData?.expected_expense?.value || 0;
@@ -244,12 +244,22 @@ export default function Simulation() {
                 data={{
                     labels: ["Aujourd'hui", 'J+1', 'J+2', 'J+3', 'J+4', 'J+5', 'J+6', 'J+7'],
                     datasets: [{
-                    label: 'Projection de trésorerie',
-                    data: simulationResults.length ? simulationResults : [kpiData?.balance?.value || 0],
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    borderWidth: 2,
-                    fill: false
+                        label: 'Projection de trésorerie',
+                        data: simulationResults.length ? simulationResults : [kpiData?.balance?.value || 0],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        fill: false
+                    },
+                    {
+                        label: 'Évolution Attendue',
+                        data: kpiData?.expected_balance_evolution
+                        ? Array(8).fill(kpiData?.expected_balance_evolution?.expected_balance || 0)
+                        : [],
+                        borderColor: 'red',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        fill: false
                     }]
                 }} 
                 options={{

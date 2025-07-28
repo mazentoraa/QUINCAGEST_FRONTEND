@@ -183,7 +183,7 @@ function TresorerieMetalGest() {
                 </div>
               </div>
               <div className="text-sm text-gray-600 mb-1">Solde Actuel</div>
-              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.balance.value)}</div>
+              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.global_balance.value)}</div>
               <div className="text-xs text-gray-500 mt-1">Tous comptes confondus</div>
             </div>
             <div 
