@@ -72,9 +72,9 @@ export default function TresorerieTraite() {
     // }
 
     const handleTraiteClick = (traite) => {
-        const type = traite.id.startsWith('TC') ? 'Client' : 'Fournisseur'
-        const name = traite.client || traite.fournisseur
-        alert(`Traite ${type} ${name} - Échéance: ${traite.echeance} - Montant: ${formatAmount(traite.montant)} - Statut: ${traite.status}`)
+        const type = traite.type=='client' ? 'Client' : 'Fournisseur'
+        const name = traite.tier
+        alert(`Traite ${type} ${name} - Échéance: ${traite.echeance} - Montant: ${formatAmount(traite.montant)} - Statut: ${traite.etat}`)
     }
 
     const getTraiteTypeColor = (type) => {
@@ -183,7 +183,7 @@ export default function TresorerieTraite() {
                     <div
                     key={traite.id}
                     className={`p-4 rounded-lg border-l-4 cursor-pointer hover:shadow-sm transition-shadow ${
-                        traite.status === 'echu' ? getTraiteTypeColor('echu') + ' bg-red-50' : 
+                        traite.etat === 'echu' ? getTraiteTypeColor('echu') + ' bg-red-50' : 
                         getTraiteTypeColor('client') + ' bg-green-50'
                     }`}
                     onClick={() => handleTraiteClick(traite)}
@@ -192,17 +192,17 @@ export default function TresorerieTraite() {
                         <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
                         CLIENT
                         </span>
-                        {getStatusBadge(traite.status)}
+                        {getStatusBadge(traite.etat)}
                     </div>
                     <div className="mb-2">
-                        <div className="font-semibold text-gray-900 mb-1">Traite #{traite.id}</div>
+                        <div className="font-semibold text-gray-900 mb-1">Traite #{traite.tier}</div>
                         <div className="text-sm text-gray-600">{traite.client}</div>
                     </div>
                     <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">
-                        {traite.status === 'paye' ? `Payé le: ${traite.echeance}` : `Échéance: ${traite.echeance}`}
+                        {traite.etat === 'paye' ? `Payé le: ${traite.echeance}` : `Échéance: ${traite.echeance}`}
                         </span>
-                        <span className={`font-semibold ${traite.status === 'echu' ? 'text-red-600' : 'text-green-600'}`}>
+                        <span className={`font-semibold ${traite.etat === 'echu' ? 'text-red-600' : traite.etat === 'en-cours' ? 'text-orange-600' : 'text-green-600'}`}>
                         {formatAmount(traite.montant)}
                         </span>
                     </div>
@@ -220,7 +220,7 @@ export default function TresorerieTraite() {
                     <div
                     key={traite.id}
                     className={`p-4 rounded-lg border-l-4 cursor-pointer hover:shadow-sm transition-shadow ${
-                        traite.status === 'echu' ? getTraiteTypeColor('echu') + ' bg-red-50' : 
+                        traite.etat === 'echu' ? getTraiteTypeColor('echu') + ' bg-red-50' : 
                         getTraiteTypeColor('fournisseur') + ' bg-orange-50'
                     }`}
                     onClick={() => handleTraiteClick(traite)}
@@ -229,18 +229,18 @@ export default function TresorerieTraite() {
                         <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded-full">
                         FOURNISSEUR
                         </span>
-                        {getStatusBadge(traite.status)}
+                        {getStatusBadge(traite.etat)}
                     </div>
                     <div className="mb-2">
-                        <div className="font-semibold text-gray-900 mb-1">Traite #{traite.id}</div>
+                        <div className="font-semibold text-gray-900 mb-1">Traite #{traite.tier}</div>
                         <div className="text-sm text-gray-600">{traite.fournisseur}</div>
                     </div>
                     <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">
-                        {traite.status === 'paye' ? `Payé le: ${traite.echeance}` : `Échéance: ${traite.echeance}`}
+                        {traite.etat === 'paye' ? `Payé le: ${traite.echeance}` : `Échéance: ${traite.echeance}`}
                         </span>
-                        <span className={`font-semibold ${traite.status === 'echu' ? 'text-red-600' : 'text-orange-600'}`}>
-                        -{traite.montant.toLocaleString()} DT
+                        <span className={`font-semibold ${traite.etat === 'echu' ? 'text-red-600' : traite.etat === 'en-cours' ?'text-orange-600':'text-green-600'}`}>
+                        {traite.montant.toLocaleString()} DT
                         </span>
                     </div>
                     </div>

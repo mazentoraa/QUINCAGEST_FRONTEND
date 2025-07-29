@@ -68,7 +68,6 @@ import TrashPage from './features/products/components/TrashPage';
 import BonLivraisonDecoupeCorbeille from "./components/BonsDevis/BonLivraisonDecoupeCorbeille";
 
 import CorbeilleDevis from "./components/BonsDevis/CorbeilleDevis";
-
 import TrashOrders from "./components/BonsDevis/TrashOrders";
 
 const { Header, Content, Sider } = Layout;
@@ -250,12 +249,12 @@ function App() {
 
                                   <Route path="/products/trash" element={<TrashPage />} />  
 
-               <Route path="/achats/avoir" element={<Avoir />} />
-              <Route path="/trash" element={<TrashPage />} />
-              <Route path="/devis/corbeille" element={<CorbeilleDevis />} />
-          
-              <Route path="/commandes/corbeille" element={<TrashOrders />} />
-              <Route path="/fournisseurs/corbeille" element={<FournisseurCorbeille />} />
+                                  <Route path="/achats/avoir" element={<Avoir />} />
+                                  <Route path="/trash" element={<TrashPage />} />
+                                  <Route path="/devis/corbeille" element={<CorbeilleDevis />} />
+                              
+                                  <Route path="/commandes/corbeille" element={<TrashOrders />} />
+                                  <Route path="/fournisseurs/corbeille" element={<FournisseurCorbeille />} />
 
                                 </Routes>
                               </Content>

@@ -13,6 +13,7 @@ import {
 } from 'chart.js'
 import { Line, Bar } from 'react-chartjs-2'
 import './treasury-styles.css'
+import { fetchKPIs } from '../services/tresorerieApi'
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -27,13 +28,21 @@ ChartJS.register(
 
 export default function Simulation() {
 
+    const [simulationResults, setSimulationResults] = useState([]);
     const [simulationData, setSimulationData] = useState({
         additionalIncome: '',
         additionalExpense: '',
         simulationDate: '',
         scenarioType: 'realistic'
     })
-    const [simulationResults, setSimulationResults] = useState(null)
+    const [kpiData, setKpiData] = useState(null);
+    const [simulatedSolde, setSimulatedSolde] = useState(0);
+    const [variationVsPrevision, setVariationVsPrevision] = useState(0);
+    const [scenarioApplique, setScenarioApplique] = useState("réaliste");
+    
+    useEffect(() => {
+        fetchKPIs().then(res => setKpiData(res.data));
+    }, []);
 
     const chartOptions = {
         responsive: true,
@@ -51,7 +60,7 @@ export default function Simulation() {
             },
             ticks: {
             callback: function(value) {
-                return value.toLocaleString() + ' DT'
+                return value?.toLocaleString() + ' DT'
             }
             }
         },
@@ -82,30 +91,58 @@ export default function Simulation() {
     const formatAmount = (amount) => {
         if (amount === 0) return '0 DT'
         const sign = amount >= 0 ? '+' : ''
-        return `${sign}${amount.toLocaleString('fr-FR')} DT`
+        return `${sign}${amount?.toLocaleString('fr-FR')} DT`
     }
 
-    const runSimulation = () => {
-        const additionalIncome = parseFloat(simulationData.additionalIncome) || 0
-        const additionalExpense = parseFloat(simulationData.additionalExpense) || 0
-        const currentBalance = 45680
-        const plannedIncome = 28450
-        const plannedExpense = -18200
-        const newBalance = currentBalance + plannedIncome + plannedExpense + additionalIncome - additionalExpense
-        const riskFactors = {
-        optimistic: 1.1,
-        realistic: 1.0,
-        pessimistic: 0.9
-        }
-        const adjustedBalance = newBalance * riskFactors[simulationData.scenarioType]
-        const variation = adjustedBalance - 55930
-        
-        setSimulationResults({
-        adjustedBalance: Math.round(adjustedBalance),
-        variation: Math.round(variation),
-        scenario: simulationData.scenarioType
-        })
-    }
+
+    const handleSimulate = () => {
+        if (!kpiData?.global_balance?.value) return;
+
+        const currentBalance = kpiData.global_balance.value;
+
+        const plannedIncome = kpiData?.expected_income?.value || 0;
+        const plannedExpense = kpiData?.expected_expense?.value || 0;
+
+        const additionalIncome = parseFloat(simulationData.additionalIncome) || 0;
+        const additionalExpense = parseFloat(simulationData.additionalExpense) || 0;
+
+        const scenario = simulationData.scenarioType;
+        const riskFactor = {
+            optimistic: 1.1,
+            realistic: 1.0,
+            pessimistic: 0.9,
+        }[scenario];
+
+        // Calculate daily variation
+        const totalIncome = (plannedIncome + additionalIncome) * riskFactor;
+        const totalExpense = (plannedExpense + additionalExpense) * riskFactor;
+        const dailyVariation = (totalIncome - totalExpense) / 7;
+
+        // Simulated balance over 8 days
+        const projected = Array.from({ length: 8 }, (_, i) =>
+            Math.round(currentBalance + dailyVariation * i)
+        );
+
+        // Set simulated solde
+        const finalSimulatedSolde = projected[projected.length - 1];
+        setSimulatedSolde(finalSimulatedSolde);
+
+        // Calculate prévision (without additional input)
+        const baseIncome = kpiData?.expected_income?.value || 0;
+        const baseExpense = kpiData?.expected_expense?.value || 0;
+        const variationPrevue = (baseIncome - baseExpense) * riskFactor;
+        const soldePrevu = currentBalance + variationPrevue;
+
+        // Variation vs prévision
+        const variationVsPrevision = finalSimulatedSolde - soldePrevu;
+        setVariationVsPrevision(variationVsPrevision);
+
+        // Store scenario label
+        setScenarioApplique(scenario);
+
+        // Save simulation results
+        setSimulationResults(projected);
+    };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -169,9 +206,9 @@ export default function Simulation() {
                 </select>
                 </div>
                 <button
-                onClick={runSimulation}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                >
+                    onClick={handleSimulate}
+                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
                 Lancer la Simulation
                 </button>
                 {simulationResults && (
@@ -180,17 +217,17 @@ export default function Simulation() {
                     <div className="space-y-3">
                     <div className="flex justify-between items-center p-3 bg-white rounded-lg">
                         <span className="text-gray-600">Solde simulé</span>
-                        <span className="font-semibold">{simulationResults.adjustedBalance.toLocaleString()} DT</span>
+                        <span className="font-semibold">{simulatedSolde?.toLocaleString()} DT</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-white rounded-lg">
                         <span className="text-gray-600">Variation vs prévision</span>
-                        <span className={`font-semibold ${simulationResults.variation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {formatAmount(simulationResults.variation)}
+                        <span className={`font-semibold ${variationVsPrevision >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatAmount(variationVsPrevision)}
                         </span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-white rounded-lg">
                         <span className="text-gray-600">Scénario appliqué</span>
-                        <span className="font-semibold capitalize">{simulationResults.scenario}</span>
+                        <span className="font-semibold capitalize">{scenarioApplique}</span>
                     </div>
                     </div>
                 </div>
@@ -207,12 +244,22 @@ export default function Simulation() {
                 data={{
                     labels: ["Aujourd'hui", 'J+1', 'J+2', 'J+3', 'J+4', 'J+5', 'J+6', 'J+7'],
                     datasets: [{
-                    label: 'Scénario Actuel',
-                    data: [45680, 48380, 51080, 46680, 61680, 53480, 55330, 55930],
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    borderWidth: 2,
-                    fill: false
+                        label: 'Projection de trésorerie',
+                        data: simulationResults.length ? simulationResults : [kpiData?.balance?.value || 0],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        fill: false
+                    },
+                    {
+                        label: 'Évolution Attendue',
+                        data: kpiData?.expected_balance_evolution
+                        ? Array(8).fill(kpiData?.expected_balance_evolution?.expected_balance || 0)
+                        : [],
+                        borderColor: 'red',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        fill: false
                     }]
                 }} 
                 options={{

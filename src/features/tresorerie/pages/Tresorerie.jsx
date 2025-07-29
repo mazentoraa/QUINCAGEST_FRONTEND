@@ -63,29 +63,29 @@ function TresorerieMetalGest() {
   //   { date: "Samedi 06/07", description: "Traite fournisseur LOG", amount: -4800, type: "supplier" }
   // ]
 
-  const alertsData = [
-    { type: 'critical', title: 'Solde critique prévu', description: 'Le 08/07 - Solde prévu: 2,300 DT (seuil min: 5,000 DT)' },
-    { type: 'warning', title: 'Traite fournisseur importante', description: 'Fournisseur TECH - 8,500 DT - Échéance: 05/07' },
-    { type: 'warning', title: 'Facture importante à échoir', description: 'Client ABC - 15,000 DT - Échéance: 05/07' },
-    { type: 'info', title: 'Optimisation possible', description: 'Négocier 10 jours de délai avec Fournisseur XYZ' },
-    { type: 'warning', title: 'Retard de paiement client', description: 'Client DEF - 8,500 DT - Retard: 5 jours' }
-  ]
-  const treasuryChartData = {
-    labels: ['01/06', '05/06', '10/06', '15/06', '20/06', '25/06', '30/06', '02/07'],
-    datasets: [{
-      label: 'Solde de Trésorerie',
-      data: [42000, 38000, 45000, 41000, 48000, 44000, 46000, 45680],
-      borderColor: '#10b981',
-      backgroundColor: 'rgba(16, 185, 129, 0.1)',
-      borderWidth: 3,
-      fill: true,
-      tension: 0.4,
-      pointBackgroundColor: '#10b981',
-      pointBorderColor: '#ffffff',
-      pointBorderWidth: 2,
-      pointRadius: 6
-    }]
-  }
+  // const alertsData = [
+  //   { type: 'critical', title: 'Solde critique prévu', description: 'Le 08/07 - Solde prévu: 2,300 DT (seuil min: 5,000 DT)' },
+  //   { type: 'warning', title: 'Traite fournisseur importante', description: 'Fournisseur TECH - 8,500 DT - Échéance: 05/07' },
+  //   { type: 'warning', title: 'Facture importante à échoir', description: 'Client ABC - 15,000 DT - Échéance: 05/07' },
+  //   { type: 'info', title: 'Optimisation possible', description: 'Négocier 10 jours de délai avec Fournisseur XYZ' },
+  //   { type: 'warning', title: 'Retard de paiement client', description: 'Client DEF - 8,500 DT - Retard: 5 jours' }
+  // ]
+  // const treasuryChartData = {
+  //   labels: ['01/06', '05/06', '10/06', '15/06', '20/06', '25/06', '30/06', '02/07'],
+  //   datasets: [{
+  //     label: 'Solde de Trésorerie',
+  //     data: [42000, 38000, 45000, 41000, 48000, 44000, 46000, 45680],
+  //     borderColor: '#10b981',
+  //     backgroundColor: 'rgba(16, 185, 129, 0.1)',
+  //     borderWidth: 3,
+  //     fill: true,
+  //     tension: 0.4,
+  //     pointBackgroundColor: '#10b981',
+  //     pointBorderColor: '#ffffff',
+  //     pointBorderWidth: 2,
+  //     pointRadius: 6
+  //   }]
+  // }
   
   const chartOptions = {
     responsive: true,
@@ -159,6 +159,7 @@ function TresorerieMetalGest() {
 
   const handleChartPeriodChange = (period) => {
     setChartPeriod(period)
+    fetchKPIs(period).then(res => setKpiData(res.data));
   }
 
   return (
@@ -182,7 +183,7 @@ function TresorerieMetalGest() {
                 </div>
               </div>
               <div className="text-sm text-gray-600 mb-1">Solde Actuel</div>
-              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.balance.value)}</div>
+              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.global_balance.value)}</div>
               <div className="text-xs text-gray-500 mt-1">Tous comptes confondus</div>
             </div>
             <div 
@@ -200,7 +201,7 @@ function TresorerieMetalGest() {
               </div>
               <div className="text-sm text-gray-600 mb-1">Encaissements Prévus</div>
               <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.expected_income.value)}</div>
-              <div className="text-xs text-gray-500 mt-1">7 prochains jours</div>
+              <div className="text-xs text-gray-500 mt-1">Les prochains jours</div>
             </div>
             <div 
               className="bg-white rounded-lg p-6 shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
@@ -217,7 +218,7 @@ function TresorerieMetalGest() {
               </div>
               <div className="text-sm text-gray-600 mb-1">Décaissements Prévus</div>
               <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.expected_expense.value)}</div>
-              <div className="text-xs text-gray-500 mt-1">7 prochains jours</div>
+              <div className="text-xs text-gray-500 mt-1">Les prochains jours</div>
             </div>
             <div 
               className="bg-white rounded-lg p-6 shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
@@ -234,7 +235,6 @@ function TresorerieMetalGest() {
               </div>
               <div className="text-sm text-gray-600 mb-1">Solde Prévisionnel</div>
               <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.forecast.value)}</div>
-              <div className="text-xs text-gray-500 mt-1">Dans 7 jours</div>
             </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -261,7 +261,9 @@ function TresorerieMetalGest() {
                 </div>
               </div>
               <div className="h-80">
-                <Line data={treasuryChartData} options={chartOptions} />
+                {kpiData?.treasury_chart_data && (
+                  <Line data={kpiData.treasury_chart_data} options={chartOptions} />
+                )}
               </div>
             </div>
             <div className="bg-white rounded-lg p-6 shadow-sm border">
@@ -299,7 +301,7 @@ function TresorerieMetalGest() {
                 <p className="text-sm text-gray-600">Notifications importantes</p>
               </div>
               <div className="space-y-4">
-                {alertsData.map((alert, index) => (
+                {kpiData?.alerts.map((alert, index) => (
                   <div
                     key={index}
                     className={`p-4 rounded-lg border cursor-pointer hover:shadow-sm transition-shadow ${
@@ -339,28 +341,30 @@ function TresorerieMetalGest() {
                 <h3 className="text-lg font-semibold text-gray-900">Résumé Financier</h3>
                 <p className="text-sm text-gray-600">Cette semaine</p>
               </div>
+              {kpiData && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-gray-600">Total Encaissements</span>
-                  <span className="font-semibold text-green-600">+28,450 DT</span>
+                  <span className="font-semibold text-green-600">+{kpiData?.income.value} DT</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-gray-600">Total Décaissements</span>
-                  <span className="font-semibold text-red-600">-18,200 DT</span>
+                  <span className="font-semibold text-red-600">-{kpiData?.expense.value} DT</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-gray-600">Flux Net</span>
-                  <span className="font-semibold text-green-600">+10,250 DT</span>
+                  <span className={`font-semibold ${(kpiData.balance.positive) ? 'text-green-600': 'text-red-600'}`}>{kpiData.balance.positive?'+':''}{kpiData?.balance.value} DT</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-gray-600">Nb Transactions</span>
-                  <span className="font-semibold">32</span>
+                  <span className="font-semibold">{kpiData?.nb_transactions}</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="text-gray-600">Taux de Recouvrement</span>
-                  <span className="font-semibold">87%</span>
+                  <span className="font-semibold">{kpiData?.taux_de_recouvrement}%</span>
                 </div>
               </div>
+              )}
             </div>
           </div>
         </div>
