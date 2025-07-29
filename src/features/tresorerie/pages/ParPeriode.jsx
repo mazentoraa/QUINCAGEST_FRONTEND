@@ -19,8 +19,8 @@ import {
   Filler
 } from 'chart.js'
 import { Line, Bar } from 'react-chartjs-2'
-import './treasury-styles.css'
 import { fetchPeriodData } from '../services/tresorerieApi'
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -37,6 +37,142 @@ export default function ParPeriode() {
 
     const [activePeriod, setActivePeriod] = useState('week')
     const [periodData, setPeriodData] = useState(null);
+
+    const styles = `
+      .treasury-container {
+        padding: 2rem;
+        background-color: #ffffff;
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+      .treasury-header {
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 1rem;
+      }
+      .treasury-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+        background: #ff9100;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .treasury-button-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+      }
+      .treasury-button {
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .treasury-button-active {
+        background: linear-gradient(135deg, #eaaa66ff 0%, #ebbd35ff 100%);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+      .treasury-button-inactive {
+        background-color: #f8fafc;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+      }
+      .treasury-button-inactive:hover {
+        background-color: #f1f5f9;
+        transform: translateY(-1px);
+      }
+      .treasury-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+      .treasury-card {
+        background-color: #ffffff;
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+      }
+      .treasury-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+      .treasury-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+      .treasury-icon-container {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .treasury-trend-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+      .treasury-card-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+      }
+      .treasury-card-value {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+      }
+      .treasury-card-period {
+        font-size: 0.75rem;
+        color: #9ca3af;
+      }
+      .treasury-chart-card {
+        background-color: #ffffff;
+        border-radius: 16px;
+        padding: 2rem;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+      .treasury-chart-header {
+        margin-bottom: 2rem;
+      }
+      .treasury-chart-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+      }
+      .treasury-chart-subtitle {
+        font-size: 0.875rem;
+        color: #6b7280;
+      }
+      .treasury-chart-container {
+        height: 20rem;
+      }
+    `;
 
     useEffect(() => {
       fetchPeriodData(activePeriod)
@@ -132,55 +268,19 @@ export default function ParPeriode() {
         return chartData[period] || chartData.week
     }
 
-    // const getPeriodData = (period) => {
-    //     const periodData = {
-    //     week: {
-    //         encaissements: { value: 125680, trend: 15.3, positive: true },
-    //         decaissements: { value: -89450, trend: -5.2, positive: false },
-    //         traitesFournisseurs: { value: -31200, trend: -8.1, positive: false },
-    //         resultatNet: { value: 5030, trend: 28.7, positive: true },
-    //         label: 'Cette semaine'
-    //     },
-    //     month: {
-    //         encaissements: { value: 485200, trend: 12.8, positive: true },
-    //         decaissements: { value: -342800, trend: -3.5, positive: false },
-    //         traitesFournisseurs: { value: -125600, trend: -6.2, positive: false },
-    //         resultatNet: { value: 16800, trend: 22.1, positive: true },
-    //         label: 'Ce mois'
-    //     },
-    //     quarter: {
-    //         encaissements: { value: 1456800, trend: 18.5, positive: true },
-    //         decaissements: { value: -1028400, trend: -2.8, positive: false },
-    //         traitesFournisseurs: { value: -378200, trend: -4.9, positive: false },
-    //         resultatNet: { value: 50200, trend: 35.2, positive: true },
-    //         label: 'Ce trimestre'
-    //     },
-    //     year: {
-    //         encaissements: { value: 5824600, trend: 14.2, positive: true },
-    //         decaissements: { value: -4112800, trend: -1.8, positive: false },
-    //         traitesFournisseurs: { value: -1512400, trend: -3.1, positive: false },
-    //         resultatNet: { value: 199400, trend: 28.9, positive: true },
-    //         label: 'Cette année'
-    //     }
-    //     }
-    //     return periodData[period] || periodData.week
-    // }
-    // const currentPeriodData = getPeriodData(activePeriod)
-    // const currentPeriodChartData = getPeriodChartData(activePeriod)
-
     const currentPeriodChartData = {
       labels: periodData?.chart_data.labels,
       datasets: [
         {
           label: 'Encaissements',
           data: periodData?.chart_data.encaissements,
-          backgroundColor: '#3b82f6',
+          backgroundColor: 'rgba(102, 126, 234, 0.8)',
           borderRadius: 8
         },
         {
           label: 'Décaissements',
           data: periodData?.chart_data.decaissements,
-          backgroundColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.8)',
           borderRadius: 8
         }
       ]
@@ -191,23 +291,42 @@ export default function ParPeriode() {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: 'top'
+            position: 'top',
+            labels: {
+              usePointStyle: true,
+              padding: 20,
+              font: {
+                size: 12,
+                weight: '500'
+              }
+            }
           }
         },
         scales: {
           y: {
             grid: {
-              color: '#f1f5f9'
+              color: '#f1f5f9',
+              drawBorder: false
             },
             ticks: {
               callback: function(value) {
                 return Math.abs(value)?.toLocaleString() + ' DT'
-              }
+              },
+              font: {
+                size: 11
+              },
+              color: '#6b7280'
             }
           },
           x: {
             grid: {
               display: false
+            },
+            ticks: {
+              font: {
+                size: 11
+              },
+              color: '#6b7280'
             }
           }
         }
@@ -218,86 +337,89 @@ export default function ParPeriode() {
     }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-        <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">Trésorerie Par Période</h1>
-        </div>
-        <div className="space-y-6">
-            <div className="flex flex-wrap gap-3">
-            {[
-                { key: 'week', label: 'Cette Semaine' },
-                { key: 'month', label: 'Ce Mois' },
-                { key: 'quarter', label: 'Ce Trimestre' },
-                { key: 'year', label: 'Cette Année' }
-            ].map((period) => (
-                <button
-                key={period.key}
-                onClick={() => handlePeriodChange(period.key)}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                    activePeriod === period.key
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-600 border hover:bg-gray-50'
-                }`}
-                >
-                {period.label}
-                </button>
-            ))}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <BarChart3 className="h-6 w-6 text-green-600" />
-                </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(periodData?.encaissements.positive)}`}>
-                    {getTrendIcon(periodData?.encaissements.trend, periodData?.encaissements.positive)}
-                    {periodData?.encaissements.trend}%
-                </div>
-                </div>
-                <div className="text-sm text-gray-600 mb-1">Encaissements Période</div>
-                <div className="text-2xl font-bold text-gray-900">{formatAmount(periodData?.encaissements.value)}</div>
-                <div className="text-xs text-gray-500 mt-1">{periodData?.label}</div>
-            </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                    <TrendingDown className="h-6 w-6 text-red-600" />
-                </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(!periodData?.decaissements.positive)}`}>
-                    {getTrendIcon(periodData?.decaissements.trend, !periodData?.decaissements.positive)}
-                    {Math.abs(periodData?.decaissements.trend)}%
-                </div>
-                </div>
-                <div className="text-sm text-gray-600 mb-1">Décaissements Période</div>
-                <div className="text-2xl font-bold text-gray-900">{formatAmount(periodData?.decaissements.value)}</div>
-                <div className="text-xs text-gray-500 mt-1">{periodData?.label}</div>
-            </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <DollarSign className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(periodData?.resultatNet.positive)}`}>
-                    {getTrendIcon(periodData?.resultatNet.trend, periodData?.resultatNet.positive)}
-                    {periodData?.resultatNet.trend}%
-                </div>
-                </div>
-                <div className="text-sm text-gray-600 mb-1">Résultat Net</div>
-                <div className="text-2xl font-bold text-gray-900">{formatAmount(periodData?.resultatNet.value)}</div>
-                <div className="text-xs text-gray-500 mt-1">{periodData?.label}</div>
-            </div>
-            </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-            <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Analyse Comparative</h3>
-                <p className="text-sm text-gray-600">Évolution par période</p>
-            </div>
-            <div className="h-80">
-                <Bar data={currentPeriodChartData} options={barChartOptions} />
-            </div>
-            </div>
-        </div>
-    </div>
+    <>
+      <style>{styles}</style>
+      <div className="treasury-container">
+          <div className="treasury-header">
+              <h1 className="treasury-title">Trésorerie Par Période</h1>
+          </div>
+          <div>
+              <div className="treasury-button-container">
+              {[
+                  { key: 'week', label: 'Cette Semaine' },
+                  { key: 'month', label: 'Ce Mois' },
+                  { key: 'quarter', label: 'Ce Trimestre' },
+                  { key: 'year', label: 'Cette Année' }
+              ].map((period) => (
+                  <button
+                  key={period.key}
+                  onClick={() => handlePeriodChange(period.key)}
+                  className={`treasury-button ${
+                      activePeriod === period.key
+                      ? 'treasury-button-active'
+                      : 'treasury-button-inactive'
+                  }`}
+                  >
+                  {period.label}
+                  </button>
+              ))}
+              </div>
+              <div className="treasury-cards-grid">
+              <div className="treasury-card">
+                  <div className="treasury-card-header">
+                  <div className="treasury-icon-container" style={{backgroundColor: '#ecfdf5'}}>
+                      <BarChart3 className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className={`treasury-trend-badge ${getTrendColor(periodData?.encaissements.positive)}`}>
+                      {getTrendIcon(periodData?.encaissements.trend, periodData?.encaissements.positive)}
+                      {periodData?.encaissements.trend}%
+                  </div>
+                  </div>
+                  <div className="treasury-card-label">Encaissements Période</div>
+                  <div className="treasury-card-value">{formatAmount(periodData?.encaissements.value)}</div>
+                  <div className="treasury-card-period">{periodData?.label}</div>
+              </div>
+              <div className="treasury-card">
+                  <div className="treasury-card-header">
+                  <div className="treasury-icon-container" style={{backgroundColor: '#fef2f2'}}>
+                      <TrendingDown className="h-6 w-6 text-red-600" />
+                  </div>
+                  <div className={`treasury-trend-badge ${getTrendColor(!periodData?.decaissements.positive)}`}>
+                      {getTrendIcon(periodData?.decaissements.trend, !periodData?.decaissements.positive)}
+                      {Math.abs(periodData?.decaissements.trend)}%
+                  </div>
+                  </div>
+                  <div className="treasury-card-label">Décaissements Période</div>
+                  <div className="treasury-card-value">{formatAmount(periodData?.decaissements.value)}</div>
+                  <div className="treasury-card-period">{periodData?.label}</div>
+              </div>
+              
+              <div className="treasury-card">
+                  <div className="treasury-card-header">
+                  <div className="treasury-icon-container" style={{backgroundColor: '#eff6ff'}}>
+                      <DollarSign className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className={`treasury-trend-badge ${getTrendColor(periodData?.resultatNet.positive)}`}>
+                      {getTrendIcon(periodData?.resultatNet.trend, periodData?.resultatNet.positive)}
+                      {periodData?.resultatNet.trend}%
+                  </div>
+                  </div>
+                  <div className="treasury-card-label">Résultat Net</div>
+                  <div className="treasury-card-value">{formatAmount(periodData?.resultatNet.value)}</div>
+                  <div className="treasury-card-period">{periodData?.label}</div>
+              </div>
+              </div>
+              <div className="treasury-chart-card">
+              <div className="treasury-chart-header">
+                  <h3 className="treasury-chart-title">Analyse Comparative</h3>
+                  <p className="treasury-chart-subtitle">Évolution par période</p>
+              </div>
+              <div className="treasury-chart-container">
+                  <Bar data={currentPeriodChartData} options={barChartOptions} />
+              </div>
+              </div>
+          </div>
+      </div>
+    </>
   )
 }

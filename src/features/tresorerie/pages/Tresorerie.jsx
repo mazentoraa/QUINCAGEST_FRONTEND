@@ -162,213 +162,567 @@ function TresorerieMetalGest() {
     fetchKPIs(period).then(res => setKpiData(res.data));
   }
 
-  return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Vue Globale de la Trésorerie</h1>
+ return (
+  <div className="p-6 min-h-screen" style={{ 
+    fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+    backgroundColor: '#ffffff',
+    backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f3f4f6' fill-opacity='0.4'%3E%3Ccircle cx='10' cy='10' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+    position: 'relative'
+  }}>
+
+    <div className="relative z-10">
+      <div className="mb-8">
+        <h1 style={{ 
+          fontSize: '32px', 
+          fontWeight: '700',
+          color: '#ff9100',
+          letterSpacing: '-0.025em',
+          marginBottom: '8px'
+        }}>
+          Vue Globale de la Trésorerie
+        </h1>
+        <p style={{
+          color: '#6b7280',
+          fontSize: '16px',
+          fontWeight: '500'
+        }}>
+          Tableau de bord financier en temps réel
+        </p>
       </div>
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div 
-              className="bg-white rounded-lg p-6 shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleKPIClick('balance')}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CreditCard className="h-6 w-6 text-green-600" />
-                </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(kpiData?.balance.positive)}`}>
-                  {getTrendIcon(kpiData?.balance.trend, kpiData?.balance.positive)}
-                  {kpiData?.balance.trend}%
-                </div>
+
+      <div className="space-y-8">
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div 
+            className="group cursor-pointer transform transition-all duration-300 hover:scale-105"
+            onClick={() => handleKPIClick('balance')}
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              padding: '24px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+              border: '1px solid #e5e7eb',
+              marginBottom: '24px'
+            }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div style={{
+                width: '56px',
+                height: '56px',
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+              }}>
+                <CreditCard style={{ width: '24px', height: '24px', color: 'white' }} />
               </div>
-              <div className="text-sm text-gray-600 mb-1">Solde Actuel</div>
-              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.global_balance.value)}</div>
-              <div className="text-xs text-gray-500 mt-1">Tous comptes confondus</div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontWeight: '600',
+                background: kpiData?.balance.positive ? 
+                  'linear-gradient(135deg, #dcfdf7, #a7f3d0)' : 
+                  'linear-gradient(135deg, #fef2f2, #fecaca)',
+                color: kpiData?.balance.positive ? '#065f46' : '#991b1b'
+              }}>
+                {getTrendIcon(kpiData?.balance.trend, kpiData?.balance.positive)}
+                {kpiData?.balance.trend}%
+              </div>
             </div>
-            <div 
-              className="bg-white rounded-lg p-6 shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleKPIClick('expected_income')}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(kpiData?.expected_income.positive)}`}>
-                  {getTrendIcon(kpiData?.expected_income.trend, kpiData?.expected_income.positive)}
-                  {kpiData?.expected_income.trend}%
-                </div>
-              </div>
-              <div className="text-sm text-gray-600 mb-1">Encaissements Prévus</div>
-              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.expected_income.value)}</div>
-              <div className="text-xs text-gray-500 mt-1">Les prochains jours</div>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px', fontWeight: '500' }}>
+              Solde Actuel
             </div>
-            <div 
-              className="bg-white rounded-lg p-6 shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleKPIClick('expected_expense')}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                  <TrendingDown className="h-6 w-6 text-red-600" />
-                </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(!kpiData?.expected_expense.positive)}`}>
-                  {getTrendIcon(kpiData?.expected_expense.trend, !kpiData?.expected_expense.positive)}
-                  {Math.abs(kpiData?.expected_expense.trend)}%
-                </div>
-              </div>
-              <div className="text-sm text-gray-600 mb-1">Décaissements Prévus</div>
-              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.expected_expense.value)}</div>
-              <div className="text-xs text-gray-500 mt-1">Les prochains jours</div>
+            <div style={{ 
+              fontSize: '28px', 
+              fontWeight: '700', 
+              color: '#1f2937',
+              letterSpacing: '-0.025em'
+            }}>
+              {formatAmount(kpiData?.global_balance.value)}
             </div>
-            <div 
-              className="bg-white rounded-lg p-6 shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleKPIClick('forecast')}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTrendColor(kpiData?.forecast.positive)}`}>
-                  {getTrendIcon(kpiData?.forecast.trend, kpiData?.forecast.positive)}
-                  {kpiData?.forecast.trend}%
-                </div>
-              </div>
-              <div className="text-sm text-gray-600 mb-1">Solde Prévisionnel</div>
-              <div className="text-2xl font-bold text-gray-900">{formatAmount(kpiData?.forecast.value)}</div>
+            <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
+              Tous comptes confondus
             </div>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white rounded-lg p-6 shadow-sm border">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Évolution de la Trésorerie</h3>
-                  <p className="text-sm text-gray-600">Tendance sur 30 jours</p>
-                </div>
-                <div className="flex gap-2">
-                  {['30d', '90d', '1y'].map((period) => (
-                    <button
-                      key={period}
-                      onClick={() => handleChartPeriodChange(period)}
-                      className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                        chartPeriod === period
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {period === '30d' ? '30j' : period === '90d' ? '90j' : '1an'}
-                    </button>
-                  ))}
-                </div>
+
+          <div 
+            className="group cursor-pointer transform transition-all duration-300 hover:scale-105"
+            onClick={() => handleKPIClick('expected_income')}
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              padding: '24px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+              border: '1px solid #e5e7eb',
+              marginBottom: '24px'
+            }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div style={{
+                width: '56px',
+                height: '56px',
+                background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+              }}>
+                <TrendingUp style={{ width: '24px', height: '24px', color: 'white' }} />
               </div>
-              <div className="h-80">
-                {kpiData?.treasury_chart_data && (
-                  <Line data={kpiData.treasury_chart_data} options={chartOptions} />
-                )}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontWeight: '600',
+                background: kpiData?.expected_income.positive ? 
+                  'linear-gradient(135deg, #dcfdf7, #a7f3d0)' : 
+                  'linear-gradient(135deg, #fef2f2, #fecaca)',
+                color: kpiData?.expected_income.positive ? '#065f46' : '#991b1b'
+              }}>
+                {getTrendIcon(kpiData?.expected_income.trend, kpiData?.expected_income.positive)}
+                {kpiData?.expected_income.trend}%
               </div>
             </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Échéancier</h3>
-                <p className="text-sm text-gray-600">7 prochains jours</p>
-              </div>
-              <div className="space-y-3 max-h-80 overflow-y-auto">
-                {scheduleData?.map((item, index) => (
-                  <div
-                    key={index}
-                    className={`p-4 rounded-lg border-l-4 cursor-pointer hover:shadow-sm transition-shadow ${
-                      item.type === 'positive' ? 'border-l-green-500 bg-green-50' :
-                      item.type === 'supplier' ? 'border-l-orange-500 bg-orange-50' :
-                      'border-l-red-500 bg-red-50'
-                    }`}
-                    onClick={() => handleScheduleClick(item)}
-                  >
-                    <div className="text-xs font-medium text-gray-900 mb-2">{item.date}</div>
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-gray-600">{item.description}</div>
-                      <div className={`font-semibold ${getAmountColor(item.amount, item.type)}`}>
-                        {formatAmount(item.amount)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px', fontWeight: '500' }}>
+              Encaissements Prévus
+            </div>
+            <div style={{ 
+              fontSize: '28px', 
+              fontWeight: '700', 
+              color: '#1f2937',
+              letterSpacing: '-0.025em'
+            }}>
+              {formatAmount(kpiData?.expected_income.value)}
+            </div>
+            <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
+              Les prochains jours
             </div>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white rounded-lg p-6 shadow-sm border">
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Alertes Trésorerie</h3>
-                <p className="text-sm text-gray-600">Notifications importantes</p>
+
+          <div 
+            className="group cursor-pointer transform transition-all duration-300 hover:scale-105"
+            onClick={() => handleKPIClick('expected_expense')}
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              padding: '24px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+              border: '1px solid #e5e7eb',
+              marginBottom: '24px'
+            }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div style={{
+                width: '56px',
+                height: '56px',
+                background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+              }}>
+                <TrendingDown style={{ width: '24px', height: '24px', color: 'white' }} />
               </div>
-              <div className="space-y-4">
-                {kpiData?.alerts.map((alert, index) => (
-                  <div
-                    key={index}
-                    className={`p-4 rounded-lg border cursor-pointer hover:shadow-sm transition-shadow ${
-                      alert.type === 'critical' ? 'border-red-200 bg-red-50' :
-                      alert.type === 'warning' ? 'border-orange-200 bg-orange-50' :
-                      'border-blue-200 bg-blue-50'
-                    }`}
-                    onClick={() => handleAlertClick(alert)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
-                        alert.type === 'critical' ? 'bg-red-500' :
-                        alert.type === 'warning' ? 'bg-orange-500' :
-                        'bg-blue-500'
-                      }`}>
-                        {alert.type === 'critical' ? '!' : alert.type === 'warning' ? '⚠' : 'ℹ'}
-                      </div>
-                      <div>
-                        <div className={`font-medium mb-1 ${
-                          alert.type === 'critical' ? 'text-red-700' :
-                          alert.type === 'warning' ? 'text-orange-700' :
-                          'text-blue-700'
-                        }`}>
-                          {alert.title}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {alert.description}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontWeight: '600',
+                background: !kpiData?.expected_expense.positive ? 
+                  'linear-gradient(135deg, #dcfdf7, #a7f3d0)' : 
+                  'linear-gradient(135deg, #fef2f2, #fecaca)',
+                color: !kpiData?.expected_expense.positive ? '#065f46' : '#991b1b'
+              }}>
+                {getTrendIcon(kpiData?.expected_expense.trend, !kpiData?.expected_expense.positive)}
+                {Math.abs(kpiData?.expected_expense.trend)}%
               </div>
             </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Résumé Financier</h3>
-                <p className="text-sm text-gray-600">Cette semaine</p>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px', fontWeight: '500' }}>
+              Décaissements Prévus
+            </div>
+            <div style={{ 
+              fontSize: '28px', 
+              fontWeight: '700', 
+              color: '#1f2937',
+              letterSpacing: '-0.025em'
+            }}>
+              {formatAmount(kpiData?.expected_expense.value)}
+            </div>
+            <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
+              Les prochains jours
+            </div>
+          </div>
+
+          <div 
+            className="group cursor-pointer transform transition-all duration-300 hover:scale-105"
+            onClick={() => handleKPIClick('forecast')}
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              padding: '24px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+              border: '1px solid #e5e7eb',
+              marginBottom: '24px'
+            }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div style={{
+                width: '56px',
+                height: '56px',
+                background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+              }}>
+                <BarChart3 style={{ width: '24px', height: '24px', color: 'white' }} />
               </div>
-              {kpiData && (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600">Total Encaissements</span>
-                  <span className="font-semibold text-green-600">+{kpiData?.income.value} DT</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600">Total Décaissements</span>
-                  <span className="font-semibold text-red-600">-{kpiData?.expense.value} DT</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600">Flux Net</span>
-                  <span className={`font-semibold ${(kpiData.balance.positive) ? 'text-green-600': 'text-red-600'}`}>{kpiData.balance.positive?'+':''}{kpiData?.balance.value} DT</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600">Nb Transactions</span>
-                  <span className="font-semibold">{kpiData?.nb_transactions}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600">Taux de Recouvrement</span>
-                  <span className="font-semibold">{kpiData?.taux_de_recouvrement}%</span>
-                </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontWeight: '600',
+                background: kpiData?.forecast.positive ? 
+                  'linear-gradient(135deg, #dcfdf7, #a7f3d0)' : 
+                  'linear-gradient(135deg, #fef2f2, #fecaca)',
+                color: kpiData?.forecast.positive ? '#065f46' : '#991b1b'
+              }}>
+                {getTrendIcon(kpiData?.forecast.trend, kpiData?.forecast.positive)}
+                {kpiData?.forecast.trend}%
               </div>
-              )}
+            </div>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px', fontWeight: '500' }}>
+              Solde Prévisionnel
+            </div>
+            <div style={{ 
+              fontSize: '28px', 
+              fontWeight: '700', 
+              color: '#1f2937',
+              letterSpacing: '-0.025em'
+            }}>
+              {formatAmount(kpiData?.forecast.value)}
             </div>
           </div>
         </div>
+
+        {/* Charts and Schedule */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2" style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            padding: '32px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #e5e7eb',
+            marginBottom: '24px'
+          }}>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 style={{ 
+                  fontSize: '20px', 
+                  fontWeight: '700', 
+                  color: '#1f2937',
+                  marginBottom: '4px'
+                }}>
+                  Évolution de la Trésorerie
+                </h3>
+                <p style={{ fontSize: '14px', color: '#6b7280' }}>
+                  Tendance sur 30 jours
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {['30d', '90d', '1y'].map((period) => (
+                  <button
+                    key={period}
+                    onClick={() => handleChartPeriodChange(period)}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '14px',
+                      borderRadius: '12px',
+                      border: 'none',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      background: chartPeriod === period
+                        ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)'
+                        : '#f3f4f6',
+                      color: chartPeriod === period ? 'white' : '#6b7280'
+                    }}
+                  >
+                    {period === '30d' ? '30j' : period === '90d' ? '90j' : '1an'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ height: '320px' }}>
+              {kpiData?.treasury_chart_data && (
+                <Line data={kpiData.treasury_chart_data} options={chartOptions} />
+              )}
+            </div>
+          </div>
+
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            padding: '32px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #e5e7eb',
+            marginBottom: '24px'
+          }}>
+            <div className="mb-8">
+              <h3 style={{ 
+                fontSize: '20px', 
+                fontWeight: '700', 
+                color: '#1f2937',
+                marginBottom: '4px'
+              }}>
+                Échéancier
+              </h3>
+              <p style={{ fontSize: '14px', color: '#6b7280' }}>
+                7 prochains jours
+              </p>
+            </div>
+            <div className="space-y-4 max-h-80 overflow-y-auto">
+              {scheduleData?.map((item, index) => (
+                <div
+                  key={index}
+                  className="cursor-pointer transform transition-all duration-200 hover:scale-102"
+                  onClick={() => handleScheduleClick(item)}
+                  style={{
+                    padding: '16px',
+                    borderRadius: '12px',
+                    borderLeft: `4px solid ${
+                      item.type === 'positive' ? '#10b981' :
+                      item.type === 'supplier' ? '#f59e0b' :
+                      '#ef4444'
+                    }`,
+                    background: item.type === 'positive' ? 
+                      'linear-gradient(135deg, #ecfdf5, #d1fae5)' :
+                      item.type === 'supplier' ? 
+                      'linear-gradient(135deg, #fffbeb, #fef3c7)' :
+                      'linear-gradient(135deg, #fef2f2, #fecaca)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+                  }}
+                >
+                  <div style={{ 
+                    fontSize: '12px', 
+                    fontWeight: '600', 
+                    color: '#374151', 
+                    marginBottom: '8px' 
+                  }}>
+                    {item.date}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                      {item.description}
+                    </div>
+                    <div style={{
+                      fontWeight: '700',
+                      color: getAmountColor(item.amount, item.type)
+                    }}>
+                      {formatAmount(item.amount)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Alerts and Summary */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2" style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            padding: '32px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #e5e7eb'
+          }}>
+            <div className="mb-8">
+              <h3 style={{ 
+                fontSize: '20px', 
+                fontWeight: '700', 
+                color: '#1f2937',
+                marginBottom: '4px'
+              }}>
+                Alertes Trésorerie
+              </h3>
+              <p style={{ fontSize: '14px', color: '#6b7280' }}>
+                Notifications importantes
+              </p>
+            </div>
+            <div className="space-y-4">
+              {kpiData?.alerts.map((alert, index) => (
+                <div
+                  key={index}
+                  className="cursor-pointer transform transition-all duration-200 hover:scale-102"
+                  onClick={() => handleAlertClick(alert)}
+                  style={{
+                    padding: '20px',
+                    borderRadius: '12px',
+                    border: `1px solid ${
+                      alert.type === 'critical' ? '#fecaca' :
+                      alert.type === 'warning' ? '#fef3c7' :
+                      '#dbeafe'
+                    }`,
+                    background: alert.type === 'critical' ? 
+                      '#fef2f2' :
+                      alert.type === 'warning' ? 
+                      '#fffbeb' :
+                      '#eff6ff',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+                  }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '16px',
+                      fontWeight: '700',
+                      color: 'white',
+                      background: alert.type === 'critical' ? 
+                        'linear-gradient(135deg, #ef4444, #dc2626)' :
+                        alert.type === 'warning' ? 
+                        'linear-gradient(135deg, #f59e0b, #d97706)' :
+                        'linear-gradient(135deg, #3b82f6, #1d4ed8)'
+                    }}>
+                      {alert.type === 'critical' ? '!' : alert.type === 'warning' ? '⚠' : 'ℹ'}
+                    </div>
+                    <div>
+                      <div style={{
+                        fontWeight: '600',
+                        marginBottom: '4px',
+                        color: alert.type === 'critical' ? '#7f1d1d' :
+                          alert.type === 'warning' ? '#92400e' :
+                          '#1e3a8a'
+                      }}>
+                        {alert.title}
+                      </div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                        {alert.description}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            padding: '32px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #e5e7eb'
+          }}>
+            <div className="mb-8">
+              <h3 style={{ 
+                fontSize: '20px', 
+                fontWeight: '700', 
+                color: '#1f2937',
+                marginBottom: '4px'
+              }}>
+                Résumé Financier
+              </h3>
+              <p style={{ fontSize: '14px', color: '#6b7280' }}>
+                Cette semaine
+              </p>
+            </div>
+            {kpiData && (
+              <div className="space-y-4">
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '16px',
+                  background: 'linear-gradient(135deg, #f9fafb, #f3f4f6)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(229, 231, 235, 0.5)'
+                }}>
+                  <span style={{ color: '#6b7280', fontWeight: '500' }}>Total Encaissements</span>
+                  <span style={{ fontWeight: '700', color: '#059669' }}>+{kpiData?.income.value} DT</span>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '16px',
+                  background: 'linear-gradient(135deg, #f9fafb, #f3f4f6)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(229, 231, 235, 0.5)'
+                }}>
+                  <span style={{ color: '#6b7280', fontWeight: '500' }}>Total Décaissements</span>
+                  <span style={{ fontWeight: '700', color: '#dc2626' }}>-{kpiData?.expense.value} DT</span>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '16px',
+                  background: 'linear-gradient(135deg, #f9fafb, #f3f4f6)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(229, 231, 235, 0.5)'
+                }}>
+                  <span style={{ color: '#6b7280', fontWeight: '500' }}>Flux Net</span>
+                  <span style={{
+                    fontWeight: '700',
+                    color: kpiData.balance.positive ? '#059669' : '#dc2626'
+                  }}>
+                    {kpiData.balance.positive ? '+' : ''}{kpiData?.balance.value} DT
+                  </span>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '16px',
+                  background: 'linear-gradient(135deg, #f9fafb, #f3f4f6)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(229, 231, 235, 0.5)'
+                }}>
+                  <span style={{ color: '#6b7280', fontWeight: '500' }}>Nb Transactions</span>
+                  <span style={{ fontWeight: '700', color: '#1f2937' }}>{kpiData?.nb_transactions}</span>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '16px',
+                  background: 'linear-gradient(135deg, #f9fafb, #f3f4f6)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(229, 231, 235, 0.5)'
+                }}>
+                  <span style={{ color: '#6b7280', fontWeight: '500' }}>Taux de Recouvrement</span>
+                  <span style={{ fontWeight: '700', color: '#1f2937' }}>{kpiData?.taux_de_recouvrement}%</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
-  )
+  </div>
+)
 }
 export default TresorerieMetalGest
