@@ -148,7 +148,7 @@ const loadEmployee = useCallback(async () => {
 
     
     const fichesSorted = [...employee.fiches_paie].sort((a, b) =>
-      new Date(b.date_creation) - new Date(a.date_creation)
+      new Date(b.date_paiement) - new Date(a.date_paiement)
     );
 
     const fichesGenerees = fichesSorted.filter(f => 
@@ -522,7 +522,7 @@ const onFinish = useCallback(async (values) => {
       net_a_payer: calculatedResume.salaireNet, 
       deduction_totale: calculatedResume.totalDeductions, // Cotisations + Avance
       statut: editingFiche ? editingFiche.statut : 'Générée',
-      date_creation: editingFiche ? editingFiche.date_creation : new Date().toISOString(),
+      date_paiement: editingFiche ? editingFiche.date_paiement : new Date().toISOString(),
       
       // Détails de la fiche
       salaire_base: values.salaire_base,
@@ -574,7 +574,7 @@ const onFinish = useCallback(async (values) => {
     setTimeout(async () => {
       await refreshFiches();
       // Recharger les données de l'employé pour avoir les avances mises à jour
-      const employeeResponse = await EmployeeService.getEmployeeById(id);
+      const employeeResponse = await EmployeeService.getById(id);
       setEmployee(employeeResponse.data || employeeResponse);
     }, 500);
     
@@ -607,7 +607,7 @@ const onFinish = useCallback(async (values) => {
             {moment().month(record.mois - 1).format('MMMM')} {record.annee}
           </div>
           <div style={{ fontSize: 12, color: '#666' }}>
-            {moment(record.date_creation).format('DD/MM/YYYY')}
+            {moment(record.date_paiement).format('DD/MM/YYYY')}
           </div>
         </div>
       ),
@@ -690,9 +690,9 @@ const onFinish = useCallback(async (values) => {
       }
     },
     {
-    title: 'Date de Création',
-    dataIndex: 'date_creation',
-    key: 'date_creation',
+    title: 'Date de Paiement',
+    dataIndex: 'date_paiement',
+    key: 'date_paiement',
     render: (date) => (
       <div>
         <div style={{ fontWeight: 500 }}>
@@ -703,7 +703,7 @@ const onFinish = useCallback(async (values) => {
         </div>
       </div>
     ),
-    sorter: (a, b) => moment(a.date_creation).valueOf() - moment(b.date_creation).valueOf(),
+    sorter: (a, b) => moment(a.date_paiement).valueOf() - moment(b.date_paiement).valueOf(),
   },
     {
       title: 'Actions',
