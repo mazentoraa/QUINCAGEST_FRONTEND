@@ -106,12 +106,10 @@ export default function FactureMatiere() {
     const matchFournisseur = f.fournisseur
       ? f.fournisseur.toLowerCase().includes(filterFournisseur.toLowerCase())
       : false;
-    const matchType = filterType ? f.type_achat === filterType : true;
 
     return (
       (filterNumero === "" || matchNumero) &&
-      (filterFournisseur === "" || matchFournisseur) &&
-      matchType
+      (filterFournisseur === "" || matchFournisseur)
     );
   });
 
@@ -233,13 +231,6 @@ export default function FactureMatiere() {
       dataIndex: "fournisseur",
       key: "fournisseur",
       width: 140,
-      ellipsis: true,
-    },
-    {
-      title: "Type d'achat",
-      dataIndex: "type_achat",
-      key: "type_achat",
-      width: 120,
       ellipsis: true,
     },
     {
@@ -736,37 +727,6 @@ export default function FactureMatiere() {
             ))}
           </Select>
         </Form.Item>
-
-        <Form.Item
-          name="type_achat"
-          label="Type d'achat"
-          rules={[{ required: false }]}
-        >
-          <Select
-            size="large"
-            placeholder="Sélectionner un type"
-            suffixIcon={<TagOutlined style={{ color: "#1890ff" }} />}
-            style={{
-              borderRadius: 10,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              fontSize: 15,
-              transition: "box-shadow 0.3s ease",
-            }}
-            onFocus={(e) =>
-              (e.currentTarget.style.boxShadow = "0 0 6px #40a9ff")
-            }
-            onBlur={(e) =>
-              (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")
-            }
-          >
-            {typeOptions.map((type) => (
-              <Option key={type} value={type}>
-                {type}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
-
         <Form.Item
           name="mode_paiement"
           label="Mode de paiement"

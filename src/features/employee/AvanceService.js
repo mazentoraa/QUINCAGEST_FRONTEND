@@ -34,7 +34,7 @@ export const employeService = {
     }
   },
 
-  getEmployeeById: async (id) => {
+  getById: async (id) => {
     try {
       const response = await api.get(`/employes/${id}/`);
       return response.data;
