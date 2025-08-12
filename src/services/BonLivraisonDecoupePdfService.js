@@ -249,8 +249,8 @@ const netCommercial = totalBrut - totalRemise;
 const fodec = netCommercial * 0.01;
 const totalHTVA = netCommercial + fodec;
 const totalTVA = totalHTVA * ((invoice.tax_rate || 0) / 100);
-const timbreFiscal = Number(invoice.timbre_fiscal) || 0;
-const netAPayer = totalHTVA + totalTVA + timbreFiscal;
+// Suppression du timbre fiscal
+const netAPayer = totalHTVA + totalTVA;
 
 const totals = {
   totalHT: netCommercial,
@@ -411,10 +411,7 @@ const totals = {
       <td style="border: 1px solid black; padding: 2px;"><strong>Total TVA</strong></td>
 <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(totalTVA)}</td>
     </tr>
-    <tr>
-      <td style="border: 1px solid black; padding: 2px;"><strong>Timbre Fiscal</strong></td>
-      <td style="border: 1px solid black; padding: 2px;">${this.formatCurrency(timbreFiscal)}</td>
-    </tr>
+    
     <tr>
       <td style="border: 1px solid black; padding: 2px;"><strong>Net à Payer</strong></td>
       <td style="border: 1px solid black; padding: 2px;"><strong>${this.formatCurrency(netAPayer)}</strong></td>

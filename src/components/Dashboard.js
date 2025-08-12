@@ -70,6 +70,7 @@ const dashboardAPI = {
       );
     }
   },
+  // Suppression des endpoints inutiles pour les counts, tout est dans main-insights
   getRecentCommandes: async () => {
     try {
       const response = await axios.get(
@@ -108,6 +109,7 @@ function Dashboard() {
   const [recentCommandes, setRecentCommandes] = useState([]);
   const [recentFactures, setRecentFactures] = useState([]);
   const [hoveredCard, setHoveredCard] = useState(null);
+  // Suppression des states inutiles pour les counts
 
   useEffect(() => {
     loadDashboardData();
@@ -195,7 +197,7 @@ function Dashboard() {
     },
     {
       title: "Fournisseurs Actifs",
-      value: counts.fournisseurs , // Valeur par défaut si pas dans l'API
+      value: counts.fournisseurs ?? '-',
       icon: <ShopOutlined />,
       gradient: "linear-gradient(135deg, #722ed1 0%, #531dab 100%)",
       path: "/fournisseurs",
@@ -205,7 +207,7 @@ function Dashboard() {
     },
     {
       title: "Employés Actifs",
-      value: counts.employes, // Valeur par défaut si pas dans l'API
+      value: counts.employees ?? '-',
       icon: <TeamOutlined />,
       gradient: "linear-gradient(135deg, #eb2f96 0%, #c41d7f 100%)",
       path: "/employes",

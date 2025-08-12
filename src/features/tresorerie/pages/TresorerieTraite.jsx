@@ -258,7 +258,7 @@ export default function TresorerieTraite() {
             {/* KPI Traites */}
             <div style={{ 
                 display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
                 gap: '24px' 
             }}>
                 <div className="kpi-card">
