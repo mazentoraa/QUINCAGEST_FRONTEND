@@ -1008,22 +1008,20 @@ export default function Facture(props) {
           currentBonInDrawer
         );
       } else {
-        // For existing order
+        // For existing order (modification)
         const existingProductInDrawerIndex = currentProductsInDrawer.findIndex(
           (p) => (p.produit_id || p.produit) === values.produit_id
         );
-
+        let updatedProductsInDrawer;
         if (existingProductInDrawerIndex > -1) {
-          // Logic to update existing product quantity in an existing order
-          // This might involve an API call to update the line item or you might prefer
-          // the user to remove and re-add. For simplicity, let's assume an update:
-          const updatedProductsInDrawer = currentProductsInDrawer.map(
+          // Update quantity if product already exists
+          updatedProductsInDrawer = currentProductsInDrawer.map(
             (p, index) =>
               index === existingProductInDrawerIndex
                 ? {
                     ...p,
-                    quantite: p.quantite + values.quantite, // Or replace: values.quantite
-                    prix_unitaire: newProductData.prix_unitaire, // Update price if changed
+                    quantite: p.quantite + values.quantite,
+                    prix_unitaire: newProductData.prix_unitaire,
                     remise_pourcentage: newProductData.remise_pourcentage,
                     prix_total:
                       (p.quantite + values.quantite) *
@@ -1032,52 +1030,24 @@ export default function Facture(props) {
                   }
                 : p
           );
-          setCurrentProductsInDrawer(updatedProductsInDrawer);
-          recalculateTotalsInDrawer(
-            updatedProductsInDrawer,
-            currentTaxRate,
-            currentBonInDrawer
-          );
-          setIsProductModalVisible(false);
-          message.success("Produit mis à jour dans la commande");
-          // Note: You'd typically need to reflect this change in `editingOrder.produit_commande`
-          // and the backend would need to handle updates to existing line items.
-          // The current `addProductToOrder` might just add a new line.
-          // If `addProductToOrder` handles updates, this local update might be redundant before API call.
         } else {
-          // Call API to add product if it doesn't exist already
-          // The backend should return the full product line item, including its own ID
-
-
-          const addedProductFromApi = await cdsService.addProductToOrder(
-            editingOrder.id,
-            newProductData // Send newProductData, backend assigns ID to the line item
-          );
-
-
-          // Ensure addedProductFromApi has prix_total or calculate it
-          if (
-            addedProductFromApi &&
-            typeof addedProductFromApi.prix_total === "undefined"
-          ) {
-            addedProductFromApi.prix_total =
-              (addedProductFromApi.quantite || 0) *
-              (addedProductFromApi.prix_unitaire || 0) *
-              (1 - (addedProductFromApi.remise_pourcentage || 0) / 100);
-          }
-          const newProductsList = [
+          // Add new product locally (no API call)
+          const tempId = `temp-${Date.now()}-${Math.floor(
+            Math.random() * 1000
+          )}`;
+          updatedProductsInDrawer = [
             ...currentProductsInDrawer,
-            addedProductFromApi,
+            { ...newProductData, id: tempId },
           ];
-          setCurrentProductsInDrawer(newProductsList);
-          recalculateTotalsInDrawer(
-            newProductsList,
-            currentTaxRate,
-            currentBonInDrawer
-          );
-          setIsProductModalVisible(false);
-          message.success("Produit ajouté à la commande");
         }
+        setCurrentProductsInDrawer(updatedProductsInDrawer);
+        recalculateTotalsInDrawer(
+          updatedProductsInDrawer,
+          currentTaxRate,
+          currentBonInDrawer
+        );
+        setIsProductModalVisible(false);
+        message.success("Produit ajouté ou mis à jour dans la commande");
       }
     } }catch (errorInfo) {
       console.log("Product modal save failed:", errorInfo);
@@ -1136,56 +1106,28 @@ export default function Facture(props) {
     }
   };
 
-  const handleRemoveProductFromDrawerOrder = async (
+  const handleRemoveProductFromDrawerOrder = (
     produitIdToRemove // This could be tempId for new orders, or actual DB ID for existing
   ) => {
-    try {
-      const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
-      if (isCreating) {
-        const updatedProducts = newOrderProducts.filter(
-          (p) => p.id !== produitIdToRemove // tempId comparison
-        );
-        setNewOrderProducts(updatedProducts);
-        setCurrentProductsInDrawer(updatedProducts);
-        recalculateTotalsInDrawer(
-          updatedProducts,
-          currentTaxRate,
-          currentBonInDrawer
-        );
-      } else {
-        // For existing order, find the product to get the correct produit_id
-        const productToRemove = currentProductsInDrawer.find(
-          (p) => p.id === produitIdToRemove
-        );
-
-        if (!productToRemove) {
-          message.error("Produit non trouvé");
-          return;
-        }
-
-        // Use produit_id instead of the PdC id for removal
-        const actualProductId =
-          productToRemove.produit_id || productToRemove.produit;
-
-        await cdsService.removeProductFromOrder(
-          editingOrder.id,
-          actualProductId // Send the actual product ID, not the PdC ID
-        );
-        const updatedProducts = currentProductsInDrawer.filter(
-          (p) => p.id !== produitIdToRemove
-        );
-        setCurrentProductsInDrawer(updatedProducts);
-        recalculateTotalsInDrawer(
-          updatedProducts,
-          currentTaxRate,
-          currentBonInDrawer
-        );
-      }
-      message.success("Product removed.");
-    } catch (error) {
-      console.error("Failed to remove product:", error);
-      message.error("Failed to remove product: " + error.message);
+    const currentTaxRate = drawerForm.getFieldValue("tax_rate") || 0;
+    let updatedProducts;
+    if (isCreating) {
+      updatedProducts = newOrderProducts.filter(
+        (p) => p.id !== produitIdToRemove // tempId comparison
+      );
+      setNewOrderProducts(updatedProducts);
+    } else {
+      updatedProducts = currentProductsInDrawer.filter(
+        (p) => p.id !== produitIdToRemove
+      );
     }
+    setCurrentProductsInDrawer(updatedProducts);
+    recalculateTotalsInDrawer(
+      updatedProducts,
+      currentTaxRate,
+      currentBonInDrawer
+    );
+    message.success("Produit supprimé.");
   };
 
   const handlePrintOrderPDF = async (orderRecord) => {
