@@ -92,17 +92,15 @@ class BonCommandePdfApiService {
     const items = orderData.produit_commande || [];
 
     const itemsHTML = items
-      .map(
-        (item) => {
-          
-          const fodec = totalPHT * 0.01; // 1%
-          const remise = item.remise_pourcentage || 0;
-          const totalPHT = (item.quantite || 0) * (item.prix_unitaire || 0) * (1 - remise / 100);
-          const totalPHTVA = totalPHT + fodec;
-          const tva = orderData.tax_rate || 20;
-          const totalPTTC = totalPHTVA + (totalPHTVA * tva / 100);
+      .map((item) => {
+        const remise = item.remise_pourcentage || 0;
+        const totalPHT = (item.quantite || 0) * (item.prix_unitaire || 0) * (1 - remise / 100);
+        const fodec = totalPHT * 0.01; // 1%
+        const totalPHTVA = totalPHT + fodec;
+        const tva = orderData.tax_rate || 20;
+        const totalPTTC = totalPHTVA + (totalPHTVA * tva / 100);
 
-          return `
+        return `
       <tr>
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
           item.code_produit || ""
@@ -133,9 +131,8 @@ class BonCommandePdfApiService {
           this.formatFloat(totalPTTC)
         }</td>
       </tr>
-    `
-        }
-      )
+    `;
+      })
       .join("");
       const totalRemise = orderData.produit_commande.reduce((acc, item) => {
   const prixUnitaire = item.prix_unitaire || 0;
