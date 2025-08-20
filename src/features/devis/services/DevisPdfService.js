@@ -445,20 +445,17 @@ const netAPayer = totalHTVA + totalTVA + timbreFiscal;
 </div>
 
 
-  <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
-    <div style="width:50%;">
-      <p style="padding: 12px;">
-        <strong>Arrêtée la présente devis à la somme de:</strong><br>
-        ${(() => {
-          const montantTTC = parseFloat(data.montant_ttc || 0) || 0;
-          const timbre = parseFloat(data.timbre_fiscal || 0);
-          const montantFinal = montantTTC;
-          return this.formatMontantEnLettres(montantFinal);
-        })()}
-      </p>
+  <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start; margin-top: 25px;">
+    <div style="width:50%; display: flex; flex-direction: column; justify-content: flex-start;">
+      <p style="margin: 0; font-weight: bold;">Arrêtée la présente devis à la somme de:</p>
+      <span style="margin: 0;">${(() => {
+        const montantTTC = parseFloat(data.montant_ttc || 0) || 0;
+        const montantFinal = montantTTC;
+        return this.formatMontantEnLettres(montantFinal);
+      })()}</span>
     </div>
-    <div style="width:50%; text-align:right; display:flex; align-items:center; justify-content:flex-end;">
-      <p style="padding: 12px; font-weight: bold;">Conditions de paiement: A régler dans les 30 jours</p>
+    <div style="width:50%; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-end;">
+      <p style="margin: 0; font-weight: bold;">Conditions de paiement: A régler dans les 30 jours</p>
     </div>
   </div>
 
