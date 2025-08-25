@@ -29,7 +29,7 @@ useEffect(() => {
   return (
     <div className="navigation-container">
       <div className="logo">
-        <Title level={3} style={{ margin: 0, color: '#fff' }}>MetalGest</Title>
+        <Title level={3} style={{ margin: 0, color: '#fff' }}>QuincaGest</Title>
       </div>
       
       <Menu theme="dark" mode="horizontal" className="nav-menu">
