@@ -118,7 +118,7 @@ function SideMenu() {
             onClick={() => handleMenuClick('/stock/produits')}
             className={isSelected('/stock/produits') ? 'selected-blue' : ''}
           >
-            Produits Finis
+            Catalogue Produits
           </Menu.Item>
           {/* A supprimer */}
           {/* <Menu.Item
