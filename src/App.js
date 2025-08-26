@@ -145,26 +145,27 @@ function App() {
                                     path="/stock/produits"
                                     element={<StockManagement />}
                                   />
-                                  <Route
+                                  {/* A supprimer */}
+                                  {/* <Route
                                     path="/stock/matieres"
                                     element={<ClientMaterialManagement />}
                                   />
                                   <Route
                                     path="/client-materials"
                                     element={<ClientMaterialManagement />}
-                                  />
-                                  <Route
+                                  /> */}
+                                  {/* <Route
                                     path="/client-materials/:client_id"
                                     element={<ClientRawMaterialsPage />}
-                                  />
+                                  /> */}
                                   <Route
                                     path="/orders"
                                     element={<OrderManagement />}
                                   />
-                                  <Route
+                                  {/* <Route
                                     path="/manifeste/travaux"
                                     element={<WorkManagementPage />}
-                                  />
+                                  /> */}
                                   <Route
                                     path="/manifeste"
                                     element={<ManifestePage />}

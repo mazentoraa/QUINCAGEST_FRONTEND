@@ -120,29 +120,31 @@ function SideMenu() {
           >
             Produits Finis
           </Menu.Item>
-          <Menu.Item
+          {/* A supprimer */}
+          {/* <Menu.Item
             key="/stock/matieres"
             icon={<GoldOutlined className="blue-icon" />}
             onClick={() => handleMenuClick('/stock/matieres')}
             className={isSelected('/stock/matieres') ? 'selected-blue' : ''}
           >
             Matières Premières Client
-          </Menu.Item>
+          </Menu.Item> */}
         </SubMenu>
+        {/* A supprimer */}
 
-        <SubMenu
+        {/* <SubMenu
           key="manifeste"
           icon={<FileTextOutlined className="blue-icon" />}
           title="Manifeste"
-        >
-          <Menu.Item
+        > */}
+          {/* <Menu.Item
             key="/manifeste/travaux"
             icon={<ToolOutlined className="blue-icon" />}
             onClick={() => handleMenuClick('/manifeste/travaux')}
             className={isSelected('/manifeste/travaux') ? 'selected-blue' : ''}
           >
             Travaux
-          </Menu.Item>
+          </Menu.Item> */}
 
           <SubMenu
             key="bons_devis"
@@ -198,7 +200,7 @@ function SideMenu() {
               Avoirs
             </Menu.Item>
           </SubMenu>
-        </SubMenu>
+        {/* </SubMenu> */}
 
         <SubMenu
           key="reglements"
