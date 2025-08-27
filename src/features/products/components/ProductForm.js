@@ -43,31 +43,6 @@ const ProductForm = ({
     }
   };
 
-
-  // Calcul du progrès du formulaire
-  const calculateProgress = () => {
-    const values = form.getFieldsValue();
-    const requiredFields = ['nom_produit'];
-    const optionalFields = ['code_produit', 'ref_produit', 'categorie', 'sous-categorie', 'materiau', 'fournisseur', 'stock_initial', 'seuil_alerte', 'unite_mesure', 'statut', 'code_barres', 'emplacement', 'prix_achat', 'prix_vente', 'description', 'file'];
-    
-    let filledRequired = 0;
-    let filledOptional = 0;
-
-    requiredFields.forEach(field => {
-      if (values[field] && values[field].toString().trim()) filledRequired++;
-    });
-
-    optionalFields.forEach(field => {
-      if (values[field] && values[field].toString().trim()) filledOptional++;
-    });
-
-    const progress = ((filledRequired / requiredFields.length) * 60) + 
-                    ((filledOptional / optionalFields.length) * 30) + 
-                    (imagePreview ? 10 : 0);
-    
-    setFormProgress(Math.min(100, progress));
-  };
-
   useEffect(() => {
     if (productToEdit) {
       form.setFieldsValue({
@@ -102,7 +77,6 @@ const ProductForm = ({
         setImagePreview(null);
         setFileList([]);
       }
-      calculateProgress();
     } else {
       form.resetFields();
       setImagePreview(null);
@@ -119,42 +93,17 @@ const ProductForm = ({
         const reader = new FileReader();
         reader.onload = () => {
           setImagePreview(reader.result);
-          calculateProgress();
         };
         reader.readAsDataURL(file);
       } else {
         setImagePreview(newFileList[0].url || newFileList[0].thumbUrl);
-        calculateProgress();
       }
     } else {
       setImagePreview(null);
-      calculateProgress();
     }
   };
 
   const normFile = (e) => (Array.isArray(e) ? e : e?.fileList || []);
-
-  const onlyNumbersAndDot = (e) => {
-    const allowed = [
-      "Backspace",
-      "Tab",
-      "ArrowLeft",
-      "ArrowRight",
-      "Delete",
-      ...Array.from({ length: 10 }, (_, i) => `${i}`),
-      ".",
-    ];
-    if (!allowed.includes(e.key) && !(e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-    }
-  };
-
-  const handlePasteNumbersOnly = (e) => {
-    const value = e.clipboardData.getData("text");
-    if (!/^\d*\.?\d*$/.test(value)) {
-      e.preventDefault();
-    }
-  };
 
   const handleSubmit = async (values) => {
     try {
@@ -268,7 +217,7 @@ const ProductForm = ({
           image: imageData ?? null,
         };
 
-
+        
         await addProduct(productPayload);
         message.success("Produit ajouté avec succès");
         form.resetFields();
@@ -410,7 +359,6 @@ const ProductForm = ({
         layout="vertical"
         onFinish={handleSubmit}
         scrollToFirstError
-        onValuesChange={calculateProgress}
       >
         {/* Section Informations générales */}
         <SectionCard
@@ -535,7 +483,6 @@ const ProductForm = ({
                     option.children.toLowerCase().includes(input.toLowerCase())
                   }
                   suffixIcon={<UserOutlined style={{ color: "#1890ff" }} />}
-                  dropdownStyle={{ borderRadius: 12 }}
                   style={{
                     borderRadius: 10,
                     boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
@@ -582,8 +529,6 @@ const ProductForm = ({
                     border: '2px solid #e5e7eb',
                     fontSize: '15px'
                   }}
-                  onKeyDown={onlyNumbersAndDot}
-                  onPaste={handlePasteNumbersOnly}
                   placeholder="📏 0"
                 />
               </Form.Item>
@@ -602,8 +547,6 @@ const ProductForm = ({
                     border: '2px solid #e5e7eb',
                     fontSize: '15px'
                   }}
-                  onKeyDown={onlyNumbersAndDot}
-                  onPaste={handlePasteNumbersOnly}
                   placeholder="📐 0"
                 />
               </Form.Item>
@@ -613,19 +556,17 @@ const ProductForm = ({
                 name="unite_mesure" 
                 label={<OptionalLabel>Unité de mesure</OptionalLabel>}
               >
-                <InputNumber
-                  min={0}
+                <Select 
+                  placeholder="🔧 Kg" 
+                  allowClear
                   style={{ 
-                    width: "100%", 
                     height: '44px',
-                    borderRadius: '10px',
-                    border: '2px solid #e5e7eb',
-                    fontSize: '15px'
                   }}
-                  onKeyDown={onlyNumbersAndDot}
-                  onPaste={handlePasteNumbersOnly}
-                  placeholder="📏 500"
-                />
+                >
+                  <Option value="Kg">✨ kg</Option>
+                  <Option value="cm">⚡ cm</Option>
+                  <Option value="m2">🔩 m²</Option>
+                </Select>
               </Form.Item>
             </Col>
             <Col xs={12} sm={6}>
@@ -633,19 +574,17 @@ const ProductForm = ({
                 name="statut" 
                 label={<OptionalLabel>Statut du produit</OptionalLabel>}
               >
-                <InputNumber
-                  min={0}
+                <Select 
+                  placeholder="🔧 Sélectionner" 
+                  allowClear
                   style={{ 
-                    width: "100%", 
                     height: '44px',
-                    borderRadius: '10px',
-                    border: '2px solid #e5e7eb',
-                    fontSize: '15px'
                   }}
-                  onKeyDown={onlyNumbersAndDot}
-                  onPaste={handlePasteNumbersOnly}
-                  placeholder="📐 2.5"
-                />
+                >
+                  <Option value="actif">🔩 Actif</Option>
+                  <Option value="inactif">✨ Inactif</Option>
+                  <Option value="supprime">⚡ Supprimé</Option>
+                </Select>
               </Form.Item>
             </Col>
           </Row>
@@ -663,8 +602,6 @@ const ProductForm = ({
                     border: '2px solid #e5e7eb',
                     fontSize: '15px'
                   }}
-                  onKeyDown={onlyNumbersAndDot}
-                  onPaste={handlePasteNumbersOnly}
                   placeholder="EAN13 (optionnel)"
                 />
               </Form.Item>
@@ -682,8 +619,6 @@ const ProductForm = ({
                     border: '2px solid #e5e7eb',
                     fontSize: '15px'
                   }}
-                  onKeyDown={onlyNumbersAndDot}
-                  onPaste={handlePasteNumbersOnly}
                   placeholder="EX: Aliée A - Etagère 3 - Niveau 3"
                 />
               </Form.Item>
@@ -713,8 +648,6 @@ const ProductForm = ({
                     border: '2px solid #e5e7eb',
                     fontSize: '15px'
                   }}
-                  onKeyDown={onlyNumbersAndDot}
-                  onPaste={handlePasteNumbersOnly}
                   placeholder="💰 100.00"
                  
                 />
@@ -734,8 +667,6 @@ const ProductForm = ({
                     border: '2px solid #e5e7eb',
                     fontSize: '15px'
                   }}
-                  onKeyDown={onlyNumbersAndDot}
-                  onPaste={handlePasteNumbersOnly}
                   placeholder="💰 100.00"
                  
                 />
