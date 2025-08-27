@@ -156,7 +156,7 @@ export const ProductProvider = ({ children }) => {
       setLoading(false);
     }
   };
-y
+
   // Update an existing product
   const updateProduct = async (id, productData) => {
     try {

@@ -1,56 +1,75 @@
 class ProductModel {
   constructor(data) {
-    // Map backend field names to frontend properties
+    // IDs and names
     this.id = data.id;
-    // Handle both backend field names (nom_produit) and frontend field names (name) for flexibility
     this.name = data.nom_produit || data.name;
-    this.description = data.description;
+    this.nom_produit = data.nom_produit || data.name;
 
-    // Ensure price is always a number
-    const priceValue = data.prix || data.price;
-    this.price =
-      priceValue !== undefined && priceValue !== null
-        ? parseFloat(priceValue)
+    // Reference code
+    this.ref_produit = data.ref_produit || data.ref;
+
+    // Categorization
+    this.categorie = data.categorie || "";
+    this.sous_categorie = data.sous_categorie || "";
+    this.materiau = data.materiau || "";
+    this.fournisseur = data.fournisseur || "";
+
+    // Stock + inventory
+    this.stock_initial =
+      data.stock_initial !== undefined ? parseInt(data.stock_initial) : 0;
+    this.seuil_alerte =
+      data.seuil_alerte !== undefined ? parseInt(data.seuil_alerte) : 0;
+
+    // Unit and status
+    this.unite_mesure = data.unite_mesure || "";
+    this.statut = data.statut || "actif";
+    this.code_barres = data.code_barres || "";
+    this.emplacement = data.emplacement || "";
+
+    // Prices
+    this.prix_achat =
+      data.prix_achat !== undefined && data.prix_achat !== null
+        ? parseFloat(data.prix_achat)
+        : 0;
+    this.prix_vente =
+      data.prix_vente !== undefined && data.prix_vente !== null
+        ? parseFloat(data.prix_vente)
         : 0;
 
-    // Fix material type mapping - ensure both properties are set correctly
-    this.material_type =
-      data.type_matiere || data.material_type || data.material;
-      
-      this.image = typeof data.image === "string" ? data.image : undefined;
+    // Legacy compatibility (for components that still expect "price")
+    this.price = this.prix_vente;
 
+    // Other details
+    this.description = data.description || "";
 
-    // Ensure numeric values are properly converted
-    this.thickness = parseFloat(data.epaisseur || data.thickness) || 0;
-    this.length = parseFloat(data.longueur || data.length) || 0;
-    this.surface = parseFloat(data.surface) || 0;
-    this.width = parseFloat(data.largeur) || 0;
+    // Image
+    this.image = typeof data.image === "string" ? data.image : undefined;
 
-    this.created_at = data.date_creation ? new Date(data.date_creation) : null;
+    // Timestamps
+    this.created_at = data.date_creation
+      ? new Date(data.date_creation)
+      : null;
     this.updated_at = data.derniere_mise_a_jour
       ? new Date(data.derniere_mise_a_jour)
       : null;
 
-    // Keep the original backend field names for backwards compatibility
-    this.nom_produit = data.nom_produit || data.name;
-    this.prix = this.price; // Use the converted numeric value
-    this.type_matiere =
-      data.type_matiere || data.material_type || data.material;
-    this.epaisseur = this.thickness; // Use the converted numeric value
-    this.longueur = this.length; // Use the converted numeric value
-    this.largeur = this.width; // Ensure both are always available
     this.date_creation = data.date_creation;
     this.derniere_mise_a_jour = data.derniere_mise_a_jour;
-    this.code = data.code_produit || data.code;
-     this.code_produit = data.code_produit || data.code;
   }
 
-  // Add any methods you want the model to have
-  getFormattedPrice() {
+  // Formatting methods
+  getFormattedPurchasePrice() {
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",
       currency: "EUR",
-    }).format(this.price);
+    }).format(this.prix_achat);
+  }
+
+  getFormattedSalePrice() {
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
+    }).format(this.prix_vente);
   }
 }
 
