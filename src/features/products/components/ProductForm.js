@@ -1,34 +1,8 @@
 import React, { useState, useEffect } from "react";
-import {
-  Form,
-  Input,
-  Button,
-  Select,
-  InputNumber,
-  Upload,
-  message,
-  Typography,
-  Card,
-  Space,
-  Row,
-  Col,
-  Tooltip,
-  Progress,
-  Badge,
-} from "antd";
-import {
-  PlusOutlined,
-  SaveOutlined,
-  CloseOutlined,
-  InfoCircleOutlined,
-  CameraOutlined,
-  TagOutlined,
-  ColumnHeightOutlined,
-  DollarOutlined,
-  FileTextOutlined,
-  CheckCircleOutlined,
-} from "@ant-design/icons";
+import {Form, Input, Button, Select, InputNumber, Upload, message, Typography, Card, Space, Row, Col, Tooltip, Progress, Badge} from "antd";
+import { PlusOutlined, SaveOutlined, CloseOutlined, InfoCircleOutlined, CameraOutlined, TagOutlined, ColumnHeightOutlined, DollarOutlined, FileTextOutlined, CheckCircleOutlined, UserOutlined} from "@ant-design/icons";
 import { useProducts } from "../contexts/ProductContext";
+import FournisseurService from "../../purshase/Services/FournisseurService";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -46,12 +20,35 @@ const ProductForm = ({
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [formProgress, setFormProgress] = useState(0);
+  const [fournisseurs, setFournisseurs] = useState([]);
+
+  useEffect(() => {
+    fetchFournisseurs();
+  }, []);
+
+  // Charger fournisseurs
+  const fetchFournisseurs = async () => {
+    try {
+      const data = await FournisseurService.getAll();
+      let list = [];
+      if (data && Array.isArray(data.results)) {
+        list = data.results;
+      } else if (Array.isArray(data)) {
+        list = data;
+      }
+      setFournisseurs(list);
+    } catch {
+      message.error("Erreur lors du chargement des fournisseurs");
+      setFournisseurs([]);
+    }
+  };
+
 
   // Calcul du progrès du formulaire
   const calculateProgress = () => {
     const values = form.getFieldsValue();
-    const requiredFields = ['name'];
-    const optionalFields = ['code_produit', 'material', 'thickness', 'length', 'width', 'surface', 'price', 'description'];
+    const requiredFields = ['nom_produit'];
+    const optionalFields = ['code_produit', 'ref_produit', 'categorie', 'sous-categorie', 'materiau', 'fournisseur', 'stock_initial', 'seuil_alerte', 'unite_mesure', 'statut', 'code_barres', 'emplacement', 'prix_achat', 'prix_vente', 'description', 'file'];
     
     let filledRequired = 0;
     let filledOptional = 0;
@@ -74,14 +71,20 @@ const ProductForm = ({
   useEffect(() => {
     if (productToEdit) {
       form.setFieldsValue({
-        name: productToEdit.nom_produit,
-        code_produit: productToEdit.code_produit,
-        material: productToEdit.type_matiere,
-        thickness: productToEdit.epaisseur,
-        length: productToEdit.longueur,
-        width: productToEdit.largeur,
-        surface: productToEdit.surface,
-        price: productToEdit.prix,
+        nom_produit: productToEdit.nom_produit,
+        ref_produit: productToEdit.ref_produit,
+        categorie: productToEdit.categorie,
+        sous_categorie: productToEdit.sous_categorie,
+        materiau: productToEdit.materiau,
+        fournisseur: productToEdit.fournisseur,
+        stock_initial: productToEdit.stock_initial,
+        seuil_alerte: productToEdit.seuil_alerte,
+        unite_mesure: productToEdit.unite_mesure,
+        statut: productToEdit.statut,
+        code_barres: productToEdit.code_barres,
+        emplacement: productToEdit.emplacement,
+        prix_achat: productToEdit.prix_achat,
+        prix_vente: productToEdit.prix_vente,
         description: productToEdit.description,
       });
 
@@ -159,22 +162,48 @@ const ProductForm = ({
       const changedFields = {};
 
       if (productToEdit && productToEdit.id) {
-        if (values.name !== productToEdit.nom_produit)
-          changedFields.nom_produit = values.name;
-        if (values.code_produit !== productToEdit.code_produit)
-          changedFields.code_produit = values.code_produit;
-        if (values.material !== productToEdit.type_matiere)
-          changedFields.type_matiere = values.material;
-        if (values.thickness !== productToEdit.epaisseur)
-          changedFields.epaisseur = values.thickness;
-        if ((values.length || 0) !== productToEdit.longueur)
-          changedFields.longueur = values.length || 0;
-        if ((values.width || 0) !== productToEdit.largeur)
-          changedFields.largeur = values.width || 0;
-        if (values.surface !== productToEdit.surface)
-          changedFields.surface = values.surface;
-        if ((values.price || 0) !== productToEdit.prix)
-          changedFields.prix = values.price || 0;
+        if (values.nom_produit !== productToEdit.nom_produit)
+          changedFields.nom_produit = values.nom_produit;
+
+        if (values.ref_produit !== productToEdit.ref_produit)
+          changedFields.ref_produit = values.ref_produit;
+
+        if (values.categorie !== productToEdit.categorie)
+          changedFields.categorie = values.categorie;
+
+        if (values.sous_categorie !== productToEdit.sous_categorie)
+          changedFields.sous_categorie = values.sous_categorie;
+
+        if (values.materiau !== productToEdit.materiau)
+          changedFields.materiau = values.materiau;
+
+        if (values.fournisseur !== productToEdit.fournisseur)
+          changedFields.fournisseur = values.fournisseur;
+
+        if ((values.stock_initial || 0) !== productToEdit.stock_initial)
+          changedFields.stock_initial = values.stock_initial || 0;
+
+        if ((values.seuil_alerte || 0) !== productToEdit.seuil_alerte)
+          changedFields.seuil_alerte = values.seuil_alerte || 0;
+
+        if (values.unite_mesure !== productToEdit.unite_mesure)
+          changedFields.unite_mesure = values.unite_mesure;
+
+        if (values.statut !== productToEdit.statut)
+          changedFields.statut = values.statut;
+
+        if (values.code_barres !== productToEdit.code_barres)
+          changedFields.code_barres = values.code_barres;
+
+        if (values.emplacement !== productToEdit.emplacement)
+          changedFields.emplacement = values.emplacement;
+
+        if ((values.prix_achat || 0) !== productToEdit.prix_achat)
+          changedFields.prix_achat = values.prix_achat || 0;
+
+        if ((values.prix_vente || 0) !== productToEdit.prix_vente)
+          changedFields.prix_vente = values.prix_vente || 0;
+
         if ((values.description || "") !== productToEdit.description)
           changedFields.description = values.description || "";
 
@@ -221,17 +250,24 @@ const ProductForm = ({
         }
 
         const productPayload = {
-          nom_produit: values.name,
-          code_produit: values.code_produit,
-          type_matiere: values.material,
-          epaisseur: values.thickness,
-          longueur: values.length || 0,
-          largeur: values.width || 0,
-          surface: values.surface,
-          prix: values.price || 0,
+          nom_produit: values.nom_produit,
+          ref_produit: values.ref_produit,
+          categorie: values.categorie,
+          sous_categorie: values.sous_categorie,
+          materiau: values.materiau,
+          fournisseur: values.fournisseur,
+          stock_initial: values.stock_initial || 0,
+          seuil_alerte: values.seuil_alerte || 0,
+          unite_mesure: values.unite_mesure,
+          statut: values.statut,
+          code_barres: values.code_barres,
+          emplacement: values.emplacement,
+          prix_achat: values.prix_achat || 0,
+          prix_vente: values.prix_vente || 0,
           description: values.description || "",
           image: imageData ?? null,
         };
+
 
         await addProduct(productPayload);
         message.success("Produit ajouté avec succès");
@@ -380,13 +416,13 @@ const ProductForm = ({
         <SectionCard
           icon={<TagOutlined />}
           title="Informations générales"
-          description="Nom, code et type de matériau du produit"
+          description="Nom, référence, catégorie, type de matériau et fournisseur du produit"
           color="#3b82f6"
         >
           <Row gutter={[20, 0]}>
             <Col xs={24} sm={12}>
               <StyledFormItem
-                name="name"
+                name="nom_produit"
                 label={<RequiredLabel>Nom du produit</RequiredLabel>}
                 rules={[{ required: true, message: "Le nom du produit est obligatoire" }]}
               >
@@ -398,10 +434,10 @@ const ProductForm = ({
             </Col>
             <Col xs={24} sm={12}>
               <StyledFormItem 
-                name="code_produit" 
+                name="ref_produit" 
                 label={
                   <OptionalLabel>
-                    Code du produit
+                    Référence produit
                     <Tooltip title="Code unique pour identifier le produit">
                       <InfoCircleOutlined style={{ marginLeft: 4, color: '#bfbfbf' }} />
                     </Tooltip>
@@ -409,51 +445,136 @@ const ProductForm = ({
                 }
               >
                 <Input 
-                  placeholder="🔢 Ex: ACIER-001" 
+                  placeholder="🔢 Ex: OUT-MAR-500" 
                   prefix={<TagOutlined style={{ color: '#9ca3af' }} />}
                 />
               </StyledFormItem>
             </Col>
           </Row>
-
-          <StyledFormItem 
-            name="material" 
-            label={<OptionalLabel>Type de matériau</OptionalLabel>}
-          >
-            <Select 
-              placeholder="🔧 Sélectionner un matériau" 
-              allowClear
-              style={{ 
-                height: '44px',
-              }}
-            >
-              <Option value="acier">🔩 Acier</Option>
-              <Option value="acier_inoxydable">✨ Acier inoxydable</Option>
-              <Option value="aluminium">⚡ Aluminium</Option>
-              <Option value="laiton">🟡 Laiton</Option>
-              <Option value="cuivre">🟠 Cuivre</Option>
-              <Option value="acier_galvanise">🛡️ Acier galvanisé</Option>
-              <Option value="autre">❓ Autre</Option>
-            </Select>
-          </StyledFormItem>
+          <Row gutter={[20,0]}>
+            <Col xs={24} sm={12}>  
+              <StyledFormItem 
+                name="categorie" 
+                label={<OptionalLabel>Catégorie</OptionalLabel>}
+                >
+                <Select 
+                  placeholder="🔧 Sélectionner une catégorie" 
+                  allowClear
+                  style={{ 
+                    height: '44px',
+                  }}
+                >
+                  <Option value="acier">🔩 Acier</Option>
+                  <Option value="acier_inoxydable">✨ Acier inoxydable</Option>
+                  <Option value="aluminium">⚡ Aluminium</Option>
+                  <Option value="laiton">🟡 Laiton</Option>
+                  <Option value="cuivre">🟠 Cuivre</Option>
+                  <Option value="acier_galvanise">🛡️ Acier galvanisé</Option>
+                  <Option value="autre">❓ Autre</Option>
+                </Select>
+              </StyledFormItem>
+            </Col>
+            <Col xs={24} sm={12}>
+              <StyledFormItem 
+                name="sous_categorie" 
+                label={<OptionalLabel>Sous-catégorie</OptionalLabel>}
+                >
+                <Select 
+                  placeholder="🔧 Sélectionner d'abord une catégorie" 
+                  allowClear
+                  style={{ 
+                    height: '44px',
+                  }}
+                >
+                  <Option value="acier">🔩 Acier</Option>
+                  <Option value="acier_inoxydable">✨ Acier inoxydable</Option>
+                  <Option value="aluminium">⚡ Aluminium</Option>
+                  <Option value="laiton">🟡 Laiton</Option>
+                  <Option value="cuivre">🟠 Cuivre</Option>
+                  <Option value="acier_galvanise">🛡️ Acier galvanisé</Option>
+                  <Option value="autre">❓ Autre</Option>
+                </Select>
+              </StyledFormItem>
+            </Col>
+          </Row>
+          <Row gutter={[20,0]}>
+            <Col xs={24} sm={12}>  
+              <StyledFormItem 
+                name="materiau" 
+                label={<OptionalLabel>Matériau</OptionalLabel>}
+                >
+                <Select 
+                  placeholder="🔧 Sélectionner un matériau" 
+                  allowClear
+                  style={{ 
+                    height: '44px',
+                  }}
+                >
+                  <Option value="acier">🔩 Acier</Option>
+                  <Option value="acier_inoxydable">✨ Acier inoxydable</Option>
+                  <Option value="aluminium">⚡ Aluminium</Option>
+                  <Option value="laiton">🟡 Laiton</Option>
+                  <Option value="cuivre">🟠 Cuivre</Option>
+                  <Option value="acier_galvanise">🛡️ Acier galvanisé</Option>
+                  <Option value="autre">❓ Autre</Option>
+                </Select>
+              </StyledFormItem>
+            </Col>
+            <Col xs={24} sm={12}>
+              <StyledFormItem 
+                name="fournisseur" 
+                label={<OptionalLabel>Fournisseur</OptionalLabel>}
+                >
+                <Select
+                  size="large"
+                  placeholder="Sélectionner un fournisseur"
+                  showSearch
+                  optionFilterProp="children"
+                  allowClear
+                  filterOption={(input, option) =>
+                    option.children.toLowerCase().includes(input.toLowerCase())
+                  }
+                  suffixIcon={<UserOutlined style={{ color: "#1890ff" }} />}
+                  dropdownStyle={{ borderRadius: 12 }}
+                  style={{
+                    borderRadius: 10,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    fontSize: 15,
+                    transition: "box-shadow 0.3s ease",
+                  }}
+                  onFocus={(e) =>
+                    (e.currentTarget.style.boxShadow = "0 0 6px #1890ff")
+                  }
+                  onBlur={(e) =>
+                    (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)")
+                  }
+                >
+                  {fournisseurs.map((f) => (
+                    <Option key={f.id} value={f.nom}>
+                      {f.nom}
+                    </Option>
+                  ))}
+                </Select>
+              </StyledFormItem>
+            </Col>
+          </Row>
         </SectionCard>
 
-        {/* Section Dimensions */}
+        {/* Section Stock */}
         <SectionCard
           icon={<ColumnHeightOutlined />}
-          title="Dimensions & Spécifications"
+          title="Stock & Emplacement"
           description="Mesures précises du produit en millimètres"
           color="#10b981"
         >
           <Row gutter={[20, 0]}>
             <Col xs={12} sm={6}>
               <Form.Item 
-                name="thickness" 
-                label={<OptionalLabel>Épaisseur (mm)</OptionalLabel>}
+                name="stock_initial" 
+                label={<OptionalLabel>Stock initial</OptionalLabel>}
               >
                 <InputNumber
                   min={0}
-                  step={0.01}
                   style={{ 
                     width: "100%", 
                     height: '44px',
@@ -463,18 +584,17 @@ const ProductForm = ({
                   }}
                   onKeyDown={onlyNumbersAndDot}
                   onPaste={handlePasteNumbersOnly}
-                  placeholder="📏 1.5"
+                  placeholder="📏 0"
                 />
               </Form.Item>
             </Col>
             <Col xs={12} sm={6}>
               <Form.Item 
-                name="length" 
-                label={<OptionalLabel>Longueur (mm)</OptionalLabel>}
+                name="seuil_alerte" 
+                label={<OptionalLabel>Seuil d'alerte</OptionalLabel>}
               >
                 <InputNumber
                   min={0}
-                  step={0.01}
                   style={{ 
                     width: "100%", 
                     height: '44px',
@@ -484,18 +604,17 @@ const ProductForm = ({
                   }}
                   onKeyDown={onlyNumbersAndDot}
                   onPaste={handlePasteNumbersOnly}
-                  placeholder="📐 1000"
+                  placeholder="📐 0"
                 />
               </Form.Item>
             </Col>
             <Col xs={12} sm={6}>
               <Form.Item 
-                name="width" 
-                label={<OptionalLabel>Largeur (mm)</OptionalLabel>}
+                name="unite_mesure" 
+                label={<OptionalLabel>Unité de mesure</OptionalLabel>}
               >
                 <InputNumber
                   min={0}
-                  step={0.01}
                   style={{ 
                     width: "100%", 
                     height: '44px',
@@ -511,12 +630,11 @@ const ProductForm = ({
             </Col>
             <Col xs={12} sm={6}>
               <Form.Item 
-                name="surface" 
-                label={<OptionalLabel>Surface (m²)</OptionalLabel>}
+                name="statut" 
+                label={<OptionalLabel>Statut du produit</OptionalLabel>}
               >
                 <InputNumber
                   min={0}
-                  step={0.01}
                   style={{ 
                     width: "100%", 
                     height: '44px',
@@ -527,6 +645,46 @@ const ProductForm = ({
                   onKeyDown={onlyNumbersAndDot}
                   onPaste={handlePasteNumbersOnly}
                   placeholder="📐 2.5"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={[20,0]}>
+            <Col xs={12} sm={12}>
+              <Form.Item 
+                name="code_barres" 
+                label={<OptionalLabel>Code à barres</OptionalLabel>}
+              >
+                <Input
+                  style={{ 
+                    width: "100%", 
+                    height: '44px',
+                    borderRadius: '10px',
+                    border: '2px solid #e5e7eb',
+                    fontSize: '15px'
+                  }}
+                  onKeyDown={onlyNumbersAndDot}
+                  onPaste={handlePasteNumbersOnly}
+                  placeholder="EAN13 (optionnel)"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={12} sm={12}>
+              <Form.Item 
+                name="emplacement" 
+                label={<OptionalLabel>Emplacement magasin</OptionalLabel>}
+              >
+                <Input
+                  style={{ 
+                    width: "100%", 
+                    height: '44px',
+                    borderRadius: '10px',
+                    border: '2px solid #e5e7eb',
+                    fontSize: '15px'
+                  }}
+                  onKeyDown={onlyNumbersAndDot}
+                  onPaste={handlePasteNumbersOnly}
+                  placeholder="EX: Aliée A - Etagère 3 - Niveau 3"
                 />
               </Form.Item>
             </Col>
@@ -543,12 +701,32 @@ const ProductForm = ({
           <Row gutter={[20, 0]}>
             <Col xs={24} sm={12}>
               <Form.Item 
-                name="price" 
-                label={<OptionalLabel>Prix </OptionalLabel>}
+                name="prix_achat" 
+                label={<OptionalLabel>Prix d'achat (DT)</OptionalLabel>}
               >
                 <InputNumber
                   min={0}
-                  step={0.01}
+                  style={{ 
+                    width: "100%", 
+                    height: '44px',
+                    borderRadius: '10px',
+                    border: '2px solid #e5e7eb',
+                    fontSize: '15px'
+                  }}
+                  onKeyDown={onlyNumbersAndDot}
+                  onPaste={handlePasteNumbersOnly}
+                  placeholder="💰 100.00"
+                 
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item 
+                name="prix_vente" 
+                label={<OptionalLabel>Prix de vente (DT)</OptionalLabel>}
+              >
+                <InputNumber
+                  min={0}
                   style={{ 
                     width: "100%", 
                     height: '44px',
@@ -601,88 +779,88 @@ const ProductForm = ({
           color="#722ed1"
         >
         <Form.Item
-  name="upload"
-  valuePropName="fileList"
-  getValueFromEvent={normFile}
->
-  <Upload
-    listType="picture-card"
-    fileList={fileList}
-    onChange={handleUploadChange}
-    beforeUpload={() => false}
-    maxCount={1}
-    accept="image/png,image/jpeg,image/jpg,image/webp"
-    className="custom-upload"
-  >
-    {fileList.length < 1 && (
-      <div className="upload-content">
-        
-        <div className="upload-text">
-          📸 Ajouter une image 
-        </div>
-     
-      </div>
-    )}
-  </Upload>
-</Form.Item>
+            name="image"
+            valuePropName="fileList"
+            getValueFromEvent={normFile}
+          >
+            <Upload
+              listType="picture-card"
+              fileList={fileList}
+              onChange={handleUploadChange}
+              beforeUpload={() => false}
+              maxCount={1}
+              accept="image/png,image/jpeg,image/jpg,image/webp"
+              className="custom-upload"
+            >
+              {fileList.length < 1 && (
+                <div className="upload-content">
+                  
+                  <div className="upload-text">
+                    📸 Ajouter une image 
+                  </div>
+              
+                </div>
+              )}
+            </Upload>
+          </Form.Item>
 
-{/* CSS à ajouter */}
-<style jsx>{`
-  .custom-upload .ant-upload-select {
-    background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
-    border: 2px dashed #d9d9d9;
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    min-height: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+          {/* CSS à ajouter */}
+          <style jsx>{`
+            .custom-upload .ant-upload-select {
+              background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+              border: 2px dashed #d9d9d9;
+              border-radius: 12px;
+              transition: all 0.3s ease;
+              min-height: 120px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
 
-  .custom-upload .ant-upload-select:hover {
-    border-color: #722ed1;
-    background: linear-gradient(135deg, #f0f4ff 0%, #e8f0ff 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(114, 46, 209, 0.15);
-  }
+            .custom-upload .ant-upload-select:hover {
+              border-color: #722ed1;
+              background: linear-gradient(135deg, #f0f4ff 0%, #e8f0ff 100%);
+              transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(114, 46, 209, 0.15);
+            }
 
-  .upload-content {
-    text-align: center;
-    padding: 20px;
-  }
+            .upload-content {
+              text-align: center;
+              padding: 20px;
+            }
 
-  .upload-icon {
-    font-size: 24px;
-    color: #722ed1;
-    margin-bottom: 12px;
-    transition: transform 0.2s ease;
-  }
+            .upload-icon {
+              font-size: 24px;
+              color: #722ed1;
+              margin-bottom: 12px;
+              transition: transform 0.2s ease;
+            }
 
-  .custom-upload .ant-upload-select:hover .upload-icon {
-    transform: scale(1.1);
-  }
+            .custom-upload .ant-upload-select:hover .upload-icon {
+              transform: scale(1.1);
+            }
 
-  .upload-text {
-    color: #722ed1;
-    font-weight: 500;
-    font-size: 16px;
-    margin-bottom: 4px;
-  }
+            .upload-text {
+              color: #722ed1;
+              font-weight: 500;
+              font-size: 16px;
+              margin-bottom: 4px;
+            }
 
-  .upload-hint {
-    color: #8c8c8c;
-    font-size: 12px;
-    margin-top: 4px;
-  }
+            .upload-hint {
+              color: #8c8c8c;
+              font-size: 12px;
+              margin-top: 4px;
+            }
 
-  .custom-upload .ant-upload-list-picture-card-container {
-    width: 100%;
-  }
+            .custom-upload .ant-upload-list-picture-card-container {
+              width: 100%;
+            }
 
-  .custom-upload .ant-upload-list-picture-card .ant-upload-list-item {
-    border-radius: 12px;
-  }
-`}</style>
+            .custom-upload .ant-upload-list-picture-card .ant-upload-list-item {
+              border-radius: 12px;
+            }
+          `}</style>
           {imagePreview && (
             <div style={{ 
               textAlign: "center", 
