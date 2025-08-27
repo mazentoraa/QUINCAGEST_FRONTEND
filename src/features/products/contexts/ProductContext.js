@@ -87,24 +87,53 @@ export const ProductProvider = ({ children }) => {
 
       // Ensure numeric fields are properly parsed
       if (typeof dataToSend === "object") {
-        if (dataToSend.price !== undefined)
-          dataToSend.price = parseFloat(dataToSend.price) || 0;
-        if (dataToSend.thickness !== undefined)
-          dataToSend.thickness = parseFloat(dataToSend.thickness) || 0;
-        if (dataToSend.length !== undefined)
-          dataToSend.length = parseFloat(dataToSend.length) || 0;
-        if (dataToSend.surface !== undefined)
-          dataToSend.surface = parseFloat(dataToSend.surface) || 0;
+        if (dataToSend.stock_initial !== undefined)
+          dataToSend.stock_initial = parseInt(dataToSend.stock_initial) || 0;
+
+        if (dataToSend.seuil_alerte !== undefined)
+          dataToSend.seuil_alerte = parseInt(dataToSend.seuil_alerte) || 0;
+
+        if (dataToSend.prix_achat !== undefined)
+          dataToSend.prix_achat = parseFloat(dataToSend.prix_achat) || 0;
+
+        if (dataToSend.prix_vente !== undefined)
+          dataToSend.prix_vente = parseFloat(dataToSend.prix_vente) || 0;
       }
 
       // Map frontend field names to backend field names
       if (typeof dataToSend === "object") {
-        // If we're receiving a product with frontend field names, we need to map them
-        if (dataToSend.material && !dataToSend.material_type) {
-          dataToSend.material_type = dataToSend.material;
-        }
         if (dataToSend.name && !dataToSend.nom_produit) {
           dataToSend.nom_produit = dataToSend.name;
+        }
+        if (dataToSend.ref && !dataToSend.ref_produit) {
+          dataToSend.ref_produit = dataToSend.ref;
+        }
+        if (dataToSend.material && !dataToSend.materiau) {
+          dataToSend.materiau = dataToSend.material;
+        }
+        if (dataToSend.supplier && !dataToSend.fournisseur) {
+          dataToSend.fournisseur = dataToSend.supplier;
+        }
+        if (dataToSend.category && !dataToSend.categorie) {
+          dataToSend.categorie = dataToSend.category;
+        }
+        if (dataToSend.subcategory && !dataToSend.sous_categorie) {
+          dataToSend.sous_categorie = dataToSend.subcategory;
+        }
+        if (dataToSend.unit && !dataToSend.unite_mesure) {
+          dataToSend.unite_mesure = dataToSend.unit;
+        }
+        if (dataToSend.status && !dataToSend.statut) {
+          dataToSend.statut = dataToSend.status;
+        }
+        if (dataToSend.barcode && !dataToSend.code_barres) {
+          dataToSend.code_barres = dataToSend.barcode;
+        }
+        if (dataToSend.location && !dataToSend.emplacement) {
+          dataToSend.emplacement = dataToSend.location;
+        }
+        if (dataToSend.description && !dataToSend.description) {
+          dataToSend.description = dataToSend.description;
         }
       }
 
@@ -127,7 +156,7 @@ export const ProductProvider = ({ children }) => {
       setLoading(false);
     }
   };
-
+y
   // Update an existing product
   const updateProduct = async (id, productData) => {
     try {
@@ -137,8 +166,6 @@ export const ProductProvider = ({ children }) => {
       console.log("Product ID:", id);
       console.log("Raw productData received:", productData);
 
-      // For updates, send only the changed fields directly without creating a ProductModel
-      // This ensures we're doing a true PATCH operation
       let dataToSend = productData;
 
       // If productData is FormData, convert it to a plain object
@@ -151,56 +178,61 @@ export const ProductProvider = ({ children }) => {
         console.log("Converted FormData:", dataToSend);
       }
 
-      // Clean the data to only include backend field names and remove frontend duplicates
+      // Clean the data to only include backend field names
       const cleanedData = {};
 
-      // Only include backend field names and necessary fields
       if (dataToSend.nom_produit !== undefined)
         cleanedData.nom_produit = dataToSend.nom_produit;
-      if (dataToSend.code_produit !== undefined)
-        cleanedData.code_produit = dataToSend.code_produit;      
-      if (dataToSend.type_matiere !== undefined)
-        cleanedData.type_matiere = dataToSend.type_matiere;
-      if (dataToSend.epaisseur !== undefined)
-        cleanedData.epaisseur = parseFloat(dataToSend.epaisseur) || 0;
-      if (dataToSend.longueur !== undefined)
-        cleanedData.longueur = parseFloat(dataToSend.longueur) || 0;
-      if (dataToSend.largeur !== undefined)
-        cleanedData.largeur = parseFloat(dataToSend.largeur) || 0;
-      
-      if (dataToSend.surface !== undefined)
-        cleanedData.surface = parseFloat(dataToSend.surface) || 0;
-      if (dataToSend.prix !== undefined)
-        cleanedData.prix = parseFloat(dataToSend.prix) || 0;
+      if (dataToSend.ref_produit !== undefined)
+        cleanedData.ref_produit = dataToSend.ref_produit;
+      if (dataToSend.categorie !== undefined)
+        cleanedData.categorie = dataToSend.categorie;
+      if (dataToSend.sous_categorie !== undefined)
+        cleanedData.sous_categorie = dataToSend.sous_categorie;
+      if (dataToSend.materiau !== undefined)
+        cleanedData.materiau = dataToSend.materiau;
+      if (dataToSend.fournisseur !== undefined)
+        cleanedData.fournisseur = dataToSend.fournisseur;
+
+      if (dataToSend.stock_initial !== undefined)
+        cleanedData.stock_initial = parseInt(dataToSend.stock_initial) || 0;
+      if (dataToSend.seuil_alerte !== undefined)
+        cleanedData.seuil_alerte = parseInt(dataToSend.seuil_alerte) || 0;
+
+      if (dataToSend.unite_mesure !== undefined)
+        cleanedData.unite_mesure = dataToSend.unite_mesure;
+      if (dataToSend.statut !== undefined)
+        cleanedData.statut = dataToSend.statut;
+      if (dataToSend.code_barres !== undefined)
+        cleanedData.code_barres = dataToSend.code_barres;
+      if (dataToSend.emplacement !== undefined)
+        cleanedData.emplacement = dataToSend.emplacement;
+
+      if (dataToSend.prix_achat !== undefined)
+        cleanedData.prix_achat = parseFloat(dataToSend.prix_achat) || 0;
+      if (dataToSend.prix_vente !== undefined)
+        cleanedData.prix_vente = parseFloat(dataToSend.prix_vente) || 0;
+
       if (dataToSend.description !== undefined)
         cleanedData.description = dataToSend.description;
 
-      // Handle image field carefully - only include if it's a new upload (base64) or null (removal)
+      // Handle image carefully
       if (dataToSend.hasOwnProperty("image")) {
         const imageValue = dataToSend.image;
         console.log("Processing image field:", imageValue);
-        console.log("Image type:", typeof imageValue);
 
         if (imageValue === null) {
-          // Image removal
-          cleanedData.image = null;
-          console.log("Image removal detected");
+          cleanedData.image = null; // removal
         } else if (
           typeof imageValue === "string" &&
           imageValue.startsWith("data:")
         ) {
-          // New base64 image upload
-          cleanedData.image = imageValue;
-          console.log("New base64 image detected");
+          cleanedData.image = imageValue; // new base64 upload
         } else if (
           typeof imageValue === "string" &&
           imageValue.startsWith("http")
         ) {
-          // This is an existing image URL - don't include it in PATCH
-          console.log(
-            "Existing image URL detected - NOT including in PATCH payload"
-          );
-          // Don't add image to cleanedData
+          console.log("Existing image URL detected - skipping");
         } else {
           console.log("Unknown image format:", imageValue);
         }
@@ -209,16 +241,12 @@ export const ProductProvider = ({ children }) => {
       dataToSend = cleanedData;
 
       console.log("Final cleaned data being sent to API:", dataToSend);
-      console.log("Has image field:", dataToSend.hasOwnProperty("image"));
-      console.log("Image value:", dataToSend.image);
-      console.log("Image type:", typeof dataToSend.image);
 
-      // Don't create a ProductModel for updates - send the raw data directly
+      // Perform PATCH request
       const updatedProduct = await ProductService.updateProduct(id, dataToSend);
 
-      // Convert the updated product to ProductModel for consistent state management
+      // Keep frontend state consistent
       const productModel = new ProductModel(updatedProduct);
-
       setProducts((prevProducts) =>
         prevProducts.map((p) => (p.id === id ? productModel : p))
       );
@@ -226,9 +254,7 @@ export const ProductProvider = ({ children }) => {
       message.success("Produit mis à jour avec succès");
       return updatedProduct;
     } catch (err) {
-      console.error("=== UPDATE ERROR ===");
-      console.error("Error details:", err);
-      console.error("Error response:", err.response?.data);
+      console.error("=== UPDATE ERROR ===", err);
       message.error("Erreur lors de la mise à jour du produit");
       throw err;
     } finally {
