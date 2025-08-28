@@ -736,7 +736,7 @@ const ProductForm = ({
           </Form.Item>
 
           {/* CSS à ajouter */}
-          <style jsx>{`
+          <style>{`
             .custom-upload .ant-upload-select {
               background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
               border: 2px dashed #d9d9d9;
