@@ -408,7 +408,7 @@ const ProductCard = ({ product , onDuplicateSuccess }) => {
 
         <Space direction="vertical" size={4}>
           {product.stock_initial !== null && product.stock_initial !== undefined && (
-            <Text>Stock : {product.stock_initial}{product.unite_mesure}</Text>
+            <Text>Stock : {product.stock_initial}</Text>
           )}
           {product.emplacement !== null && product.emplacement !== undefined && (
             <Text>Emplacement : {product.emplacement} mm</Text>
