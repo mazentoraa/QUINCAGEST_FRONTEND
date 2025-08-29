@@ -287,23 +287,6 @@ const ProductForm = ({
             </Text>
           )}
         </div>
-        {!productToEdit && title === "Informations générales" && (
-          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-            <div style={{ marginBottom: '8px' }}>
-              <Text style={{ color: '#6b7280', fontSize: '12px' }}>Progression</Text>
-            </div>
-            <Progress 
-              percent={formProgress} 
-              size="small" 
-              strokeColor={{
-                '0%': '#ff9a56',
-                '50%': '#ffad56',
-                '100%': '#52c41a',
-              }}
-              style={{ width: '120px' }}
-            />
-          </div>
-        )}
       </div>
       {children}
     </div>
