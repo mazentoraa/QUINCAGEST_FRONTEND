@@ -104,7 +104,7 @@ const ProductCard = ({ product , onDuplicateSuccess }) => {
           sous_categorie: values.subcategory,
           materiau: values.material,        
           fournisseur: values.supplier,    
-          stock_initial: values.initial_stock, 
+          stock: values.initial_stock, 
           seuil_alerte: values.alert_threshold, 
           unite_mesure: values.unit,         
           statut: values.status,             
@@ -401,8 +401,8 @@ const ProductCard = ({ product , onDuplicateSuccess }) => {
         </Typography.Text>          
 
         <Space direction="vertical" size={0} style={{ margin: 0 }}>
-          {product.stock_initial !== null && product.stock_initial !== undefined && (
-            <Text>Stock : {product.stock_initial}</Text>
+          {product.stock !== null && product.stock !== undefined && (
+            <Text>Stock : {product.stock}</Text>
           )}
           {product.emplacement !== null && product.emplacement !== undefined && (
             <Text>{product.emplacement}</Text>

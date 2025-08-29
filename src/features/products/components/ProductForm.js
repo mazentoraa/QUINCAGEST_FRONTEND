@@ -52,7 +52,7 @@ const ProductForm = ({
         sous_categorie: productToEdit.sous_categorie,
         materiau: productToEdit.materiau,
         fournisseur: productToEdit.fournisseur,
-        stock_initial: productToEdit.stock_initial,
+        stock: productToEdit.stock,
         seuil_alerte: productToEdit.seuil_alerte,
         unite_mesure: productToEdit.unite_mesure,
         statut: productToEdit.statut,
@@ -129,8 +129,8 @@ const ProductForm = ({
         if (values.fournisseur !== productToEdit.fournisseur)
           changedFields.fournisseur = values.fournisseur;
 
-        if ((values.stock_initial || 0) !== productToEdit.stock_initial)
-          changedFields.stock_initial = values.stock_initial || 0;
+        if ((values.stock || 0) !== productToEdit.stock)
+          changedFields.stock = values.stock || 0;
 
         if ((values.seuil_alerte || 0) !== productToEdit.seuil_alerte)
           changedFields.seuil_alerte = values.seuil_alerte || 0;
@@ -205,7 +205,7 @@ const ProductForm = ({
           sous_categorie: values.sous_categorie,
           materiau: values.materiau,
           fournisseur: values.fournisseur,
-          stock_initial: values.stock_initial || 0,
+          stock: values.stock || 0,
           seuil_alerte: values.seuil_alerte || 0,
           unite_mesure: values.unite_mesure,
           statut: values.statut,
@@ -517,7 +517,7 @@ const ProductForm = ({
           <Row gutter={[20, 0]}>
             <Col xs={12} sm={6}>
               <Form.Item 
-                name="stock_initial" 
+                name="stock" 
                 label={<OptionalLabel>Stock initial</OptionalLabel>}
               >
                 <InputNumber

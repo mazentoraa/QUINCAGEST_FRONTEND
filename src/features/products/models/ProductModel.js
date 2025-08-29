@@ -15,8 +15,8 @@ class ProductModel {
     this.fournisseur = data.fournisseur || "";
 
     // Stock + inventory
-    this.stock_initial =
-      data.stock_initial !== undefined ? parseInt(data.stock_initial) : 0;
+    this.stock =
+      data.stock !== undefined ? parseInt(data.stock) : 0;
     this.seuil_alerte =
       data.seuil_alerte !== undefined ? parseInt(data.seuil_alerte) : 0;
 

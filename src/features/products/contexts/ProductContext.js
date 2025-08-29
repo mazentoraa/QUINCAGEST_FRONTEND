@@ -87,8 +87,8 @@ export const ProductProvider = ({ children }) => {
 
       // Ensure numeric fields are properly parsed
       if (typeof dataToSend === "object") {
-        if (dataToSend.stock_initial !== undefined)
-          dataToSend.stock_initial = parseInt(dataToSend.stock_initial) || 0;
+        if (dataToSend.stock !== undefined)
+          dataToSend.stock = parseInt(dataToSend.stock) || 0;
 
         if (dataToSend.seuil_alerte !== undefined)
           dataToSend.seuil_alerte = parseInt(dataToSend.seuil_alerte) || 0;
@@ -194,8 +194,8 @@ export const ProductProvider = ({ children }) => {
       if (dataToSend.fournisseur !== undefined)
         cleanedData.fournisseur = dataToSend.fournisseur;
 
-      if (dataToSend.stock_initial !== undefined)
-        cleanedData.stock_initial = parseInt(dataToSend.stock_initial) || 0;
+      if (dataToSend.stock !== undefined)
+        cleanedData.stock = parseInt(dataToSend.stock) || 0;
       if (dataToSend.seuil_alerte !== undefined)
         cleanedData.seuil_alerte = parseInt(dataToSend.seuil_alerte) || 0;
 
