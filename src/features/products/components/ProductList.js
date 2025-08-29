@@ -59,6 +59,16 @@ const ProductList = ({ onDuplicateSuccess }) => {
 
     return () => clearInterval(intervalId);
   }, [refreshProducts]);
+
+  // Charger categories
+  const fetchCategories = async () => {
+    try {
+      categoryService.getCategories().then(res => setCategories(res.data));
+    } catch {
+      message.error("Erreur lors du chargement des categories");
+      setCategories([]);
+    }
+  };
   
   const handleAddCategorie = async () => {
     if (!nomCategorie) return message.error("Veuillez entrer un nom de catégorie");
@@ -76,8 +86,7 @@ const ProductList = ({ onDuplicateSuccess }) => {
       setNomCategorie("");
       setIsCategorieModalVisible(false);
       // Fetch updated categories after adding
-      const categoriesRes = await categoryService.getCategories();
-      setCategories(categoriesRes.data); // update state with new data
+      fetchCategories();
     } catch (err) {
       console.error(err);
       message.error("Erreur lors de la création de la catégorie");
@@ -107,36 +116,54 @@ const ProductList = ({ onDuplicateSuccess }) => {
   
   useEffect(() => {
     // load categories for sous-categorie
-    categoryService.getCategories().then(res => setCategories(res.data));
-  }, []);
+    fetchCategories();
+  }, [products]); 
   
-  const getRandomColor = () => {
-    const colors = ["#FF6B6B", "#6BCB77", "#4D96FF", "#FFD93D", "#FF6FFF"];
-    return colors[Math.floor(Math.random() * colors.length)];
-  };
+  const colors = ["#FF6B6B", "#6BCB77", "#4D96FF", "#FFD93D", "#FF6FFF"];
+  const getColor = (id) => colors[id % colors.length];
 
   const formattedCategories = () => {
     return (categories ?? []).map(cat => ({
       title: (
-        <Tooltip title={`${cat.nom} (${cat.count} produits)`}>
-          <span style={{ color: getRandomColor(), fontWeight: "bold" }}>{cat.nom} ({cat.count})</span>
+        <Tooltip title={`${cat.nom} (${cat.count || 0} produits)`}>
+          <span style={{
+            color: getColor(cat.id),
+            fontWeight: "bold",
+            display: "inline-block",
+            maxWidth: "200px",
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+          }}>
+            {cat.nom} ({cat.count || 0})
+          </span>
         </Tooltip>
       ),
       key: cat.id ?? `cat-${cat.nom}`,
-      icon: <ToolOutlined style={{ color: getRandomColor() }} />,
+      icon: <ToolOutlined style={{ color: getColor(cat.id) }} />,
       children: Array.isArray(cat.children)
         ? cat.children.map(sub => ({
             title: (
-              <Tooltip title={`${sub.nom} (${sub.count})`}>
-                <span style={{ color: getRandomColor() }}>{sub.nom} ({sub.count})</span>
+              <Tooltip title={`${sub.nom} (${sub.count || 0})`}>
+                <span style={{
+                  color: getColor(sub.id),
+                  display: "inline-block",
+                  maxWidth: "180px",
+                  textOverflow: "ellipsis",
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                }}>
+                  {sub.nom} ({sub.count || 0})
+                </span>
               </Tooltip>
             ),
             key: sub.id ?? `sub-${sub.nom}-${cat.id}`,
-            icon: <AppstoreOutlined style={{ color: getRandomColor() }} />,
+            icon: <AppstoreOutlined style={{ color: getColor(sub.id) }} />,
           }))
         : [],
     }));
   };
+
 
   console.log(formattedCategories())
 
@@ -498,9 +525,9 @@ return (
         </Card>
       <Row gutter={24} align="top">
         {/* Catégories */}
-        <Col span={10}>
+        <Col span={8}>
           <Card
-            title="Hiérarchie des Catégories"
+            title="Catégories"
             extra={
               <Button type="primary" size="medium" icon={<PlusOutlined />} onClick={setIsCategorieModalVisible}>
                 Ajouter catégorie
@@ -518,7 +545,7 @@ return (
             )}
           </Card>
         </Col>
-        <Col span={14}>
+        <Col span={16}>
           {/* Résultat Produits */}
           <Card
             title={

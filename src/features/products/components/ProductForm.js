@@ -3,6 +3,7 @@ import {Form, Input, Button, Select, InputNumber, Upload, message, Typography, C
 import { PlusOutlined, SaveOutlined, CloseOutlined, InfoCircleOutlined, CameraOutlined, TagOutlined, ColumnHeightOutlined, DollarOutlined, FileTextOutlined, CheckCircleOutlined, UserOutlined} from "@ant-design/icons";
 import { useProducts } from "../contexts/ProductContext";
 import FournisseurService from "../../purshase/Services/FournisseurService";
+import { categoryService } from "../services/CategoryService";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -21,9 +22,12 @@ const ProductForm = ({
   const [imagePreview, setImagePreview] = useState(null);
   const [formProgress, setFormProgress] = useState(0);
   const [fournisseurs, setFournisseurs] = useState([]);
+  const [selectedCategorie, setSelectedCategorie] = useState(null);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     fetchFournisseurs();
+    fetchCategories();
   }, []);
 
   // Charger fournisseurs
@@ -40,6 +44,16 @@ const ProductForm = ({
     } catch {
       message.error("Erreur lors du chargement des fournisseurs");
       setFournisseurs([]);
+    }
+  };
+
+  // Charger categories
+  const fetchCategories = async () => {
+    try {
+      categoryService.getCategories().then(res => setCategories(res.data));
+    } catch {
+      message.error("Erreur lors du chargement des categories");
+      setCategories([]);
     }
   };
 
@@ -394,14 +408,17 @@ const ProductForm = ({
                   style={{ 
                     height: '44px',
                   }}
+                  value={selectedCategorie}
+                  onSelect={(catId) => {
+                    const cat = categories.find((c) => c.id === catId);
+                    setSelectedCategorie(cat); // store the whole object
+                  }}
                 >
-                  <Option value="acier">🔩 Acier</Option>
-                  <Option value="acier_inoxydable">✨ Acier inoxydable</Option>
-                  <Option value="aluminium">⚡ Aluminium</Option>
-                  <Option value="laiton">🟡 Laiton</Option>
-                  <Option value="cuivre">🟠 Cuivre</Option>
-                  <Option value="acier_galvanise">🛡️ Acier galvanisé</Option>
-                  <Option value="autre">❓ Autre</Option>
+                  {categories.map((cat) => (
+                    <Option key={cat.id} value={cat.id}>
+                      {cat.nom}
+                    </Option>
+                  ))}
                 </Select>
               </StyledFormItem>
             </Col>
@@ -410,20 +427,17 @@ const ProductForm = ({
                 name="sous_categorie" 
                 label={<OptionalLabel>Sous-catégorie</OptionalLabel>}
                 >
-                <Select 
-                  placeholder="🔧 Sélectionner d'abord une catégorie" 
+                <Select
+                  placeholder="🔧 Sélectionner d'abord une catégorie"
                   allowClear
-                  style={{ 
-                    height: '44px',
-                  }}
+                  style={{ height: "44px" }}
+                  disabled={!selectedCategorie}
                 >
-                  <Option value="acier">🔩 Acier</Option>
-                  <Option value="acier_inoxydable">✨ Acier inoxydable</Option>
-                  <Option value="aluminium">⚡ Aluminium</Option>
-                  <Option value="laiton">🟡 Laiton</Option>
-                  <Option value="cuivre">🟠 Cuivre</Option>
-                  <Option value="acier_galvanise">🛡️ Acier galvanisé</Option>
-                  <Option value="autre">❓ Autre</Option>
+                  {selectedCategorie?.children?.map((subCat) => (
+                    <Option key={subCat.id} value={subCat.id}>
+                      {subCat.nom}
+                    </Option>
+                  ))}
                 </Select>
               </StyledFormItem>
             </Col>

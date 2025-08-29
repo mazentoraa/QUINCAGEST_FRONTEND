@@ -388,7 +388,7 @@ const ProductCard = ({ product , onDuplicateSuccess }) => {
 
       <Space direction="vertical" size="small" style={{ width: "100%" }}>
         <Space direction="horizontal">
-          <Typography.Title level={5} style={{ margin: 0, width:"max-content", }}>
+          <Typography.Title level={5} style={{ margin: 0, wordBreak: "normal" }}>
             {product.nom_produit}
           </Typography.Title>
           <Space>
