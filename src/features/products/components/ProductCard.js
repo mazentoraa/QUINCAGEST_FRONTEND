@@ -111,7 +111,7 @@ const ProductCard = ({ product , onDuplicateSuccess }) => {
           code_barres: values.barcode,      
           emplacement: values.location,  
           prix_achat: values.purchase_price, 
-          prix_vente: values.sale_price,  
+          prix_unitaire: values.sale_price,  
           description: values.description,  
           image: imageData, 
         };
@@ -392,7 +392,7 @@ const ProductCard = ({ product , onDuplicateSuccess }) => {
             {product.nom_produit}
           </Typography.Title>
           <Space>
-            <Tag color="green">{formatPrice(product.prix_vente)}</Tag>
+            <Tag color="green">{formatPrice(product.prix_unitaire)}</Tag>
           </Space>
         </Space>
 

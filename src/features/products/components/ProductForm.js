@@ -59,7 +59,7 @@ const ProductForm = ({
         code_barres: productToEdit.code_barres,
         emplacement: productToEdit.emplacement,
         prix_achat: productToEdit.prix_achat,
-        prix_vente: productToEdit.prix_vente,
+        prix_unitaire: productToEdit.prix_unitaire,
         description: productToEdit.description,
       });
 
@@ -150,8 +150,8 @@ const ProductForm = ({
         if ((values.prix_achat || 0) !== productToEdit.prix_achat)
           changedFields.prix_achat = values.prix_achat || 0;
 
-        if ((values.prix_vente || 0) !== productToEdit.prix_vente)
-          changedFields.prix_vente = values.prix_vente || 0;
+        if ((values.prix_unitaire || 0) !== productToEdit.prix_unitaire)
+          changedFields.prix_unitaire = values.prix_unitaire || 0;
 
         if ((values.description || "") !== productToEdit.description)
           changedFields.description = values.description || "";
@@ -212,7 +212,7 @@ const ProductForm = ({
           code_barres: values.code_barres,
           emplacement: values.emplacement,
           prix_achat: values.prix_achat || 0,
-          prix_vente: values.prix_vente || 0,
+          prix_unitaire: values.prix_unitaire || 0,
           description: values.description || "",
           image: imageData ?? null,
         };
@@ -655,7 +655,7 @@ const ProductForm = ({
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item 
-                name="prix_vente" 
+                name="prix_unitaire" 
                 label={<OptionalLabel>Prix de vente (DT)</OptionalLabel>}
               >
                 <InputNumber

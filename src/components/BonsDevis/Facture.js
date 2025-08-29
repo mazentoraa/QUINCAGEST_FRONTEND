@@ -357,7 +357,7 @@ export default function Facture(props) {
       // Map API products to the expected structure with prix_unitaire
       const mappedProducts = products.map((product) => ({
         ...product,
-        prix_unitaire: product.prix, // Map the prix field to prix_unitaire for compatibility
+        prix_unitaire: product.prix_unitaire, // Map the prix field to prix_unitaire for compatibility
       }));
       setAvailableProducts(mappedProducts);
     } catch (err) {

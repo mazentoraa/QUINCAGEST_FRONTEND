@@ -96,8 +96,8 @@ export const ProductProvider = ({ children }) => {
         if (dataToSend.prix_achat !== undefined)
           dataToSend.prix_achat = parseFloat(dataToSend.prix_achat) || 0;
 
-        if (dataToSend.prix_vente !== undefined)
-          dataToSend.prix_vente = parseFloat(dataToSend.prix_vente) || 0;
+        if (dataToSend.prix_unitaire !== undefined)
+          dataToSend.prix_unitaire = parseFloat(dataToSend.prix_unitaire) || 0;
       }
 
       // Map frontend field names to backend field names
@@ -210,8 +210,8 @@ export const ProductProvider = ({ children }) => {
 
       if (dataToSend.prix_achat !== undefined)
         cleanedData.prix_achat = parseFloat(dataToSend.prix_achat) || 0;
-      if (dataToSend.prix_vente !== undefined)
-        cleanedData.prix_vente = parseFloat(dataToSend.prix_vente) || 0;
+      if (dataToSend.prix_unitaire !== undefined)
+        cleanedData.prix_unitaire = parseFloat(dataToSend.prix_unitaire) || 0;
 
       if (dataToSend.description !== undefined)
         cleanedData.description = dataToSend.description;

@@ -31,13 +31,13 @@ class ProductModel {
       data.prix_achat !== undefined && data.prix_achat !== null
         ? parseFloat(data.prix_achat)
         : 0;
-    this.prix_vente =
-      data.prix_vente !== undefined && data.prix_vente !== null
-        ? parseFloat(data.prix_vente)
+    this.prix_unitaire =
+      data.prix_unitaire !== undefined && data.prix_unitaire !== null
+        ? parseFloat(data.prix_unitaire)
         : 0;
 
     // Legacy compatibility (for components that still expect "price")
-    this.price = this.prix_vente;
+    this.price = this.prix_unitaire;
 
     // Other details
     this.description = data.description || "";
@@ -69,7 +69,7 @@ class ProductModel {
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",
       currency: "EUR",
-    }).format(this.prix_vente);
+    }).format(this.prix_unitaire);
   }
 }
 
