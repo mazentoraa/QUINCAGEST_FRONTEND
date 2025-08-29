@@ -356,17 +356,16 @@ const ProductCard = ({ product , onDuplicateSuccess }) => {
     <>
       <div
         style={{
-          height: "200px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          marginBottom: "16px",
+          marginBottom: "8px",
         }}
       >
         {product.image ? (
           <Image
             width="100%"
-            height={200}
+            height={80}
             src={product.image}
             alt={product.nom_produit}
             style={{ objectFit: "contain" }}
@@ -388,30 +387,25 @@ const ProductCard = ({ product , onDuplicateSuccess }) => {
       </div>
 
       <Space direction="vertical" size="small" style={{ width: "100%" }}>
-
-        
-        <Typography.Title level={5} style={{ margin: 0 }}>
-          {product.nom_produit}
-        </Typography.Title>
-
-        <Typography.Title level={5} style={{ margin: 0 }} color="grey">
-          {product.ref_produit}
-        </Typography.Title>
-        
-
-        <Space>
-          <Tag color={getMaterialColor(product.materiau)}>
-            {product.materiau}
-          </Tag>
-          <Tag color="green">{formatPrice(product.prix_vente)}</Tag>
+        <Space direction="horizontal">
+          <Typography.Title level={5} style={{ margin: 0, width:"max-content", }}>
+            {product.nom_produit}
+          </Typography.Title>
+          <Space>
+            <Tag color="green">{formatPrice(product.prix_vente)}</Tag>
+          </Space>
         </Space>
 
-        <Space direction="vertical" size={4}>
+        <Typography.Text style={{ color:"grey" }}>
+          {product.ref_produit}
+        </Typography.Text>          
+
+        <Space direction="vertical" size={0} style={{ margin: 0 }}>
           {product.stock_initial !== null && product.stock_initial !== undefined && (
             <Text>Stock : {product.stock_initial}</Text>
           )}
           {product.emplacement !== null && product.emplacement !== undefined && (
-            <Text>Emplacement : {product.emplacement} mm</Text>
+            <Text>{product.emplacement}</Text>
           )}  
         </Space>
       </Space>
@@ -431,7 +425,7 @@ const ProductCard = ({ product , onDuplicateSuccess }) => {
       >
         {renderProductDetails()}
         <Modal
-          title="Formulaire d'ajout de produit"
+          title="Formulaire de mise à jour de produit"
           open={isModalVisible}
           onCancel={handleCancel}
           footer={null}

@@ -13,6 +13,7 @@ import {
   Input,
   Badge,
   Modal,
+  Tree,
 } from "antd";
 import {
   ReloadOutlined,
@@ -51,6 +52,50 @@ const ProductList = ({ onDuplicateSuccess }) => {
 
     return () => clearInterval(intervalId);
   }, [refreshProducts]);
+
+  const categories = [
+  {
+    title: "Outillage (542 produits)",
+    key: "outillage",
+    children: [
+      { title: "Outillage à main (312)", key: "outillage-main" },
+      { title: "Outillage électroportatif (165)", key: "outillage-elec" },
+      { title: "Accessoires et consommables (65)", key: "outillage-acc" },
+    ],
+  },
+  {
+    title: "Fixation et Visserie (823 produits)",
+    key: "fixation",
+    children: [
+      { title: "Vis et boulons (445)", key: "vis-boulons" },
+      { title: "Chevilles et fixations (287)", key: "chevilles" },
+      { title: "Écrous et rondelles (91)", key: "ecrous" },
+    ],
+  },
+  {
+    title: "Plomberie (384 produits)",
+    key: "plomberie",
+    children: [
+      { title: "Tuyauterie (156)", key: "tuyauterie" },
+      { title: "Raccords (123)", key: "raccords" },
+      { title: "Robinetterie (105)", key: "robinetterie" },
+    ],
+  },
+  {
+    title: "Électricité (267 produits)",
+    key: "electricite",
+    children: [
+      { title: "Câbles et fils (98)", key: "cables" },
+      { title: "Appareillage (102)", key: "appareillage" },
+      { title: "Éclairage (67)", key: "eclairage" },
+    ],
+  },
+];
+
+  const handleSelect = (keys, info) => {
+    console.log("Selected category:", info.node.key);
+    // TODO: load products by category
+  };
   
 const handleTrashClick = () => {
     navigate('/trash'); // ou '/products/trash' selon votre routing
@@ -167,9 +212,7 @@ const handleTrashClick = () => {
   }
 
 return (
-  <div
- 
-  >
+  <div>
     <div
       style={{
         background: "#ffffff",
@@ -355,6 +398,7 @@ return (
           borderRadius: 12,
           boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
           border: "1px solid #f0f0f0",
+          marginBottom: 24
         }}
       >
         <div style={{ marginBottom: 24 }}>
@@ -419,64 +463,95 @@ return (
             </Space>
           </div>
         )}
-      </Card>
-
-      {/* Résultat Produits */}
-      <div style={{ marginTop: 32 }}>
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "60px 0" }}>
-            <Spin size="large" />
-            <div style={{ marginTop: 12 }}>
-              <Text type="secondary">Chargement des produits...</Text>
-            </div>
-          </div>
-        ) : displayedProducts.length === 0 ? (
-          <Empty
-            description={
-              <>
-                <Text strong>Aucun produit trouvé</Text>
-                <br />
-                <Text type="secondary">
-                  {hasActiveFilters
-                    ? "Essayez d'ajuster vos filtres"
-                    : "Aucun produit disponible pour le moment"}
-                </Text>
-              </>
-            }
-            style={{ padding: "80px 0" }}
-          >
-            {hasActiveFilters && (
-              <Button type="primary" onClick={handleClearFilters}>
-                Réinitialiser les filtres
+        </Card>
+      <Row gutter={24} align="top">
+        {/* Catégories */}
+        <Col span={10}>
+          <Card
+            title="Hiérarchie des Catégories"
+            extra={
+              <Button type="primary" size="medium" icon={<PlusOutlined />}>
+                Ajouter catégorie
               </Button>
+            }
+            style={{ height: "100%" }}
+          >
+            <Tree
+              defaultExpandAll
+              treeData={categories}
+              onSelect={handleSelect}
+              />
+          </Card>
+        </Col>
+        <Col span={14}>
+          {/* Résultat Produits */}
+          <Card
+            title={
+              <div>
+                <div>Produits - Outillage à main</div>
+                <Typography.Text style={{ color: 'grey', fontSize: 12 }}>
+                  xx produits dans cette catégorie
+                </Typography.Text>
+              </div>
+            }
+            style={{ height: "100%" }}
+          >
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "60px 0" }}>
+                <Spin size="large" />
+                <div style={{ marginTop: 12 }}>
+                  <Text type="secondary">Chargement des produits...</Text>
+                </div>
+              </div>
+            ) : displayedProducts.length === 0 ? (
+              <Empty
+              description={
+                <>
+                    <Text strong>Aucun produit trouvé</Text>
+                    <br />
+                    <Text type="secondary">
+                      {hasActiveFilters
+                        ? "Essayez d'ajuster vos filtres"
+                        : "Aucun produit disponible pour le moment"}
+                    </Text>
+                  </>
+                }
+                style={{ padding: "80px 0" }}
+                >
+                {hasActiveFilters && (
+                  <Button type="primary" onClick={handleClearFilters}>
+                    Réinitialiser les filtres
+                  </Button>
+                )}
+              </Empty>
+            ) : (
+              <Row gutter={[24, 24]}>
+                {displayedProducts.map((product) => (
+                  <Col span={8} key={product.id}>
+                    <ProductCard
+                      product={product}
+                      onDuplicateSuccess={handleDuplicateSuccess}
+                      />
+                  </Col>
+                ))}
+              </Row>
             )}
-          </Empty>
-        ) : (
-          <Row gutter={[24, 24]}>
-            {displayedProducts.map((product) => (
-              <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
-                <ProductCard
-                  product={product}
-                  onDuplicateSuccess={handleDuplicateSuccess}
-                />
-              </Col>
-            ))}
-          </Row>
-        )}
-      </div>
+          </Card>
+        </Col>
+      </Row>
 
-      {/* Modal pour ajouter un produit */}
-      <Modal
-        title="Formulaire d'ajout de produit"
-        open={isModalVisible}
-        onCancel={handleCancel}
-        footer={null}
-        destroyOnClose={true}
-        width={800}
-        style={{ top: 20 }}
-      >
-        <ProductForm onSuccess={handleProductAdded} />
-      </Modal>
+        {/* Modal pour ajouter un produit */}
+        <Modal
+          title="Formulaire d'ajout de produit"
+          open={isModalVisible}
+          onCancel={handleCancel}
+          footer={null}
+          destroyOnClose={true}
+          width={800}
+          style={{ top: 20 }}
+          >
+          <ProductForm onSuccess={handleProductAdded} />
+        </Modal>
     </div>
   </div>
 );
