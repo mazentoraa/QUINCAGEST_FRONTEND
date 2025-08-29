@@ -14,6 +14,9 @@ import {
   Badge,
   Modal,
   Tree,
+  message,
+  Radio,
+  Tooltip,
 } from "antd";
 import {
   ReloadOutlined,
@@ -23,12 +26,16 @@ import {
   AppstoreOutlined,
   DeleteOutlined,
   PlusOutlined,
+  FolderOutlined,
+  FileOutlined,
+  ToolOutlined,
 } from "@ant-design/icons";
 import { useProducts } from "../contexts/ProductContext";
 import { StockContext } from "../../stock/contexts/StockContext";
 import ProductCard from "./ProductCard";
 import ProductForm from "./ProductForm";
 import { useNavigate } from 'react-router-dom';
+import { categoryService } from "../services/CategoryService";
 const { Option } = Select;
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -52,70 +59,95 @@ const ProductList = ({ onDuplicateSuccess }) => {
 
     return () => clearInterval(intervalId);
   }, [refreshProducts]);
-
-  const categories = [
-  {
-    title: "Outillage (542 produits)",
-    key: "outillage",
-    children: [
-      { title: "Outillage à main (312)", key: "outillage-main" },
-      { title: "Outillage électroportatif (165)", key: "outillage-elec" },
-      { title: "Accessoires et consommables (65)", key: "outillage-acc" },
-    ],
-  },
-  {
-    title: "Fixation et Visserie (823 produits)",
-    key: "fixation",
-    children: [
-      { title: "Vis et boulons (445)", key: "vis-boulons" },
-      { title: "Chevilles et fixations (287)", key: "chevilles" },
-      { title: "Écrous et rondelles (91)", key: "ecrous" },
-    ],
-  },
-  {
-    title: "Plomberie (384 produits)",
-    key: "plomberie",
-    children: [
-      { title: "Tuyauterie (156)", key: "tuyauterie" },
-      { title: "Raccords (123)", key: "raccords" },
-      { title: "Robinetterie (105)", key: "robinetterie" },
-    ],
-  },
-  {
-    title: "Électricité (267 produits)",
-    key: "electricite",
-    children: [
-      { title: "Câbles et fils (98)", key: "cables" },
-      { title: "Appareillage (102)", key: "appareillage" },
-      { title: "Éclairage (67)", key: "eclairage" },
-    ],
-  },
-];
-
+  
+  const handleAddCategorie = async () => {
+    if (!nomCategorie) return message.error("Veuillez entrer un nom de catégorie");
+    try {
+      let res;
+      if (typeCategorie === "categorie") {
+        res = await categoryService.createCategorie({ nom: nomCategorie });
+      } else {
+        res = await categoryService.createSousCategorie({
+          nom: nomCategorie,
+          categorie_id: selectedCategorie,
+        });
+      }      
+      message.success("Catégorie ajoutée !");
+      setNomCategorie("");
+      setIsCategorieModalVisible(false);
+      // Fetch updated categories after adding
+      const categoriesRes = await categoryService.getCategories();
+      setCategories(categoriesRes.data); // update state with new data
+    } catch (err) {
+      console.error(err);
+      message.error("Erreur lors de la création de la catégorie");
+    }
+  };
+  
   const handleSelect = (keys, info) => {
     console.log("Selected category:", info.node.key);
     // TODO: load products by category
   };
   
-const handleTrashClick = () => {
+  const handleTrashClick = () => {
     navigate('/trash'); // ou '/products/trash' selon votre routing
   };
   // Integration StockManagement
   const { filteredProducts } = useContext(StockContext);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-
+  const [isCategorieModalVisible, setIsCategorieModalVisible] = useState(false);
+  const [typeCategorie, setTypeCategorie] = useState("categorie"); // "categorie" or "sous-categorie"
+  const [nomCategorie, setNomCategorie] = useState("");
+  const [selectedCategorie, setSelectedCategorie] = useState(null);
+  const [categories, setCategories] = useState([]);
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [displayedProducts, setDisplayedProducts] = useState([]);
   
+  useEffect(() => {
+    // load categories for sous-categorie
+    categoryService.getCategories().then(res => setCategories(res.data));
+  }, []);
+  
+  const getRandomColor = () => {
+    const colors = ["#FF6B6B", "#6BCB77", "#4D96FF", "#FFD93D", "#FF6FFF"];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
+
+  const formattedCategories = () => {
+    return (categories ?? []).map(cat => ({
+      title: (
+        <Tooltip title={`${cat.nom} (${cat.count} produits)`}>
+          <span style={{ color: getRandomColor(), fontWeight: "bold" }}>{cat.nom} ({cat.count})</span>
+        </Tooltip>
+      ),
+      key: cat.id ?? `cat-${cat.nom}`,
+      icon: <ToolOutlined style={{ color: getRandomColor() }} />,
+      children: Array.isArray(cat.children)
+        ? cat.children.map(sub => ({
+            title: (
+              <Tooltip title={`${sub.nom} (${sub.count})`}>
+                <span style={{ color: getRandomColor() }}>{sub.nom} ({sub.count})</span>
+              </Tooltip>
+            ),
+            key: sub.id ?? `sub-${sub.nom}-${cat.id}`,
+            icon: <AppstoreOutlined style={{ color: getRandomColor() }} />,
+          }))
+        : [],
+    }));
+  };
+
+  console.log(formattedCategories())
+
   useEffect(() => {
     if (!Array.isArray(products)) {
       setDisplayedProducts([]);
       return;
     }
-
+    
     let filtered = products;
-
+    
     if (selectedMaterial && selectedMaterial !== "all") {
       filtered = filtered.filter((product) => {
         const productMaterial = product.type_matiere || product.material_type;
@@ -470,17 +502,20 @@ return (
           <Card
             title="Hiérarchie des Catégories"
             extra={
-              <Button type="primary" size="medium" icon={<PlusOutlined />}>
+              <Button type="primary" size="medium" icon={<PlusOutlined />} onClick={setIsCategorieModalVisible}>
                 Ajouter catégorie
               </Button>
             }
             style={{ height: "100%" }}
           >
-            <Tree
-              defaultExpandAll
-              treeData={categories}
-              onSelect={handleSelect}
+            {categories && (
+              <Tree
+                treeData={formattedCategories()}
+                defaultExpandAll
+                showLine={{ showLeafIcon: true }}
+                style={{ maxHeight: "500px", overflowY: "auto", padding: "10px", background: "#f0f2f5", borderRadius: "10px" }}
               />
+            )}
           </Card>
         </Col>
         <Col span={14}>
@@ -551,6 +586,43 @@ return (
           style={{ top: 20 }}
           >
           <ProductForm onSuccess={handleProductAdded} />
+        </Modal>
+        {/* Modal pour ajouter une catégorie */}
+        <Modal
+          title="Ajouter une catégorie ou sous-catégorie"
+          open={isCategorieModalVisible}
+          onOk={handleAddCategorie}
+          onCancel={()=>setIsCategorieModalVisible(false)}
+          confirmLoading={loading}
+        >
+          <Radio.Group
+            onChange={(e) => setTypeCategorie(e.target.value)}
+            value={typeCategorie}
+            style={{ marginBottom: 16 }}
+          >
+            <Radio value="categorie">Catégorie</Radio>
+            <Radio value="sous-categorie">Sous-catégorie</Radio>
+          </Radio.Group>
+
+          {typeCategorie === "sous-categorie" && (
+            <Select
+              placeholder="Choisir la catégorie parente"
+              style={{ width: "100%", marginBottom: 16 }}
+              value={selectedCategorie}
+              onChange={setSelectedCategorie}
+            >
+              {categories.map((cat) => (
+                <Option key={cat.id} value={cat.id}>
+                  {cat.nom}
+                </Option>
+              ))}
+            </Select>
+          )}
+          <Input
+            placeholder={typeCategorie === "categorie" ? "Nom de la catégorie" : "Nom de la sous-catégorie"}
+            value={nomCategorie}
+            onChange={(e) => setNomCategorie(e.target.value)}
+          />
         </Modal>
     </div>
   </div>
