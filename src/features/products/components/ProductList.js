@@ -123,7 +123,6 @@ const ProductList = ({ onDuplicateSuccess }) => {
   const getColor = (id) => colors[id % colors.length];
 
   const formattedCategories = () => {
-    console.log(categories)
     return (categories ?? []).map(cat => ({
       title: (
         <Tooltip title={`${cat.nom} (${cat.count || 0} produits)`}>
@@ -164,9 +163,6 @@ const ProductList = ({ onDuplicateSuccess }) => {
         : [],
     }));
   };
-
-
-  console.log(formattedCategories())
 
   useEffect(() => {
     if (!Array.isArray(products)) {

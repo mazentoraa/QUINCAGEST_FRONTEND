@@ -59,6 +59,11 @@ const ProductForm = ({
 
   useEffect(() => {
     if (productToEdit) {
+      categoryService.getCategories().then(res => {
+        const cats = res.data;
+        const cat = cats.find((c) => c.id === productToEdit.categorie);
+        setSelectedCategorie(cat)
+      });
       form.setFieldsValue({
         nom_produit: productToEdit.nom_produit,
         ref_produit: productToEdit.ref_produit,
@@ -412,6 +417,7 @@ const ProductForm = ({
                   onSelect={(catId) => {
                     const cat = categories.find((c) => c.id === catId);
                     setSelectedCategorie(cat); // store the whole object
+                    form.setFieldsValue({ sous_categorie: null }); // reset sous-categorie in the form
                   }}
                 >
                   {categories.map((cat) => (
@@ -428,7 +434,7 @@ const ProductForm = ({
                 label={<OptionalLabel>Sous-catégorie</OptionalLabel>}
                 >
                 <Select
-                  placeholder="🔧 Sélectionner d'abord une catégorie"
+                  placeholder={(selectedCategorie?"🔧 Sélectionner une catégorie":"🔧 Sélectionner d'abord une catégorie")}
                   allowClear
                   style={{ height: "44px" }}
                   disabled={!selectedCategorie}
