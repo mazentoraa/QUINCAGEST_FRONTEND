@@ -51,15 +51,6 @@ const ProductList = ({ onDuplicateSuccess }) => {
   } = useProducts();
   const navigate = useNavigate();
 
-  // Auto refresh products every 30 seconds
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      refreshProducts();
-    }, 30000); // 30000 ms = 30 seconds
-
-    return () => clearInterval(intervalId);
-  }, [refreshProducts]);
-
   // Charger categories
   const fetchCategories = async () => {
     try {
