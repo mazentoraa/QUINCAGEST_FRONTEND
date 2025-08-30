@@ -216,16 +216,6 @@ function Dashboard() {
       subtitle: "Équipe",
     },
     {
-      title: "Projets en Cours",
-      value: counts.traveaux,
-      icon: <RocketOutlined />,
-      gradient: "linear-gradient(135deg, #52c41a 0%, #389e0d 100%)",
-      path: "/manifeste/travaux",
-      change: "+8%",
-      trend: "up",
-      subtitle: "Projets actifs",
-    },
-    {
       title: "Devis Actifs",
       value: counts.devis,
       icon: <FileTextOutlined />,
@@ -625,12 +615,6 @@ function Dashboard() {
               label: "Produits",
               path: "/stock/produits",
               color: "#1890ff",
-            },
-            {
-              icon: <ToolOutlined />,
-              label: "Travaux",
-              path: "/manifeste/travaux",
-              color: "#52c41a",
             },
             {
               icon: <FileTextOutlined />,
