@@ -242,7 +242,7 @@ class BonCommandePdfService {
       <html lang="fr">
       <head>
           <meta charset="UTF-8">
-          <title>Bon de Commande ${data.numero_commande} - RM METALASER</title>
+          <title>Bon de Commande ${data.numero_commande}</title>
           <style>
               body {
                   font-family: Arial, sans-serif;
@@ -403,16 +403,16 @@ class BonCommandePdfService {
       </head>
       <body>
           <div class="header">
-              <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo">
+              <img src="https://imgcdn.dev/i/YQD9nL" alt="YUCCAINFO Logo">
               <h1>BON DE COMMANDE</h1>
-              <h2>RM METALASER</h2>
+              <h2>YUCCAINFO</h2>
               <p>
-                  Découpes Métaux<br>
-                  Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
-                  IF: 191 1419B/A/M/000<br>
-                  Tél. : +216 20 366 150<br>
-                  Email: contact@rmmetalaser.tn<br>
-                  Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
+                  Solutions ERP<br>
+                  Dar Chaabane Fehri, Nabeul, Tunisia<br>
+                  IF: 1883737/D/A/M/000<br>
+                  Tél. : +216 23 198 524 / +216 97 131 795<br>
+                  Email: contact@yuccainfo.com.tn<br>
+                  Site Web: <a href="http://www.yuccainfo.com.tn/">www.yuccainfo.com.tn/</a>
               </p>
           </div>
 
@@ -512,7 +512,7 @@ class BonCommandePdfService {
               </div>
               
               <div class="signature-box">
-                  <div class="signature-title">SIGNATURE RM METALASER</div>
+                  <div class="signature-title">SIGNATURE</div>
                   <div style="margin-top: 20px;">
                       Date : ___________<br><br>
                       Cachet et Signature :

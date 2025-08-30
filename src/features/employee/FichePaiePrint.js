@@ -83,15 +83,15 @@ const FichePaiePrint = () => {
         {/* Header Section */}
         <div className="entete">
           <div className="logo-section">
-            <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg " alt="Logo" />
+            <img src="https://imgcdn.dev/i/YQD9nL" alt="Logo" />
             <div className="entreprise-infos">
-              <strong>RM METALASER</strong><br />
-              Découpes Métaux<br />
-              Rue Hédi Khfech Z, Madagascar 3047 - Sfax<br />
-              IF: 191 1419B/A/M/000<br />
-              Tél : +216 20 366 150<br />
-              Email: contact@rmmetalaser.tn<br />
-              Site: www.rmmetalaser.tn
+              <strong>YUCCAINFO</strong><br />
+              Solutions ERP<br />
+              Dar Chaabane Fehri, Nabeul, Tunisia<br />
+              IF: 1883737/D/A/M/000<br />
+              Tél : +216 23 198 524 / +216 97 131 795<br />
+              Email: contact@yuccainfo.com.tn<br />
+              Site: www.yuccainfo.com.tn/
             </div>
           </div>
 

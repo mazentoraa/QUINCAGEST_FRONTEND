@@ -28,14 +28,14 @@ export async function generatePDF(order, client) {
   doc.setFontSize(11);
   doc.setTextColor(0, 0, 0);
   doc.setFont(undefined, 'bold');
-  doc.text("RM METALASER", 10, 10);
+  doc.text("YUCCAINFO", 10, 10);
   doc.setFontSize(10);
   doc.setFont(undefined, 'normal');
-  doc.text("Découpes Métaux", 10, 15);
-  doc.text("Rue hedi Khfecha Z l Madagascar 3047 sfax ville", 10, 20);
-  doc.text("Tél : +216 20 366 150", 10, 25);
+  doc.text("Solutions ERP", 10, 15);
+  doc.text("Dar Chaabane Fehri, Nabeul, Tunisia", 10, 20);
+  doc.text("Tél : +216 23 198 524 / +216 97 131 795", 10, 25);
   doc.text("MF : 19144189/N/A/000", 10, 30);
-  doc.text("Email : contact@rmmetalaser.tn", 10, 35);
+  doc.text("Email : contact@yuccainfo.com.tn", 10, 35);
   doc.text("Site Web : www.RMETALASER.tn", 10, 40);
 
   doc.setFontSize(13);
@@ -210,12 +210,12 @@ function InvoiceGenerator({ order, editable = false, onEdit }) {
     <div className="invoice-preview" style={{ background: '#fff', color: '#222', maxWidth: 800, margin: '0 auto', padding: 32, fontFamily: 'Arial, sans-serif', border: '1px solid #eee' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h2 style={{ margin: 0, color: '#333' }}>RM METALASER</h2>
-          <div style={{ fontSize: 13, marginBottom: 8 }}>Découpes Métaux</div>
-          <div style={{ fontSize: 12 }}>Rue hedi Khfecha Z l Madagascar 3047 sfax ville</div>
-          <div style={{ fontSize: 12 }}>Tél : +216 20 366 150</div>
+          <h2 style={{ margin: 0, color: '#333' }}>YUCCAINFO</h2>
+          <div style={{ fontSize: 13, marginBottom: 8 }}>Solutions ERP</div>
+          <div style={{ fontSize: 12 }}>Dar Chaabane Fehri, Nabeul, Tunisia</div>
+          <div style={{ fontSize: 12 }}>Tél : +216 23 198 524 / +216 97 131 795</div>
           <div style={{ fontSize: 12 }}>MF : 19144189/N/A/000</div>
-          <div style={{ fontSize: 12 }}>Email : contact@rmmetalaser.tn</div>
+          <div style={{ fontSize: 12 }}>Email : contact@yuccainfo.com.tn</div>
           <div style={{ fontSize: 12 }}>Site Web : www.RMETALASER.tn</div>
         </div>
         <img src="/images/logo.jpg" alt="Logo" style={{ width: 120, height: 'auto', objectFit: 'contain' }} />

@@ -20,8 +20,8 @@ const SupplierInstallmentForm = () => {
 
   // Form state
   const [formData, setFormData] = useState({
-    drawerName: "RM METALASER", // Default value
-    drawerTaxId: "191 1419B/A/M/000", // Default value
+    drawerName: "YUCCAINFO", // Default value
+    drawerTaxId: "1883737/D/A/M/000", // Default value
     drawerAddress: "Sfax", // Default value
     supplierName: "",
     supplierTaxId: "",
@@ -264,8 +264,8 @@ const SupplierInstallmentForm = () => {
 
   const resetForm = () => {
     setFormData({
-      drawerName: "RM METALASER",
-      drawerTaxId: "191 1419B/A/M/000",
+      drawerName: "YUCCAINFO",
+      drawerTaxId: "1883737/D/A/M/000",
       drawerAddress: "Sfax",
       supplierName: "",
       supplierTaxId: "",

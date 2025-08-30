@@ -38,16 +38,16 @@ const FichePaieView = () => {
         <div className="fiche-header">
           <div className="header-left">
             <div className="company-logo">
-              <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" />
+              <img src="https://imgcdn.dev/i/YQD9nL" alt="YUCCAINFO Logo" />
             </div>
             <div className="company-info">
-              <h3>RM METALASER</h3>
-              <p>Découpes Métaux</p>
-              <p>Rue hedi khfecha Z Madagascar 3047 - Sfax ville</p>
-              <p>IF: 191 1419B/A/M/000</p>
-              <p>Tél. : +216 20 366 150</p>
-              <p>Email: contact@rmmetalaser.tn</p>
-              <p>Site Web: www.rmmetalaser.tn</p>
+              <h3>YUCCAINFO</h3>
+              <p>Solutions ERP</p>
+              <p>Dar Chaabane Fehri, Nabeul, Tunisia</p>
+              <p>IF: 1883737/D/A/M/000</p>
+              <p>Tél. : +216 23 198 524 / +216 97 131 795</p>
+              <p>Email: contact@yuccainfo.com.tn</p>
+              <p>Site Web: www.yuccainfo.com.tn/</p>
             </div>
           </div>
 

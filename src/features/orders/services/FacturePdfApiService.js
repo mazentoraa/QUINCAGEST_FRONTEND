@@ -88,7 +88,6 @@ class FacturePdfApiService {
   static generateOrderHTML(orderData) {
     const items = orderData.produit_commande || [];
     const type_facture = orderData.type_facture
-    console.log("Order data ", orderData)
     // Helper to format invoice number as FAC-YYYY-NNNNN
     const formatInvoiceNumber = (order) => {
       return order.numero_commande;
@@ -254,7 +253,7 @@ const netAPayer = totalHTVA + totalTVA + timbreFiscal;
     <html lang="fr">
     <head>
         <meta charset="UTF-8">
-        <title>${orderData.nature == 'facture'? 'Facture' : 'Avoir'} RM METALASER</title>
+        <title>${orderData.nature == 'facture'? 'Facture' : 'Avoir'}</title>
         <script src="https://cdn.jsdelivr.net/npm/n2words/dist/n2words.umd.min.js"></script>
         <style>
             body {
@@ -363,19 +362,19 @@ const netAPayer = totalHTVA + totalTVA + timbreFiscal;
 
             <div style="display: flex; flex-direction: row; justify-content: space-between;">
         <div style="text-align:left" class="company-info">
-          <h2 style="margin-bottom: 6px;">RM METALASER</h2>
+          <h2 style="margin-bottom: 6px;">YUCCAINFO</h2>
           <p style="margin: 0; line-height: 1.5;">
-            <span style="color: grey; font-weight: bold;">Découpes Métaux</span><br>
-            Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
-            MF: 191 1419B/A/M/000<br>
-            Tél. : +216 20 366 150<br>
-            Email: contact@rmmetalaser.tn<br>
-            Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
+            <span style="color: grey; font-weight: bold;">Solutions ERP</span><br>
+            Dar Chaabane Fehri, Nabeul, Tunisia<br>
+            MF: 1883737/D/A/M/000<br>
+            Tél. : +216 23 198 524 / +216 97 131 795<br>
+            Email: contact@yuccainfo.com.tn<br>
+            Site Web: <a href="http://www.yuccainfo.com.tn/">www.yuccainfo.com.tn/</a>
           </p>
         </div>
             
             <div class="logo" style="text-align: right; margin-top: 20px;">
-          <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" style="width: 300px;">
+          <img src="https://imgcdn.dev/i/YQD9nL" alt="YUCCAINFO Logo" style="width: 300px;">
         </div>
       </div>
 

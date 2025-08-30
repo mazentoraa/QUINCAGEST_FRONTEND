@@ -231,7 +231,7 @@ class ClientMaterialPdfService {
       <html lang="fr">
       <head>
           <meta charset="UTF-8">
-          <title>Bon de Livraison Matières - RM METALASER</title>
+          <title>Bon de Livraison Matières</title>
           <style>
               body {
                   font-family: Arial, sans-serif;
@@ -341,18 +341,18 @@ class ClientMaterialPdfService {
       <body>
           <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
               <div class="company-info" style="text-align: left;">
-                  <h2 style="margin-bottom: 1px;">RM METALASER</h2>
+                  <h2 style="margin-bottom: 1px;">YUCCAINFO</h2>
                   <p style="margin: 0; line-height: 1.5;">
-                      <span style="color:grey; font-weight: bold;">Découpes Métaux</span><br>
-                      Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
-                      MF: 191 1419B/A/M/000<br>
-                      Tél. : +216 20 366 150<br>
-                      Email: contact@rmmetalaser.tn<br>
-                      Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
+                      <span style="color:grey; font-weight: bold;">Solutions ERP</span><br>
+                      Dar Chaabane Fehri, Nabeul, Tunisia<br>
+                      MF: 1883737/D/A/M/000<br>
+                      Tél. : +216 23 198 524 / +216 97 131 795<br>
+                      Email: contact@yuccainfo.com.tn<br>
+                      Site Web: <a href="http://www.yuccainfo.com.tn/">yuccainfo.com.tn/</a>
                   </p>
               </div>
               <div class="logo" style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
-                  <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER" style="width: 300px;">
+                  <img src="https://imgcdn.dev/i/YQD9nL" alt="YUCCAINFO" style="width: 300px;">
               </div>
           </header>
 
@@ -418,7 +418,7 @@ class ClientMaterialPdfService {
                   <div class="rectangle"></div>
               </div>
               <div>
-                  <p><strong>Cachet et Signature du RM METALASER</strong></p>
+                  <p><strong>Cachet et Signature</strong></p>
                   <div class="rectangle"></div>
               </div>
           </div>

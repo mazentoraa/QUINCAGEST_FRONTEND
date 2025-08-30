@@ -10,7 +10,7 @@ const SupplierTraitePrinter = (props) => {
     // RM METALAZER = client (tiré)
     clientName: "RM METALAZER",
     clientAddress: "Sfax",
-    clientTaxId: "191 1419B/A/M/000",
+    clientTaxId: "1883737/D/A/M/000",
     // Fournisseur = tireur
     drawerName: installmentData.fournisseur_nom || installmentData.supplierName || installmentData.nom_raison_sociale || '',
     drawerAddress: installmentData.fournisseur_adresse || installmentData.supplierAddress || installmentData.fournisseurAddress || '',

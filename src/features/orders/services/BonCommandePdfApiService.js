@@ -168,7 +168,7 @@ const netAPayer = totalHTVA + totalTVA + (orderData.timbre_fiscal || 0);
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Bon de Commande RM METALASER</title>
+    <title>Bon de Commande</title>
     <style>
        body {
                   font-family: Arial, sans-serif;
@@ -190,19 +190,19 @@ const netAPayer = totalHTVA + totalTVA + (orderData.timbre_fiscal || 0);
         <header style="display: flex; flex-direction: column;">
   <div style="display: flex; flex-direction: row; justify-content: space-between;">
     <div style="text-align:left" class="company-info">
-      <h2 style="margin-bottom: 6px;">RM METALASER</h2>
+      <h2 style="margin-bottom: 6px;">YUCCAINFO</h2>
       <p style="margin: 0; line-height: 1.5;">
-        <span style="color: grey; font-weight: bold;">Découpes Métaux</span><br>
-        Rue hedi khfecha ZI Madagascar 3047 - Sfax ville<br>
-        MF: 191 1419B/A/M/000<br>
-        Tél. : +216 20 366 150<br>
-        Email: contact@rmmetalaser.tn<br>
-        Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
+        <span style="color: grey; font-weight: bold;">Solutions ERP</span><br>
+        Dar Chaabane Fehri, Nabeul, Tunisia<br>
+        MF: 1883737/D/A/M/000<br>
+        Tél. : +216 23 198 524 / +216 97 131 795 / +216 97 131 795 / +216 97 131 795 / +216 97 131 795<br>
+        Email: contact@yuccainfo.com.tn<br>
+        Site Web: <a href="http://www.yuccainfo.com.tn/">www.yuccainfo.com.tn/</a>
       </p>
     </div>
         
         <div class="logo" style="text-align: right;">
-      <img src="https://i.postimg.cc/7hhjQYRS/logo.jpg" alt="RM METALASER Logo" style="width: 300px; margin-bottom: 5px;">
+      <img src="https://imgcdn.dev/i/YQD9nL" alt="YUCCAINFO Logo" style="width: 300px; margin-bottom: 5px;">
     </div>
   </div>
           

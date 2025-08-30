@@ -276,7 +276,7 @@ class PdfApiService {
       <html lang="fr">
       <head>
           <meta charset="UTF-8">
-          <title>Facture RM METALASER</title>
+          <title>Facture</title>
           <style>
               body {
                   font-family: Arial, sans-serif;
@@ -369,15 +369,15 @@ class PdfApiService {
       </head>
       <body>
           <div class="header">
-              <img src="https://s6.imgcdn.dev/Y6OYhg.jpg" alt="RM METALASER Logo">
-              <h2>RM METALASER</h2>
+              <img src="https://imgcdn.dev/i/YQD9nL" alt="YUCCAINFO Logo">
+              <h2>YUCCAINFO</h2>
               <p>
-                  Découpes Métaux<br>
-                  Rue hedi khfecha Z Madagascar 3047 - Sfax ville<br>
-                  IF: 191 1419B/A/M/000<br>
-                  Tél. : +216 20 366 150<br>
-                  Email: contact@rmmetalaser.tn<br>
-                  Site Web: <a href="http://www.rmmetalaser.tn">www.rmmetalaser.tn</a>
+                  Solutions ERP<br>
+                  Dar Chaabane Fehri, Nabeul, Tunisia<br>
+                  IF: 1883737/D/A/M/000<br>
+                  Tél. : +216 23 198 524 / +216 97 131 795<br>
+                  Email: contact@yuccainfo.com.tn<br>
+                  Site Web: <a href="http://yuccainfo.com.tn/">yuccainfo.com.tn/</a>
               </p>
           </div>
 
