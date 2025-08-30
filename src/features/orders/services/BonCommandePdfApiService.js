@@ -103,7 +103,7 @@ class BonCommandePdfApiService {
         return `
       <tr>
         <td style="border: 1px solid #000; padding: 8px; text-align: center; font-size: 11px;">${
-          item.code_produit || ""
+          item.ref_produit || ""
         }</td>
         <td style="border: 1px solid #000; padding: 8px; font-size: 11px;">${
           item.nom_produit || "N/A"

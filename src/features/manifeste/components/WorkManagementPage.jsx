@@ -990,7 +990,7 @@ const fetchWorks = async () => {
         selectedRows.map((item) => ({
           id: item.id,
           produit: item.produit,
-          code_produit: item.produit?.code_produit,
+          ref_produit: item.produit?.ref_produit,
         }))
       );
     },
@@ -1133,7 +1133,7 @@ const fetchWorks = async () => {
       totalHT += productTotal;
 
       invoiceItems.push({
-        code: item.code_produit || "",
+        code: item.ref_produit || "",
         description:
           (item.produit_name || "N/A") +
           (item.description ? ` (${item.description})` : ""),
@@ -1148,7 +1148,7 @@ const fetchWorks = async () => {
         work_id: item.id,
         produit_id: item.produit_id || item.produit?.id,
         produit_name: item.produit_name || item.produit?.nom_produit || "Produit inconnu",
-        code_produit: item.code_produit || item.produit?.code_produit,
+        ref_produit: item.ref_produit || item.produit?.ref_produit,
         description_travail: item.description,
         quantite_produit: item.billable.quantite_produit,
         remise_produit: remise,
@@ -1213,7 +1213,7 @@ const fetchWorks = async () => {
         const remise = (remisePercent / 100) * (quantity * unitPrice) || 0;
 
         return {
-          code_produit: item.code_produit || "N/A",
+          ref_produit: item.ref_produit || "N/A",
           nom_produit: item.produit_name || item.produit?.nom_produit || "N/A",
           description: item.description || "",
           billable: {

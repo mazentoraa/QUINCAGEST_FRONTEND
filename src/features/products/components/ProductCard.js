@@ -99,7 +99,7 @@ const ProductCard = ({ product , onDuplicateSuccess }) => {
     
         const newProduct = {
           nom_produit: values.name,          
-          ref_produit: values.code_produit,  
+          ref_produit: values.ref_produit,  
           categorie: values.category,        
           sous_categorie: values.subcategory,
           materiau: values.material,        

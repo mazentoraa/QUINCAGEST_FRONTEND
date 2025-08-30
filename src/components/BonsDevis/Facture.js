@@ -1209,9 +1209,9 @@ export default function Facture(props) {
             produit_id: orderProduct.produit_id || orderProduct.produit,
             bon_id: orderProduct.bon_id,
             bon_numero: orderProduct.bon_numero,
-            code_produit:
-              orderProduct.code_produit ||
-              productDetailsFromCatalog?.code_produit ||
+            ref_produit:
+              orderProduct.ref_produit ||
+              productDetailsFromCatalog?.ref_produit ||
               "XX",
             nom_produit: nomProduit,
             quantite: quantite,

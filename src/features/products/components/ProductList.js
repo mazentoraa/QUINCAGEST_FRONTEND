@@ -123,6 +123,7 @@ const ProductList = ({ onDuplicateSuccess }) => {
   const getColor = (id) => colors[id % colors.length];
 
   const formattedCategories = () => {
+    console.log(categories)
     return (categories ?? []).map(cat => ({
       title: (
         <Tooltip title={`${cat.nom} (${cat.count || 0} produits)`}>
@@ -139,7 +140,7 @@ const ProductList = ({ onDuplicateSuccess }) => {
           </span>
         </Tooltip>
       ),
-      key: cat.id ?? `cat-${cat.nom}`,
+      // key: cat.id ?? `cat-${cat.nom}`,
       icon: <ToolOutlined style={{ color: getColor(cat.id) }} />,
       children: Array.isArray(cat.children)
         ? cat.children.map(sub => ({

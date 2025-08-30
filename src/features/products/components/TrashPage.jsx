@@ -173,8 +173,8 @@ const TrashPage = () => {
     },
     {
       title: 'Code',
-      dataIndex: 'code_produit',
-      key: 'code_produit',
+      dataIndex: 'ref_produit',
+      key: 'ref_produit',
       width: 120,
       render: (text) => <Tag color="blue">{text}</Tag>
     },

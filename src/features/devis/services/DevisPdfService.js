@@ -209,7 +209,7 @@ class DevisPdfService {
         return `
         <tr>
            <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
-            ${item.code_produit || "N/A"}
+            ${item.ref_produit || "N/A"}
           </td>
           <td style="border: 1px solid #000; padding: 4px; font-size: 11px; text-align: center; vertical-align: middle;">
             ${item.nom_produit || "N/A"}

@@ -639,7 +639,7 @@ const navigate = useNavigate();
               `Produit ID ${
                 orderProduct.produit_id || orderProduct.produit || "N/A"
               }`;
-            const code_produit = orderProduct.code_produit || "N/A";
+            const ref_produit = orderProduct.ref_produit || "N/A";
             const prixUnitaire =
               orderProduct.prix_unitaire ??
               productDetailsFromCatalog?.prix_unitaire ??
@@ -661,7 +661,7 @@ const navigate = useNavigate();
               id: orderProduct.id,
               produit_id: orderProduct.produit_id || orderProduct.produit,
               nom_produit: nomProduit,
-              code_produit : code_produit , 
+              ref_produit : ref_produit , 
               quantite: quantite,
               prix_unitaire: prixUnitaire,
               remise_pourcentage: remisePourcentage,
@@ -686,7 +686,7 @@ const navigate = useNavigate();
               detailProduct.nom_produit ||
               productDetailsFromCatalog?.nom_produit ||
               `Produit ID ${detailProduct.id || "N/A"}`;
-            const code_produit = detailProduct.code_produit || "N/A";
+            const ref_produit = detailProduct.ref_produit || "N/A";
             // Assuming 'prix' in produits_details is the unit price
             const prixUnitaire =
               detailProduct.prix ??
@@ -698,7 +698,7 @@ const navigate = useNavigate();
             return {
               produit_id: detailProduct.id,
               nom_produit: nomProduit,
-              code_produit:code_produit , 
+              ref_produit:ref_produit , 
               quantite: quantite,
               prix_unitaire: prixUnitaire,
               remise_pourcentage: remisePourcentage,
