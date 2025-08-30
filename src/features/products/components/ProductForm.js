@@ -125,8 +125,8 @@ const ProductForm = ({
       const changedFields = {};
 
       if (productToEdit && productToEdit.id) {
-        if (values.nom_produit !== productToEdit.nom_produit)
-          changedFields.nom_produit = values.nom_produit;
+        
+        changedFields.nom_produit = values.nom_produit;
 
         if (values.ref_produit !== productToEdit.ref_produit)
           changedFields.ref_produit = values.ref_produit;
