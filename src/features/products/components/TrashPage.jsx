@@ -180,8 +180,8 @@ const TrashPage = () => {
     },
     {
       title: 'Type de matière',
-      dataIndex: 'type_matiere',
-      key: 'type_matiere',
+      dataIndex: 'materiau',
+      key: 'materiau',
       width: 150,
       render: (type) => {
         const colors = {
@@ -198,8 +198,8 @@ const TrashPage = () => {
     },
     {
       title: 'Prix',
-      dataIndex: 'prix',
-      key: 'prix',
+      dataIndex: 'prix_unitaire',
+      key: 'prix_unitaire',
       width: 120,
       render: (prix) => prix ? `${prix.toFixed(2)} ` : 'N/A'
     },
